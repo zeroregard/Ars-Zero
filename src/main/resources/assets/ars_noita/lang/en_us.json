@@ -1,0 +1,17 @@
+{
+  "itemGroup.ars_noita": "Ars Noita",
+  "item.ars_noita.ars_noita_staff": "Ars Noita Staff",
+  "item.ars_noita.ars_noita_staff.desc": "A staff that allows temporal spellcasting with begin, tick, and end phases.",
+  
+  "glyph.ars_noita.temporal_context_form": "Temporal Context Form",
+  "glyph.ars_noita.temporal_context_form.desc": "A form glyph that resolves based on the current staff phase context. Can only be used in staff Tick or End phases.",
+  
+  "gui.ars_noita.staff.title": "Ars Noita Staff Configuration",
+  "gui.ars_noita.staff.begin_phase": "Begin Phase",
+  "gui.ars_noita.staff.tick_phase": "Tick Phase", 
+  "gui.ars_noita.staff.end_phase": "End Phase",
+  "gui.ars_noita.staff.begin_phase_selected": "Begin Phase (Selected)",
+  "gui.ars_noita.staff.tick_phase_selected": "Tick Phase (Selected)",
+  "gui.ars_noita.staff.end_phase_selected": "End Phase (Selected)",
+  "gui.ars_noita.staff.current_phase": "Current Phase: %s"
+}

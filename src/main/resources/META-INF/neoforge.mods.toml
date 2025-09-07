@@ -1,0 +1,36 @@
+modLoader="javafml"
+loaderVersion="[2,)"
+license="MIT"
+
+[[mods]]
+modId="ars_noita"
+version="1.0.0-alpha"
+displayName="Ars Noita"
+authors="mathi"
+description='''
+A mod focused on staff-based spellcasting with temporal context for Ars Nouveau.
+'''
+
+[[mixins]]
+config="ars_noita.mixins.json"
+
+[[dependencies.ars_noita]]
+    modId="neoforge"
+    mandatory=true
+    versionRange="[21.1.0,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.ars_noita]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.21.1,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.ars_noita]]
+    modId="ars_nouveau"
+    mandatory=true
+    versionRange="[5.8.2,)"
+    ordering="AFTER"
+    side="BOTH"
