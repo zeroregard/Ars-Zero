@@ -63,7 +63,7 @@ public class ArsNoitaStaffGUI extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(graphics);
+        this.renderBackground(graphics, mouseX, mouseY, partialTicks);
         
         // Render GUI background
         RenderSystem.setShaderTexture(0, GUI_TEXTURE);

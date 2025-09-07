@@ -2,24 +2,33 @@ package com.github.ars_noita.common.glyph;
 
 import com.github.ars_noita.ArsNoita;
 import com.github.ars_noita.common.item.ArsNoitaStaff;
-import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
+import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
+import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
+import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.PlayerCaster;
-import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 
-public class TemporalContextForm extends AbstractSpellPart {
+import java.util.Set;
+
+public class TemporalContextForm extends AbstractEffect {
     
     public static final String ID = "temporal_context_form";
 
+    public TemporalContextForm() {
+        super(ID, "Temporal Context Form");
+    }
+
     @Override
-    public void onResolve(EntityHitResult rayTraceResult, Level world, LivingEntity shooter, SpellStats spellStats, SpellContext spellContext) {
+    public void onResolveEntity(EntityHitResult rayTraceResult, Level world, LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (spellContext.getCaster() instanceof PlayerCaster playerCaster) {
-            Player player = playerCaster.getPlayer();
+            Player player = playerCaster.player;
             ItemStack mainHand = player.getMainHandItem();
             
             if (mainHand.getItem() instanceof ArsNoitaStaff staff) {
@@ -57,13 +66,13 @@ public class TemporalContextForm extends AbstractSpellPart {
     }
 
     @Override
-    public String getRegistryName() {
-        return ArsNoita.prefix(ID).toString();
+    public ResourceLocation getRegistryName() {
+        return ArsNoita.prefix(ID);
     }
 
     @Override
-    public Component getBookDescription() {
-        return Component.translatable("glyph.ars_noita.temporal_context_form.desc");
+    public String getBookDescription() {
+        return "glyph.ars_noita.temporal_context_form.desc";
     }
 
     @Override
@@ -71,13 +80,21 @@ public class TemporalContextForm extends AbstractSpellPart {
         return 10;
     }
 
-    @Override
     public boolean canBeUsedInSpellbook() {
         return false; // Can only be used in staff Tick or End phases
     }
 
-    @Override
     public boolean canBeUsedInStaff() {
         return true;
+    }
+
+    @Override
+    public Integer getTypeIndex() {
+        return 8; // Form type index
+    }
+
+    @Override
+    public Set<AbstractAugment> getCompatibleAugments() {
+        return Set.of(); // No augments for this form
     }
 }

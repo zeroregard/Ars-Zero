@@ -1,0 +1,6 @@
+{
+  "parent": "item/handheld",
+  "textures": {
+    "layer0": "ars_noita:item/ars_noita_staff"
+  }
+}

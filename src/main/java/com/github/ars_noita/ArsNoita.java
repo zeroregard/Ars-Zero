@@ -19,8 +19,10 @@ public class ArsNoita {
 
     public ArsNoita(IEventBus modEventBus, ModContainer modContainer) {
         ModItems.ITEMS.register(modEventBus);
-        ModGlyphs.GLYPHS.register(modEventBus);
         ModCreativeTabs.TABS.register(modEventBus);
+        
+        // Register glyphs using Ars Nouveau's system
+        ModGlyphs.registerGlyphs();
         
         if (FMLEnvironment.dist.isClient()) {
             ArsNoitaClient.init(modEventBus);
