@@ -13,7 +13,7 @@ public class ModItems {
     
     // Flag to track if spell casters have been registered
     public static boolean SPELL_CASTERS_REGISTERED = false;
-
+    
     public static final ItemRegistryWrapper<ArsNoitaStaff> ARS_NOITA_STAFF = register("ars_noita_staff", () -> {
         ArsNoita.LOGGER.debug("Creating ArsNoitaStaff item instance for registration");
         return new ArsNoitaStaff();
@@ -29,11 +29,16 @@ public class ModItems {
     }
 
     public static void registerSpellCasters() {
-        ArsNoita.LOGGER.debug("Registering Ars Noita staff with SpellCasterRegistry");
+        ArsNoita.LOGGER.info("Registering Ars Noita staff with SpellCasterRegistry");
+        ArsNoita.LOGGER.debug("Staff item: {}", ARS_NOITA_STAFF.get());
         // Register our staff with the SpellCasterRegistry so Ars Nouveau can detect it
+        // Use the same pattern as Ars Nouveau items - extract SpellCaster from data component
         SpellCasterRegistry.register(ARS_NOITA_STAFF.get(), (stack) -> {
-            ArsNoita.LOGGER.debug("SpellCasterRegistry requested caster for ArsNoitaStaff - returning null for now");
-            return null; // For now, return null since we don't have a spell caster system yet
+            ArsNoita.LOGGER.info("SpellCasterRegistry requested caster for ArsNoitaStaff - extracting from data component");
+            ArsNoita.LOGGER.debug("Stack: {}", stack);
+            // Extract SpellCaster from the data component (same as Ars Nouveau items)
+            return stack.get(com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry.SPELL_CASTER);
         });
+        ArsNoita.LOGGER.info("SpellCasterRegistry registration completed");
     }
 }

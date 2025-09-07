@@ -43,8 +43,19 @@ public class ArsNoita {
         ModGlyphs.registerGlyphs();
         LOGGER.info("Glyph registration completed");
 
-        // Spell caster registration will be done in a separate event handler
-        // after items are fully registered
+        // Register spell casters after a short delay to ensure items are fully registered
+        if (FMLEnvironment.dist.isClient()) {
+            LOGGER.debug("Scheduling spell caster registration...");
+            // Use a timer to register spell casters after items are fully loaded
+            new java.util.Timer().schedule(new java.util.TimerTask() {
+                @Override
+                public void run() {
+                    LOGGER.info("Registering spell casters with Ars Nouveau...");
+                    ModItems.registerSpellCasters();
+                    LOGGER.info("Spell caster registration completed");
+                }
+            }, 1000); // 1 second delay
+        }
 
         if (FMLEnvironment.dist.isClient()) {
             LOGGER.debug("Initializing client-side components...");

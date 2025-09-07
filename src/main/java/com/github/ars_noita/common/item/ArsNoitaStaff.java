@@ -3,6 +3,8 @@ package com.github.ars_noita.common.item;
 import com.github.ars_noita.ArsNoita;
 import com.github.ars_noita.client.gui.ArsNoitaStaffGUI;
 import com.hollingsworth.arsnouveau.api.item.ICasterTool;
+import com.hollingsworth.arsnouveau.api.spell.SpellCaster;
+import com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -27,8 +29,8 @@ public class ArsNoitaStaff extends Item implements ICasterTool {
     private int tickCount = 0;
 
     public ArsNoitaStaff() {
-        super(new Item.Properties().stacksTo(1));
-        ArsNoita.LOGGER.debug("Creating ArsNoitaStaff item instance");
+        super(new Item.Properties().stacksTo(1).component(DataComponentRegistry.SPELL_CASTER, new SpellCaster(3)));
+        ArsNoita.LOGGER.debug("Creating ArsNoitaStaff item instance with SpellCaster data component");
     }
 
     @Override
@@ -61,18 +63,12 @@ public class ArsNoitaStaff extends Item implements ICasterTool {
     @Override
     @OnlyIn(Dist.CLIENT)
     public void onOpenBookMenuKeyPressed(ItemStack stack, Player player) {
-        ArsNoita.LOGGER.debug("C key pressed - opening Ars Noita Staff GUI for player {}", player.getName().getString());
+        ArsNoita.LOGGER.info("C key pressed - opening Ars Noita Staff GUI for player {}", player.getName().getString());
+        ArsNoita.LOGGER.debug("Staff stack: {}, Player: {}", stack, player);
         openStaffGUI(player);
     }
 
-    // ICasterTool implementation
-    @Override
-    public com.hollingsworth.arsnouveau.api.spell.AbstractCaster<?> getSpellCaster(ItemStack stack) {
-        // For now, return null since we don't have a spell caster system yet
-        // This will be implemented when we add the spell storage system
-        ArsNoita.LOGGER.debug("getSpellCaster called for ArsNoitaStaff - returning null for now");
-        return null;
-    }
+    // ICasterTool implementation - getSpellCaster is handled by SpellCasterRegistry registration
 
     @Override
     public boolean canQuickCast() {
