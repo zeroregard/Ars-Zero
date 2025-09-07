@@ -2,6 +2,7 @@ package com.github.ars_noita.common.item;
 
 import com.github.ars_noita.ArsNoita;
 import com.github.ars_noita.client.gui.ArsNoitaStaffGUI;
+import com.hollingsworth.arsnouveau.api.item.ICasterTool;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -13,7 +14,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
-public class ArsNoitaStaff extends Item {
+public class ArsNoitaStaff extends Item implements ICasterTool {
     
     public enum StaffPhase {
         BEGIN,
@@ -53,7 +54,30 @@ public class ArsNoitaStaff extends Item {
 
     @OnlyIn(Dist.CLIENT)
     private void openStaffGUI(Player player) {
+        ArsNoita.LOGGER.debug("Opening Ars Noita Staff GUI for player {}", player.getName().getString());
         Minecraft.getInstance().setScreen(new ArsNoitaStaffGUI());
+    }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public void onOpenBookMenuKeyPressed(ItemStack stack, Player player) {
+        ArsNoita.LOGGER.debug("C key pressed - opening Ars Noita Staff GUI for player {}", player.getName().getString());
+        openStaffGUI(player);
+    }
+
+    // ICasterTool implementation
+    @Override
+    public com.hollingsworth.arsnouveau.api.spell.AbstractCaster<?> getSpellCaster(ItemStack stack) {
+        // For now, return null since we don't have a spell caster system yet
+        // This will be implemented when we add the spell storage system
+        ArsNoita.LOGGER.debug("getSpellCaster called for ArsNoitaStaff - returning null for now");
+        return null;
+    }
+
+    @Override
+    public boolean canQuickCast() {
+        // Return true to allow quick casting with the staff
+        return true;
     }
 
     private void beginPhase(Player player, ItemStack stack) {

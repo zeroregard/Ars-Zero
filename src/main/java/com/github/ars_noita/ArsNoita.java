@@ -43,6 +43,9 @@ public class ArsNoita {
         ModGlyphs.registerGlyphs();
         LOGGER.info("Glyph registration completed");
 
+        // Spell caster registration will be done in a separate event handler
+        // after items are fully registered
+
         if (FMLEnvironment.dist.isClient()) {
             LOGGER.debug("Initializing client-side components...");
             ArsNoitaClient.init(modEventBus);
