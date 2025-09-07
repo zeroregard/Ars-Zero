@@ -23,16 +23,22 @@ public class TemporalContextForm extends AbstractEffect {
 
     public TemporalContextForm() {
         super(ID, "Temporal Context Form");
+        ArsNoita.LOGGER.debug("Creating TemporalContextForm glyph instance");
     }
 
     @Override
     public void onResolveEntity(EntityHitResult rayTraceResult, Level world, LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
+        ArsNoita.LOGGER.debug("TemporalContextForm onResolveEntity called by {} in world {}", shooter.getName().getString(), world.dimension().location());
+        
         if (spellContext.getCaster() instanceof PlayerCaster playerCaster) {
             Player player = playerCaster.player;
             ItemStack mainHand = player.getMainHandItem();
             
+            ArsNoita.LOGGER.debug("Player {} holding item: {}", player.getName().getString(), mainHand.getItem().toString());
+            
             if (mainHand.getItem() instanceof ArsNoitaStaff staff) {
                 ArsNoitaStaff.StaffPhase currentPhase = staff.getCurrentPhase();
+                ArsNoita.LOGGER.debug("ArsNoitaStaff detected, current phase: {}", currentPhase);
                 
                 // Resolve based on current staff phase context
                 switch (currentPhase) {
@@ -46,23 +52,39 @@ public class TemporalContextForm extends AbstractEffect {
                         resolveEndPhase(rayTraceResult, world, shooter, spellStats, spellContext);
                         break;
                 }
+            } else {
+                ArsNoita.LOGGER.debug("Player not holding ArsNoitaStaff, ignoring temporal context resolution");
             }
+        } else {
+            ArsNoita.LOGGER.debug("Spell caster is not a PlayerCaster, ignoring temporal context resolution");
         }
     }
 
     private void resolveBeginPhase(EntityHitResult rayTraceResult, Level world, LivingEntity shooter, SpellStats spellStats, SpellContext spellContext) {
         // Begin phase logic - executes once on press
         ArsNoita.LOGGER.info("TemporalContextForm resolving in BEGIN phase");
+        ArsNoita.LOGGER.debug("Begin phase - Target: {}, World: {}, Shooter: {}", 
+            rayTraceResult.getEntity() != null ? rayTraceResult.getEntity().getName().getString() : "null",
+            world.dimension().location(),
+            shooter.getName().getString());
     }
 
     private void resolveTickPhase(EntityHitResult rayTraceResult, Level world, LivingEntity shooter, SpellStats spellStats, SpellContext spellContext) {
         // Tick phase logic - executes every tick while held
         ArsNoita.LOGGER.info("TemporalContextForm resolving in TICK phase");
+        ArsNoita.LOGGER.debug("Tick phase - Target: {}, World: {}, Shooter: {}", 
+            rayTraceResult.getEntity() != null ? rayTraceResult.getEntity().getName().getString() : "null",
+            world.dimension().location(),
+            shooter.getName().getString());
     }
 
     private void resolveEndPhase(EntityHitResult rayTraceResult, Level world, LivingEntity shooter, SpellStats spellStats, SpellContext spellContext) {
         // End phase logic - executes once on release
         ArsNoita.LOGGER.info("TemporalContextForm resolving in END phase");
+        ArsNoita.LOGGER.debug("End phase - Target: {}, World: {}, Shooter: {}", 
+            rayTraceResult.getEntity() != null ? rayTraceResult.getEntity().getName().getString() : "null",
+            world.dimension().location(),
+            shooter.getName().getString());
     }
 
     @Override

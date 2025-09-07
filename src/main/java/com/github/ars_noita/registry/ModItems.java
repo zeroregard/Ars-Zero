@@ -10,9 +10,13 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class ModItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Registries.ITEM, ArsNoita.MOD_ID);
 
-    public static final ItemRegistryWrapper<ArsNoitaStaff> ARS_NOITA_STAFF = register("ars_noita_staff", ArsNoitaStaff::new);
+    public static final ItemRegistryWrapper<ArsNoitaStaff> ARS_NOITA_STAFF = register("ars_noita_staff", () -> {
+        ArsNoita.LOGGER.debug("Creating ArsNoitaStaff item instance for registration");
+        return new ArsNoitaStaff();
+    });
 
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
+        ArsNoita.LOGGER.debug("Registering item: {}", name);
         return new ItemRegistryWrapper<>(ITEMS.register(name, item));
     }
 

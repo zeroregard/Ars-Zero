@@ -27,22 +27,27 @@ public class ArsNoitaStaff extends Item {
 
     public ArsNoitaStaff() {
         super(new Item.Properties().stacksTo(1));
+        ArsNoita.LOGGER.debug("Creating ArsNoitaStaff item instance");
     }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        ArsNoita.LOGGER.debug("ArsNoitaStaff use() called by {} in hand {}", player.getName().getString(), hand.name());
         
         if (level.isClientSide) {
             if (player.isShiftKeyDown()) {
+                ArsNoita.LOGGER.debug("Opening staff GUI for player {}", player.getName().getString());
                 openStaffGUI(player);
                 return InteractionResultHolder.success(stack);
             } else {
+                ArsNoita.LOGGER.debug("Starting begin phase for player {}", player.getName().getString());
                 beginPhase(player, stack);
                 return InteractionResultHolder.success(stack);
             }
         }
         
+        ArsNoita.LOGGER.debug("Server-side use, passing through");
         return InteractionResultHolder.pass(stack);
     }
 
@@ -52,6 +57,7 @@ public class ArsNoitaStaff extends Item {
     }
 
     private void beginPhase(Player player, ItemStack stack) {
+        ArsNoita.LOGGER.debug("Starting BEGIN phase for player {}", player.getName().getString());
         currentPhase = StaffPhase.BEGIN;
         isHeld = true;
         tickCount = 0;
@@ -62,6 +68,7 @@ public class ArsNoitaStaff extends Item {
 
     public void tickPhase(Player player, ItemStack stack) {
         if (isHeld) {
+            ArsNoita.LOGGER.debug("Executing TICK phase for player {} (tick #{})", player.getName().getString(), tickCount + 1);
             currentPhase = StaffPhase.TICK;
             tickCount++;
             
@@ -72,6 +79,7 @@ public class ArsNoitaStaff extends Item {
 
     public void endPhase(Player player, ItemStack stack) {
         if (isHeld) {
+            ArsNoita.LOGGER.debug("Ending staff use for player {} after {} ticks", player.getName().getString(), tickCount);
             currentPhase = StaffPhase.END;
             isHeld = false;
             
@@ -83,7 +91,8 @@ public class ArsNoitaStaff extends Item {
     private void executeSpell(Player player, ItemStack stack, StaffPhase phase) {
         // TODO: Implement spell execution based on phase
         // This will integrate with Ars Nouveau's spell system
-        ArsNoita.LOGGER.info("Executing {} spell for staff", phase.name());
+        ArsNoita.LOGGER.info("Executing {} spell for staff (Player: {}, Tick: {})", phase.name(), player.getName().getString(), tickCount);
+        ArsNoita.LOGGER.debug("Spell execution details - Phase: {}, IsHeld: {}, TickCount: {}", phase, isHeld, tickCount);
     }
 
     public StaffPhase getCurrentPhase() {
