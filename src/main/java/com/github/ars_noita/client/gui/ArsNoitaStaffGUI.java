@@ -618,10 +618,26 @@ public class ArsNoitaStaffGUI extends SpellSlottedScreen {
                     displayedGlyphs.add(spellPart);
                 }
             }
+            // Set visibility of Cast Methods and Augments
+            for (net.minecraft.client.gui.components.Renderable w : renderables) {
+                if (w instanceof GlyphButton glyphButton) {
+                    if (glyphButton.abstractSpellPart.getRegistryName() != null) {
+                        AbstractSpellPart part = GlyphRegistry.getSpellpartMap().get(glyphButton.abstractSpellPart.getRegistryName());
+                        if (part != null) {
+                            glyphButton.visible = part.getLocaleName().toLowerCase().contains(str.toLowerCase());
+                        }
+                    }
+                }
+            }
         } else {
             // Reset our book on clear
             searchBar.setSuggestion(Component.translatable("ars_nouveau.spell_book_gui.search").getString());
             displayedGlyphs = new ArrayList<>(unlockedSpells);
+            for (net.minecraft.client.gui.components.Renderable w : renderables) {
+                if (w instanceof GlyphButton) {
+                    ((GlyphButton) w).visible = true;
+                }
+            }
         }
         updateNextPageButtons();
         this.page = 0;
@@ -632,6 +648,7 @@ public class ArsNoitaStaffGUI extends SpellSlottedScreen {
 
     private void clearGlyphButtons(List<GlyphButton> buttons) {
         for (GlyphButton b : buttons) {
+            renderables.remove(b);
             children().remove(b);
         }
         buttons.clear();
@@ -649,14 +666,17 @@ public class ArsNoitaStaffGUI extends SpellSlottedScreen {
     }
 
     @Override
-    public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        // Use the parent's render method which handles the book background properly
-        super.render(graphics, mouseX, mouseY, partialTicks);
-        
-        // Phase labels removed
+    public void drawBackgroundElements(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        super.drawBackgroundElements(graphics, mouseX, mouseY, partialTicks);
         
         // Add category labels for glyphs
         renderCategoryLabels(graphics);
+    }
+
+    @Override
+    public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        // Use the parent's render method which handles the book background properly
+        super.render(graphics, mouseX, mouseY, partialTicks);
     }
 
     private void renderPhaseLabels(net.minecraft.client.gui.GuiGraphics graphics) {
@@ -665,20 +685,22 @@ public class ArsNoitaStaffGUI extends SpellSlottedScreen {
     
     private void renderCategoryLabels(net.minecraft.client.gui.GuiGraphics graphics) {
         // Render category labels for glyphs (Forms, Augment, Effect)
+        // Adjust Y position by 32 pixels to account for the taller GUI
+        int yOffset = 32;
         int formOffset = 0;
         if (formTextRow >= 1) {
             graphics.drawString(font, Component.translatable("ars_nouveau.spell_book_gui.form").getString(), 
-                formTextRow > 6 ? 154 : 20, 5 + 18 * (formTextRow + (formTextRow == 1 ? 0 : 1)), -8355712, false);
+                formTextRow > 6 ? 154 : 20, 5 + 18 * (formTextRow + (formTextRow == 1 ? 0 : 1)) + yOffset, -8355712, false);
             formOffset = 1;
         }
 
         if (effectTextRow >= 1) {
             graphics.drawString(font, Component.translatable("ars_nouveau.spell_book_gui.effect").getString(), 
-                effectTextRow > 6 ? 154 : 20, 5 + 18 * (effectTextRow % 7 + formOffset), -8355712, false);
+                effectTextRow > 6 ? 154 : 20, 5 + 18 * (effectTextRow % 7 + formOffset) + yOffset, -8355712, false);
         }
         if (augmentTextRow >= 1) {
             graphics.drawString(font, Component.translatable("ars_nouveau.spell_book_gui.augment").getString(), 
-                augmentTextRow > 6 ? 154 : 20, 5 + 18 * (augmentTextRow + formOffset), -8355712, false);
+                augmentTextRow > 6 ? 154 : 20, 5 + 18 * (augmentTextRow + formOffset) + yOffset, -8355712, false);
         }
     }
 

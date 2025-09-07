@@ -34,8 +34,6 @@ public class ModItems {
         // Register our staff with the SpellCasterRegistry so Ars Nouveau can detect it
         // Use the same pattern as Ars Nouveau items - extract SpellCaster from data component
         SpellCasterRegistry.register(ARS_NOITA_STAFF.get(), (stack) -> {
-            ArsNoita.LOGGER.info("SpellCasterRegistry requested caster for ArsNoitaStaff - extracting from data component");
-            ArsNoita.LOGGER.debug("Stack: {}", stack);
             // Extract SpellCaster from the data component (same as Ars Nouveau items)
             return stack.get(com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry.SPELL_CASTER);
         });

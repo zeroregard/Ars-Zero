@@ -2,6 +2,7 @@ package com.github.ars_noita;
 
 import com.github.ars_noita.client.ArsNoitaClient;
 import com.github.ars_noita.registry.ModCreativeTabs;
+import com.github.ars_noita.registry.ModEntities;
 import com.github.ars_noita.registry.ModItems;
 import com.github.ars_noita.registry.ModGlyphs;
 import net.minecraft.resources.ResourceLocation;
@@ -30,6 +31,10 @@ public class ArsNoita {
         LOGGER.info("Initializing Ars Noita mod...");
         LOGGER.debug("Mod container: {}", modContainer.getModId());
         LOGGER.debug("Environment: {}", FMLEnvironment.dist);
+
+        LOGGER.debug("Registering entities...");
+        ModEntities.ENTITIES.register(modEventBus);
+        LOGGER.info("Registered {} entities", ModEntities.ENTITIES.getEntries().size());
 
         LOGGER.debug("Registering items...");
         ModItems.ITEMS.register(modEventBus);
@@ -69,7 +74,6 @@ public class ArsNoita {
     }
 
     public static ResourceLocation prefix(String path) {
-        LOGGER.debug("Creating resource location: {}:{}", MOD_ID, path);
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 }

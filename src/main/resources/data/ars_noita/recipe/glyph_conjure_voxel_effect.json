@@ -1,0 +1,16 @@
+{
+  "type": "ars_nouveau:glyph",
+  "exp": 30,
+  "inputs": [
+    {
+      "item": "ars_nouveau:source_gem"
+    },
+    {
+      "item": "minecraft:stone"
+    }
+  ],
+  "output": {
+    "count": 1,
+    "id": "ars_noita:glyph_conjure_voxel_effect"
+  }
+}

@@ -9,20 +9,25 @@ import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.model.GeoModel;
 
 public class CreativeSpellStaffModel extends GeoModel<ArsNoitaStaff> {
+    
+    // Cache ResourceLocation objects to prevent creation every frame
+    private static final ResourceLocation MODEL_RESOURCE = ArsNoita.prefix("geo/creative_spell_staff.geo.json");
+    private static final ResourceLocation TEXTURE_RESOURCE = ArsNoita.prefix("textures/item/creative_spell_staff.png");
+    private static final ResourceLocation ANIMATION_RESOURCE = ArsNoita.prefix("animations/creative_spell_staff.animation.json");
 
     @Override
     public ResourceLocation getModelResource(ArsNoitaStaff object) {
-        return ArsNoita.prefix("geo/creative_spell_staff.geo.json");
+        return MODEL_RESOURCE;
     }
 
     @Override
     public ResourceLocation getTextureResource(ArsNoitaStaff object) {
-        return ArsNoita.prefix("textures/item/creative_spell_staff.png");
+        return TEXTURE_RESOURCE;
     }
 
     @Override
     public ResourceLocation getAnimationResource(ArsNoitaStaff animatable) {
-        return ArsNoita.prefix("animations/creative_spell_staff.animation.json");
+        return ANIMATION_RESOURCE;
     }
 
     @Override

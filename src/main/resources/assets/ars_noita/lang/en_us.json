@@ -10,5 +10,14 @@
   
   "key.category.ars_noita.general": "Ars Noita",
   
-  "itemGroup.ars_noita.general": "Ars Noita"
+  "itemGroup.ars_noita.general": "Ars Noita",
+  
+  "ars_noita.glyph_name.glyph_conjure_voxel_effect": "Conjure Voxel",
+  "ars_noita.glyph_desc.glyph_conjure_voxel_effect": "Conjures a small voxel entity that persists for a duration. The voxel is a quarter the size of a normal block and does not collide with anything. Can be augmented with AOE, Pierce, Extend Time, and Sensitive.",
+  
+  "ars_noita.glyph_name.glyph_temporal_context_form": "Temporal Context Form",
+  "ars_noita.glyph_desc.glyph_temporal_context_form": "A cast method that provides access to context from previous staff phases. When used in Tick or End phases, it will target the entity or block that was stored in the temporal context from previous phases.",
+  
+  "ars_noita.glyph_name.glyph_translate_effect": "Translate",
+  "ars_noita.glyph_desc.glyph_translate_effect": "Maintains the relative position of a target entity to the caster. The entity will follow the caster's movement and rotation, staying in the same relative position. Duration can be extended with augments."
 }
