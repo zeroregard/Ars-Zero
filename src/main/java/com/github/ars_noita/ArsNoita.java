@@ -1,6 +1,7 @@
 package com.github.ars_noita;
 
 import com.github.ars_noita.client.ArsNoitaClient;
+import com.github.ars_noita.event.ArsNoitaStaffEvents;
 import com.github.ars_noita.registry.ModCreativeTabs;
 import com.github.ars_noita.registry.ModEntities;
 import com.github.ars_noita.registry.ModItems;
@@ -10,6 +11,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.common.NeoForge;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.Logger;
@@ -69,6 +71,11 @@ public class ArsNoita {
         } else {
             LOGGER.debug("Skipping client initialization (server-side)");
         }
+
+        // Register event handlers
+        LOGGER.debug("Registering event handlers...");
+        NeoForge.EVENT_BUS.register(ArsNoitaStaffEvents.class);
+        LOGGER.info("Event handlers registered");
 
         LOGGER.info("Ars Noita mod initialization completed successfully!");
     }
