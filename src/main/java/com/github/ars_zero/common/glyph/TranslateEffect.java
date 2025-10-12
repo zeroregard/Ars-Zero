@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.glyph;
 
-import com.github.ars_zero.ArsNoita;
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.capability.IPlayerTranslationCapability;
 import com.github.ars_zero.common.capability.ModCapabilities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
@@ -54,7 +54,7 @@ public class TranslateEffect extends AbstractEffect {
         
         if (target == null || target == player) return;
         
-        ArsNoita.LOGGER.info("TranslateEffect: Starting translation for entity {} by player {}", 
+        ArsZero.LOGGER.info("TranslateEffect: Starting translation for entity {} by player {}", 
             target.getName().getString(), player.getName().getString());
         
         // Get or create the player's translation capability
@@ -79,7 +79,7 @@ public class TranslateEffect extends AbstractEffect {
             cap.setInitialPitch(pitch);
             cap.setDuration(duration);
             
-            ArsNoita.LOGGER.debug("Translation data stored in capability: relativePos={}, yaw={}, pitch={}, duration={}", 
+            ArsZero.LOGGER.debug("Translation data stored in capability: relativePos={}, yaw={}, pitch={}, duration={}", 
                 relativePos, yaw, pitch, duration);
         }
     }
@@ -87,7 +87,7 @@ public class TranslateEffect extends AbstractEffect {
     @Override
     public void onResolveBlock(BlockHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         // Translate effect doesn't work on blocks directly
-        ArsNoita.LOGGER.debug("TranslateEffect: Block hit, ignoring (effect only works on entities)");
+        ArsZero.LOGGER.debug("TranslateEffect: Block hit, ignoring (effect only works on entities)");
     }
     
     /**
@@ -108,7 +108,7 @@ public class TranslateEffect extends AbstractEffect {
     private static void updatePlayerTranslation(Player player, IPlayerTranslationCapability cap) {
         Entity target = cap.getTargetEntity();
         if (target == null || !target.isAlive()) {
-            ArsNoita.LOGGER.debug("Translation ended: target no longer exists");
+            ArsZero.LOGGER.debug("Translation ended: target no longer exists");
             cap.clearTranslation();
             return;
         }
@@ -116,7 +116,7 @@ public class TranslateEffect extends AbstractEffect {
         // Decrement remaining ticks
         cap.decrementTicks();
         if (cap.getRemainingTicks() <= 0) {
-            ArsNoita.LOGGER.debug("Translation ended: duration expired");
+            ArsZero.LOGGER.debug("Translation ended: duration expired");
             cap.clearTranslation();
             return;
         }
@@ -147,9 +147,9 @@ public class TranslateEffect extends AbstractEffect {
             target.setPos(targetPos.x, targetPos.y, targetPos.z);
             target.setDeltaMovement(Vec3.ZERO); // Stop any existing movement
             
-            ArsNoita.LOGGER.debug("Translated entity {} to position {}", target.getName().getString(), targetPos);
+            ArsZero.LOGGER.debug("Translated entity {} to position {}", target.getName().getString(), targetPos);
         } else {
-            ArsNoita.LOGGER.debug("Cannot move entity {} to position {} due to collision", 
+            ArsZero.LOGGER.debug("Cannot move entity {} to position {} due to collision", 
                 target.getName().getString(), targetPos);
         }
     }
@@ -210,7 +210,7 @@ public class TranslateEffect extends AbstractEffect {
         IPlayerTranslationCapability cap = player.getCapability(ModCapabilities.TRANSLATION_CAPABILITY);
         if (cap != null) {
             cap.clearTranslation();
-            ArsNoita.LOGGER.debug("Stopped translation for player {}", player.getName().getString());
+            ArsZero.LOGGER.debug("Stopped translation for player {}", player.getName().getString());
         }
     }
     

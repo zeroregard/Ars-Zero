@@ -86,10 +86,10 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     // Context storage for temporal context form - now using new system
     private static final Map<UUID, StaffCastContext> playerContexts = new HashMap<>();
     
-    public static class ArsNoitaSpellContext extends SpellContext {
+    public static class ArsZeroSpellContext extends SpellContext {
         public final StaffPhase phase;
         
-        public ArsNoitaSpellContext(Level world, Spell spell, LivingEntity caster, StaffPhase phase) {
+        public ArsZeroSpellContext(Level world, Spell spell, LivingEntity caster, StaffPhase phase) {
             super(world, spell, caster, LivingCaster.from(caster), caster.getMainHandItem());
             this.phase = phase;
         }
@@ -98,7 +98,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     // GeckoLib
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
-    public ArsNoitaStaff() {
+    public ArsZeroStaff() {
         super(new Item.Properties().stacksTo(1).component(DataComponentRegistry.SPELL_CASTER, new SpellCaster(30)));
     }
     
@@ -133,7 +133,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
 
     @OnlyIn(Dist.CLIENT)
     private void openStaffGUI(Player player) {
-        Minecraft.getInstance().setScreen(new ArsNoitaStaffGUI());
+        Minecraft.getInstance().setScreen(new ArsZeroStaffGUI());
     }
 
     @Override
@@ -191,7 +191,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
 
 
     private void beginPhase(Player player, ItemStack stack) {
-        ArsNoita.LOGGER.info("BEGIN SPELL FIRED for player {}", player.getName().getString());
+        ArsZero.LOGGER.info("BEGIN SPELL FIRED for player {}", player.getName().getString());
         
         currentPhase = StaffPhase.BEGIN;
         isHeld = true;
@@ -249,7 +249,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
             if (graceTicks <= 0) {
                 // Grace period expired, actually stop the staff
                 gracePeriodTicks.remove(playerId);
-                ArsNoita.LOGGER.info("HOLDING DOWN: NO (grace period expired) for player {}", player.getName().getString());
+                ArsZero.LOGGER.info("HOLDING DOWN: NO (grace period expired) for player {}", player.getName().getString());
                 endPhase(player, player.getItemInHand(InteractionHand.MAIN_HAND));
             } else {
                 // Update grace period counter
@@ -376,7 +376,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     }
     
     private boolean checkManaAndCast(Player player, ItemStack stack, Spell spell, StaffPhase phase) {
-        ArsNoitaSpellContext context = new ArsNoitaSpellContext(player.level(), spell, player, phase);
+        ArsZeroSpellContext context = new ArsZeroSpellContext(player.level(), spell, player, phase);
         SpellResolver resolver = new SpellResolver(context);
         
         // Wrap the resolver for Begin phase to capture results
@@ -397,7 +397,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
                     return false;
                 }
             } catch (Exception e) {
-                ArsNoita.LOGGER.error("Exception during cast: ", e);
+                ArsZero.LOGGER.error("Exception during cast: ", e);
                 return false;
             }
         }
@@ -487,7 +487,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         }
         
         // Start using the staff
-        ArsNoita.LOGGER.info("HOLDING DOWN: YES for player {}", player.getName().getString());
+        ArsZero.LOGGER.info("HOLDING DOWN: YES for player {}", player.getName().getString());
         player.startUsingItem(hand);
         return InteractionResultHolder.consume(stack);
     }
@@ -507,7 +507,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
             // Keep isHeld true during grace period so we can continue ticking
         } else {
             // Quick tap - immediate end (fire-and-forget)
-            ArsNoita.LOGGER.info("HOLDING DOWN: NO for player {}", player.getName().getString());
+            ArsZero.LOGGER.info("HOLDING DOWN: NO for player {}", player.getName().getString());
             endPhase(player, stack);
         }
     }
@@ -529,7 +529,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
 
     @Override
     public Component getDescription() {
-        return Component.translatable("item.ars_noita.ars_noita_staff.desc");
+        return Component.translatable("item.ars_zero.ars_zero_staff.desc");
     }
 
     // GeckoLib implementation
@@ -552,7 +552,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     @OnlyIn(Dist.CLIENT)
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
         consumer.accept(new GeoRenderProvider() {
-            private final BlockEntityWithoutLevelRenderer renderer = new com.github.ars_noita.client.renderer.item.CreativeSpellStaffRenderer();
+            private final BlockEntityWithoutLevelRenderer renderer = new com.github.ars_zero.client.renderer.item.CreativeSpellStaffRenderer();
 
             @Override
             public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {

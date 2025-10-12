@@ -1,7 +1,7 @@
 package com.github.ars_zero.client.renderer.item;
 
-import com.github.ars_zero.ArsNoita;
-import com.github.ars_zero.common.item.ArsNoitaStaff;
+import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.item.ArsZeroStaff;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -52,11 +52,11 @@ public class CreativeSpellStaffRenderer extends GeoItemRenderer<ArsZeroStaff> {
     }
 
     @Override
-    public void defaultRender(PoseStack poseStack, ArsNoitaStaff animatable, MultiBufferSource bufferSource, @Nullable RenderType renderType, @Nullable VertexConsumer buffer, float yaw, float partialTick, int packedLight) {
+    public void defaultRender(PoseStack poseStack, ArsZeroStaff animatable, MultiBufferSource bufferSource, @Nullable RenderType renderType, @Nullable VertexConsumer buffer, float yaw, float partialTick, int packedLight) {
         super.defaultRender(poseStack, animatable, bufferSource, renderType, buffer, yaw, partialTick, packedLight);
     }
 
-    public void defaultRenderGui(PoseStack poseStack, ArsNoitaStaff animatable, MultiBufferSource bufferSource, @Nullable RenderType renderType, @Nullable VertexConsumer buffer, float yaw, float partialTick, int packedLight, int packedOverlay, int packedColor) {
+    public void defaultRenderGui(PoseStack poseStack, ArsZeroStaff animatable, MultiBufferSource bufferSource, @Nullable RenderType renderType, @Nullable VertexConsumer buffer, float yaw, float partialTick, int packedLight, int packedOverlay, int packedColor) {
         poseStack.pushPose();
         Color renderColor = this.getRenderColor(animatable, partialTick, packedLight);
         float red = renderColor.getRedFloat();
@@ -86,7 +86,7 @@ public class CreativeSpellStaffRenderer extends GeoItemRenderer<ArsZeroStaff> {
     }
 
     @Override
-    public RenderType getRenderType(ArsNoitaStaff animatable, ResourceLocation texture, @org.jetbrains.annotations.Nullable MultiBufferSource bufferSource, float partialTick) {
+    public RenderType getRenderType(ArsZeroStaff animatable, ResourceLocation texture, @org.jetbrains.annotations.Nullable MultiBufferSource bufferSource, float partialTick) {
         return RenderType.entityTranslucent(texture);
     }
 }

@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.capability;
 
-import com.github.ars_zero.ArsNoita;
+import com.github.ars_zero.ArsZero;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;

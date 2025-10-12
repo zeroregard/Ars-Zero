@@ -48,7 +48,7 @@ public class ArsZeroResolverEvents {
             switch (wrapped.getPhase()) {
                 case BEGIN -> {
                     context.beginResults.add(result);
-                    com.github.ars_noita.ArsNoita.LOGGER.debug("Added Begin result: {} (total: {})", result.hitResult, context.beginResults.size());
+                    com.github.ars_zero.ArsZero.LOGGER.debug("Added Begin result: {} (total: {})", result.hitResult, context.beginResults.size());
                 }
                 case TICK -> {
                     context.tickResults.add(result);

@@ -1,6 +1,6 @@
 package com.github.ars_zero.client.renderer.item;
 
-import com.github.ars_zero.ArsNoita;
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.item.ArsZeroStaff;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;

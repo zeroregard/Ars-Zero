@@ -17,7 +17,7 @@ public class ArsZeroStaffEvents {
         
         // Call tickPhase for all players using the staff
         event.getServer().getPlayerList().getPlayers().forEach(player -> {
-            if (player.getMainHandItem().getItem() instanceof ArsNoitaStaff staff) {
+            if (player.getMainHandItem().getItem() instanceof ArsZeroStaff staff) {
                 staff.tickPhase(player, player.getMainHandItem());
             }
         });

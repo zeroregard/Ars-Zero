@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.glyph;
 
-import com.github.ars_zero.ArsNoita;
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.item.ArsZeroStaff;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
@@ -54,7 +54,7 @@ public class TemporalContextForm extends AbstractCastMethod {
     public CastResolveType onCast(ItemStack stack, LivingEntity caster, Level world, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         // Check if we have stored temporal context
         if (caster instanceof net.minecraft.world.entity.player.Player player) {
-            com.github.ars_noita.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+            com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
             
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
                 ArsZero.LOGGER.debug("TemporalContextForm onCast - no stored context, blocking spell");
@@ -75,7 +75,7 @@ public class TemporalContextForm extends AbstractCastMethod {
     public CastResolveType onCastOnBlock(UseOnContext context, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         // Check if we have stored temporal context
         if (context.getPlayer() instanceof net.minecraft.world.entity.player.Player player) {
-            com.github.ars_noita.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+            com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
                 return CastResolveType.FAILURE;
             }
@@ -92,7 +92,7 @@ public class TemporalContextForm extends AbstractCastMethod {
     public CastResolveType onCastOnBlock(BlockHitResult blockHitResult, LivingEntity caster, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         // Check if we have stored temporal context
         if (caster instanceof net.minecraft.world.entity.player.Player player) {
-            com.github.ars_noita.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+            com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
                 return CastResolveType.FAILURE;
             }
@@ -109,7 +109,7 @@ public class TemporalContextForm extends AbstractCastMethod {
     public CastResolveType onCastOnEntity(ItemStack stack, LivingEntity caster, Entity target, InteractionHand hand, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         // Check if we have stored temporal context
         if (caster instanceof net.minecraft.world.entity.player.Player player) {
-            com.github.ars_noita.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+            com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
                 return CastResolveType.FAILURE;
             }

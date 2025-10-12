@@ -1,6 +1,6 @@
 package com.github.ars_zero.client.registry;
 
-import com.github.ars_zero.ArsNoita;
+import com.github.ars_zero.ArsZero;
 import net.minecraft.client.KeyMapping;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;

@@ -1,7 +1,7 @@
 package com.github.ars_zero;
 
-import com.github.ars_zero.client.ArsNoitaClient;
-import com.github.ars_zero.event.ArsNoitaStaffEvents;
+import com.github.ars_zero.client.ArsZeroClient;
+import com.github.ars_zero.event.ArsZeroStaffEvents;
 import com.github.ars_zero.registry.ModCreativeTabs;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModItems;
@@ -29,8 +29,8 @@ public class ArsZero {
         }
     }
 
-    public ArsNoita(IEventBus modEventBus, ModContainer modContainer) {
-        LOGGER.info("Initializing Ars Noita mod...");
+    public ArsZero(IEventBus modEventBus, ModContainer modContainer) {
+        LOGGER.info("Initializing Ars Zero mod...");
         LOGGER.debug("Mod container: {}", modContainer.getModId());
         LOGGER.debug("Environment: {}", FMLEnvironment.dist);
 
@@ -66,7 +66,7 @@ public class ArsZero {
 
         if (FMLEnvironment.dist.isClient()) {
             LOGGER.debug("Initializing client-side components...");
-            ArsNoitaClient.init(modEventBus);
+            ArsZeroClient.init(modEventBus);
             LOGGER.info("Client initialization completed");
         } else {
             LOGGER.debug("Skipping client initialization (server-side)");
@@ -74,7 +74,7 @@ public class ArsZero {
 
         // Register event handlers
         LOGGER.debug("Registering event handlers...");
-        NeoForge.EVENT_BUS.register(ArsNoitaStaffEvents.class);
+        NeoForge.EVENT_BUS.register(ArsZeroStaffEvents.class);
         LOGGER.info("Event handlers registered");
 
         LOGGER.info("Ars Noita mod initialization completed successfully!");

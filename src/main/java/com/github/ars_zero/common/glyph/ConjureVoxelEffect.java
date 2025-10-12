@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.glyph;
 
-import com.github.ars_zero.ArsNoita;
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.VoxelEntity;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;

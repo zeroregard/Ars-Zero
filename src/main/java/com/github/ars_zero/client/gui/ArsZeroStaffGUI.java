@@ -72,9 +72,9 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     // Phase-specific spell storage (3 phases, each with 10 crafting cells)
     private List<List<AbstractSpellPart>> phaseSpells = new ArrayList<>();
 
-    public ArsNoitaStaffGUI() {
+    public ArsZeroStaffGUI() {
         super(InteractionHand.MAIN_HAND);
-        ArsNoita.LOGGER.debug("Creating Ars Noita Staff GUI");
+        ArsZero.LOGGER.debug("Creating Ars Zero Staff GUI");
         
         // Initialize unlocked spells - we'll do this in init() when playerCap is available
         this.unlockedSpells = new ArrayList<>();
@@ -210,7 +210,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
                 phaseSpell.set(i, recipeList.get(i));
             }
             
-            ArsNoita.LOGGER.debug("Loaded {} phase from physical slot {} with {} glyphs", 
+            ArsZero.LOGGER.debug("Loaded {} phase from physical slot {} with {} glyphs", 
                 StaffPhase.values()[phase], physicalSlot, recipeList.size());
         }
         
@@ -235,7 +235,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             
             // Set tooltip
             phaseButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
-                Component.translatable("gui.ars_noita.phase." + staffPhase.name().toLowerCase())
+                Component.translatable("gui.ars_zero.phase." + staffPhase.name().toLowerCase())
             ));
             
             addRenderableWidget(phaseButton);
@@ -278,7 +278,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
 
         // Add Clear and Create buttons
         addRenderableWidget(new CreateSpellButton(bookRight - 74, bookBottom - 13, (b) -> {
-            ArsNoita.LOGGER.debug("Save button clicked!");
+            ArsZero.LOGGER.debug("Save button clicked!");
             this.saveSpell();
         }, () -> new ArrayList<>()));
         addRenderableWidget(new ClearButton(bookRight - 129, bookBottom - 13, Component.translatable("ars_nouveau.spell_book_gui.clear"), (button) -> clear()));
@@ -310,7 +310,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     private void selectPhase(StaffPhase phase) {
-        ArsNoita.LOGGER.debug("Selecting phase: {}", phase);
+        ArsZero.LOGGER.debug("Selecting phase: {}", phase);
         currentPhase = phase;
         
         // Update button states - active means clickable, inactive means selected
@@ -442,7 +442,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
                 }
                 currentSpell.set(i, glyphButton.abstractSpellPart);
                 
-                ArsNoita.LOGGER.debug("Added glyph {} to {} phase at slot {}", 
+                ArsZero.LOGGER.debug("Added glyph {} to {} phase at slot {}", 
                     glyphButton.abstractSpellPart.getLocaleName(), currentPhase, i);
                 return;
             }
@@ -499,12 +499,12 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
                 phaseSpell.set(slot, null);
             }
             cell.setAbstractSpellPart(null);
-            ArsNoita.LOGGER.debug("Removed glyph from phase {} at slot {}", phase, slot);
+            ArsZero.LOGGER.debug("Removed glyph from phase {} at slot {}", phase, slot);
         }
     }
 
     public void saveSpell() {
-        ArsNoita.LOGGER.debug("saveSpell() called for slot {}", selectedSpellSlot);
+        ArsZero.LOGGER.debug("saveSpell() called for slot {}", selectedSpellSlot);
         
         // Save all 3 phases using extended slot system
         // Each logical slot uses 3 physical slots: slot*3 + phase (0=BEGIN, 1=TICK, 2=END)
@@ -525,14 +525,14 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             // Send update to server for this phase
             Networking.sendToServer(new PacketUpdateCaster(spell, physicalSlot, spellName, true));
             
-            ArsNoita.LOGGER.debug("Saved {} phase to physical slot {} with {} glyphs", 
+            ArsZero.LOGGER.debug("Saved {} phase to physical slot {} with {} glyphs", 
                 StaffPhase.values()[phase], physicalSlot, filteredPhase.size());
         }
         
         // Update the spell slot display
         spellSlots[selectedSpellSlot].spellName = spellName;
         
-        ArsNoita.LOGGER.debug("Saved all 3 phases for logical slot {} (physical slots: {}, {}, {})", 
+        ArsZero.LOGGER.debug("Saved all 3 phases for logical slot {} (physical slots: {}, {}, {})", 
             selectedSpellSlot, 
             selectedSpellSlot * 3 + 0, 
             selectedSpellSlot * 3 + 1, 
@@ -556,7 +556,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         }
         
         resetCraftingCells();
-        ArsNoita.LOGGER.debug("Cleared all phase spells from slot {}", selectedSpellSlot);
+        ArsZero.LOGGER.debug("Cleared all phase spells from slot {}", selectedSpellSlot);
     }
 
     public void updateNextPageButtons() {
@@ -657,12 +657,12 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     // Event handlers for left side tabs
     private void onDocumentationClick(Button button) {
         // For now, just show a message - can be implemented later
-        ArsNoita.LOGGER.info("Documentation button clicked - feature coming soon");
+        ArsZero.LOGGER.info("Documentation button clicked - feature coming soon");
     }
 
     private void onFamiliarClick(Button button) {
         // For now, just show a message - can be implemented later
-        ArsNoita.LOGGER.info("Familiar button clicked - feature coming soon");
+        ArsZero.LOGGER.info("Familiar button clicked - feature coming soon");
     }
 
     @Override
