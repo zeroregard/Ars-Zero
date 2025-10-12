@@ -1,15 +1,15 @@
 {
   "category": "ars_nouveau:glyphs_1",
-  "icon": "ars_noita:glyph_conjure_voxel_effect",
-  "name": "ars_noita.glyph_name.glyph_conjure_voxel_effect",
+  "icon": "ars_zero:glyph_conjure_voxel_effect",
+  "name": "ars_zero.glyph_name.glyph_conjure_voxel_effect",
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "ars_noita.glyph_desc.glyph_conjure_voxel_effect"
+      "text": "ars_zero.glyph_desc.glyph_conjure_voxel_effect"
     },
     {
       "type": "ars_nouveau:glyph_recipe",
-      "recipe": "ars_noita:glyph_conjure_voxel_effect"
+      "recipe": "ars_zero:glyph_conjure_voxel_effect"
     }
   ],
   "sortnum": 1

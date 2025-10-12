@@ -1,7 +1,7 @@
 {
-  "name": "ars_noita.glyph_name.glyph_translate_effect",
-  "description": "ars_noita.glyph_desc.glyph_translate_effect",
-  "icon": "ars_noita:glyph_translate_effect",
-  "category": "ars_noita:glyphs_1",
+  "name": "ars_zero.glyph_name.glyph_translate_effect",
+  "description": "ars_zero.glyph_desc.glyph_translate_effect",
+  "icon": "ars_zero:glyph_translate_effect",
+  "category": "ars_zero:glyphs_1",
   "sortnum": 2
 }
