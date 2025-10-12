@@ -76,6 +76,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     private static final Map<UUID, Integer> playerBeginCount = new HashMap<>();
     private static final Map<UUID, Integer> playerEndCount = new HashMap<>();
     private static final Map<UUID, Integer> playerReleaseCount = new HashMap<>();
+    private static final Map<UUID, Integer> playerSequenceTick = new HashMap<>(); // Tracks which tick in the sequence we're on
     
     public static class ArsZeroSpellContext extends SpellContext {
         public final StaffPhase phase;
@@ -113,9 +114,14 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
             boolean alreadyHolding = playerHoldingStaff.getOrDefault(playerId, false);
             
             if (isFirstTick && !alreadyHolding) {
+                // First tick: BEGIN phase
                 beginPhase(player, stack);
+                playerSequenceTick.put(playerId, 0); // Tick 0: BEGIN
             } else if (!isFirstTick && alreadyHolding) {
+                // Subsequent ticks: TICK phase
                 tickPhase(player, stack);
+                int sequenceTick = playerSequenceTick.getOrDefault(playerId, 0) + 1;
+                playerSequenceTick.put(playerId, sequenceTick);
             }
         }
     }
@@ -248,6 +254,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         playerHoldingStaff.remove(playerId);
         playerTickCount.remove(playerId);
         playerOutOfMana.remove(playerId);
+        playerSequenceTick.remove(playerId); // Clean up sequence tracking
         
         StaffCastContext context = playerContexts.get(playerId);
         if (context != null) {
@@ -386,6 +393,10 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         return playerReleaseCount.getOrDefault(playerId, 0);
     }
     
+    public static int getSequenceTick(UUID playerId) {
+        return playerSequenceTick.getOrDefault(playerId, 0);
+    }
+    
     
     // New temporal context management using StaffCastContext
     public static StaffCastContext getStaffContext(Player player) {
@@ -450,14 +461,22 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         
         UUID playerId = player.getUUID();
         boolean wasHolding = playerHoldingStaff.getOrDefault(playerId, false);
-        int ticksHeld = playerTickCount.getOrDefault(playerId, 0);
         
         int releaseCount = playerReleaseCount.getOrDefault(playerId, 0) + 1;
         playerReleaseCount.put(playerId, releaseCount);
         
         if (wasHolding) {
-            // Always end the phase on release (like bow always shoots on release)
-            endPhase(player, stack);
+            // Check if this was a quick click (no TICK phase happened)
+            int sequenceTick = playerSequenceTick.getOrDefault(playerId, 0);
+            
+            if (sequenceTick == 0) {
+                // Quick click: Tick 0: BEGIN → Tick 1: TICK → Tick 2: END
+                tickPhase(player, stack); // Tick 1: TICK
+                endPhase(player, stack);  // Tick 2: END
+            } else {
+                // Normal release: END spell
+                endPhase(player, stack);
+            }
         }
     }
     
@@ -514,5 +533,6 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
             }
         });
     }
+
 
 }

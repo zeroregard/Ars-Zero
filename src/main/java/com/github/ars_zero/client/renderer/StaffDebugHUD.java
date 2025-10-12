@@ -75,6 +75,8 @@ public class StaffDebugHUD {
         debugInfo.add(String.format("  Player Holding Staff: %s", ArsZeroStaff.isPlayerHoldingStaff(player.getUUID())));
         Boolean outOfMana = ArsZeroStaff.isPlayerOutOfMana(player.getUUID());
         debugInfo.add(String.format("  Out of Mana: %s", outOfMana != null ? outOfMana : "false"));
+        int sequenceTick = ArsZeroStaff.getSequenceTick(player.getUUID());
+        debugInfo.add(String.format("  Sequence Tick: %d", sequenceTick));
         debugInfo.add("");
         
         debugInfo.add("Action Counts:");

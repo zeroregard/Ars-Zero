@@ -26,6 +26,7 @@ public class CreativeSpellStaffRenderer extends GeoItemRenderer<ArsZeroStaff> {
 
     @Override
     protected void renderInGui(ItemDisplayContext transformType, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay, float partialTick) {
+        
         if (this.useEntityGuiLighting) {
             Lighting.setupForEntityInInventory();
         } else {

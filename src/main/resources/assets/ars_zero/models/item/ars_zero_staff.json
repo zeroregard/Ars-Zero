@@ -76,5 +76,13 @@
         0.75
       ]
     }
-  }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "ars_zero:item/creative_spell_staff_icon"
+    }
+  ]
 }
