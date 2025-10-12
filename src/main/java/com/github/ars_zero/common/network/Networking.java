@@ -13,6 +13,16 @@ public class Networking {
             PacketStaffSpellFired.STREAM_CODEC,
             PacketStaffSpellFired::handle
         );
+        
+        registrar.playToServer(
+            PacketSetStaffSlot.TYPE,
+            PacketSetStaffSlot.CODEC,
+            PacketSetStaffSlot::handle
+        );
+    }
+    
+    public static void sendToServer(PacketSetStaffSlot packet) {
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
     }
 }
 

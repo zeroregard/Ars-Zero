@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
+import com.github.ars_zero.common.network.PacketSetStaffSlot;
 import com.github.ars_zero.common.spell.CastPhase;
 import com.github.ars_zero.common.spell.StaffCastContext;
 import com.github.ars_zero.common.spell.StaffContextRegistry;
@@ -155,14 +156,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
 
     public RadialMenu<AbstractSpellPart> getRadialMenuProviderForSpellpart(ItemStack itemStack) {
         return new RadialMenu<>((int logicalSlot) -> {
-            AbstractCaster<?> caster = SpellCasterRegistry.from(itemStack);
-            if (caster != null) {
-                // Set the logical slot (0-9) which represents the hotkey
-                caster.setCurrentSlot(logicalSlot);
-                caster.saveToStack(itemStack);
-            }
-            // Send the logical slot to server
-            Networking.sendToServer(new PacketSetCasterSlot(logicalSlot));
+            com.github.ars_zero.common.network.Networking.sendToServer(new PacketSetStaffSlot(logicalSlot));
         },
                 getRadialMenuSlotsForSpellpart(itemStack),
                 SecondaryIconPosition.NORTH,
@@ -313,25 +307,11 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
             return;
         }
         
-        int originalSlot = caster.getCurrentSlot();
-        caster.setCurrentSlot(physicalSlot);
-        caster.saveToStack(stack);
-        
-        Spell currentSpell = caster.getSpell(physicalSlot);
-        if (currentSpell.isEmpty()) {
-            caster.setCurrentSlot(originalSlot);
-            caster.saveToStack(stack);
-            return;
-        }
-        
-        if (isTemporalContextFormSpell(currentSpell)) {
+        if (isTemporalContextFormSpell(spell)) {
             // Temporal context is now handled via events
         }
         
-        checkManaAndCast(player, stack, currentSpell, phase);
-        
-        caster.setCurrentSlot(originalSlot);
-        caster.saveToStack(stack);
+        checkManaAndCast(player, stack, spell, phase);
     }
     
     private boolean checkManaAndCast(Player player, ItemStack stack, Spell spell, StaffPhase phase) {
