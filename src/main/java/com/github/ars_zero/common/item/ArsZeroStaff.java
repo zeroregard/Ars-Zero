@@ -3,6 +3,7 @@ package com.github.ars_zero.common.item;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
+import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.spell.CastPhase;
 import com.github.ars_zero.common.spell.StaffCastContext;
 import com.github.ars_zero.common.spell.StaffContextRegistry;
@@ -29,6 +30,8 @@ import com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -64,27 +67,15 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         END
     }
     
-    private StaffPhase currentPhase = StaffPhase.BEGIN;
-    private boolean isHeld = false;
-    private int tickCount = 0;
-    
-    // Hybrid grace period system
-    private static final int GRACE_PERIOD_BEGIN = 5;  // Minimum hold time to "commit" to a spell
-    private static final int GRACE_PERIOD_END = 2;   // Grace period for ending a committed spell
-    private static final int COOLDOWN_TICKS = 10;     // Cooldown after committed spell ends
-    
-    private Map<UUID, Integer> gracePeriodTicks = new HashMap<>();
-    private Map<UUID, Boolean> committedSpells = new HashMap<>();  // Track if player has a committed spell
-    private Map<UUID, Integer> cooldownTicks = new HashMap<>();   // Track cooldown after committed spell ends
-    
-    // Track which players are currently using the staff to prevent multiple instances
+    private static final Map<UUID, StaffPhase> playerPhase = new HashMap<>();
     private static final Map<UUID, Boolean> playerHoldingStaff = new HashMap<>();
-    
-    // Track which players have run out of mana and should stop using the staff
+    private static final Map<UUID, Integer> playerTickCount = new HashMap<>();
     private static final Map<UUID, Boolean> playerOutOfMana = new HashMap<>();
-    
-    // Context storage for temporal context form - now using new system
     private static final Map<UUID, StaffCastContext> playerContexts = new HashMap<>();
+    private static final Map<UUID, Integer> playerUseCount = new HashMap<>();
+    private static final Map<UUID, Integer> playerBeginCount = new HashMap<>();
+    private static final Map<UUID, Integer> playerEndCount = new HashMap<>();
+    private static final Map<UUID, Integer> playerReleaseCount = new HashMap<>();
     
     public static class ArsZeroSpellContext extends SpellContext {
         public final StaffPhase phase;
@@ -116,16 +107,15 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     @Override
     public void onUseTick(Level level, net.minecraft.world.entity.LivingEntity livingEntity, ItemStack stack, int remainingUseDuration) {
         if (livingEntity instanceof Player player && !level.isClientSide) {
-            if (remainingUseDuration == getUseDuration(stack, livingEntity) - 1) {
+            UUID playerId = player.getUUID();
+            int totalDuration = getUseDuration(stack, livingEntity);
+            boolean isFirstTick = remainingUseDuration == totalDuration - 1; // 71999 for duration 72000
+            boolean alreadyHolding = playerHoldingStaff.getOrDefault(playerId, false);
+            
+            if (isFirstTick && !alreadyHolding) {
                 beginPhase(player, stack);
-            } else {
-                // Only call tickPhase if we're actually holding the staff and it's the right item
-                boolean isHoldingStaff = playerHoldingStaff.getOrDefault(player.getUUID(), false);
-                boolean isUsingStaff = player.getUseItem() == stack;
-                
-                if (isHoldingStaff && isUsingStaff) {
-                    tickPhase(player, stack);
-                }
+            } else if (!isFirstTick && alreadyHolding) {
+                tickPhase(player, stack);
             }
         }
     }
@@ -191,119 +181,81 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
 
 
     private void beginPhase(Player player, ItemStack stack) {
-        ArsZero.LOGGER.info("BEGIN SPELL FIRED for player {}", player.getName().getString());
+        UUID playerId = player.getUUID();
         
-        currentPhase = StaffPhase.BEGIN;
-        isHeld = true;
-        tickCount = 0;
+        if (playerHoldingStaff.getOrDefault(playerId, false)) {
+            return;
+        }
         
-        playerHoldingStaff.put(player.getUUID(), true);
-        playerOutOfMana.remove(player.getUUID());
+        int beginCount = playerBeginCount.getOrDefault(playerId, 0) + 1;
+        playerBeginCount.put(playerId, beginCount);
         
-        // Create new context for this cast
+        playerPhase.put(playerId, StaffPhase.BEGIN);
+        playerHoldingStaff.put(playerId, true);
+        playerTickCount.put(playerId, 0);
+        playerOutOfMana.remove(playerId);
+        
         UUID castId = UUID.randomUUID();
-        StaffCastContext context = new StaffCastContext(castId, player.getUUID(), CastPhase.BEGIN);
+        StaffCastContext context = new StaffCastContext(castId, playerId, CastPhase.BEGIN);
         StaffContextRegistry.register(context);
-        playerContexts.put(player.getUUID(), context);
+        playerContexts.put(playerId, context);
         
         executeSpell(player, stack, StaffPhase.BEGIN);
+        
+        if (player instanceof ServerPlayer serverPlayer) {
+            sendSpellFiredPacket(serverPlayer, StaffPhase.BEGIN);
+        }
     }
 
     public void tickPhase(Player player, ItemStack stack) {
-        if (isHeld) {
-            boolean outOfMana = playerOutOfMana.getOrDefault(player.getUUID(), false);
-            
-            if (outOfMana && !player.isCreative()) {
-                return;
-            }
-            
-            currentPhase = StaffPhase.TICK;
-            tickCount++;
-            
-            // Check if we should commit to the spell (held for GRACE_PERIOD_BEGIN ticks)
-            UUID playerId = player.getUUID();
-            if (tickCount >= GRACE_PERIOD_BEGIN && !committedSpells.getOrDefault(playerId, false)) {
-                committedSpells.put(playerId, true);
-            }
-            
-            StaffCastContext context = playerContexts.get(player.getUUID());
-            
-            if (context != null && context.beginFinished) {
-                // Only execute tick if begin phase is finished
-                executeSpell(player, stack, StaffPhase.TICK);
-            }
-        }
-        
-        // Handle grace period and cooldown countdown
-        handleGracePeriod(player);
-    }
-    
-    private void handleGracePeriod(Player player) {
         UUID playerId = player.getUUID();
         
-        // Handle grace period countdown
-        Integer graceTicks = gracePeriodTicks.get(playerId);
-        if (graceTicks != null) {
-            graceTicks--;
-            
-            if (graceTicks <= 0) {
-                // Grace period expired, actually stop the staff
-                gracePeriodTicks.remove(playerId);
-                ArsZero.LOGGER.info("HOLDING DOWN: NO (grace period expired) for player {}", player.getName().getString());
-                endPhase(player, player.getItemInHand(InteractionHand.MAIN_HAND));
-            } else {
-                // Update grace period counter
-                gracePeriodTicks.put(playerId, graceTicks);
-            }
+        if (!playerHoldingStaff.getOrDefault(playerId, false)) {
+            return;
         }
         
-        // Handle cooldown countdown
-        Integer cooldownTicks = this.cooldownTicks.get(playerId);
-        if (cooldownTicks != null) {
-            cooldownTicks--;
-            
-            if (cooldownTicks <= 0) {
-                // Cooldown expired, allow new spells
-                this.cooldownTicks.remove(playerId);
-            } else {
-                // Update cooldown counter
-                this.cooldownTicks.put(playerId, cooldownTicks);
-            }
+        playerPhase.put(playerId, StaffPhase.TICK);
+        int ticks = playerTickCount.getOrDefault(playerId, 0);
+        playerTickCount.put(playerId, ticks + 1);
+        
+        executeSpell(player, stack, StaffPhase.TICK);
+        
+        if (player instanceof ServerPlayer serverPlayer) {
+            sendSpellFiredPacket(serverPlayer, StaffPhase.TICK);
         }
     }
+    
 
     public void endPhase(Player player, ItemStack stack) {
-        boolean playerIsHolding = playerHoldingStaff.getOrDefault(player.getUUID(), false);
+        UUID playerId = player.getUUID();
+        boolean playerIsHolding = playerHoldingStaff.getOrDefault(playerId, false);
         
-        if (isHeld && playerIsHolding) {
-            currentPhase = StaffPhase.END;
-            isHeld = false;
-            
-            playerHoldingStaff.remove(player.getUUID());
-            playerOutOfMana.remove(player.getUUID());
-            
-            StaffCastContext context = playerContexts.get(player.getUUID());
-                
-            if (context != null && context.beginFinished) {
-                // Only execute end if begin phase is finished
-                executeSpell(player, stack, StaffPhase.END);
-            }
-            
-            // Cleanup context
-            if (context != null) {
-                StaffContextRegistry.remove(context.castId);
-                playerContexts.remove(player.getUUID());
-            }
-            
-            // Start cooldown if this was a committed spell
-            boolean wasCommitted = committedSpells.getOrDefault(player.getUUID(), false);
-            if (wasCommitted) {
-                cooldownTicks.put(player.getUUID(), COOLDOWN_TICKS);
-            }
-            
-            // Clear committed spell state
-            committedSpells.remove(player.getUUID());
+        int endCount = playerEndCount.getOrDefault(playerId, 0) + 1;
+        playerEndCount.put(playerId, endCount);
+        
+        if (!playerIsHolding) {
+            return;
         }
+        
+        playerPhase.put(playerId, StaffPhase.END);
+        
+        executeSpell(player, stack, StaffPhase.END);
+        
+        if (player instanceof ServerPlayer serverPlayer) {
+            sendSpellFiredPacket(serverPlayer, StaffPhase.END);
+        }
+        
+        playerHoldingStaff.remove(playerId);
+        playerTickCount.remove(playerId);
+        playerOutOfMana.remove(playerId);
+        
+        StaffCastContext context = playerContexts.get(playerId);
+        if (context != null) {
+            StaffContextRegistry.remove(context.castId);
+            playerContexts.remove(playerId);
+        }
+        
+        playerPhase.remove(playerId);
     }
 
     private void executeSpell(Player player, ItemStack stack, StaffPhase phase) {
@@ -362,14 +314,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
             // Temporal context is now handled via events
         }
         
-        if (!checkManaAndCast(player, stack, currentSpell, phase)) {
-            if (!player.isCreative() && !playerOutOfMana.containsKey(player.getUUID())) {
-                playerOutOfMana.put(player.getUUID(), true);
-            }
-            caster.setCurrentSlot(originalSlot);
-            caster.saveToStack(stack);
-            return;
-        }
+        checkManaAndCast(player, stack, currentSpell, phase);
         
         caster.setCurrentSlot(originalSlot);
         caster.saveToStack(stack);
@@ -405,17 +350,42 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         return canCast;
     }
 
-    public StaffPhase getCurrentPhase() {
-        return currentPhase;
+    public StaffPhase getCurrentPhase(UUID playerId) {
+        return playerPhase.getOrDefault(playerId, StaffPhase.BEGIN);
     }
 
-    public boolean isHeld() {
-        return isHeld;
+    public boolean isHeld(UUID playerId) {
+        return playerHoldingStaff.getOrDefault(playerId, false);
     }
 
-    public int getTickCount() {
-        return tickCount;
+    public int getTickCount(UUID playerId) {
+        return playerTickCount.getOrDefault(playerId, 0);
     }
+    
+    public static boolean isPlayerHoldingStaff(UUID playerId) {
+        return playerHoldingStaff.getOrDefault(playerId, false);
+    }
+    
+    public static Boolean isPlayerOutOfMana(UUID playerId) {
+        return playerOutOfMana.get(playerId);
+    }
+    
+    public static int getUseCount(UUID playerId) {
+        return playerUseCount.getOrDefault(playerId, 0);
+    }
+    
+    public static int getBeginCount(UUID playerId) {
+        return playerBeginCount.getOrDefault(playerId, 0);
+    }
+    
+    public static int getEndCount(UUID playerId) {
+        return playerEndCount.getOrDefault(playerId, 0);
+    }
+    
+    public static int getReleaseCount(UUID playerId) {
+        return playerReleaseCount.getOrDefault(playerId, 0);
+    }
+    
     
     // New temporal context management using StaffCastContext
     public static StaffCastContext getStaffContext(Player player) {
@@ -459,35 +429,15 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         
         UUID playerId = player.getUUID();
         boolean isHolding = playerHoldingStaff.getOrDefault(playerId, false);
-        boolean inGracePeriod = gracePeriodTicks.containsKey(playerId);
-        boolean hasCommittedSpell = committedSpells.getOrDefault(playerId, false);
-        boolean inCooldown = cooldownTicks.containsKey(playerId);
         
-        // Check if player is already using the staff
         if (isHolding) {
             return InteractionResultHolder.pass(stack);
         }
         
-        // If player has a committed spell, block new spell attempts
-        if (hasCommittedSpell) {
-            return InteractionResultHolder.pass(stack);
-        }
+        // Only increment useCount AFTER confirming we can start using
+        int useCount = playerUseCount.getOrDefault(playerId, 0) + 1;
+        playerUseCount.put(playerId, useCount);
         
-        // If player is in cooldown after committed spell, block new spell attempts
-        if (inCooldown) {
-            return InteractionResultHolder.pass(stack);
-        }
-        
-        // Check if player is in grace period and wants to resume
-        if (inGracePeriod) {
-            // Cancel grace period and resume staff usage
-            gracePeriodTicks.remove(playerId);
-            // Don't start using item again, just cancel grace period
-            return InteractionResultHolder.pass(stack);
-        }
-        
-        // Start using the staff
-        ArsZero.LOGGER.info("HOLDING DOWN: YES for player {}", player.getName().getString());
         player.startUsingItem(hand);
         return InteractionResultHolder.consume(stack);
     }
@@ -499,15 +449,14 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         }
         
         UUID playerId = player.getUUID();
-        boolean hasCommittedSpell = committedSpells.getOrDefault(playerId, false);
+        boolean wasHolding = playerHoldingStaff.getOrDefault(playerId, false);
+        int ticksHeld = playerTickCount.getOrDefault(playerId, 0);
         
-        if (hasCommittedSpell) {
-            // Committed spell - start grace period for ending
-            gracePeriodTicks.put(playerId, GRACE_PERIOD_END);
-            // Keep isHeld true during grace period so we can continue ticking
-        } else {
-            // Quick tap - immediate end (fire-and-forget)
-            ArsZero.LOGGER.info("HOLDING DOWN: NO for player {}", player.getName().getString());
+        int releaseCount = playerReleaseCount.getOrDefault(playerId, 0) + 1;
+        playerReleaseCount.put(playerId, releaseCount);
+        
+        if (wasHolding) {
+            // Always end the phase on release (like bow always shoots on release)
             endPhase(player, stack);
         }
     }
@@ -530,6 +479,11 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     @Override
     public Component getDescription() {
         return Component.translatable("item.ars_zero.ars_zero_staff.desc");
+    }
+    
+    private void sendSpellFiredPacket(ServerPlayer player, StaffPhase phase) {
+        PacketStaffSpellFired packet = new PacketStaffSpellFired(phase.ordinal());
+        PacketDistributor.sendToPlayer(player, packet);
     }
 
     // GeckoLib implementation
@@ -560,4 +514,5 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
             }
         });
     }
+
 }

@@ -1,6 +1,7 @@
 package com.github.ars_zero;
 
 import com.github.ars_zero.client.ArsZeroClient;
+import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.event.ArsZeroStaffEvents;
 import com.github.ars_zero.registry.ModCreativeTabs;
 import com.github.ars_zero.registry.ModEntities;
@@ -49,6 +50,8 @@ public class ArsZero {
         LOGGER.debug("Registering glyphs using Ars Nouveau's system...");
         ModGlyphs.registerGlyphs();
         LOGGER.info("Glyph registration completed");
+        
+        modEventBus.addListener(Networking::register); 
 
         // Register spell casters after a short delay to ensure items are fully registered
         if (FMLEnvironment.dist.isClient()) {
