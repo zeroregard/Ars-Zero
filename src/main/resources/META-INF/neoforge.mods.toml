@@ -3,32 +3,32 @@ loaderVersion="[2,)"
 license="MIT"
 
 [[mods]]
-modId="ars_noita"
+modId="ars_zero"
 version="1.0.0-alpha"
-displayName="Ars Noita"
+displayName="Ars Zero"
 authors="mathi"
 description='''
 A mod focused on staff-based spellcasting with temporal context for Ars Nouveau.
 '''
 
 [[mixins]]
-config="ars_noita.mixins.json"
+config="ars_zero.mixins.json"
 
-[[dependencies.ars_noita]]
+[[dependencies.ars_zero]]
     modId="neoforge"
     mandatory=true
     versionRange="[21.1.0,)"
     ordering="NONE"
     side="BOTH"
 
-[[dependencies.ars_noita]]
+[[dependencies.ars_zero]]
     modId="minecraft"
     mandatory=true
     versionRange="[1.21.1,)"
     ordering="NONE"
     side="BOTH"
 
-[[dependencies.ars_noita]]
+[[dependencies.ars_zero]]
     modId="ars_nouveau"
     mandatory=true
     versionRange="[5.8.2,)"

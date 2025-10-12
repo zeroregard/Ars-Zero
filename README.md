@@ -1,10 +1,10 @@
-# Ars Noita
+# Ars Zero
 
 A mod focused on staff-based spellcasting with temporal context for Ars Nouveau.
 
 ## Overview
 
-Ars Noita introduces a new staff-based spellcasting system that allows spells to be executed in different temporal phases:
+Ars Zero introduces a new staff-based spellcasting system that allows spells to be executed in different temporal phases:
 
 - **Begin Phase**: Executes once when the staff is pressed
 - **Tick Phase**: Executes every tick while the staff is held
@@ -12,7 +12,7 @@ Ars Noita introduces a new staff-based spellcasting system that allows spells to
 
 ## Features
 
-### ArsNoitaStaff
+### ArsZeroStaff
 
 A staff item that provides temporal spellcasting capabilities:
 

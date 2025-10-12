@@ -8,8 +8,8 @@ plugins {
 
 base {
     version = "${minecraft_version}-${mod_version}"
-    group = 'com.github.ars_noita'
-    archivesBaseName = 'ars_noita'
+    group = 'com.github.ars_zero'
+    archivesBaseName = 'ars_zero'
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
