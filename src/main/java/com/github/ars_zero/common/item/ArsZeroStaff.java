@@ -17,7 +17,14 @@ import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
+import com.hollingsworth.arsnouveau.api.util.SpellUtil;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.client.gui.radial_menu.GuiRadialMenu;
 import com.hollingsworth.arsnouveau.client.gui.radial_menu.RadialMenu;
@@ -343,7 +350,36 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         
         if (canCast) {
             try {
-                boolean castSuccess = resolver.onCast(stack, player.level());
+                AugmentSensitive sensitiveAugment = AugmentSensitive.INSTANCE;
+                boolean isSensitive = resolver.spell.getBuffsAtIndex(0, player, sensitiveAugment) > 0;
+                
+                HitResult hitResult = SpellUtil.rayTrace(
+                    player, 
+                    0.5 + player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE).getValue(), 
+                    1, 
+                    isSensitive
+                );
+                
+                boolean castSuccess = false;
+                
+                if (hitResult instanceof EntityHitResult entityHitResult && 
+                    entityHitResult.getEntity() instanceof LivingEntity) {
+                    resolver.onCastOnEntity(stack, entityHitResult.getEntity(), InteractionHand.MAIN_HAND);
+                    castSuccess = true;
+                }
+                else if (hitResult instanceof BlockHitResult blockHitResult && 
+                         (hitResult.getType() == HitResult.Type.BLOCK || isSensitive)) {
+                    UseOnContext useContext = new UseOnContext(
+                        player, 
+                        InteractionHand.MAIN_HAND, 
+                        blockHitResult
+                    );
+                    resolver.onCastOnBlock(useContext);
+                    castSuccess = true;
+                }
+                else {
+                    castSuccess = resolver.onCast(stack, player.level());
+                }
                 
                 if (!castSuccess) {
                     return false;

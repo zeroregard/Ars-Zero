@@ -52,12 +52,16 @@ public class TemporalContextForm extends AbstractCastMethod {
 
     @Override
     public CastResolveType onCast(ItemStack stack, LivingEntity caster, Level world, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        // Check if we have stored temporal context
         if (caster instanceof net.minecraft.world.entity.player.Player player) {
             com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
             
+            ArsZero.LOGGER.info("TemporalContextForm.onCast - Player: {}, staffContext: {}", 
+                player.getName().getString(), staffContext != null ? "present" : "null");
+            
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
-                ArsZero.LOGGER.debug("TemporalContextForm onCast - no stored context, blocking spell");
+                ArsZero.LOGGER.info("TemporalContextForm.onCast - No stored context or empty results. Context: {}, Results: {}", 
+                    staffContext != null ? "exists" : "null",
+                    staffContext != null ? staffContext.beginResults.size() : 0);
                 return CastResolveType.FAILURE;
             }
             
@@ -65,6 +69,11 @@ public class TemporalContextForm extends AbstractCastMethod {
             SpellResult result = staffContext.beginResults.get(0);
             HitResult originalHit = resolver.hitResult;
             resolver.hitResult = result.hitResult;
+            
+            ArsZero.LOGGER.info("TemporalContextForm.onCast - Using stored context. Result type: {}, Location: {}", 
+                result.hitResult.getType(), 
+                result.hitResult.getLocation());
+            
             // NOW PROCESS THE EFFECTS WITH THE STORED CONTEXT!
             resolver.onResolveEffect(world, result.hitResult);
         }
@@ -73,15 +82,24 @@ public class TemporalContextForm extends AbstractCastMethod {
 
     @Override
     public CastResolveType onCastOnBlock(UseOnContext context, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        // Check if we have stored temporal context
         if (context.getPlayer() instanceof net.minecraft.world.entity.player.Player player) {
             com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+            
+            ArsZero.LOGGER.info("TemporalContextForm.onCastOnBlock - Player: {}, staffContext: {}", 
+                player.getName().getString(), staffContext != null ? "present" : "null");
+            
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
+                ArsZero.LOGGER.info("TemporalContextForm.onCastOnBlock - No stored context or empty results");
                 return CastResolveType.FAILURE;
             }
             
             SpellResult result = staffContext.beginResults.get(0);
             resolver.hitResult = result.hitResult;
+            
+            ArsZero.LOGGER.info("TemporalContextForm.onCastOnBlock - Using stored context. Result type: {}, Location: {}", 
+                result.hitResult.getType(), 
+                result.hitResult.getLocation());
+            
             // Process the effects with the stored context
             resolver.onResolveEffect(context.getLevel(), result.hitResult);
         }
