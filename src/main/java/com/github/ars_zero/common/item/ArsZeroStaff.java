@@ -7,8 +7,8 @@ import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.network.PacketSetStaffSlot;
 import com.github.ars_zero.common.spell.CastPhase;
 import com.github.ars_zero.common.spell.StaffCastContext;
-import com.github.ars_zero.common.spell.StaffContextRegistry;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
+import com.github.ars_zero.registry.ModAttachments;
 import com.hollingsworth.arsnouveau.api.item.ICasterTool;
 import com.hollingsworth.arsnouveau.api.item.IRadialProvider;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
@@ -75,16 +75,22 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         END
     }
     
-    private static final Map<UUID, StaffPhase> playerPhase = new HashMap<>();
-    private static final Map<UUID, Boolean> playerHoldingStaff = new HashMap<>();
-    private static final Map<UUID, Integer> playerTickCount = new HashMap<>();
-    private static final Map<UUID, Boolean> playerOutOfMana = new HashMap<>();
-    private static final Map<UUID, StaffCastContext> playerContexts = new HashMap<>();
-    private static final Map<UUID, Integer> playerUseCount = new HashMap<>();
-    private static final Map<UUID, Integer> playerBeginCount = new HashMap<>();
-    private static final Map<UUID, Integer> playerEndCount = new HashMap<>();
-    private static final Map<UUID, Integer> playerReleaseCount = new HashMap<>();
-    private static final Map<UUID, Integer> playerSequenceTick = new HashMap<>(); // Tracks which tick in the sequence we're on
+    private static StaffCastContext getOrCreateContext(Player player) {
+        StaffCastContext context = player.getData(ModAttachments.STAFF_CONTEXT);
+        if (context == null) {
+            context = new StaffCastContext(player.getUUID());
+            player.setData(ModAttachments.STAFF_CONTEXT, context);
+        }
+        return context;
+    }
+    
+    private static StaffCastContext getContext(Player player) {
+        return player.getData(ModAttachments.STAFF_CONTEXT);
+    }
+    
+    private static void clearContext(Player player) {
+        player.removeData(ModAttachments.STAFF_CONTEXT);
+    }
     
     public static class ArsZeroSpellContext extends SpellContext {
         public final StaffPhase phase;
@@ -116,20 +122,15 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     @Override
     public void onUseTick(Level level, net.minecraft.world.entity.LivingEntity livingEntity, ItemStack stack, int remainingUseDuration) {
         if (livingEntity instanceof Player player && !level.isClientSide) {
-            UUID playerId = player.getUUID();
             int totalDuration = getUseDuration(stack, livingEntity);
-            boolean isFirstTick = remainingUseDuration == totalDuration - 1; // 71999 for duration 72000
-            boolean alreadyHolding = playerHoldingStaff.getOrDefault(playerId, false);
+            boolean isFirstTick = remainingUseDuration == totalDuration - 1;
+            StaffCastContext context = getContext(player);
+            boolean alreadyHolding = context != null && context.isHoldingStaff;
             
             if (isFirstTick && !alreadyHolding) {
-                // First tick: BEGIN phase
                 beginPhase(player, stack);
-                playerSequenceTick.put(playerId, 0); // Tick 0: BEGIN
             } else if (!isFirstTick && alreadyHolding) {
-                // Subsequent ticks: TICK phase
                 tickPhase(player, stack);
-                int sequenceTick = playerSequenceTick.getOrDefault(playerId, 0) + 1;
-                playerSequenceTick.put(playerId, sequenceTick);
             }
         }
     }
@@ -188,24 +189,21 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
 
 
     private void beginPhase(Player player, ItemStack stack) {
-        UUID playerId = player.getUUID();
+        StaffCastContext context = getOrCreateContext(player);
         
-        if (playerHoldingStaff.getOrDefault(playerId, false)) {
+        if (context.isHoldingStaff) {
             return;
         }
         
-        int beginCount = playerBeginCount.getOrDefault(playerId, 0) + 1;
-        playerBeginCount.put(playerId, beginCount);
-        
-        playerPhase.put(playerId, StaffPhase.BEGIN);
-        playerHoldingStaff.put(playerId, true);
-        playerTickCount.put(playerId, 0);
-        playerOutOfMana.remove(playerId);
-        
-        UUID castId = UUID.randomUUID();
-        StaffCastContext context = new StaffCastContext(castId, playerId, CastPhase.BEGIN);
-        StaffContextRegistry.register(context);
-        playerContexts.put(playerId, context);
+        context.currentPhase = StaffPhase.BEGIN;
+        context.isHoldingStaff = true;
+        context.tickCount = 0;
+        context.sequenceTick = 0;
+        context.outOfMana = false;
+        context.createdAt = System.currentTimeMillis();
+        context.beginResults.clear();
+        context.tickResults.clear();
+        context.endResults.clear();
         
         executeSpell(player, stack, StaffPhase.BEGIN);
         
@@ -215,15 +213,14 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     }
 
     public void tickPhase(Player player, ItemStack stack) {
-        UUID playerId = player.getUUID();
-        
-        if (!playerHoldingStaff.getOrDefault(playerId, false)) {
+        StaffCastContext context = getContext(player);
+        if (context == null || !context.isHoldingStaff) {
             return;
         }
         
-        playerPhase.put(playerId, StaffPhase.TICK);
-        int ticks = playerTickCount.getOrDefault(playerId, 0);
-        playerTickCount.put(playerId, ticks + 1);
+        context.currentPhase = StaffPhase.TICK;
+        context.tickCount++;
+        context.sequenceTick++;
         
         executeSpell(player, stack, StaffPhase.TICK);
         
@@ -234,17 +231,12 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     
 
     public void endPhase(Player player, ItemStack stack) {
-        UUID playerId = player.getUUID();
-        boolean playerIsHolding = playerHoldingStaff.getOrDefault(playerId, false);
-        
-        int endCount = playerEndCount.getOrDefault(playerId, 0) + 1;
-        playerEndCount.put(playerId, endCount);
-        
-        if (!playerIsHolding) {
+        StaffCastContext context = getContext(player);
+        if (context == null || !context.isHoldingStaff) {
             return;
         }
         
-        playerPhase.put(playerId, StaffPhase.END);
+        context.currentPhase = StaffPhase.END;
         
         executeSpell(player, stack, StaffPhase.END);
         
@@ -252,18 +244,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
             sendSpellFiredPacket(serverPlayer, StaffPhase.END);
         }
         
-        playerHoldingStaff.remove(playerId);
-        playerTickCount.remove(playerId);
-        playerOutOfMana.remove(playerId);
-        playerSequenceTick.remove(playerId); // Clean up sequence tracking
-        
-        StaffCastContext context = playerContexts.get(playerId);
-        if (context != null) {
-            StaffContextRegistry.remove(context.castId);
-            playerContexts.remove(playerId);
-        }
-        
-        playerPhase.remove(playerId);
+        clearContext(player);
     }
 
     private void executeSpell(Player player, ItemStack stack, StaffPhase phase) {
@@ -318,11 +299,10 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         ArsZeroSpellContext context = new ArsZeroSpellContext(player.level(), spell, player, phase);
         SpellResolver resolver = new SpellResolver(context);
         
-        // Wrap the resolver for Begin phase to capture results
         if (phase == StaffPhase.BEGIN) {
-            StaffCastContext staffContext = playerContexts.get(player.getUUID());
+            StaffCastContext staffContext = getContext(player);
             if (staffContext != null) {
-                resolver = new WrappedSpellResolver(resolver, staffContext.castId, CastPhase.BEGIN, true);
+                resolver = new WrappedSpellResolver(resolver, player.getUUID(), CastPhase.BEGIN, true);
             }
         }
         
@@ -373,58 +353,8 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         return canCast;
     }
 
-    public StaffPhase getCurrentPhase(UUID playerId) {
-        return playerPhase.getOrDefault(playerId, StaffPhase.BEGIN);
-    }
-
-    public boolean isHeld(UUID playerId) {
-        return playerHoldingStaff.getOrDefault(playerId, false);
-    }
-
-    public int getTickCount(UUID playerId) {
-        return playerTickCount.getOrDefault(playerId, 0);
-    }
-    
-    public static boolean isPlayerHoldingStaff(UUID playerId) {
-        return playerHoldingStaff.getOrDefault(playerId, false);
-    }
-    
-    public static Boolean isPlayerOutOfMana(UUID playerId) {
-        return playerOutOfMana.get(playerId);
-    }
-    
-    public static int getUseCount(UUID playerId) {
-        return playerUseCount.getOrDefault(playerId, 0);
-    }
-    
-    public static int getBeginCount(UUID playerId) {
-        return playerBeginCount.getOrDefault(playerId, 0);
-    }
-    
-    public static int getEndCount(UUID playerId) {
-        return playerEndCount.getOrDefault(playerId, 0);
-    }
-    
-    public static int getReleaseCount(UUID playerId) {
-        return playerReleaseCount.getOrDefault(playerId, 0);
-    }
-    
-    public static int getSequenceTick(UUID playerId) {
-        return playerSequenceTick.getOrDefault(playerId, 0);
-    }
-    
-    
-    // New temporal context management using StaffCastContext
     public static StaffCastContext getStaffContext(Player player) {
-        return playerContexts.get(player.getUUID());
-    }
-    
-    public static void clearStaffContext(Player player) {
-        StaffCastContext context = playerContexts.get(player.getUUID());
-        if (context != null) {
-            StaffContextRegistry.remove(context.castId);
-            playerContexts.remove(player.getUUID());
-        }
+        return player.getData(ModAttachments.STAFF_CONTEXT);
     }
     
     
@@ -454,16 +384,12 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
             return InteractionResultHolder.consume(stack);
         }
         
-        UUID playerId = player.getUUID();
-        boolean isHolding = playerHoldingStaff.getOrDefault(playerId, false);
+        StaffCastContext context = getContext(player);
+        boolean isHolding = context != null && context.isHoldingStaff;
         
         if (isHolding) {
             return InteractionResultHolder.pass(stack);
         }
-        
-        // Only increment useCount AFTER confirming we can start using
-        int useCount = playerUseCount.getOrDefault(playerId, 0) + 1;
-        playerUseCount.put(playerId, useCount);
         
         player.startUsingItem(hand);
         return InteractionResultHolder.consume(stack);
@@ -475,24 +401,16 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
             return;
         }
         
-        UUID playerId = player.getUUID();
-        boolean wasHolding = playerHoldingStaff.getOrDefault(playerId, false);
+        StaffCastContext context = getContext(player);
+        if (context == null || !context.isHoldingStaff) {
+            return;
+        }
         
-        int releaseCount = playerReleaseCount.getOrDefault(playerId, 0) + 1;
-        playerReleaseCount.put(playerId, releaseCount);
-        
-        if (wasHolding) {
-            // Check if this was a quick click (no TICK phase happened)
-            int sequenceTick = playerSequenceTick.getOrDefault(playerId, 0);
-            
-            if (sequenceTick == 0) {
-                // Quick click: Tick 0: BEGIN → Tick 1: TICK → Tick 2: END
-                tickPhase(player, stack); // Tick 1: TICK
-                endPhase(player, stack);  // Tick 2: END
-            } else {
-                // Normal release: END spell
-                endPhase(player, stack);
-            }
+        if (context.sequenceTick == 0) {
+            tickPhase(player, stack);
+            endPhase(player, stack);
+        } else {
+            endPhase(player, stack);
         }
     }
     

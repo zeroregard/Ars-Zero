@@ -1,17 +1,17 @@
 package com.github.ars_zero.event;
 
+import com.github.ars_zero.common.item.ArsZeroStaff;
 import com.github.ars_zero.common.spell.CastPhase;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.StaffCastContext;
-import com.github.ars_zero.common.spell.StaffContextRegistry;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
 import com.hollingsworth.arsnouveau.api.event.EffectResolveEvent;
 import com.hollingsworth.arsnouveau.api.event.SpellResolveEvent;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-
-import java.util.UUID;
 
 @EventBusSubscriber(modid = "ars_zero")
 public class ArsZeroResolverEvents {
@@ -22,40 +22,36 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        UUID castId = WrappedSpellResolver.getCastId(event.resolver);
-        if (castId == null) {
-            return; // Not our staff cast
+        if (!(event.resolver instanceof WrappedSpellResolver wrapped)) {
+            return;
         }
         
-        StaffCastContext context = StaffContextRegistry.get(castId);
+        if (wrapped.getPhase() != CastPhase.BEGIN) {
+            return;
+        }
+        
+        Player player = ((ServerLevel) event.world).getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
+        if (player == null) {
+            return;
+        }
+        
+        StaffCastContext context = ArsZeroStaff.getStaffContext(player);
         if (context == null) {
             return;
         }
         
-        
-        // Only capture Begin-phase results
-        if (event.resolver instanceof WrappedSpellResolver wrapped) {
-            if (wrapped.getPhase() != CastPhase.BEGIN) {
-                return;
-            }
-        }
-        
-        // Create SpellResult from the hit result
         SpellResult result = SpellResult.fromHitResult(event.rayTraceResult, SpellEffectType.RESOLVED);
         
-        // Add to appropriate results list based on phase
-        if (event.resolver instanceof WrappedSpellResolver wrapped) {
-            switch (wrapped.getPhase()) {
-                case BEGIN -> {
-                    context.beginResults.add(result);
-                    com.github.ars_zero.ArsZero.LOGGER.debug("Added Begin result: {} (total: {})", result.hitResult, context.beginResults.size());
-                }
-                case TICK -> {
-                    context.tickResults.add(result);
-                }
-                case END -> {
-                    context.endResults.add(result);
-                }
+        switch (wrapped.getPhase()) {
+            case BEGIN -> {
+                context.beginResults.add(result);
+                com.github.ars_zero.ArsZero.LOGGER.debug("Added Begin result: {} (total: {})", result.hitResult, context.beginResults.size());
+            }
+            case TICK -> {
+                context.tickResults.add(result);
+            }
+            case END -> {
+                context.endResults.add(result);
             }
         }
     }
@@ -66,21 +62,24 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        UUID castId = WrappedSpellResolver.getCastId(event.resolver);
-        if (castId == null) {
+        if (!(event.resolver instanceof WrappedSpellResolver wrapped)) {
             return;
         }
         
-        StaffCastContext context = StaffContextRegistry.get(castId);
+        if (!wrapped.isRootResolver() || wrapped.getPhase() != CastPhase.BEGIN) {
+            return;
+        }
+        
+        Player player = ((ServerLevel) event.world).getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
+        if (player == null) {
+            return;
+        }
+        
+        StaffCastContext context = ArsZeroStaff.getStaffContext(player);
         if (context == null) {
             return;
         }
         
-        // If this is a root resolver for Begin phase, mark it as finished
-        if (event.resolver instanceof WrappedSpellResolver wrapped) {
-            if (wrapped.isRootResolver() && wrapped.getPhase() == CastPhase.BEGIN) {
-                context.beginFinished = true;
-            }
-        }
+        context.beginFinished = true;
     }
 }

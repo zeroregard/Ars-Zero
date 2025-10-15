@@ -3,6 +3,7 @@ package com.github.ars_zero;
 import com.github.ars_zero.client.ArsZeroClient;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.event.ArsZeroStaffEvents;
+import com.github.ars_zero.registry.ModAttachments;
 import com.github.ars_zero.registry.ModCreativeTabs;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModItems;
@@ -51,6 +52,10 @@ public class ArsZero {
         ModGlyphs.registerGlyphs();
         LOGGER.info("Glyph registration completed");
         
+        LOGGER.debug("Registering attachment types...");
+        ModAttachments.ATTACHMENT_TYPES.register(modEventBus);
+        LOGGER.info("Registered {} attachment types", ModAttachments.ATTACHMENT_TYPES.getEntries().size());
+        
         modEventBus.addListener(Networking::register); 
 
         // Register spell casters after a short delay to ensure items are fully registered
@@ -74,11 +79,6 @@ public class ArsZero {
         } else {
             LOGGER.debug("Skipping client initialization (server-side)");
         }
-
-        // Register event handlers
-        LOGGER.debug("Registering event handlers...");
-        NeoForge.EVENT_BUS.register(ArsZeroStaffEvents.class);
-        LOGGER.info("Event handlers registered");
 
         LOGGER.info("Ars Noita mod initialization completed successfully!");
     }

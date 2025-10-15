@@ -59,22 +59,17 @@ public class TemporalContextForm extends AbstractCastMethod {
                 player.getName().getString(), staffContext != null ? "present" : "null");
             
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
-                ArsZero.LOGGER.info("TemporalContextForm.onCast - No stored context or empty results. Context: {}, Results: {}", 
-                    staffContext != null ? "exists" : "null",
-                    staffContext != null ? staffContext.beginResults.size() : 0);
+                ArsZero.LOGGER.info("TemporalContextForm.onCast - No stored context or empty results");
                 return CastResolveType.FAILURE;
             }
             
-            // Use the first result from begin phase
             SpellResult result = staffContext.beginResults.get(0);
-            HitResult originalHit = resolver.hitResult;
             resolver.hitResult = result.hitResult;
             
             ArsZero.LOGGER.info("TemporalContextForm.onCast - Using stored context. Result type: {}, Location: {}", 
                 result.hitResult.getType(), 
                 result.hitResult.getLocation());
             
-            // NOW PROCESS THE EFFECTS WITH THE STORED CONTEXT!
             resolver.onResolveEffect(world, result.hitResult);
         }
         return CastResolveType.SUCCESS;
@@ -85,22 +80,12 @@ public class TemporalContextForm extends AbstractCastMethod {
         if (context.getPlayer() instanceof net.minecraft.world.entity.player.Player player) {
             com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
             
-            ArsZero.LOGGER.info("TemporalContextForm.onCastOnBlock - Player: {}, staffContext: {}", 
-                player.getName().getString(), staffContext != null ? "present" : "null");
-            
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
-                ArsZero.LOGGER.info("TemporalContextForm.onCastOnBlock - No stored context or empty results");
                 return CastResolveType.FAILURE;
             }
             
             SpellResult result = staffContext.beginResults.get(0);
             resolver.hitResult = result.hitResult;
-            
-            ArsZero.LOGGER.info("TemporalContextForm.onCastOnBlock - Using stored context. Result type: {}, Location: {}", 
-                result.hitResult.getType(), 
-                result.hitResult.getLocation());
-            
-            // Process the effects with the stored context
             resolver.onResolveEffect(context.getLevel(), result.hitResult);
         }
         return CastResolveType.SUCCESS;
@@ -108,7 +93,6 @@ public class TemporalContextForm extends AbstractCastMethod {
 
     @Override
     public CastResolveType onCastOnBlock(BlockHitResult blockHitResult, LivingEntity caster, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        // Check if we have stored temporal context
         if (caster instanceof net.minecraft.world.entity.player.Player player) {
             com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
@@ -117,7 +101,6 @@ public class TemporalContextForm extends AbstractCastMethod {
             
             SpellResult result = staffContext.beginResults.get(0);
             resolver.hitResult = result.hitResult;
-            // Process the effects with the stored context
             resolver.onResolveEffect(caster.getCommandSenderWorld(), result.hitResult);
         }
         return CastResolveType.SUCCESS;
@@ -125,7 +108,6 @@ public class TemporalContextForm extends AbstractCastMethod {
 
     @Override
     public CastResolveType onCastOnEntity(ItemStack stack, LivingEntity caster, Entity target, InteractionHand hand, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        // Check if we have stored temporal context
         if (caster instanceof net.minecraft.world.entity.player.Player player) {
             com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
@@ -134,7 +116,6 @@ public class TemporalContextForm extends AbstractCastMethod {
             
             SpellResult result = staffContext.beginResults.get(0);
             resolver.hitResult = result.hitResult;
-            // Process the effects with the stored context
             resolver.onResolveEffect(caster.getCommandSenderWorld(), result.hitResult);
         }
         return CastResolveType.SUCCESS;

@@ -63,27 +63,29 @@ public class StaffDebugHUD {
         debugInfo.add(String.format("Session Time: %.1fs", sessionStartTime > 0 ? (currentTime - sessionStartTime) / 1000.0 : 0));
         debugInfo.add("");
         
+        com.github.ars_zero.common.spell.StaffCastContext context = ArsZeroStaff.getStaffContext(player);
+        
         debugInfo.add("Current State:");
-        debugInfo.add(String.format("  Phase: %s", staff.getCurrentPhase(player.getUUID())));
-        debugInfo.add(String.format("  Is Held (Item): %s", staff.isHeld(player.getUUID())));
-        debugInfo.add(String.format("  Tick Count: %d", staff.getTickCount(player.getUUID())));
+        debugInfo.add(String.format("  Phase: %s", context != null ? context.currentPhase : "NONE"));
+        debugInfo.add(String.format("  Is Held (Item): %s", context != null ? context.isHoldingStaff : false));
+        debugInfo.add(String.format("  Tick Count: %d", context != null ? context.tickCount : 0));
         debugInfo.add(String.format("  Using Item (MC): %s", isUsing));
         debugInfo.add(String.format("  Time Since Phase Change: %dms", lastPhaseChangeTime > 0 ? currentTime - lastPhaseChangeTime : 0));
         debugInfo.add("");
         
         debugInfo.add("Internal Flags:");
-        debugInfo.add(String.format("  Player Holding Staff: %s", ArsZeroStaff.isPlayerHoldingStaff(player.getUUID())));
-        Boolean outOfMana = ArsZeroStaff.isPlayerOutOfMana(player.getUUID());
-        debugInfo.add(String.format("  Out of Mana: %s", outOfMana != null ? outOfMana : "false"));
-        int sequenceTick = ArsZeroStaff.getSequenceTick(player.getUUID());
-        debugInfo.add(String.format("  Sequence Tick: %d", sequenceTick));
+        debugInfo.add(String.format("  Player Holding Staff: %s", context != null ? context.isHoldingStaff : false));
+        debugInfo.add(String.format("  Out of Mana: %s", context != null ? context.outOfMana : false));
+        debugInfo.add(String.format("  Sequence Tick: %d", context != null ? context.sequenceTick : 0));
         debugInfo.add("");
         
-        debugInfo.add("Action Counts:");
-        debugInfo.add(String.format("  Mouse downs (use()): %d", ArsZeroStaff.getUseCount(player.getUUID())));
-        debugInfo.add(String.format("  Mouse ups (release): %d", ArsZeroStaff.getReleaseCount(player.getUUID())));
-        debugInfo.add(String.format("  BEGIN spells fired: %d", ArsZeroStaff.getBeginCount(player.getUUID())));
-        debugInfo.add(String.format("  END spells fired: %d", ArsZeroStaff.getEndCount(player.getUUID())));
+        debugInfo.add("Context:");
+        debugInfo.add(String.format("  Has Context: %s", context != null));
+        if (context != null) {
+            debugInfo.add(String.format("  Begin Results: %d", context.beginResults.size()));
+            debugInfo.add(String.format("  Tick Results: %d", context.tickResults.size()));
+            debugInfo.add(String.format("  End Results: %d", context.endResults.size()));
+        }
         debugInfo.add("");
         
         debugInfo.add("Spell Fire Counts:");
@@ -102,16 +104,8 @@ public class StaffDebugHUD {
         debugInfo.add(String.format("Consecutive Ticks: %d", consecutiveTicks));
         debugInfo.add("");
         
-        int useCount = ArsZeroStaff.getUseCount(player.getUUID());
-        int beginCount = ArsZeroStaff.getBeginCount(player.getUUID());
-        int endCount = ArsZeroStaff.getEndCount(player.getUUID());
-        
-        if (useCount != beginCount) {
-            debugInfo.add(String.format("WARNING: Right-clicks (%d) != BEGIN spells (%d)!", useCount, beginCount));
-        }
-        
-        if (beginCount != endCount) {
-            debugInfo.add(String.format("WARNING: BEGIN spells (%d) != END spells (%d)!", beginCount, endCount));
+        if (beginFireCount != endFireCount && beginFireCount > 0) {
+            debugInfo.add(String.format("WARNING: BEGIN spells (%d) != END spells (%d)!", beginFireCount, endFireCount));
         }
         
         if (tickFireCount > 0 && beginFireCount == 0) {
