@@ -69,35 +69,10 @@ public class NearForm extends AbstractCastMethod {
         Vec3 lookVec = caster.getLookAngle();
         Vec3 targetPos = eyePos.add(lookVec.scale(distance));
         
-        BlockHitResult blockRayTrace = world.clip(new ClipContext(
-            eyePos,
-            targetPos,
-            ClipContext.Block.OUTLINE,
-            ClipContext.Fluid.NONE,
-            caster
-        ));
-        
-        AABB searchBox = new AABB(eyePos, targetPos).inflate(0.5);
-        EntityHitResult entityHitResult = ProjectileUtil.getEntityHitResult(
-            world,
-            caster,
-            eyePos,
-            targetPos,
-            searchBox,
-            (entity) -> !entity.isSpectator() && entity.isPickable() && entity != caster
-        );
-        
-        if (entityHitResult != null) {
-            resolver.onResolveEffect(world, entityHitResult);
-            ArsZero.LOGGER.debug("Near form resolved entity at {} (distance: {})", entityHitResult.getLocation(), distance);
-        } else {
-            Vec3 resolvePos = blockRayTrace.getType() == HitResult.Type.MISS ? targetPos : blockRayTrace.getLocation();
-            Direction direction = Direction.getNearest(lookVec.x, lookVec.y, lookVec.z);
-            BlockPos blockPos = BlockPos.containing(resolvePos);
-            BlockHitResult result = new BlockHitResult(resolvePos, direction, blockPos, false);
-            resolver.onResolveEffect(world, result);
-            ArsZero.LOGGER.debug("Near form resolved block at {} with direction {} (distance: {})", resolvePos, direction, distance);
-        }
+        Direction direction = Direction.getNearest(lookVec.x, lookVec.y, lookVec.z);
+        BlockPos blockPos = BlockPos.containing(targetPos);
+        BlockHitResult result = new BlockHitResult(targetPos, direction, blockPos, false);
+        resolver.onResolveEffect(world, result);
         
         return CastResolveType.SUCCESS;
     }

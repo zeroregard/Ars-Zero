@@ -50,7 +50,7 @@ public class SpellResult {
             
             if (caster != null && entity != null) {
                 Vec3 entityPos = entity.position();
-                casterPosition = caster.position();
+                casterPosition = caster.getEyePosition(1.0f);
                 casterYaw = caster.getYRot();
                 casterPitch = caster.getXRot();
                 
@@ -62,7 +62,7 @@ public class SpellResult {
             blockPos = blockHit.getBlockPos();
             
             if (caster != null) {
-                casterPosition = caster.position();
+                casterPosition = caster.getEyePosition(1.0f);
                 casterYaw = caster.getYRot();
                 casterPitch = caster.getXRot();
                 

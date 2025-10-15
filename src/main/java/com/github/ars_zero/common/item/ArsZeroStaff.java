@@ -199,10 +199,6 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     private void beginPhase(Player player, ItemStack stack) {
         StaffCastContext context = getOrCreateContext(player);
         
-        if (context.isHoldingStaff) {
-            return;
-        }
-        
         context.currentPhase = StaffPhase.BEGIN;
         context.isHoldingStaff = true;
         context.tickCount = 0;
@@ -382,13 +378,6 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        
-        if (player.isShiftKeyDown()) {
-            if (level.isClientSide) {
-                openStaffGUI(player);
-            }
-            return InteractionResultHolder.success(stack);
-        }
         
         if (level.isClientSide) {
             return InteractionResultHolder.consume(stack);

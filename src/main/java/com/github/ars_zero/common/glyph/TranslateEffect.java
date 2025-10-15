@@ -54,6 +54,7 @@ public class TranslateEffect extends AbstractEffect {
             return;
         }
         
+        
         SpellResult beginResult = staffContext.beginResults.get(0);
         Entity target = beginResult.targetEntity;
         
@@ -70,7 +71,7 @@ public class TranslateEffect extends AbstractEffect {
         Vec3 newPosition = beginResult.transformLocalToWorld(
             player.getYRot(), 
             player.getXRot(), 
-            player.position()
+            player.getEyePosition(1.0f)
         );
         
         if (newPosition != null) {

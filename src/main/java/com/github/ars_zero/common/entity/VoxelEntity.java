@@ -24,7 +24,7 @@ public class VoxelEntity extends Entity {
     
     public VoxelEntity(EntityType<? extends VoxelEntity> entityType, Level level) {
         super(entityType, level);
-        this.noPhysics = true;
+        this.noPhysics = false;
         this.noCulling = true;
         this.setSize(0.25f);
     }
@@ -107,12 +107,12 @@ public class VoxelEntity extends Entity {
     
     @Override
     public boolean isPickable() {
-        return false;
+        return true;
     }
     
     @Override
     public boolean isPushable() {
-        return false;
+        return true;
     }
     
     @Override

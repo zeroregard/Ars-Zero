@@ -36,7 +36,9 @@ public class PushEffect extends AbstractEffect {
         if (world.isClientSide) return;
         
         Entity target = rayTraceResult.getEntity();
-        if (target == null) return;
+        if (target == null) {
+            return;
+        }
         
         Vec3 lookVec = shooter.getLookAngle();
         
@@ -48,9 +50,6 @@ public class PushEffect extends AbstractEffect {
         target.setDeltaMovement(velocity);
         target.hurtMarked = true;
         target.fallDistance = 0.0f;
-        
-        ArsZero.LOGGER.debug("Pushed {} with velocity {} (strength: {})", 
-            target.getName().getString(), velocity, strength);
     }
 
     @Override

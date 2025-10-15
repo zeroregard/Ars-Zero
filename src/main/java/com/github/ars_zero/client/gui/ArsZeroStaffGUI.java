@@ -103,7 +103,6 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             if (selectedSpellSlot < 0 || selectedSpellSlot >= 10) {
                 selectedSpellSlot = 0;
             }
-            ArsZero.LOGGER.debug("Initialized GUI with slot {}", selectedSpellSlot);
         }
         
         List<AbstractSpellPart> parts = new ArrayList<>(GlyphRegistry.getSpellpartMap().values().stream().filter(AbstractSpellPart::shouldShowInSpellBook).toList());
@@ -727,7 +726,6 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         if (player != null && caster != null) {
             caster.setCurrentSlot(selectedSpellSlot);
             caster.saveToStack(player.getMainHandItem());
-            ArsZero.LOGGER.debug("Saved current slot {} to caster on GUI close", selectedSpellSlot);
         }
         super.onClose();
     }

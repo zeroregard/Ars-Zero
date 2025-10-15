@@ -39,7 +39,6 @@ public class EnlargeEffect extends AbstractEffect {
         Entity target = rayTraceResult.getEntity();
         
         if (target == null || !target.isAlive()) {
-            ArsZero.LOGGER.debug("EnlargeEffect: Target null or dead");
             return;
         }
         
@@ -55,9 +54,6 @@ public class EnlargeEffect extends AbstractEffect {
             
             voxel.setSize(newSize);
             voxel.refreshDimensions();
-            ArsZero.LOGGER.info("Enlarged voxel from {} to {} (growth rate: {})", currentSize, newSize, growthRate);
-        } else {
-            ArsZero.LOGGER.debug("EnlargeEffect: Target {} is not a VoxelEntity, generic entity scaling not yet implemented", target.getName().getString());
         }
     }
 

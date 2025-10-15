@@ -59,7 +59,6 @@ public class ConjureVoxelEffect extends AbstractEffect {
             VoxelEntity voxel = new VoxelEntity(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration);
             serverLevel.addFreshEntity(voxel);
             updateTemporalContext(shooter, voxel);
-            ArsZero.LOGGER.info("Spawned voxel at {} with size {} and duration {}", hitLocation, voxel.getSize(), duration);
         }
     }
     
@@ -73,19 +72,21 @@ public class ConjureVoxelEffect extends AbstractEffect {
             return;
         }
         
+        if (!context.beginResults.isEmpty()) {
+            SpellResult oldResult = context.beginResults.get(0);
+            if (oldResult.targetEntity instanceof VoxelEntity oldVoxel && oldVoxel.isAlive()) {
+                oldVoxel.discard();
+            }
+        }
+        
         SpellResult voxelResult = SpellResult.fromHitResultWithCaster(
             new net.minecraft.world.phys.EntityHitResult(voxel), 
             SpellEffectType.RESOLVED, 
             player
         );
         
-        if (!context.beginResults.isEmpty()) {
-            context.beginResults.set(0, voxelResult);
-            ArsZero.LOGGER.info("Updated temporal context with spawned voxel entity");
-        } else {
-            context.beginResults.add(voxelResult);
-            ArsZero.LOGGER.info("Added spawned voxel entity to temporal context");
-        }
+        context.beginResults.clear();
+        context.beginResults.add(voxelResult);
     }
     
     private int getDuration(SpellStats spellStats) {
