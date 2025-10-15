@@ -11,6 +11,7 @@ import com.github.ars_zero.common.spell.WrappedSpellResolver;
 import com.github.ars_zero.registry.ModAttachments;
 import com.hollingsworth.arsnouveau.api.item.ICasterTool;
 import com.hollingsworth.arsnouveau.api.item.IRadialProvider;
+import com.hollingsworth.arsnouveau.api.spell.AbstractCastMethod;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.api.spell.SpellCaster;
@@ -169,15 +170,22 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         AbstractCaster<?> spellCaster = SpellCasterRegistry.from(itemStack);
         List<RadialMenuSlot<AbstractSpellPart>> radialMenuSlots = new ArrayList<>();
         
-        // Show 10 logical slots, each displaying the TICK spell (middle of 3 physical slots)
         for (int logicalSlot = 0; logicalSlot < 10; logicalSlot++) {
-            // Each logical slot uses 3 physical slots: logicalSlot*3 + phase
-            // TICK phase is phase 1, so physical slot = logicalSlot*3 + 1
             int tickPhysicalSlot = logicalSlot * 3 + StaffPhase.TICK.ordinal();
             Spell spell = spellCaster.getSpell(tickPhysicalSlot);
             
             if (!spell.isEmpty()) {
-                radialMenuSlots.add(new RadialMenuSlot<AbstractSpellPart>(spellCaster.getSpellName(tickPhysicalSlot), spell.recipe().iterator().next()));
+                AbstractSpellPart iconGlyph = null;
+                for (AbstractSpellPart part : spell.recipe()) {
+                    if (!(part instanceof AbstractCastMethod)) {
+                        iconGlyph = part;
+                        break;
+                    }
+                }
+                if (iconGlyph == null && spell.recipe().iterator().hasNext()) {
+                    iconGlyph = spell.recipe().iterator().next();
+                }
+                radialMenuSlots.add(new RadialMenuSlot<AbstractSpellPart>(spellCaster.getSpellName(tickPhysicalSlot), iconGlyph));
             } else {
                 radialMenuSlots.add(new RadialMenuSlot<AbstractSpellPart>("Empty", null));
             }

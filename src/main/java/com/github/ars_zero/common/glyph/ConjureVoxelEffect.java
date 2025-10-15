@@ -2,6 +2,10 @@ package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.VoxelEntity;
+import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.spell.SpellEffectType;
+import com.github.ars_zero.common.spell.SpellResult;
+import com.github.ars_zero.common.spell.StaffCastContext;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -10,12 +14,8 @@ import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
-import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAOE;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
-import com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -26,7 +26,6 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,21 +53,47 @@ public class ConjureVoxelEffect extends AbstractEffect {
     @Override
     public void onResolveBlock(BlockHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (world instanceof ServerLevel serverLevel) {
-            double aoeBuff = spellStats.getAoeMultiplier();
-            List<BlockPos> posList = com.hollingsworth.arsnouveau.api.util.SpellUtil.calcAOEBlocks(shooter, rayTraceResult.getBlockPos(), rayTraceResult, aoeBuff, spellStats.getBuffCount(AugmentPierce.INSTANCE));
-            
+            Vec3 hitLocation = rayTraceResult.getLocation();
             int duration = getDuration(spellStats);
             
-            for (BlockPos pos : posList) {
-                Vec3 voxelPos = Vec3.atCenterOf(pos.relative(rayTraceResult.getDirection()));
-                VoxelEntity voxel = new VoxelEntity(serverLevel, voxelPos.x, voxelPos.y, voxelPos.z, duration);
-                serverLevel.addFreshEntity(voxel);
-            }
+            VoxelEntity voxel = new VoxelEntity(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration);
+            serverLevel.addFreshEntity(voxel);
+            updateTemporalContext(shooter, voxel);
+            ArsZero.LOGGER.info("Spawned voxel at {} with size {} and duration {}", hitLocation, voxel.getSize(), duration);
+        }
+    }
+    
+    private void updateTemporalContext(LivingEntity shooter, VoxelEntity voxel) {
+        if (!(shooter instanceof net.minecraft.world.entity.player.Player player)) {
+            return;
+        }
+        
+        StaffCastContext context = ArsZeroStaff.getStaffContext(player);
+        if (context == null) {
+            return;
+        }
+        
+        SpellResult voxelResult = SpellResult.fromHitResultWithCaster(
+            new net.minecraft.world.phys.EntityHitResult(voxel), 
+            SpellEffectType.RESOLVED, 
+            player
+        );
+        
+        if (!context.beginResults.isEmpty()) {
+            context.beginResults.set(0, voxelResult);
+            ArsZero.LOGGER.info("Updated temporal context with spawned voxel entity");
+        } else {
+            context.beginResults.add(voxelResult);
+            ArsZero.LOGGER.info("Added spawned voxel entity to temporal context");
         }
     }
     
     private int getDuration(SpellStats spellStats) {
-        return (int) (200 * spellStats.getDurationMultiplier());
+        double durationMultiplier = spellStats.getDurationMultiplier();
+        if (durationMultiplier <= 0) {
+            durationMultiplier = 1.0;
+        }
+        return (int) (1200 * durationMultiplier);
     }
 
     @Override
@@ -79,20 +104,19 @@ public class ConjureVoxelEffect extends AbstractEffect {
     @NotNull
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
-        return Set.of(AugmentAOE.INSTANCE, AugmentPierce.INSTANCE, AugmentExtendTime.INSTANCE, AugmentSensitive.INSTANCE);
+        return Set.of(AugmentExtendTime.INSTANCE, AugmentSensitive.INSTANCE);
     }
 
     @Override
     public void addAugmentDescriptions(Map<AbstractAugment, String> map) {
         super.addAugmentDescriptions(map);
-        addBlockAoeAugmentDescriptions(map);
         map.put(AugmentSensitive.INSTANCE, "Places a voxel at a target entity's position.");
         map.put(AugmentExtendTime.INSTANCE, "Increases the duration the voxel remains.");
     }
 
     @Override
     public String getBookDescription() {
-        return "Conjures a small voxel entity that persists for a duration. The voxel is a quarter the size of a normal block and does not collide with anything.";
+        return "Conjures a small 4x4x4 pixel (1/4 block) purple voxel entity that persists for 1 minute. The voxel does not collide with anything and can be grown using temporal effects like Enlarge.";
     }
 
     @Override

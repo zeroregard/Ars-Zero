@@ -18,15 +18,14 @@ public class VoxelEntityRenderer extends EntityRenderer<VoxelEntity> {
 
     @Override
     public void render(VoxelEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        poseStack.pushPose();
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
         
-        AABB boundingBox = entity.getBoundingBox();
         float size = entity.getSize();
         
-        // Render debug outline
-        VertexConsumer vertexConsumer = buffer.getBuffer(RenderType.lines());
+        poseStack.pushPose();
         
-        // Draw wireframe cube outline
+        VertexConsumer vertexConsumer = buffer.getBuffer(RenderType.LINES);
+        
         float halfSize = size / 2.0f;
         
         // Bottom face
@@ -52,10 +51,10 @@ public class VoxelEntityRenderer extends EntityRenderer<VoxelEntity> {
     
     private void drawLine(VertexConsumer consumer, PoseStack poseStack, float x1, float y1, float z1, float x2, float y2, float z2) {
         consumer.addVertex(poseStack.last(), x1, y1, z1)
-                .setColor(0.0f, 0.0f, 1.0f, 1.0f)
+                .setColor(0.6f, 0.0f, 1.0f, 1.0f)
                 .setNormal(poseStack.last(), 0, 1, 0);
         consumer.addVertex(poseStack.last(), x2, y2, z2)
-                .setColor(0.0f, 0.0f, 1.0f, 1.0f)
+                .setColor(0.6f, 0.0f, 1.0f, 1.0f)
                 .setNormal(poseStack.last(), 0, 1, 0);
     }
 

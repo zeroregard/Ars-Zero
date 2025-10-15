@@ -25,6 +25,7 @@ public class VoxelEntity extends Entity {
     public VoxelEntity(EntityType<? extends VoxelEntity> entityType, Level level) {
         super(entityType, level);
         this.noPhysics = true;
+        this.noCulling = true;
         this.setSize(0.25f);
     }
     
@@ -36,7 +37,7 @@ public class VoxelEntity extends Entity {
     
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder pBuilder) {
-        pBuilder.define(LIFETIME, 200);
+        pBuilder.define(LIFETIME, 1200);
         pBuilder.define(SIZE, 0.25f);
     }
     
@@ -72,7 +73,16 @@ public class VoxelEntity extends Entity {
     @Override
     public AABB getBoundingBoxForCulling() {
         float size = this.getSize();
-        return new AABB(-size/2, -size/2, -size/2, size/2, size/2, size/2).move(this.position());
+        return new AABB(-size, -size, -size, size, size, size).move(this.position());
+    }
+    
+    @Override
+    public void refreshDimensions() {
+        float size = this.getSize();
+        this.setBoundingBox(new AABB(
+            this.getX() - size/2, this.getY() - size/2, this.getZ() - size/2,
+            this.getX() + size/2, this.getY() + size/2, this.getZ() + size/2
+        ));
     }
     
     public int getLifetime() {

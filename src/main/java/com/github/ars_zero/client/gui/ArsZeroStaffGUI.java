@@ -537,6 +537,14 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         // Update the spell slot display
         spellSlots[selectedSpellSlot].spellName = spellName;
         
+        // Save the current selected slot
+        Player player = Minecraft.getInstance().player;
+        if (player != null && caster != null) {
+            caster.setCurrentSlot(selectedSpellSlot);
+            caster.saveToStack(player.getMainHandItem());
+            ArsZero.LOGGER.debug("Saved current slot {} to caster after spell save", selectedSpellSlot);
+        }
+        
         ArsZero.LOGGER.debug("Saved all 3 phases for logical slot {} (physical slots: {}, {}, {})", 
             selectedSpellSlot, 
             selectedSpellSlot * 3 + 0, 
@@ -711,5 +719,16 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
 
     public StaffPhase getCurrentPhase() {
         return currentPhase;
+    }
+
+    @Override
+    public void onClose() {
+        Player player = Minecraft.getInstance().player;
+        if (player != null && caster != null) {
+            caster.setCurrentSlot(selectedSpellSlot);
+            caster.saveToStack(player.getMainHandItem());
+            ArsZero.LOGGER.debug("Saved current slot {} to caster on GUI close", selectedSpellSlot);
+        }
+        super.onClose();
     }
 }

@@ -116,7 +116,7 @@ public class TranslateEffect extends AbstractEffect {
 
     @Override
     public int getDefaultManaCost() {
-        return 30;
+        return 0;
     }
 
     @NotNull
