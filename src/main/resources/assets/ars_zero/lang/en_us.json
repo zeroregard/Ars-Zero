@@ -19,5 +19,14 @@
   "ars_zero.glyph_desc.glyph_temporal_context_form": "A cast method that provides access to context from previous staff phases. When used in Tick or End phases, it will target the entity or block that was stored in the temporal context from previous phases.",
   
   "ars_zero.glyph_name.glyph_translate_effect": "Translate",
-  "ars_zero.glyph_desc.glyph_translate_effect": "Maintains the relative position of a target entity to the caster. The entity will follow the caster's movement and rotation, staying in the same relative position. Duration can be extended with augments."
+  "ars_zero.glyph_desc.glyph_translate_effect": "Maintains the relative position of a target entity to the caster. The entity will follow the caster's movement and rotation, staying in the same relative position. Duration can be extended with augments.",
+  
+  "ars_nouveau.glyph_name.temporal_context_form": "Temporal Context Form",
+  "ars_nouveau.glyph_desc.temporal_context_form": "A cast method that provides access to context from previous staff phases. When used in Tick or End phases, it will target the entity or block that was stored in the temporal context from previous phases.",
+  
+  "ars_nouveau.glyph_name.translate_effect": "Translate",
+  "ars_nouveau.glyph_desc.translate_effect": "When used with Temporal Context Form in TICK phase, keeps the target entity locked to the same position on your screen. The entity will follow your look direction and movement.",
+  
+  "ars_nouveau.augment_desc.translate_effect_amplify": "Increases the distance from the player",
+  "ars_nouveau.augment_desc.translate_effect_dampen": "Decreases the distance from the player"
 }

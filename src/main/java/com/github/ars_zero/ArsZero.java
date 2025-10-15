@@ -2,7 +2,6 @@ package com.github.ars_zero;
 
 import com.github.ars_zero.client.ArsZeroClient;
 import com.github.ars_zero.common.network.Networking;
-import com.github.ars_zero.event.ArsZeroStaffEvents;
 import com.github.ars_zero.registry.ModAttachments;
 import com.github.ars_zero.registry.ModCreativeTabs;
 import com.github.ars_zero.registry.ModEntities;

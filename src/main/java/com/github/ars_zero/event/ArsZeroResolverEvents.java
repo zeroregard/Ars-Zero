@@ -40,7 +40,7 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        SpellResult result = SpellResult.fromHitResult(event.rayTraceResult, SpellEffectType.RESOLVED);
+        SpellResult result = SpellResult.fromHitResultWithCaster(event.rayTraceResult, SpellEffectType.RESOLVED, player);
         
         switch (wrapped.getPhase()) {
             case BEGIN -> {

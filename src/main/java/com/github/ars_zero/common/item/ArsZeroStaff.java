@@ -238,6 +238,8 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         
         context.currentPhase = StaffPhase.END;
         
+        com.github.ars_zero.common.glyph.TranslateEffect.restoreEntityPhysics(context);
+        
         executeSpell(player, stack, StaffPhase.END);
         
         if (player instanceof ServerPlayer serverPlayer) {

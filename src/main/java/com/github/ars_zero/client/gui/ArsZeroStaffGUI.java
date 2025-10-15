@@ -20,6 +20,8 @@ import com.hollingsworth.arsnouveau.common.network.PacketUpdateCaster;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.inventory.PageButton;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -45,7 +47,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     // Spell slots for the 10 shortcuts on the right (radial menu slots)
     private GuiSpellSlot[] spellSlots = new GuiSpellSlot[10];
     private GuiSpellSlot selectedSlotButton;
-    private int selectedSpellSlot = 0;
+    private int selectedSpellSlot = -1;
     
     // Glyph selection
     private List<GlyphButton> glyphButtons = new ArrayList<>();
@@ -60,9 +62,8 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     public int augmentTextRow = 0;
     public int effectTextRow = 0;
     
-    // Pagination buttons
-    private net.minecraft.client.gui.screens.inventory.PageButton nextButton;
-    private net.minecraft.client.gui.screens.inventory.PageButton previousButton;
+    private PageButton nextButton;
+    private PageButton previousButton;
     
     // UI elements
     private SearchBar searchBar;
@@ -94,16 +95,21 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
 
     @Override
     public void init() {
-        // Override the height to make it taller by 32 pixels
         this.height = this.height + 32;
         super.init();
         
-        // Initialize unlocked spells - make all glyphs available like Creative Spell Book
+        if (selectedSpellSlot == -1) {
+            selectedSpellSlot = caster.getCurrentSlot();
+            if (selectedSpellSlot < 0 || selectedSpellSlot >= 10) {
+                selectedSpellSlot = 0;
+            }
+            ArsZero.LOGGER.debug("Initialized GUI with slot {}", selectedSpellSlot);
+        }
+        
         List<AbstractSpellPart> parts = new ArrayList<>(GlyphRegistry.getSpellpartMap().values().stream().filter(AbstractSpellPart::shouldShowInSpellBook).toList());
         this.unlockedSpells = parts;
         this.displayedGlyphs = new ArrayList<>(this.unlockedSpells);
         
-        // Initialize the 10 spell slots on the right (radial menu slots)
         initSpellSlots();
         
         // Add phase selection buttons (16x16 buttons for each row)
@@ -233,8 +239,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
                 selectPhase(staffPhase);
             }).bounds(buttonX, y, buttonSize, buttonSize).build();
             
-            // Set tooltip
-            phaseButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+            phaseButton.setTooltip(Tooltip.create(
                 Component.translatable("gui.ars_zero.phase." + staffPhase.name().toLowerCase())
             ));
             
@@ -333,8 +338,8 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     private void addPaginationButtons() {
-        this.nextButton = addRenderableWidget(new net.minecraft.client.gui.screens.inventory.PageButton(bookRight - 20, bookBottom - 6, true, this::onPageIncrease, true));
-        this.previousButton = addRenderableWidget(new net.minecraft.client.gui.screens.inventory.PageButton(bookLeft - 5, bookBottom - 6, false, this::onPageDec, true));
+        this.nextButton = addRenderableWidget(new PageButton(bookRight - 20, bookBottom - 6, true, this::onPageIncrease, true));
+        this.previousButton = addRenderableWidget(new PageButton(bookLeft - 5, bookBottom - 6, false, this::onPageDec, true));
         
         updateNextPageButtons();
         previousButton.active = false;
