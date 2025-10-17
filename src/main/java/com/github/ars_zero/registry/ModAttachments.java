@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.attachment.FrozenPhysicsAttachment;
 import com.github.ars_zero.common.spell.StaffCastContext;
 import com.mojang.serialization.Codec;
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -16,6 +17,11 @@ public class ModAttachments {
     public static final Supplier<AttachmentType<StaffCastContext>> STAFF_CONTEXT = 
         ATTACHMENT_TYPES.register("staff_context", () -> 
             AttachmentType.<StaffCastContext>builder(() -> null).build()
+        );
+    
+    public static final Supplier<AttachmentType<FrozenPhysicsAttachment>> FROZEN_PHYSICS = 
+        ATTACHMENT_TYPES.register("frozen_physics", () -> 
+            AttachmentType.builder(() -> new FrozenPhysicsAttachment()).build()
         );
 }
 

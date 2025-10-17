@@ -1,13 +1,16 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.entity.VoxelEntity;
+import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
+import com.github.ars_zero.common.entity.BaseVoxelEntity;
+import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.item.ArsZeroStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.StaffCastContext;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
+import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
@@ -16,6 +19,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
+import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -45,7 +49,13 @@ public class ConjureVoxelEffect extends AbstractEffect {
             Vec3 pos = target.position();
             
             int duration = getDuration(spellStats);
-            VoxelEntity voxel = new VoxelEntity(serverLevel, pos.x, pos.y, pos.z, duration);
+            BaseVoxelEntity voxel = createVoxel(serverLevel, pos.x, pos.y, pos.z, duration, spellContext);
+            
+            SpellContext newContext = spellContext.makeChildContext();
+            spellContext.setCanceled(true);
+            
+            voxel.setCaster(shooter);
+            voxel.setResolver(resolver.getNewResolver(newContext));
             serverLevel.addFreshEntity(voxel);
         }
     }
@@ -56,13 +66,49 @@ public class ConjureVoxelEffect extends AbstractEffect {
             Vec3 hitLocation = rayTraceResult.getLocation();
             int duration = getDuration(spellStats);
             
-            VoxelEntity voxel = new VoxelEntity(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration);
+            BaseVoxelEntity voxel = createVoxel(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration, spellContext);
+            
+            SpellContext newContext = spellContext.makeChildContext();
+            spellContext.setCanceled(true);
+            
+            voxel.setCaster(shooter);
+            voxel.setResolver(resolver.getNewResolver(newContext));
             serverLevel.addFreshEntity(voxel);
             updateTemporalContext(shooter, voxel);
         }
     }
     
-    private void updateTemporalContext(LivingEntity shooter, VoxelEntity voxel) {
+    private BaseVoxelEntity createVoxel(ServerLevel level, double x, double y, double z, int duration, SpellContext context) {
+        boolean hasWater = false;
+        
+        if (context.hasNextPart()) {
+            while (context.hasNextPart()) {
+                AbstractSpellPart next = context.nextPart();
+                ArsZero.LOGGER.info("ConjureVoxel checking next part: {}", next.getClass().getSimpleName());
+                if (next instanceof AbstractEffect) {
+                    if (next == EffectConjureWater.INSTANCE) {
+                        hasWater = true;
+                        ArsZero.LOGGER.info("ConjureVoxel detected EffectConjureWater - creating WaterVoxelEntity and removing water from chain");
+                    }
+                    break;
+                }
+            }
+        }
+        
+        BaseVoxelEntity result;
+        if (hasWater) {
+            result = new WaterVoxelEntity(level, x, y, z, duration);
+            ArsZero.LOGGER.info("Created WaterVoxelEntity at ({}, {}, {})", x, y, z);
+        } else {
+            result = new ArcaneVoxelEntity(level, x, y, z, duration);
+            ArsZero.LOGGER.info("Created ArcaneVoxelEntity at ({}, {}, {})", x, y, z);
+        }
+        
+        ArsZero.LOGGER.info("Voxel entity type: {}, isNoGravity: {}", result.getClass().getSimpleName(), result.isNoGravity());
+        return result;
+    }
+    
+    private void updateTemporalContext(LivingEntity shooter, BaseVoxelEntity voxel) {
         if (!(shooter instanceof net.minecraft.world.entity.player.Player player)) {
             return;
         }
@@ -74,7 +120,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
         
         if (!context.beginResults.isEmpty()) {
             SpellResult oldResult = context.beginResults.get(0);
-            if (oldResult.targetEntity instanceof VoxelEntity oldVoxel && oldVoxel.isAlive()) {
+            if (oldResult.targetEntity instanceof ArcaneVoxelEntity oldVoxel && oldVoxel.isAlive()) {
                 oldVoxel.discard();
             }
         }

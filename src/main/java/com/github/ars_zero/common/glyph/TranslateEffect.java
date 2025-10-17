@@ -50,7 +50,6 @@ public class TranslateEffect extends AbstractEffect {
         
         StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
         if (staffContext == null || staffContext.beginResults.isEmpty()) {
-            ArsZero.LOGGER.debug("TranslateEffect: No staff context or begin results");
             return;
         }
         
@@ -58,13 +57,16 @@ public class TranslateEffect extends AbstractEffect {
         SpellResult beginResult = staffContext.beginResults.get(0);
         Entity target = beginResult.targetEntity;
         
+        com.github.ars_zero.ArsZero.LOGGER.info("TranslateEffect targeting: {}, type: {}", 
+            target != null ? target.getName().getString() : "null", 
+            target != null ? target.getClass().getSimpleName() : "null");
+        
         if (target == null || !target.isAlive()) {
-            ArsZero.LOGGER.debug("TranslateEffect: Target null or dead");
             return;
         }
         
+        
         if (beginResult.relativeOffset == null) {
-            ArsZero.LOGGER.debug("TranslateEffect: No relative offset data in SpellResult");
             return;
         }
         
@@ -79,9 +81,10 @@ public class TranslateEffect extends AbstractEffect {
                 target.setPos(newPosition.x, newPosition.y, newPosition.z);
                 target.setDeltaMovement(Vec3.ZERO);
                 target.setNoGravity(true);
-                ArsZero.LOGGER.debug("Translated {} to {}", target.getName().getString(), newPosition);
-            } else {
-                ArsZero.LOGGER.debug("Cannot translate to {} - solid block", newPosition);
+                
+                if (target instanceof com.github.ars_zero.common.entity.BaseVoxelEntity voxel) {
+                    voxel.freezePhysics();
+                }
             }
         }
     }
@@ -89,11 +92,7 @@ public class TranslateEffect extends AbstractEffect {
     private static boolean canMoveToPosition(Vec3 targetPos, Level world) {
         BlockPos blockPos = BlockPos.containing(targetPos);
         
-        if (world.getBlockState(blockPos).blocksMotion()) {
-            return false;
-        }
-        
-        return true;
+        return !world.getBlockState(blockPos).blocksMotion();
     }
     
     public static void restoreEntityPhysics(StaffCastContext context) {

@@ -18,7 +18,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -48,7 +47,6 @@ public class TemporalContextForm extends AbstractCastMethod {
 
     public TemporalContextForm() {
         super(ID, "Temporal Context Form");
-        ArsZero.LOGGER.debug("Creating TemporalContextForm form instance");
     }
 
     @Override
@@ -56,20 +54,14 @@ public class TemporalContextForm extends AbstractCastMethod {
         if (caster instanceof Player player) {
             com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
             
-            ArsZero.LOGGER.info("TemporalContextForm.onCast - Player: {}, staffContext: {}", 
-                player.getName().getString(), staffContext != null ? "present" : "null");
             
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
-                ArsZero.LOGGER.info("TemporalContextForm.onCast - No stored context or empty results");
                 return CastResolveType.FAILURE;
             }
             
             SpellResult result = staffContext.beginResults.get(0);
             resolver.hitResult = result.hitResult;
             
-            ArsZero.LOGGER.info("TemporalContextForm.onCast - Using stored context. Result type: {}, Location: {}", 
-                result.hitResult.getType(), 
-                result.hitResult.getLocation());
             
             resolver.onResolveEffect(world, result.hitResult);
         }

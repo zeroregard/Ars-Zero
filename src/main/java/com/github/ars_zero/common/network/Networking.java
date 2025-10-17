@@ -19,9 +19,19 @@ public class Networking {
             PacketSetStaffSlot.CODEC,
             PacketSetStaffSlot::handle
         );
+        
+        registrar.playToServer(
+            PacketSetStaffSound.TYPE,
+            PacketSetStaffSound.CODEC,
+            PacketSetStaffSound::handle
+        );
     }
     
     public static void sendToServer(PacketSetStaffSlot packet) {
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
+    }
+    
+    public static void sendToServer(PacketSetStaffSound packet) {
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
     }
 }

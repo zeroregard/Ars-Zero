@@ -33,13 +33,20 @@ import com.hollingsworth.arsnouveau.client.gui.radial_menu.RadialMenu;
 import com.hollingsworth.arsnouveau.client.gui.radial_menu.RadialMenuSlot;
 import com.hollingsworth.arsnouveau.client.gui.radial_menu.SecondaryIconPosition;
 import com.hollingsworth.arsnouveau.client.gui.utils.RenderUtils;
+import com.hollingsworth.arsnouveau.api.sound.ConfiguredSpellSound;
 import com.hollingsworth.arsnouveau.common.network.Networking;
 import com.hollingsworth.arsnouveau.common.network.PacketSetCasterSlot;
 import com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -209,6 +216,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         context.tickResults.clear();
         context.endResults.clear();
         
+        playPhaseSound(player, stack, StaffPhase.BEGIN);
         executeSpell(player, stack, StaffPhase.BEGIN);
         
         if (player instanceof ServerPlayer serverPlayer) {
@@ -225,6 +233,10 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         context.currentPhase = StaffPhase.TICK;
         context.tickCount++;
         context.sequenceTick++;
+        
+        if (context.tickCount % 20 == 0) {
+            playPhaseSound(player, stack, StaffPhase.TICK);
+        }
         
         executeSpell(player, stack, StaffPhase.TICK);
         
@@ -244,6 +256,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         
         com.github.ars_zero.common.glyph.TranslateEffect.restoreEntityPhysics(context);
         
+        playPhaseSound(player, stack, StaffPhase.END);
         executeSpell(player, stack, StaffPhase.END);
         
         if (player instanceof ServerPlayer serverPlayer) {
@@ -363,6 +376,78 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         return player.getData(ModAttachments.STAFF_CONTEXT);
     }
     
+    public static void setStaffSounds(ItemStack stack, ConfiguredSpellSound beginSound, ConfiguredSpellSound tickSound, ConfiguredSpellSound endSound, ResourceLocation tickLoopingSound) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        CompoundTag tag = data != null ? data.copyTag() : new CompoundTag();
+        
+        tag.putString("beginSound", beginSound.getSound() != null ? beginSound.getSound().getId().toString() : "");
+        tag.putFloat("beginVolume", beginSound.getVolume());
+        tag.putFloat("beginPitch", beginSound.getPitch());
+        tag.putString("tickSound", tickSound.getSound() != null ? tickSound.getSound().getId().toString() : "");
+        tag.putFloat("tickVolume", tickSound.getVolume());
+        tag.putFloat("tickPitch", tickSound.getPitch());
+        tag.putString("endSound", endSound.getSound() != null ? endSound.getSound().getId().toString() : "");
+        tag.putFloat("endVolume", endSound.getVolume());
+        tag.putFloat("endPitch", endSound.getPitch());
+        if (tickLoopingSound != null) {
+            tag.putString("tickLooping", tickLoopingSound.toString());
+        }
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+    }
+    
+    public static ConfiguredSpellSound getBeginSound(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) return ConfiguredSpellSound.EMPTY;
+        CompoundTag tag = data.copyTag();
+        if (!tag.contains("beginSound")) return ConfiguredSpellSound.EMPTY;
+        
+        String soundId = tag.getString("beginSound");
+        if (soundId.isEmpty()) return ConfiguredSpellSound.EMPTY;
+        
+        var sound = com.hollingsworth.arsnouveau.api.registry.SpellSoundRegistry.get(ResourceLocation.parse(soundId));
+        if (sound == null) return ConfiguredSpellSound.EMPTY;
+        
+        return new ConfiguredSpellSound(sound, tag.getFloat("beginVolume"), tag.getFloat("beginPitch"));
+    }
+    
+    public static ConfiguredSpellSound getTickSound(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) return ConfiguredSpellSound.EMPTY;
+        CompoundTag tag = data.copyTag();
+        if (!tag.contains("tickSound")) return ConfiguredSpellSound.EMPTY;
+        
+        String soundId = tag.getString("tickSound");
+        if (soundId.isEmpty()) return ConfiguredSpellSound.EMPTY;
+        
+        var sound = com.hollingsworth.arsnouveau.api.registry.SpellSoundRegistry.get(ResourceLocation.parse(soundId));
+        if (sound == null) return ConfiguredSpellSound.EMPTY;
+        
+        return new ConfiguredSpellSound(sound, tag.getFloat("tickVolume"), tag.getFloat("tickPitch"));
+    }
+    
+    public static ConfiguredSpellSound getEndSound(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) return ConfiguredSpellSound.EMPTY;
+        CompoundTag tag = data.copyTag();
+        if (!tag.contains("endSound")) return ConfiguredSpellSound.EMPTY;
+        
+        String soundId = tag.getString("endSound");
+        if (soundId.isEmpty()) return ConfiguredSpellSound.EMPTY;
+        
+        var sound = com.hollingsworth.arsnouveau.api.registry.SpellSoundRegistry.get(ResourceLocation.parse(soundId));
+        if (sound == null) return ConfiguredSpellSound.EMPTY;
+        
+        return new ConfiguredSpellSound(sound, tag.getFloat("endVolume"), tag.getFloat("endPitch"));
+    }
+    
+    public static ResourceLocation getTickLoopingSound(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) return null;
+        CompoundTag tag = data.copyTag();
+        if (!tag.contains("tickLooping")) return null;
+        return ResourceLocation.parse(tag.getString("tickLooping"));
+    }
+    
     
     /**
      * Check if a spell starts with TemporalContextForm
@@ -436,6 +521,27 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     private void sendSpellFiredPacket(ServerPlayer player, StaffPhase phase) {
         PacketStaffSpellFired packet = new PacketStaffSpellFired(phase.ordinal());
         PacketDistributor.sendToPlayer(player, packet);
+    }
+    
+    private void playPhaseSound(Player player, ItemStack stack, StaffPhase phase) {
+        ConfiguredSpellSound sound = switch (phase) {
+            case BEGIN -> getBeginSound(stack);
+            case TICK -> getTickSound(stack);
+            case END -> getEndSound(stack);
+        };
+        
+        if (phase == StaffPhase.TICK) {
+            ResourceLocation loopingSound = getTickLoopingSound(stack);
+            if (loopingSound != null) {
+                SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(loopingSound);
+                player.level().playSound(null, player.blockPosition(), soundEvent, SoundSource.PLAYERS, sound.getVolume(), sound.getPitch());
+                return;
+            }
+        }
+        
+        if (sound != ConfiguredSpellSound.EMPTY && sound.getSound() != null) {
+            player.level().playSound(null, player.blockPosition(), sound.getSound().getSoundEvent().value(), SoundSource.PLAYERS, sound.getVolume(), sound.getPitch());
+        }
     }
 
     // GeckoLib implementation

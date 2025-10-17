@@ -1,9 +1,11 @@
 package com.github.ars_zero.client.gui;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.item.ArsZeroStaff;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
+import com.hollingsworth.arsnouveau.api.sound.ConfiguredSpellSound;
+import net.minecraft.resources.ResourceLocation;
 import com.hollingsworth.arsnouveau.api.spell.*;
-import com.hollingsworth.arsnouveau.client.gui.book.BaseBook;
 import com.hollingsworth.arsnouveau.client.gui.book.SpellSlottedScreen;
 import com.hollingsworth.arsnouveau.client.gui.buttons.ClearButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.CreateSpellButton;
@@ -14,12 +16,12 @@ import com.hollingsworth.arsnouveau.client.gui.buttons.GuiSpellSlot;
 import com.hollingsworth.arsnouveau.client.gui.SearchBar;
 import com.hollingsworth.arsnouveau.api.documentation.DocAssets;
 import com.hollingsworth.arsnouveau.client.gui.book.EnterTextField;
-import com.hollingsworth.arsnouveau.common.capability.IPlayerCap;
 import com.hollingsworth.arsnouveau.common.network.Networking;
 import com.hollingsworth.arsnouveau.common.network.PacketUpdateCaster;
-import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.PageButton;
 import net.minecraft.network.chat.Component;
@@ -29,7 +31,6 @@ import net.minecraft.world.entity.player.Player;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class ArsZeroStaffGUI extends SpellSlottedScreen {
 
@@ -100,7 +101,9 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         
         if (selectedSpellSlot == -1) {
             selectedSpellSlot = caster.getCurrentSlot();
+            ArsZero.LOGGER.info("GUI init: loaded selectedSpellSlot = {} from caster.getCurrentSlot()", selectedSpellSlot);
             if (selectedSpellSlot < 0 || selectedSpellSlot >= 10) {
+                ArsZero.LOGGER.info("GUI init: slot out of range, resetting to 0");
                 selectedSpellSlot = 0;
             }
         }
@@ -280,11 +283,10 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         spellNameBox.setValue(caster.getSpellName(beginPhysicalSlot));
         addRenderableWidget(spellNameBox);
 
-        // Add Clear and Create buttons
         addRenderableWidget(new CreateSpellButton(bookRight - 74, bookBottom - 13, (b) -> {
-            ArsZero.LOGGER.debug("Save button clicked!");
+            ArsZero.LOGGER.info("Save button clicked!");
             this.saveSpell();
-        }, () -> new ArrayList<>()));
+        }, this::getValidationErrors));
         addRenderableWidget(new ClearButton(bookRight - 129, bookBottom - 13, Component.translatable("ars_nouveau.spell_book_gui.clear"), (button) -> clear()));
     }
 
@@ -293,8 +295,8 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 22, DocAssets.DOCUMENTATION_TAB, this::onDocumentationClick)
                 .withTooltip(Component.translatable("ars_nouveau.gui.notebook")));
 
-        addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 44, DocAssets.SPELL_STYLE_TAB, (b) -> {
-            // TODO: Implement spell style screen
+addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 44, DocAssets.SPELL_STYLE_TAB, (b) -> {
+            openSoundScreen();
         }).withTooltip(Component.translatable("ars_nouveau.gui.spell_style")));
 
         addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 68, DocAssets.FAMILIAR_TAB, this::onFamiliarClick)
@@ -327,12 +329,9 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
     
     private void updateCraftingCellVisibility() {
-        // Show all crafting cells but highlight the current phase
         for (int i = 0; i < craftingCells.size(); i++) {
-            int phase = i / 10; // Each row has 10 cells
             CraftingButton cell = craftingCells.get(i);
             cell.visible = true;
-            // TODO: Add visual highlighting for current phase
         }
     }
 
@@ -456,6 +455,10 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     private List<AbstractSpellPart> getCurrentPhaseSpell() {
         return phaseSpells.get(currentPhase.ordinal());
     }
+    
+    private List<com.hollingsworth.arsnouveau.api.spell.SpellValidationError> getValidationErrors() {
+        return new ArrayList<>();
+    }
 
     public void resetCraftingCells() {
         for (CraftingButton button : craftingCells) {
@@ -508,12 +511,10 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     public void saveSpell() {
-        ArsZero.LOGGER.debug("saveSpell() called for slot {}", selectedSpellSlot);
-        
-        // Save all 3 phases using extended slot system
-        // Each logical slot uses 3 physical slots: slot*3 + phase (0=BEGIN, 1=TICK, 2=END)
+        ArsZero.LOGGER.info("saveSpell() called for slot {}", selectedSpellSlot);
         
         String spellName = spellNameBox.getValue();
+        ArsZero.LOGGER.info("Spell name: {}", spellName);
         
         for (int phase = 0; phase < 3; phase++) {
             List<AbstractSpellPart> phaseSpell = phaseSpells.get(phase);
@@ -523,26 +524,20 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             
             Spell spell = new Spell(filteredPhase);
             
-            // Calculate the physical slot: slot*3 + phase
             int physicalSlot = selectedSpellSlot * 3 + phase;
             
-            // Send update to server for this phase
+            ArsZero.LOGGER.info("Sending PacketUpdateCaster for phase {} to slot {} with {} glyphs", 
+                StaffPhase.values()[phase], physicalSlot, filteredPhase.size());
+            
             Networking.sendToServer(new PacketUpdateCaster(spell, physicalSlot, spellName, true));
             
-            ArsZero.LOGGER.debug("Saved {} phase to physical slot {} with {} glyphs", 
-                StaffPhase.values()[phase], physicalSlot, filteredPhase.size());
+            ArsZero.LOGGER.info("Sent PacketUpdateCaster for phase {}", StaffPhase.values()[phase]);
         }
         
-        // Update the spell slot display
         spellSlots[selectedSpellSlot].spellName = spellName;
         
-        // Save the current selected slot
-        Player player = Minecraft.getInstance().player;
-        if (player != null && caster != null) {
-            caster.setCurrentSlot(selectedSpellSlot);
-            caster.saveToStack(player.getMainHandItem());
-            ArsZero.LOGGER.debug("Saved current slot {} to caster after spell save", selectedSpellSlot);
-        }
+        com.github.ars_zero.common.network.Networking.sendToServer(new com.github.ars_zero.common.network.PacketSetStaffSlot(selectedSpellSlot));
+        ArsZero.LOGGER.info("Sent PacketSetStaffSlot with slot {}", selectedSpellSlot);
         
         ArsZero.LOGGER.debug("Saved all 3 phases for logical slot {} (physical slots: {}, {}, {})", 
             selectedSpellSlot, 
@@ -552,19 +547,16 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     public void clear() {
-        // Clear all phases from both memory and storage
         for (int phase = 0; phase < 3; phase++) {
-            // Clear from memory
             List<AbstractSpellPart> phaseSpell = phaseSpells.get(phase);
             phaseSpell.clear();
             for (int i = 0; i < 10; i++) {
                 phaseSpell.add(null);
             }
             
-            // Clear from storage (send empty spell to physical slot)
             int physicalSlot = selectedSpellSlot * 3 + phase;
             Spell emptySpell = new Spell();
-            Networking.sendToServer(new PacketUpdateCaster(emptySpell, physicalSlot, "", true));
+            Networking.sendToServer(new PacketUpdateCaster(emptySpell, physicalSlot, "", false));
         }
         
         resetCraftingCells();
@@ -673,8 +665,24 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     private void onFamiliarClick(Button button) {
-        // For now, just show a message - can be implemented later
         ArsZero.LOGGER.info("Familiar button clicked - feature coming soon");
+    }
+    
+    private void openSoundScreen() {
+        Player player = Minecraft.getInstance().player;
+        if (player == null) return;
+        
+        ItemStack stack = player.getMainHandItem();
+        if (!(stack.getItem() instanceof ArsZeroStaff)) {
+            stack = player.getOffhandItem();
+        }
+        
+        ConfiguredSpellSound beginSound = ArsZeroStaff.getBeginSound(stack);
+        ConfiguredSpellSound tickSound = ArsZeroStaff.getTickSound(stack);
+        ConfiguredSpellSound endSound = ArsZeroStaff.getEndSound(stack);
+        ResourceLocation tickLooping = ArsZeroStaff.getTickLoopingSound(stack);
+        
+        Minecraft.getInstance().setScreen(new StaffSoundScreen(beginSound, tickSound, endSound, tickLooping, hand, (Screen) this));
     }
 
     @Override
@@ -687,12 +695,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
 
     @Override
     public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        // Use the parent's render method which handles the book background properly
         super.render(graphics, mouseX, mouseY, partialTicks);
-    }
-
-    private void renderPhaseLabels(net.minecraft.client.gui.GuiGraphics graphics) {
-        // Phase labels removed as requested
     }
     
     private void renderCategoryLabels(net.minecraft.client.gui.GuiGraphics graphics) {
@@ -722,11 +725,8 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
 
     @Override
     public void onClose() {
-        Player player = Minecraft.getInstance().player;
-        if (player != null && caster != null) {
-            caster.setCurrentSlot(selectedSpellSlot);
-            caster.saveToStack(player.getMainHandItem());
-        }
+        com.github.ars_zero.common.network.Networking.sendToServer(new com.github.ars_zero.common.network.PacketSetStaffSlot(selectedSpellSlot));
+        ArsZero.LOGGER.info("onClose: sent PacketSetStaffSlot with slot {}", selectedSpellSlot);
         super.onClose();
     }
 }

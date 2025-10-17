@@ -48,8 +48,5 @@
   "ars_nouveau.augment_desc.enlarge_effect_amplify": "Increases the growth rate",
   "ars_nouveau.augment_desc.enlarge_effect_dampen": "Decreases the growth rate",
   
-  "ars_nouveau.glyph_name.select_effect": "Select",
-  "ars_nouveau.glyph_desc.select_effect": "Selects a target entity or block without performing any action. Use this to choose targets for future operations. AOE and Pierce allow selecting multiple blocks. Sensitive restricts selection to entities only.",
-  
   "ars_nouveau.augment_desc.select_effect_sensitive": "Only selects entities, ignoring blocks"
 }

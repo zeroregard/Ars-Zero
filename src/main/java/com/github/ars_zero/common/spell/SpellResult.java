@@ -96,7 +96,6 @@ public class SpellResult {
         double localZ = rotatedZ * cosPitch - worldOffset.y * sinPitch;
         
         Vec3 result = new Vec3(localX, localY, localZ);
-        com.github.ars_zero.ArsZero.LOGGER.debug("Captured: world={}, yaw={}, pitch={} -> local={}", worldOffset, yaw, pitch, result);
         return result;
     }
     
@@ -119,7 +118,6 @@ public class SpellResult {
         
         Vec3 worldOffset = new Vec3(worldX, rotatedY, worldZ);
         Vec3 result = currentCasterPos.add(worldOffset);
-        com.github.ars_zero.ArsZero.LOGGER.debug("Transform: local={}, yaw={}, pitch={} -> world offset={}, final={}", relativeOffset, currentYaw, currentPitch, worldOffset, result);
         return result;
     }
 }

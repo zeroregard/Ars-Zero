@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.entity.VoxelEntity;
+import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -42,7 +42,7 @@ public class EnlargeEffect extends AbstractEffect {
             return;
         }
         
-        if (target instanceof VoxelEntity voxel) {
+        if (target instanceof BaseVoxelEntity voxel) {
             float currentSize = voxel.getSize();
             float growthRate = 0.01f + ((float)spellStats.getAmpMultiplier() * 0.005f);
             float newSize = currentSize * (1.0f + growthRate);

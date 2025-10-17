@@ -3,7 +3,8 @@ package com.github.ars_zero.client;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.GuiStaffHUD;
 import com.github.ars_zero.client.registry.ModKeyBindings;
-import com.github.ars_zero.client.renderer.entity.VoxelEntityRenderer;
+import com.github.ars_zero.client.renderer.entity.ArcaneVoxelEntityRenderer;
+import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.registry.ModEntities;
 import net.minecraft.client.renderer.entity.EntityRenderers;
@@ -30,7 +31,8 @@ public class ArsZeroClient {
     
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
-            EntityRenderers.register(ModEntities.VOXEL_ENTITY.get(), VoxelEntityRenderer::new);
+            EntityRenderers.register(ModEntities.ARCANE_VOXEL_ENTITY.get(), ArcaneVoxelEntityRenderer::new);
+            EntityRenderers.register(ModEntities.WATER_VOXEL_ENTITY.get(), WaterVoxelEntityRenderer::new);
         });
     }
     
