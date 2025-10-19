@@ -5,20 +5,28 @@
 			"animation_length": 0.375,
 			"bones": {
 				"root": {
+					"rotation": {
+						"0.0": [45, 45, 0],
+						"0.375": [0, 0, 0]
+					},
 					"scale": {
-						"0.0": {
-							"vector": [0, 0, 0]
-						},
-						"0.375": {
-							"vector": [1, 1, 1],
-							"easing": "easeInElastic"
-						}
+						"0.0": [0, 0, 0],
+						"0.375": [1, 1, 1]
 					}
 				}
 			}
 		},
 		"idle": {
-			"loop": true
+			"loop": true,
+			"animation_length": 4,
+			"bones": {
+				"root": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"4.0": [-360, -360, 0]
+					}
+				}
+			}
 		}
 	},
 	"geckolib_format_version": 2

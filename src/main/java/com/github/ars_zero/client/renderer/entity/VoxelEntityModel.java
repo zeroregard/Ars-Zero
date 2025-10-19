@@ -14,6 +14,9 @@ public class VoxelEntityModel<T extends BaseVoxelEntity> extends GeoModel<T> {
     
     @Override
     public ResourceLocation getTextureResource(T animatable) {
+        if (animatable instanceof com.github.ars_zero.common.entity.WaterVoxelEntity) {
+            return ArsZero.prefix("textures/entity/water_voxel.png");
+        }
         return ArsZero.prefix("textures/entity/arcane_voxel.png");
     }
     
