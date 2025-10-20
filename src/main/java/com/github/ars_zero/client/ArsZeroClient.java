@@ -24,7 +24,7 @@ public class ArsZeroClient {
         modEventBus.addListener(ArsZeroClient::onClientSetup);
         modEventBus.addListener(ArsZeroClient::registerGuiLayers);
         
-        NeoForge.EVENT_BUS.register(StaffDebugHUD.class);
+        // NeoForge.EVENT_BUS.register(StaffDebugHUD.class);
         
         ArsZero.LOGGER.debug("Ars Zero client initialization completed");
     }
@@ -38,6 +38,6 @@ public class ArsZeroClient {
     
     @SubscribeEvent
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
-        event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("staff_hud"), GuiStaffHUD.OVERLAY);
+        // event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("staff_hud"), GuiStaffHUD.OVERLAY);
     }
 }

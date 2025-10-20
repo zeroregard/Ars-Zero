@@ -9,3 +9,4 @@ public class ArcaneVoxelEntityRenderer extends VoxelAnimatedRenderer<ArcaneVoxel
         super(context);
     }
 }
+

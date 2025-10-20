@@ -9,3 +9,4 @@ public class WaterVoxelEntityRenderer extends VoxelAnimatedRenderer<WaterVoxelEn
         super(context);
     }
 }
+

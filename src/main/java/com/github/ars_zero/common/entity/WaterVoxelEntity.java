@@ -43,7 +43,8 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
     protected void onBlockCollision(BlockHitResult blockHit) {
         BlockPos pos = blockHit.getBlockPos().relative(blockHit.getDirection());
         if (this.level().getBlockState(pos).isAir()) {
-            this.level().setBlock(pos, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, 7), 3);
+            int waterLevel = calculateWaterLevel();
+            this.level().setBlock(pos, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, waterLevel), 3);
         }
     }
     
@@ -63,14 +64,46 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
                 (int) Math.round(hitLocation.z)
             );
             
+            int waterLevel = calculateWaterLevel();
             for (BlockPos pos : BlockPos.betweenClosed(centerPos.offset(-1, -1, -1), centerPos.offset(1, 1, 1))) {
                 if (this.level().getBlockState(pos).isAir()) {
-                    this.level().setBlock(pos, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, 7), 3);
+                    this.level().setBlock(pos, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, waterLevel), 3);
                     break;
                 }
             }
         }
         this.discard();
+    }
+    
+    private int calculateWaterLevel() {
+        float size = this.getSize();
+        float ratio = size / 1.0f;
+        
+        if (ratio >= 1.0f) {
+            return 0;
+        } else if (ratio >= 0.875f) {
+            return 1;
+        } else if (ratio >= 0.75f) {
+            return 2;
+        } else if (ratio >= 0.625f) {
+            return 3;
+        } else if (ratio >= 0.5f) {
+            return 4;
+        } else if (ratio >= 0.375f) {
+            return 5;
+        } else if (ratio >= 0.25f) {
+            return 6;
+        } else {
+            return 7;
+        }
+    }
+    
+    private int calculateParticleCount() {
+        float size = this.getSize();
+        float ratio = size / 1.0f;
+        
+        int baseCount = (int) (ratio * 32);
+        return Math.min(baseCount, 32);
     }
     
     @Override
@@ -81,7 +114,9 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
     @Override
     protected void spawnHitParticles(Vec3 location) {
         if (!this.level().isClientSide) {
-            for (int i = 0; i < 8; i++) {
+            int particleCount = calculateParticleCount();
+            
+            for (int i = 0; i < particleCount; i++) {
                 double offsetX = (this.random.nextDouble() - 0.5) * 0.3;
                 double offsetY = (this.random.nextDouble() - 0.5) * 0.3;
                 double offsetZ = (this.random.nextDouble() - 0.5) * 0.3;
@@ -95,7 +130,7 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
                     0.0
                 );
             }
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < particleCount / 2; i++) {
                 double offsetX = (this.random.nextDouble() - 0.5) * 0.2;
                 double offsetY = (this.random.nextDouble() - 0.5) * 0.2;
                 double offsetZ = (this.random.nextDouble() - 0.5) * 0.2;
