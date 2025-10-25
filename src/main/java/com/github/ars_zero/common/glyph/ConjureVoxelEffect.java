@@ -95,19 +95,27 @@ public class ConjureVoxelEffect extends AbstractEffect {
         boolean hasFire = false;
         
         SpellContext peekContext = context.clone();
-        if (peekContext.hasNextPart()) {
-            while (peekContext.hasNextPart()) {
-                AbstractSpellPart next = peekContext.nextPart();
-                if (next instanceof AbstractEffect) {
-                    if (next == EffectConjureWater.INSTANCE) {
-                        hasWater = true;
-                        context.nextPart();
-                    } else if (next == EffectIgnite.INSTANCE) {
-                        hasFire = true;
-                        context.nextPart();
+        while (peekContext.hasNextPart()) {
+            AbstractSpellPart next = peekContext.nextPart();
+            if (next instanceof AbstractEffect) {
+                if (next == EffectConjureWater.INSTANCE) {
+                    hasWater = true;
+                    while (context.hasNextPart()) {
+                        AbstractSpellPart consumed = context.nextPart();
+                        if (consumed == EffectConjureWater.INSTANCE) {
+                            break;
+                        }
                     }
-                    break;
+                } else if (next == EffectIgnite.INSTANCE) {
+                    hasFire = true;
+                    while (context.hasNextPart()) {
+                        AbstractSpellPart consumed = context.nextPart();
+                        if (consumed == EffectIgnite.INSTANCE) {
+                            break;
+                        }
+                    }
                 }
+                break;
             }
         }
         
