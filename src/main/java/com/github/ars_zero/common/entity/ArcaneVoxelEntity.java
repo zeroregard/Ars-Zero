@@ -2,6 +2,7 @@ package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.registry.ModEntities;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -32,11 +33,6 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity {
     }
     
     @Override
-    public boolean isNoGravity() {
-        return true;
-    }
-    
-    @Override
     protected net.minecraft.core.particles.ParticleOptions getAmbientParticle() {
         Vector3f color = new Vector3f(0.54f, 0.17f, 0.89f);
         return new DustParticleOptions(color, 0.8f);
@@ -52,7 +48,7 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity {
                 double offsetX = (this.random.nextDouble() - 0.5) * 0.4;
                 double offsetY = (this.random.nextDouble() - 0.5) * 0.4;
                 double offsetZ = (this.random.nextDouble() - 0.5) * 0.4;
-                ((net.minecraft.server.level.ServerLevel) this.level()).sendParticles(
+                ((ServerLevel) this.level()).sendParticles(
                     particleOptions,
                     location.x + offsetX,
                     location.y + offsetY,

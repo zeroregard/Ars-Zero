@@ -2,6 +2,10 @@
   "item.ars_zero.ars_zero_staff": "Creative Spell Staff",
   "item.ars_zero.ars_zero_staff.desc": "A creative magical staff that can cast spells in three phases: Begin, Tick, and End. All glyphs are available.",
   
+  "block.ars_zero.arcane_voxel_spawner": "Arcane Voxel Spawner",
+  "block.ars_zero.fire_voxel_spawner": "Fire Voxel Spawner",
+  "block.ars_zero.water_voxel_spawner": "Water Voxel Spawner",
+  
   "gui.ars_zero.staff_title": "Creative Spell Staff",
   "gui.ars_zero.phase.begin": "Begin",
   "gui.ars_zero.phase.tick": "Tick", 

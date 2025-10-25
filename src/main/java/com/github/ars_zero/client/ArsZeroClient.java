@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.GuiStaffHUD;
 import com.github.ars_zero.client.registry.ModKeyBindings;
 import com.github.ars_zero.client.renderer.entity.ArcaneVoxelEntityRenderer;
+import com.github.ars_zero.client.renderer.entity.FireVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.registry.ModEntities;
@@ -33,6 +34,7 @@ public class ArsZeroClient {
         event.enqueueWork(() -> {
             EntityRenderers.register(ModEntities.ARCANE_VOXEL_ENTITY.get(), ArcaneVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.WATER_VOXEL_ENTITY.get(), WaterVoxelEntityRenderer::new);
+            EntityRenderers.register(ModEntities.FIRE_VOXEL_ENTITY.get(), FireVoxelEntityRenderer::new);
         });
     }
     

@@ -3,6 +3,7 @@ package com.github.ars_zero.common.glyph;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
+import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.item.ArsZeroStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
@@ -20,6 +21,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
+import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -54,9 +56,17 @@ public class ConjureVoxelEffect extends AbstractEffect {
             SpellContext newContext = spellContext.makeChildContext();
             spellContext.setCanceled(true);
             
+            if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
+                voxel.setNoGravity(true);
+                ArsZero.LOGGER.info("Set noGravity on {} before adding: {}", voxel.getClass().getSimpleName(), voxel.isNoGravity());
+            }
+            
             voxel.setCaster(shooter);
             voxel.setResolver(resolver.getNewResolver(newContext));
+            
             serverLevel.addFreshEntity(voxel);
+            
+            ArsZero.LOGGER.info("After adding {} to world: noGravity={}", voxel.getClass().getSimpleName(), voxel.isNoGravity());
         }
     }
 
@@ -71,24 +81,40 @@ public class ConjureVoxelEffect extends AbstractEffect {
             SpellContext newContext = spellContext.makeChildContext();
             spellContext.setCanceled(true);
             
+            if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
+                voxel.setNoGravity(true);
+                ArsZero.LOGGER.info("Set noGravity on {} before adding: {}", voxel.getClass().getSimpleName(), voxel.isNoGravity());
+            }
+            
             voxel.setCaster(shooter);
             voxel.setResolver(resolver.getNewResolver(newContext));
+            
             serverLevel.addFreshEntity(voxel);
+            
+            ArsZero.LOGGER.info("After adding {} to world: noGravity={}", voxel.getClass().getSimpleName(), voxel.isNoGravity());
+            
             updateTemporalContext(shooter, voxel);
         }
     }
     
     private BaseVoxelEntity createVoxel(ServerLevel level, double x, double y, double z, int duration, SpellContext context) {
         boolean hasWater = false;
+        boolean hasFire = false;
         
-        if (context.hasNextPart()) {
-            while (context.hasNextPart()) {
-                AbstractSpellPart next = context.nextPart();
+        SpellContext peekContext = context.clone();
+        if (peekContext.hasNextPart()) {
+            while (peekContext.hasNextPart()) {
+                AbstractSpellPart next = peekContext.nextPart();
                 ArsZero.LOGGER.info("ConjureVoxel checking next part: {}", next.getClass().getSimpleName());
                 if (next instanceof AbstractEffect) {
                     if (next == EffectConjureWater.INSTANCE) {
                         hasWater = true;
-                        ArsZero.LOGGER.info("ConjureVoxel detected EffectConjureWater - creating WaterVoxelEntity and removing water from chain");
+                        ArsZero.LOGGER.info("ConjureVoxel detected EffectConjureWater - creating WaterVoxelEntity and consuming water from context");
+                        context.nextPart();
+                    } else if (next == EffectIgnite.INSTANCE) {
+                        hasFire = true;
+                        ArsZero.LOGGER.info("ConjureVoxel detected EffectIgnite - creating FireVoxelEntity and consuming ignite from context");
+                        context.nextPart();
                     }
                     break;
                 }
@@ -99,6 +125,9 @@ public class ConjureVoxelEffect extends AbstractEffect {
         if (hasWater) {
             result = new WaterVoxelEntity(level, x, y, z, duration);
             ArsZero.LOGGER.info("Created WaterVoxelEntity at ({}, {}, {})", x, y, z);
+        } else if (hasFire) {
+            result = new FireVoxelEntity(level, x, y, z, duration);
+            ArsZero.LOGGER.info("Created FireVoxelEntity at ({}, {}, {})", x, y, z);
         } else {
             result = new ArcaneVoxelEntity(level, x, y, z, duration);
             ArsZero.LOGGER.info("Created ArcaneVoxelEntity at ({}, {}, {})", x, y, z);

@@ -2,6 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
+import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
@@ -20,7 +21,6 @@ public class ModEntities {
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .setShouldReceiveVelocityUpdates(true)
-                    .noSave()
                     .build(ArsZero.MOD_ID + ":arcane_voxel_entity")
     );
     
@@ -31,7 +31,16 @@ public class ModEntities {
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .setShouldReceiveVelocityUpdates(true)
-                    .noSave()
                     .build(ArsZero.MOD_ID + ":water_voxel_entity")
+    );
+    
+    public static final DeferredHolder<EntityType<?>, EntityType<FireVoxelEntity>> FIRE_VOXEL_ENTITY = ENTITIES.register(
+            "fire_voxel_entity",
+            () -> EntityType.Builder.<FireVoxelEntity>of(FireVoxelEntity::new, MobCategory.MISC)
+                    .sized(0.25f, 0.25f)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(ArsZero.MOD_ID + ":fire_voxel_entity")
     );
 }

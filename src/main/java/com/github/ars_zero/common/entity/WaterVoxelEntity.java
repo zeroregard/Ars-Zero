@@ -3,6 +3,7 @@ package com.github.ars_zero.common.entity;
 import com.github.ars_zero.registry.ModEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -35,11 +36,6 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
     }
     
     @Override
-    public boolean isNoGravity() {
-        return false;
-    }
-    
-    @Override
     protected void onBlockCollision(BlockHitResult blockHit) {
         BlockPos pos = blockHit.getBlockPos().relative(blockHit.getDirection());
         if (this.level().getBlockState(pos).isAir()) {
@@ -55,6 +51,15 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
     
     @Override
     protected void onHitEntity(net.minecraft.world.phys.EntityHitResult result) {
+        com.github.ars_zero.ArsZero.LOGGER.info("WaterVoxel hit entity: {}", result.getEntity().getClass().getSimpleName());
+        
+        if (result.getEntity() instanceof BaseVoxelEntity) {
+            com.github.ars_zero.ArsZero.LOGGER.info("Hit entity is a voxel, delegating to interaction system");
+            super.onHitEntity(result);
+            return;
+        }
+        
+        com.github.ars_zero.ArsZero.LOGGER.info("Hit entity is not a voxel, placing water block");
         if (!this.level().isClientSide) {
             Vec3 hitLocation = result.getLocation();
             
@@ -120,7 +125,7 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
                 double offsetX = (this.random.nextDouble() - 0.5) * 0.3;
                 double offsetY = (this.random.nextDouble() - 0.5) * 0.3;
                 double offsetZ = (this.random.nextDouble() - 0.5) * 0.3;
-                ((net.minecraft.server.level.ServerLevel) this.level()).sendParticles(
+                ((ServerLevel) this.level()).sendParticles(
                     ParticleTypes.SPLASH,
                     location.x + offsetX,
                     location.y + offsetY,
@@ -134,7 +139,7 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
                 double offsetX = (this.random.nextDouble() - 0.5) * 0.2;
                 double offsetY = (this.random.nextDouble() - 0.5) * 0.2;
                 double offsetZ = (this.random.nextDouble() - 0.5) * 0.2;
-                ((net.minecraft.server.level.ServerLevel) this.level()).sendParticles(
+                ((ServerLevel) this.level()).sendParticles(
                     ParticleTypes.BUBBLE_POP,
                     location.x + offsetX,
                     location.y + offsetY,

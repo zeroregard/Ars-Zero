@@ -1,18 +1,19 @@
 package com.github.ars_zero.common.entity;
 
+import com.github.ars_zero.common.entity.interaction.VoxelInteraction;
+import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
+import com.github.ars_zero.common.entity.interaction.VoxelInteractionResult;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -22,6 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
@@ -29,6 +34,8 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     private static final EntityDataAccessor<Float> SIZE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> BASE_SIZE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Long> FROZEN_UNTIL_TICK = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Boolean> PICKABLE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> SPAWNER_OWNED = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.BOOLEAN);
     
     protected int age = 0;
     protected SpellResolver resolver;
@@ -47,6 +54,8 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         pBuilder.define(SIZE, 0.25f);
         pBuilder.define(BASE_SIZE, 0.25f);
         pBuilder.define(FROZEN_UNTIL_TICK, 0L);
+        pBuilder.define(PICKABLE, true);
+        pBuilder.define(SPAWNER_OWNED, false);
     }
     
     @Override
@@ -83,16 +92,13 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         }
         
         EntityHitResult entityHitResult = this.findHitEntity(thisPosition, nextPosition);
-        com.github.ars_zero.ArsZero.LOGGER.info("Tick collision check: blockHit={}, entityHit={}", blockHitResult.getType(), entityHitResult != null);
         
         HitResult hitResult = blockHitResult;
         if (entityHitResult != null) {
             hitResult = entityHitResult;
-            com.github.ars_zero.ArsZero.LOGGER.info("Using entity hit result at {}", entityHitResult.getLocation());
         }
         
         if (hitResult.getType() != HitResult.Type.MISS && !net.neoforged.neoforge.event.EventHooks.onProjectileImpact(this, hitResult)) {
-            com.github.ars_zero.ArsZero.LOGGER.info("Hit detected! Type: {}", hitResult.getType());
             this.onHit(hitResult);
             this.hasImpulse = true;
             return;
@@ -118,15 +124,53 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     }
     
     @Override
+    protected boolean canHitEntity(Entity entity) {
+        if (entity instanceof BaseVoxelEntity) {
+            return true;
+        }
+        return super.canHitEntity(entity);
+    }
+    
+    @Override
     protected void onHitEntity(EntityHitResult result) {
-        com.github.ars_zero.ArsZero.LOGGER.info("BaseVoxel onHitEntity called: {} at {}", result.getEntity().getName().getString(), result.getLocation());
+        Entity hitEntity = result.getEntity();
+        com.github.ars_zero.ArsZero.LOGGER.info("BaseVoxel onHitEntity called: {} (class: {}) at {}", 
+            hitEntity.getName().getString(), hitEntity.getClass().getSimpleName(), result.getLocation());
+        
+        if (hitEntity instanceof BaseVoxelEntity otherVoxel) {
+            com.github.ars_zero.ArsZero.LOGGER.info("Detected voxel-voxel collision: {} vs {}", 
+                this.getClass().getSimpleName(), otherVoxel.getClass().getSimpleName());
+            
+            VoxelInteraction interaction = VoxelInteractionRegistry.getInteraction(this, otherVoxel);
+            com.github.ars_zero.ArsZero.LOGGER.info("Registry lookup result: {}", interaction != null ? interaction.getClass().getSimpleName() : "null");
+            
+            if (interaction != null && interaction.shouldInteract(this, otherVoxel)) {
+                com.github.ars_zero.ArsZero.LOGGER.info("Interaction approved, executing: primary size={}, secondary size={}", 
+                    this.getSize(), otherVoxel.getSize());
+                
+                boolean wasThisOwned = this.isSpawnerOwned();
+                boolean wasOtherOwned = otherVoxel.isSpawnerOwned();
+                
+                this.setSpawnerOwned(false);
+                otherVoxel.setSpawnerOwned(false);
+                
+                com.github.ars_zero.ArsZero.LOGGER.info("Voxel interaction: removing ownership (thisWasOwned={}, otherWasOwned={})", 
+                    wasThisOwned, wasOtherOwned);
+                
+                VoxelInteractionResult interactionResult = interaction.interact(this, otherVoxel);
+                applyInteractionResult(interactionResult, otherVoxel);
+                return;
+            } else {
+                com.github.ars_zero.ArsZero.LOGGER.info("Interaction blocked or not found");
+            }
+        }
+        
         spawnHitParticles(result.getLocation());
         resolveAndDiscard(result);
     }
     
     @Override
     protected void onHitBlock(BlockHitResult result) {
-        com.github.ars_zero.ArsZero.LOGGER.info("BaseVoxel onHitBlock called at {}", result.getLocation());
         spawnHitParticles(result.getLocation());
         resolveAndDiscard(result);
     }
@@ -192,6 +236,13 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         this.setLifetime(compound.getInt("lifetime"));
         this.setSize(compound.getFloat("size"));
         this.setBaseSize(compound.getFloat("baseSize"));
+        this.setPickable(compound.getBoolean("pickable"));
+        if (compound.contains("NoGravity")) {
+            this.setNoGravity(compound.getBoolean("NoGravity"));
+        }
+        if (compound.contains("spawnerOwned")) {
+            this.setSpawnerOwned(compound.getBoolean("spawnerOwned"));
+        }
     }
     
     @Override
@@ -200,6 +251,9 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         compound.putInt("lifetime", this.getLifetime());
         compound.putFloat("size", this.getSize());
         compound.putFloat("baseSize", this.getBaseSize());
+        compound.putBoolean("pickable", this.entityData.get(PICKABLE));
+        compound.putBoolean("NoGravity", this.isNoGravity());
+        compound.putBoolean("spawnerOwned", this.entityData.get(SPAWNER_OWNED));
     }
     
     @Override
@@ -257,6 +311,95 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         this.entityData.set(BASE_SIZE, baseSize);
     }
     
+    protected void applyInteractionResult(VoxelInteractionResult result, BaseVoxelEntity other) {
+        Vec3 location = result.getInteractionLocation();
+        
+        result.getParticleType().ifPresent(particleType -> {
+            if (!this.level().isClientSide) {
+                for (int i = 0; i < result.getParticleCount(); i++) {
+                    double offsetX = (this.random.nextDouble() - 0.5) * 0.5;
+                    double offsetY = (this.random.nextDouble() - 0.5) * 0.5;
+                    double offsetZ = (this.random.nextDouble() - 0.5) * 0.5;
+                    ((ServerLevel) this.level()).sendParticles(
+                        particleType,
+                        location.x + offsetX,
+                        location.y + offsetY,
+                        location.z + offsetZ,
+                        1,
+                        0.0, 0.1, 0.0,
+                        0.02
+                    );
+                }
+            }
+        });
+        
+        result.getSoundEvent().ifPresent(sound -> {
+            if (!this.level().isClientSide) {
+                this.level().playSound(null, location.x, location.y, location.z, 
+                    sound, this.getSoundSource(), 1.0f, 1.0f);
+            }
+        });
+        
+        VoxelInteractionResult.ActionType primaryAction = result.getPrimaryAction();
+        VoxelInteractionResult.ActionType secondaryAction = result.getSecondaryAction();
+        
+        switch (primaryAction) {
+            case DISCARD:
+                this.discard();
+                break;
+            case RESOLVE:
+                EntityHitResult fakeHit = new EntityHitResult(other, location);
+                this.resolveAndDiscard(fakeHit);
+                break;
+            case RESIZE:
+                float newSize = result.getPrimaryNewSize();
+                if (newSize < 0.0625f) {
+                    com.github.ars_zero.ArsZero.LOGGER.info("Voxel size too small ({}), discarding", newSize);
+                    this.discard();
+                } else {
+                    this.setSize(newSize);
+                    this.refreshDimensions();
+                }
+                break;
+            case REPEL:
+                Vec3 repelDir = result.getPrimaryRepelDirection();
+                if (repelDir != null) {
+                    this.setDeltaMovement(repelDir.scale(result.getRepelForce()));
+                }
+                break;
+            case CONTINUE:
+                break;
+        }
+        
+        switch (secondaryAction) {
+            case DISCARD:
+                other.discard();
+                break;
+            case RESOLVE:
+                EntityHitResult fakeHit = new EntityHitResult(this, location);
+                other.resolveAndDiscard(fakeHit);
+                break;
+            case RESIZE:
+                float newSize = result.getSecondaryNewSize();
+                if (newSize < 0.0625f) {
+                    com.github.ars_zero.ArsZero.LOGGER.info("Voxel size too small ({}), discarding", newSize);
+                    other.discard();
+                } else {
+                    other.setSize(newSize);
+                    other.refreshDimensions();
+                }
+                break;
+            case REPEL:
+                Vec3 repelDir = result.getSecondaryRepelDirection();
+                if (repelDir != null) {
+                    other.setDeltaMovement(repelDir.scale(result.getRepelForce()));
+                }
+                break;
+            case CONTINUE:
+                break;
+        }
+    }
+    
     public int getAge() {
         return this.age;
     }
@@ -267,7 +410,19 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     
     @Override
     public boolean isPickable() {
-        return true;
+        return this.entityData.get(PICKABLE);
+    }
+    
+    public void setPickable(boolean pickable) {
+        this.entityData.set(PICKABLE, pickable);
+    }
+    
+    public boolean isSpawnerOwned() {
+        return this.entityData.get(SPAWNER_OWNED);
+    }
+    
+    public void setSpawnerOwned(boolean owned) {
+        this.entityData.set(SPAWNER_OWNED, owned);
     }
     
     @Override
@@ -295,14 +450,14 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new software.bernie.geckolib.animation.AnimationController<>(this, "controller", 0, this::predicate));
+        controllers.add(new AnimationController<>(this, "controller", 0, this::predicate));
     }
     
-    private software.bernie.geckolib.animation.PlayState predicate(software.bernie.geckolib.animation.AnimationState<BaseVoxelEntity> state) {
+    private PlayState predicate(AnimationState<BaseVoxelEntity> state) {
         if (this.age <= 7) {
-            return state.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("spawn"));
+            return state.setAndContinue(RawAnimation.begin().thenPlay("spawn"));
         } else {
-            return state.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("idle"));
+            return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));
         }
     }
     

@@ -1,8 +1,17 @@
 package com.github.ars_zero;
 
 import com.github.ars_zero.client.ArsZeroClient;
+import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
+import com.github.ars_zero.common.entity.FireVoxelEntity;
+import com.github.ars_zero.common.entity.WaterVoxelEntity;
+import com.github.ars_zero.common.entity.interaction.ArcaneCollisionInteraction;
+import com.github.ars_zero.common.entity.interaction.FireWaterInteraction;
+import com.github.ars_zero.common.entity.interaction.MergeInteraction;
+import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.registry.ModAttachments;
+import com.github.ars_zero.registry.ModBlockEntities;
+import com.github.ars_zero.registry.ModBlocks;
 import com.github.ars_zero.registry.ModCreativeTabs;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModItems;
@@ -12,7 +21,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.neoforge.common.NeoForge;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.Logger;
@@ -35,6 +43,14 @@ public class ArsZero {
         LOGGER.debug("Mod container: {}", modContainer.getModId());
         LOGGER.debug("Environment: {}", FMLEnvironment.dist);
 
+        LOGGER.debug("Registering blocks...");
+        ModBlocks.BLOCKS.register(modEventBus);
+        LOGGER.info("Registered {} blocks", ModBlocks.BLOCKS.getEntries().size());
+        
+        LOGGER.debug("Registering block entities...");
+        ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
+        LOGGER.info("Registered {} block entities", ModBlockEntities.BLOCK_ENTITIES.getEntries().size());
+        
         LOGGER.debug("Registering entities...");
         ModEntities.ENTITIES.register(modEventBus);
         LOGGER.info("Registered {} entities", ModEntities.ENTITIES.getEntries().size());
@@ -62,6 +78,10 @@ public class ArsZero {
                 LOGGER.info("Registering spell casters with Ars Nouveau...");
                 ModItems.registerSpellCasters();
                 LOGGER.info("Spell caster registration completed");
+                
+                LOGGER.info("Registering voxel interactions...");
+                registerVoxelInteractions();
+                LOGGER.info("Voxel interaction registration completed");
             });
         });
 
@@ -76,6 +96,47 @@ public class ArsZero {
         LOGGER.info("Ars Noita mod initialization completed successfully!");
     }
 
+    private static void registerVoxelInteractions() {
+        MergeInteraction mergeInteraction = new MergeInteraction();
+        ArcaneCollisionInteraction arcaneInteraction = new ArcaneCollisionInteraction();
+        
+        VoxelInteractionRegistry.register(
+            FireVoxelEntity.class,
+            WaterVoxelEntity.class,
+            new FireWaterInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            FireVoxelEntity.class,
+            FireVoxelEntity.class,
+            mergeInteraction
+        );
+        
+        VoxelInteractionRegistry.register(
+            WaterVoxelEntity.class,
+            WaterVoxelEntity.class,
+            mergeInteraction
+        );
+        
+        VoxelInteractionRegistry.register(
+            ArcaneVoxelEntity.class,
+            ArcaneVoxelEntity.class,
+            arcaneInteraction
+        );
+        
+        VoxelInteractionRegistry.register(
+            ArcaneVoxelEntity.class,
+            FireVoxelEntity.class,
+            arcaneInteraction
+        );
+        
+        VoxelInteractionRegistry.register(
+            ArcaneVoxelEntity.class,
+            WaterVoxelEntity.class,
+            arcaneInteraction
+        );
+    }
+    
     public static ResourceLocation prefix(String path) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }

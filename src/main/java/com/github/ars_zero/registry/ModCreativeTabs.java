@@ -21,6 +21,9 @@ public class ModCreativeTabs {
                 .displayItems((params, output) -> {
                     ArsZero.LOGGER.debug("Populating Ars Zero creative tab with items");
                     output.accept(ModItems.ARS_ZERO_STAFF.get().getDefaultInstance());
+                    output.accept(ModItems.ARCANE_VOXEL_SPAWNER.get().getDefaultInstance());
+                    output.accept(ModItems.FIRE_VOXEL_SPAWNER.get().getDefaultInstance());
+                    output.accept(ModItems.WATER_VOXEL_SPAWNER.get().getDefaultInstance());
                 })
                 .build();
     });
