@@ -40,7 +40,6 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity {
     
     @Override
     protected void spawnHitParticles(Vec3 location) {
-        com.github.ars_zero.ArsZero.LOGGER.info("ArcaneVoxel spawnHitParticles called at {}, isClientSide: {}", location, this.level().isClientSide);
         if (!this.level().isClientSide) {
             net.minecraft.core.particles.ParticleOptions particleOptions = getAmbientParticle();
             
@@ -58,7 +57,6 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity {
                     0.0
                 );
             }
-            com.github.ars_zero.ArsZero.LOGGER.info("Spawned 12 purple dust particles");
         }
     }
 }

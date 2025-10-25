@@ -36,6 +36,7 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     private static final EntityDataAccessor<Long> FROZEN_UNTIL_TICK = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Boolean> PICKABLE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SPAWNER_OWNED = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> NO_GRAVITY_CUSTOM = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.BOOLEAN);
     
     protected int age = 0;
     protected SpellResolver resolver;
@@ -56,6 +57,7 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         pBuilder.define(FROZEN_UNTIL_TICK, 0L);
         pBuilder.define(PICKABLE, true);
         pBuilder.define(SPAWNER_OWNED, false);
+        pBuilder.define(NO_GRAVITY_CUSTOM, false);
     }
     
     @Override
@@ -108,7 +110,7 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         this.setPos(this.getX() + deltaMovement.x, this.getY() + deltaMovement.y, this.getZ() + deltaMovement.z);
         
         this.setDeltaMovement(deltaMovement.scale(0.98));
-        if (!this.isNoGravity()) {
+        if (!this.entityData.get(NO_GRAVITY_CUSTOM)) {
             this.applyGravity();
         }
     }
@@ -134,34 +136,14 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     @Override
     protected void onHitEntity(EntityHitResult result) {
         Entity hitEntity = result.getEntity();
-        com.github.ars_zero.ArsZero.LOGGER.info("BaseVoxel onHitEntity called: {} (class: {}) at {}", 
-            hitEntity.getName().getString(), hitEntity.getClass().getSimpleName(), result.getLocation());
         
         if (hitEntity instanceof BaseVoxelEntity otherVoxel) {
-            com.github.ars_zero.ArsZero.LOGGER.info("Detected voxel-voxel collision: {} vs {}", 
-                this.getClass().getSimpleName(), otherVoxel.getClass().getSimpleName());
-            
             VoxelInteraction interaction = VoxelInteractionRegistry.getInteraction(this, otherVoxel);
-            com.github.ars_zero.ArsZero.LOGGER.info("Registry lookup result: {}", interaction != null ? interaction.getClass().getSimpleName() : "null");
             
             if (interaction != null && interaction.shouldInteract(this, otherVoxel)) {
-                com.github.ars_zero.ArsZero.LOGGER.info("Interaction approved, executing: primary size={}, secondary size={}", 
-                    this.getSize(), otherVoxel.getSize());
-                
-                boolean wasThisOwned = this.isSpawnerOwned();
-                boolean wasOtherOwned = otherVoxel.isSpawnerOwned();
-                
-                this.setSpawnerOwned(false);
-                otherVoxel.setSpawnerOwned(false);
-                
-                com.github.ars_zero.ArsZero.LOGGER.info("Voxel interaction: removing ownership (thisWasOwned={}, otherWasOwned={})", 
-                    wasThisOwned, wasOtherOwned);
-                
                 VoxelInteractionResult interactionResult = interaction.interact(this, otherVoxel);
                 applyInteractionResult(interactionResult, otherVoxel);
                 return;
-            } else {
-                com.github.ars_zero.ArsZero.LOGGER.info("Interaction blocked or not found");
             }
         }
         
@@ -237,8 +219,8 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         this.setSize(compound.getFloat("size"));
         this.setBaseSize(compound.getFloat("baseSize"));
         this.setPickable(compound.getBoolean("pickable"));
-        if (compound.contains("NoGravity")) {
-            this.setNoGravity(compound.getBoolean("NoGravity"));
+        if (compound.contains("NoGravityCustom")) {
+            this.setNoGravityCustom(compound.getBoolean("NoGravityCustom"));
         }
         if (compound.contains("spawnerOwned")) {
             this.setSpawnerOwned(compound.getBoolean("spawnerOwned"));
@@ -252,7 +234,7 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         compound.putFloat("size", this.getSize());
         compound.putFloat("baseSize", this.getBaseSize());
         compound.putBoolean("pickable", this.entityData.get(PICKABLE));
-        compound.putBoolean("NoGravity", this.isNoGravity());
+        compound.putBoolean("NoGravityCustom", this.getNoGravityCustom());
         compound.putBoolean("spawnerOwned", this.entityData.get(SPAWNER_OWNED));
     }
     
@@ -345,16 +327,18 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         
         switch (primaryAction) {
             case DISCARD:
+                this.setSpawnerOwned(false);
                 this.discard();
                 break;
             case RESOLVE:
+                this.setSpawnerOwned(false);
                 EntityHitResult fakeHit = new EntityHitResult(other, location);
                 this.resolveAndDiscard(fakeHit);
                 break;
             case RESIZE:
                 float newSize = result.getPrimaryNewSize();
                 if (newSize < 0.0625f) {
-                    com.github.ars_zero.ArsZero.LOGGER.info("Voxel size too small ({}), discarding", newSize);
+                    this.setSpawnerOwned(false);
                     this.discard();
                 } else {
                     this.setSize(newSize);
@@ -373,16 +357,18 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         
         switch (secondaryAction) {
             case DISCARD:
+                other.setSpawnerOwned(false);
                 other.discard();
                 break;
             case RESOLVE:
+                other.setSpawnerOwned(false);
                 EntityHitResult fakeHit = new EntityHitResult(this, location);
                 other.resolveAndDiscard(fakeHit);
                 break;
             case RESIZE:
                 float newSize = result.getSecondaryNewSize();
                 if (newSize < 0.0625f) {
-                    com.github.ars_zero.ArsZero.LOGGER.info("Voxel size too small ({}), discarding", newSize);
+                    other.setSpawnerOwned(false);
                     other.discard();
                 } else {
                     other.setSize(newSize);
@@ -423,6 +409,15 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     
     public void setSpawnerOwned(boolean owned) {
         this.entityData.set(SPAWNER_OWNED, owned);
+    }
+    
+    public void setNoGravityCustom(boolean noGravity) {
+        this.entityData.set(NO_GRAVITY_CUSTOM, noGravity);
+        super.setNoGravity(noGravity);
+    }
+    
+    public boolean getNoGravityCustom() {
+        return this.entityData.get(NO_GRAVITY_CUSTOM);
     }
     
     @Override

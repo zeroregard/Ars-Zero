@@ -43,6 +43,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -113,7 +114,10 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     public ArsZeroStaff() {
-        super(new Item.Properties().stacksTo(1).component(DataComponentRegistry.SPELL_CASTER, new SpellCaster(30)));
+        super(new Item.Properties()
+            .stacksTo(1)
+            .component(DataComponents.BASE_COLOR, DyeColor.PURPLE)
+            .component(DataComponentRegistry.SPELL_CASTER, new SpellCaster(30)));
     }
     
     @Override

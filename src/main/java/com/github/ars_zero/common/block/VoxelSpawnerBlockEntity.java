@@ -12,7 +12,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
+import java.util.List;
 import java.util.UUID;
 
 public class VoxelSpawnerBlockEntity extends BlockEntity {
@@ -26,6 +28,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
     private int waitTicks = 0;
     private boolean waiting = false;
     private boolean needsVoxelRestore = false;
+    private boolean needsVoxelSearch = false;
     
     public VoxelSpawnerBlockEntity(BlockPos pos, BlockState blockState) {
         super(ModBlockEntities.VOXEL_SPAWNER.get(), pos, blockState);
@@ -33,6 +36,11 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
     
     public void tick() {
         if (level == null || level.isClientSide) return;
+        
+        if (needsVoxelSearch) {
+            searchForExistingVoxel();
+            needsVoxelSearch = false;
+        }
         
         if (needsVoxelRestore) {
             tryRestoreVoxel();
@@ -44,7 +52,6 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
             if (waitTicks >= WAIT_AFTER_DESTROY_TICKS) {
                 waiting = false;
                 waitTicks = 0;
-                com.github.ars_zero.ArsZero.LOGGER.info("Spawner finished waiting, will spawn next tick");
             }
             return;
         }
@@ -53,20 +60,12 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
         boolean isAlive = currentVoxel != null && currentVoxel.isAlive();
         boolean isOwned = currentVoxel != null && currentVoxel.isSpawnerOwned();
         
-        if (currentVoxel != null && level.getGameTime() % 20 == 0) {
-            com.github.ars_zero.ArsZero.LOGGER.info("Spawner check: voxelNull={}, isAlive={}, isOwned={}", 
-                isNull, isAlive, isOwned);
-        }
-        
         if (isNull || !isAlive || !isOwned) {
             if (currentVoxel != null) {
-                com.github.ars_zero.ArsZero.LOGGER.info("Spawner detected voxel lost (alive={}, owned={}), clearing reference and starting wait", 
-                    isAlive, isOwned);
                 currentVoxel = null;
                 currentVoxelUUID = null;
                 startWaiting();
             } else {
-                com.github.ars_zero.ArsZero.LOGGER.info("Spawner has no voxel, spawning new one");
                 spawnVoxel();
             }
             return;
@@ -74,7 +73,6 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
         
         ticksSinceSpawn++;
         if (ticksSinceSpawn >= VOXEL_LIFETIME_TICKS) {
-            com.github.ars_zero.ArsZero.LOGGER.info("Spawner voxel lifetime expired, destroying");
             destroyVoxel();
             startWaiting();
         }
@@ -98,17 +96,11 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
         
         voxel.setSize(1.0f);
         voxel.setDeltaMovement(0, 0, 0);
-        voxel.setNoGravity(true);
         voxel.setPickable(false);
         voxel.setSpawnerOwned(true);
-        
-        com.github.ars_zero.ArsZero.LOGGER.info("About to spawn voxel with noGravity={}, pickable={}, spawnerOwned={}", 
-            voxel.isNoGravity(), voxel.isPickable(), voxel.isSpawnerOwned());
+        voxel.setNoGravityCustom(true);
         
         level.addFreshEntity(voxel);
-        
-        com.github.ars_zero.ArsZero.LOGGER.info("After spawning: noGravity={}, pickable={}, spawnerOwned={}", 
-            voxel.isNoGravity(), voxel.isPickable(), voxel.isSpawnerOwned());
         
         currentVoxel = voxel;
         currentVoxelUUID = voxel.getUUID();
@@ -124,6 +116,33 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
         ticksSinceSpawn = 0;
     }
     
+    private void searchForExistingVoxel() {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        
+        BlockPos searchCenter = worldPosition.above();
+        AABB searchBox = new AABB(searchCenter).inflate(5.0);
+        List<BaseVoxelEntity> nearbyVoxels = serverLevel.getEntitiesOfClass(BaseVoxelEntity.class, searchBox);
+        
+        for (BaseVoxelEntity voxel : nearbyVoxels) {
+            if (voxel.isSpawnerOwned() && voxel.isAlive()) {
+                VoxelSpawnerBlock.VoxelType expectedType = getVoxelType();
+                boolean typeMatches = switch (expectedType) {
+                    case FIRE -> voxel instanceof FireVoxelEntity;
+                    case WATER -> voxel instanceof WaterVoxelEntity;
+                    case ARCANE -> voxel instanceof ArcaneVoxelEntity;
+                };
+                
+                if (typeMatches) {
+                    currentVoxel = voxel;
+                    currentVoxelUUID = voxel.getUUID();
+                    return;
+                }
+            }
+        }
+    }
+    
     private void tryRestoreVoxel() {
         if (currentVoxelUUID == null || !(level instanceof ServerLevel serverLevel)) {
             return;
@@ -132,10 +151,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
         Entity entity = serverLevel.getEntity(currentVoxelUUID);
         if (entity instanceof BaseVoxelEntity voxel && voxel.isAlive()) {
             currentVoxel = voxel;
-            com.github.ars_zero.ArsZero.LOGGER.info("Restored voxel reference after world load: size={}, owned={}", 
-                voxel.getSize(), voxel.isSpawnerOwned());
         } else {
-            com.github.ars_zero.ArsZero.LOGGER.info("Voxel UUID found but entity doesn't exist, starting wait cycle");
             currentVoxel = null;
             currentVoxelUUID = null;
             startWaiting();
@@ -176,6 +192,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
             currentVoxelUUID = tag.getUUID("currentVoxelUUID");
             needsVoxelRestore = true;
         }
+        needsVoxelSearch = true;
     }
 }
 

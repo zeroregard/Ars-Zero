@@ -16,6 +16,7 @@ import com.github.ars_zero.registry.ModCreativeTabs;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.registry.ModGlyphs;
+import com.github.ars_zero.registry.ModRecipes;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -71,7 +72,13 @@ public class ArsZero {
         ModAttachments.ATTACHMENT_TYPES.register(modEventBus);
         LOGGER.info("Registered {} attachment types", ModAttachments.ATTACHMENT_TYPES.getEntries().size());
         
-        modEventBus.addListener(Networking::register); 
+        LOGGER.debug("Registering recipe types and serializers...");
+        ModRecipes.RECIPE_TYPES.register(modEventBus);
+        ModRecipes.RECIPE_SERIALIZERS.register(modEventBus);
+        LOGGER.info("Registered recipe types and serializers");
+        
+        modEventBus.addListener(Networking::register);
+        modEventBus.addListener(this::gatherData); 
         
         modEventBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) -> {
             event.enqueueWork(() -> {
@@ -93,7 +100,7 @@ public class ArsZero {
             LOGGER.debug("Skipping client initialization (server-side)");
         }
 
-        LOGGER.info("Ars Noita mod initialization completed successfully!");
+        LOGGER.info("Ars Zero mod initialization completed successfully!");
     }
 
     private static void registerVoxelInteractions() {
@@ -139,5 +146,13 @@ public class ArsZero {
     
     public static ResourceLocation prefix(String path) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    }
+    
+    public void gatherData(net.neoforged.neoforge.data.event.GatherDataEvent event) {
+        var generator = event.getGenerator();
+        
+        if (event.includeServer()) {
+            generator.addProvider(true, new com.github.ars_zero.common.datagen.DyeRecipeDatagen(generator));
+        }
     }
 }

@@ -6,10 +6,12 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
@@ -26,6 +28,8 @@ public class CreativeSpellStaffRenderer extends GeoItemRenderer<ArsZeroStaff> {
 
     @Override
     protected void renderInGui(ItemDisplayContext transformType, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay, float partialTick) {
+        this.animatable.getAnimatableInstanceCache().getManagerForId(this.animatable.hashCode()).getAnimationControllers().values().forEach(controller -> controller.stop());
+        
         if (this.useEntityGuiLighting) {
             Lighting.setupForEntityInInventory();
         } else {
@@ -44,7 +48,13 @@ public class CreativeSpellStaffRenderer extends GeoItemRenderer<ArsZeroStaff> {
         VertexConsumer buffer = ItemRenderer.getFoilBufferDirect(bufferSource, renderType, true, this.currentItemStack != null && this.currentItemStack.hasFoil());
 
         poseStack.pushPose();
-        this.defaultRenderGui(poseStack, this.animatable, defaultBufferSource, renderType, buffer, 0.0F, partialTick, packedLight, packedOverlay, color);
+        
+        poseStack.translate(0F, 0.35, 0F);
+        poseStack.scale(0.47F, 0.47F, 0.47F);
+        poseStack.mulPose(Axis.ZP.rotationDegrees(-45));
+        poseStack.mulPose(Axis.XP.rotationDegrees(10));
+        
+        this.defaultRenderGui(poseStack, this.animatable, defaultBufferSource, renderType, buffer, 0.0F, 0.0F, packedLight, packedOverlay, color);
         defaultBufferSource.endBatch();
         RenderSystem.enableDepthTest();
         Lighting.setupFor3DItems();
@@ -86,10 +96,19 @@ public class CreativeSpellStaffRenderer extends GeoItemRenderer<ArsZeroStaff> {
     }
 
     @Override
+    public ResourceLocation getTextureLocation(ArsZeroStaff o) {
+        String base = "textures/item/creative_spell_staff_";
+        var dyeColor = currentItemStack.get(DataComponents.BASE_COLOR);
+        String color = dyeColor == null ? "purple" : dyeColor.getName();
+        return ArsZero.prefix(base + color + ".png");
+    }
+
+    @Override
     public RenderType getRenderType(ArsZeroStaff animatable, ResourceLocation texture, @org.jetbrains.annotations.Nullable MultiBufferSource bufferSource, float partialTick) {
         return RenderType.entityTranslucent(texture);
     }
 }
+
 
 
 

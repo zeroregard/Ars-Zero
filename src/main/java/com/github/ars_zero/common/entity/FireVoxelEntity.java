@@ -68,15 +68,11 @@ public class FireVoxelEntity extends BaseVoxelEntity {
     
     @Override
     protected void onHitEntity(net.minecraft.world.phys.EntityHitResult result) {
-        com.github.ars_zero.ArsZero.LOGGER.info("FireVoxel hit entity: {}", result.getEntity().getClass().getSimpleName());
-        
         if (result.getEntity() instanceof BaseVoxelEntity) {
-            com.github.ars_zero.ArsZero.LOGGER.info("Hit entity is a voxel, delegating to interaction system");
             super.onHitEntity(result);
             return;
         }
         
-        com.github.ars_zero.ArsZero.LOGGER.info("Hit entity is not a voxel, placing fire/evaporating water");
         if (!this.level().isClientSide) {
             Vec3 hitLocation = result.getLocation();
             
