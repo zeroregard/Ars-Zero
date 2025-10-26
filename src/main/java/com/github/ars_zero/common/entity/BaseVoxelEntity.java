@@ -147,6 +147,13 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
             }
         }
         
+        if (this instanceof CompressibleVoxelEntity compressible && compressible.isDamageEnabled()) {
+            if (hitEntity instanceof net.minecraft.world.entity.LivingEntity living) {
+                float damage = 2.0f * compressible.getCompressionLevel();
+                living.hurt(this.damageSources().magic(), damage);
+            }
+        }
+        
         spawnHitParticles(result.getLocation());
         resolveAndDiscard(result);
     }

@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.glyph.CompressionEffect;
 import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
 import com.github.ars_zero.common.glyph.EnlargeEffect;
 import com.github.ars_zero.common.glyph.NearForm;
@@ -17,6 +18,7 @@ public class ModGlyphs {
     public static final TranslateEffect TRANSLATE_EFFECT = new TranslateEffect();
     public static final PushEffect PUSH_EFFECT = new PushEffect();
     public static final EnlargeEffect ENLARGE_EFFECT = new EnlargeEffect();
+    public static final CompressionEffect COMPRESSION_EFFECT = new CompressionEffect();
 
     public static void registerGlyphs() {
         ArsZero.LOGGER.debug("Starting glyph registration...");
@@ -44,6 +46,10 @@ public class ModGlyphs {
         ArsZero.LOGGER.debug("Registering EnlargeEffect glyph...");
         GlyphRegistry.registerSpell(ENLARGE_EFFECT);
         ArsZero.LOGGER.info("Successfully registered EnlargeEffect glyph with ID: {}", ENLARGE_EFFECT.getRegistryName());
+        
+        ArsZero.LOGGER.debug("Registering CompressionEffect glyph...");
+        GlyphRegistry.registerSpell(COMPRESSION_EFFECT);
+        ArsZero.LOGGER.info("Successfully registered CompressionEffect glyph with ID: {}", COMPRESSION_EFFECT.getRegistryName());
         
         ArsZero.LOGGER.debug("Glyph registration completed");
     }

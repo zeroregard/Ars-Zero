@@ -21,9 +21,21 @@ public class VoxelAnimatedRenderer<T extends BaseVoxelEntity> extends VoxelBaseR
         if (shader != null && Minecraft.getInstance().level != null) {
             shader.apply();
             float time = (Minecraft.getInstance().level.getGameTime() + partialTick) / 20.0f;
-            var uniform = shader.getUniform("Time");
-            if (uniform != null) {
-                uniform.set(time);
+            var timeUniform = shader.getUniform("Time");
+            if (timeUniform != null) {
+                timeUniform.set(time);
+            }
+            
+            if (animatable instanceof com.github.ars_zero.common.entity.CompressibleVoxelEntity compressible) {
+                var compressionUniform = shader.getUniform("CompressionLevel");
+                if (compressionUniform != null) {
+                    compressionUniform.set(compressible.getCompressionLevel());
+                }
+                
+                var emissiveUniform = shader.getUniform("EmissiveIntensity");
+                if (emissiveUniform != null) {
+                    emissiveUniform.set(compressible.getEmissiveIntensity());
+                }
             }
         }
         
