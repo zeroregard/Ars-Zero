@@ -3,6 +3,7 @@ package com.github.ars_zero.registry;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
 import com.github.ars_zero.common.glyph.EnlargeEffect;
+import com.github.ars_zero.common.glyph.FixedRayForm;
 import com.github.ars_zero.common.glyph.NearForm;
 import com.github.ars_zero.common.glyph.PushEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
@@ -13,6 +14,7 @@ public class ModGlyphs {
     
     public static final TemporalContextForm TEMPORAL_CONTEXT_FORM = new TemporalContextForm();
     public static final NearForm NEAR_FORM = new NearForm();
+    public static final FixedRayForm FIXED_RAY_FORM = new FixedRayForm();
     public static final ConjureVoxelEffect CONJURE_VOXEL_EFFECT = new ConjureVoxelEffect();
     public static final TranslateEffect TRANSLATE_EFFECT = new TranslateEffect();
     public static final PushEffect PUSH_EFFECT = new PushEffect();
@@ -28,6 +30,10 @@ public class ModGlyphs {
         ArsZero.LOGGER.debug("Registering NearForm glyph...");
         GlyphRegistry.registerSpell(NEAR_FORM);
         ArsZero.LOGGER.info("Successfully registered NearForm glyph with ID: {}", NEAR_FORM.getRegistryName());
+        
+        ArsZero.LOGGER.debug("Registering FixedRayForm glyph...");
+        GlyphRegistry.registerSpell(FIXED_RAY_FORM);
+        ArsZero.LOGGER.info("Successfully registered FixedRayForm glyph with ID: {}", FIXED_RAY_FORM.getRegistryName());
         
         ArsZero.LOGGER.debug("Registering ConjureVoxelEffect glyph...");
         GlyphRegistry.registerSpell(CONJURE_VOXEL_EFFECT);
