@@ -52,5 +52,11 @@
   "ars_nouveau.augment_desc.enlarge_effect_amplify": "Increases the growth rate",
   "ars_nouveau.augment_desc.enlarge_effect_dampen": "Decreases the growth rate",
   
+  "ars_nouveau.glyph_name.compression_effect": "Compression",
+  "ars_nouveau.glyph_desc.compression_effect": "Gradually compresses the target entity over time, reducing its size while increasing its magical intensity. Works best with Voxel entities when used with Temporal Context Form in the TICK phase. The entity shrinks using an exponential decay curve, with a minimum size of 30% of original. At high compression levels, the entity becomes more emissive and can deal damage.",
+  
+  "ars_nouveau.augment_desc.compression_effect_amplify": "Increases the compression rate",
+  "ars_nouveau.augment_desc.compression_effect_dampen": "Decreases the compression rate",
+  
   "ars_nouveau.augment_desc.select_effect_sensitive": "Only selects entities, ignoring blocks"
 }

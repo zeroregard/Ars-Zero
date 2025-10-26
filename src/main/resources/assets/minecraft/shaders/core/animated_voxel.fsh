@@ -11,6 +11,8 @@ uniform float FogStart;
 uniform float FogEnd;
 uniform vec4 FogColor;
 uniform float Time;
+uniform float CompressionLevel;
+uniform float EmissiveIntensity;
 
 in float vertexDistance;
 in vec4 vertexColor;
@@ -41,6 +43,23 @@ void main() {
     
     if (color.a < 0.1) {
         discard;
+    }
+
+    // Apply compression effects
+    if (CompressionLevel > 0.0) {
+        // Color transition from purple to white-blue
+        vec3 baseColor = vec3(0.54, 0.17, 0.89); // Purple
+        vec3 compressedColor = vec3(0.53, 0.81, 0.92); // White-blue
+        vec3 finalColor = mix(baseColor, compressedColor, CompressionLevel);
+        
+        // Apply emissive intensity
+        float emissive = EmissiveIntensity * CompressionLevel;
+        finalColor += vec3(emissive * 0.3);
+        
+        color.rgb = mix(color.rgb, finalColor, CompressionLevel * 0.7);
+        
+        // Increase alpha with compression
+        color.a = min(1.0, color.a + CompressionLevel * 0.5);
     }
 
     // Apply vertex color + color modulator

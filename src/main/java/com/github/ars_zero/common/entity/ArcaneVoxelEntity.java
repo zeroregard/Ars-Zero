@@ -8,9 +8,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
-public class ArcaneVoxelEntity extends BaseVoxelEntity {
+public class ArcaneVoxelEntity extends BaseVoxelEntity implements CompressibleVoxelEntity {
     
     private static final int COLOR = 0x8A2BE2;
+    private static final int COMPRESSED_COLOR = 0x87CEEB;
+    
+    private float compressionLevel = 0.0f;
+    private float emissiveIntensity = 0.0f;
+    private boolean damageEnabled = false;
     
     public ArcaneVoxelEntity(EntityType<? extends ArcaneVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -24,7 +29,19 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity {
     
     @Override
     public int getColor() {
+        if (compressionLevel > 0.5f) {
+            return getCompressedColor();
+        }
         return COLOR;
+    }
+    
+    @Override
+    public int getCompressedColor() {
+        float t = Math.min(compressionLevel * 2.0f, 1.0f);
+        int r = (int) (0x8A + (0x87 - 0x8A) * t);
+        int g = (int) (0x2B + (0xCE - 0x2B) * t);
+        int b = (int) (0xE2 + (0xEB - 0xE2) * t);
+        return (r << 16) | (g << 8) | b;
     }
     
     @Override
@@ -58,6 +75,36 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity {
                 );
             }
         }
+    }
+    
+    @Override
+    public void setCompressionLevel(float compressionLevel) {
+        this.compressionLevel = Math.max(0.0f, Math.min(1.0f, compressionLevel));
+    }
+    
+    @Override
+    public float getCompressionLevel() {
+        return compressionLevel;
+    }
+    
+    @Override
+    public void setEmissiveIntensity(float intensity) {
+        this.emissiveIntensity = Math.max(0.0f, intensity);
+    }
+    
+    @Override
+    public float getEmissiveIntensity() {
+        return emissiveIntensity;
+    }
+    
+    @Override
+    public void setDamageEnabled(boolean enabled) {
+        this.damageEnabled = enabled;
+    }
+    
+    @Override
+    public boolean isDamageEnabled() {
+        return damageEnabled;
     }
 }
 

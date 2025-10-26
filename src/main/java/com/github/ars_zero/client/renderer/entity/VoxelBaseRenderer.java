@@ -35,6 +35,18 @@ public class VoxelBaseRenderer<T extends BaseVoxelEntity> extends GeoEntityRende
     public void actuallyRender(PoseStack poseStack, T animatable, BakedGeoModel model, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int color) {
         int entityColor = animatable.getColor();
         int alpha = 128;
+        
+        if (animatable instanceof com.github.ars_zero.common.entity.CompressibleVoxelEntity compressible) {
+            float compressionLevel = compressible.getCompressionLevel();
+            float emissiveIntensity = compressible.getEmissiveIntensity();
+            
+            alpha = (int) (128 + 127 * compressionLevel);
+            
+            if (emissiveIntensity > 0.5f) {
+                alpha = 255;
+            }
+        }
+        
         int finalColor = entityColor | (alpha << 24);
         
         super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, finalColor);
