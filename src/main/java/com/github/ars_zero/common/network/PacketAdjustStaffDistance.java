@@ -12,9 +12,9 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPacketPayload {
     
-    private static final double SCROLL_SENSITIVITY = 0.1;
+    private static final double SCROLL_SENSITIVITY = 0.4;
     private static final double MIN_DISTANCE_MULTIPLIER = 0.1;
-    private static final double MAX_DISTANCE_MULTIPLIER = 5.0;
+    private static final double MAX_DISTANCE_MULTIPLIER = 50.0;
     
     public static final CustomPacketPayload.Type<PacketAdjustStaffDistance> TYPE = 
         new CustomPacketPayload.Type<>(ArsZero.prefix("adjust_staff_distance"));
@@ -46,15 +46,20 @@ public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPac
                 double scrollSensitivity = SCROLL_SENSITIVITY;
                 
                 var targetEntity = staffContext.beginResults.get(0).targetEntity;
+                float entitySize = 1.0f;
                 
                 // TODO: Replace voxel instanceof check with general entity scale attachment for any scalable entity
                 if (targetEntity instanceof com.github.ars_zero.common.entity.BaseVoxelEntity voxel) {
-                    float voxelSize = voxel.getSize();
-                    scrollSensitivity *= voxelSize * voxelSize;
+                    entitySize = voxel.getSize();
+                    scrollSensitivity *= entitySize;
                 }
                 
                 double multiplierChange = packet.scrollDelta * scrollSensitivity;
+                double oldMultiplier = staffContext.distanceMultiplier;
                 staffContext.distanceMultiplier += multiplierChange;
+                
+                ArsZero.LOGGER.info("Scroll: voxelSize={}, scrollDelta={}, sensitivity={}, multiplierChange={}, distanceMultiplier: {} -> {}", 
+                    entitySize, packet.scrollDelta, scrollSensitivity, multiplierChange, oldMultiplier, staffContext.distanceMultiplier);
                 
                 staffContext.distanceMultiplier = Math.max(MIN_DISTANCE_MULTIPLIER, 
                                                           Math.min(MAX_DISTANCE_MULTIPLIER, staffContext.distanceMultiplier));

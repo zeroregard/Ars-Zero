@@ -34,8 +34,6 @@ import com.hollingsworth.arsnouveau.client.gui.radial_menu.RadialMenuSlot;
 import com.hollingsworth.arsnouveau.client.gui.radial_menu.SecondaryIconPosition;
 import com.hollingsworth.arsnouveau.client.gui.utils.RenderUtils;
 import com.hollingsworth.arsnouveau.api.sound.ConfiguredSpellSound;
-import com.hollingsworth.arsnouveau.common.network.Networking;
-import com.hollingsworth.arsnouveau.common.network.PacketSetCasterSlot;
 import com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -46,7 +44,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.world.InteractionHand;
@@ -72,9 +69,6 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, GeoItem {
     
@@ -237,10 +231,6 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         context.currentPhase = StaffPhase.TICK;
         context.tickCount++;
         context.sequenceTick++;
-        
-        if (context.tickCount % 20 == 0) {
-            playPhaseSound(player, stack, StaffPhase.TICK);
-        }
         
         executeSpell(player, stack, StaffPhase.TICK);
         
@@ -528,23 +518,19 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     }
     
     private void playPhaseSound(Player player, ItemStack stack, StaffPhase phase) {
-        ConfiguredSpellSound sound = switch (phase) {
-            case BEGIN -> getBeginSound(stack);
-            case TICK -> getTickSound(stack);
-            case END -> getEndSound(stack);
-        };
-        
-        if (phase == StaffPhase.TICK) {
-            ResourceLocation loopingSound = getTickLoopingSound(stack);
-            if (loopingSound != null) {
-                SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(loopingSound);
-                player.level().playSound(null, player.blockPosition(), soundEvent, SoundSource.PLAYERS, sound.getVolume(), sound.getPitch());
-                return;
+        switch (phase) {
+            case BEGIN -> {
+                player.level().playSound(null, player.blockPosition(), 
+                    net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 
+                    SoundSource.PLAYERS, 0.5f, 0.8f);
             }
-        }
-        
-        if (sound != ConfiguredSpellSound.EMPTY && sound.getSound() != null) {
-            player.level().playSound(null, player.blockPosition(), sound.getSound().getSoundEvent().value(), SoundSource.PLAYERS, sound.getVolume(), sound.getPitch());
+            case END -> {
+                player.level().playSound(null, player.blockPosition(), 
+                    net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 
+                    SoundSource.PLAYERS, 0.5f, 1.2f);
+            }
+            case TICK -> {
+            }
         }
     }
 
