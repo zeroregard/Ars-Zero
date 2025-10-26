@@ -109,7 +109,6 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         Vec3 deltaMovement = this.getDeltaMovement();
         this.setPos(this.getX() + deltaMovement.x, this.getY() + deltaMovement.y, this.getZ() + deltaMovement.z);
         
-        this.setDeltaMovement(deltaMovement.scale(0.98));
         if (!this.entityData.get(NO_GRAVITY_CUSTOM)) {
             this.applyGravity();
         }

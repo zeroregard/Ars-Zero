@@ -1,19 +1,16 @@
 package com.github.ars_zero.client;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.client.gui.GuiStaffHUD;
 import com.github.ars_zero.client.registry.ModKeyBindings;
 import com.github.ars_zero.client.renderer.entity.ArcaneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.FireVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
-import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.registry.ModEntities;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 
 public class ArsZeroClient {
@@ -25,7 +22,7 @@ public class ArsZeroClient {
         modEventBus.addListener(ArsZeroClient::onClientSetup);
         modEventBus.addListener(ArsZeroClient::registerGuiLayers);
         
-        // NeoForge.EVENT_BUS.register(StaffDebugHUD.class);
+        NeoForge.EVENT_BUS.register(StaffScrollHandler.class);
         
         ArsZero.LOGGER.debug("Ars Zero client initialization completed");
     }

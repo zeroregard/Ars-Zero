@@ -73,7 +73,8 @@ public class TranslateEffect extends AbstractEffect {
         Vec3 newPosition = beginResult.transformLocalToWorld(
             player.getYRot(), 
             player.getXRot(), 
-            player.getEyePosition(1.0f)
+            player.getEyePosition(1.0f),
+            staffContext.distanceMultiplier
         );
         
         if (newPosition != null) {

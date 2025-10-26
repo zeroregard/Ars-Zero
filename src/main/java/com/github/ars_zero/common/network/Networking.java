@@ -25,6 +25,12 @@ public class Networking {
             PacketSetStaffSound.CODEC,
             PacketSetStaffSound::handle
         );
+        
+        registrar.playToServer(
+            PacketAdjustStaffDistance.TYPE,
+            PacketAdjustStaffDistance.CODEC,
+            PacketAdjustStaffDistance::handle
+        );
     }
     
     public static void sendToServer(PacketSetStaffSlot packet) {
@@ -32,6 +38,10 @@ public class Networking {
     }
     
     public static void sendToServer(PacketSetStaffSound packet) {
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
+    }
+    
+    public static void sendToServer(PacketAdjustStaffDistance packet) {
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
     }
 }
