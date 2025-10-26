@@ -20,6 +20,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
+import com.github.ars_zero.common.glyph.SplitAugment;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
 import net.minecraft.resources.ResourceLocation;
@@ -51,19 +52,24 @@ public class ConjureVoxelEffect extends AbstractEffect {
             Vec3 pos = target.position();
             
             int duration = getDuration(spellStats);
-            BaseVoxelEntity voxel = createVoxel(serverLevel, pos.x, pos.y, pos.z, duration, spellContext);
-            
-            SpellContext newContext = spellContext.makeChildContext();
-            spellContext.setCanceled(true);
-            
-            voxel.setCaster(shooter);
-            voxel.setResolver(resolver.getNewResolver(newContext));
-            
-            if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
-                voxel.setNoGravityCustom(true);
+            int splitLevel = spellStats.getBuffCount(SplitAugment.INSTANCE);
+            if (splitLevel > 0) {
+                createSplitVoxels(serverLevel, pos.x, pos.y, pos.z, duration, spellContext, shooter, resolver, splitLevel);
+            } else {
+                BaseVoxelEntity voxel = createVoxel(serverLevel, pos.x, pos.y, pos.z, duration, spellContext);
+                
+                SpellContext newContext = spellContext.makeChildContext();
+                spellContext.setCanceled(true);
+                
+                voxel.setCaster(shooter);
+                voxel.setResolver(resolver.getNewResolver(newContext));
+                
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
+                    voxel.setNoGravityCustom(true);
+                }
+                
+                serverLevel.addFreshEntity(voxel);
             }
-            
-            serverLevel.addFreshEntity(voxel);
         }
     }
 
@@ -73,10 +79,67 @@ public class ConjureVoxelEffect extends AbstractEffect {
             Vec3 hitLocation = rayTraceResult.getLocation();
             int duration = getDuration(spellStats);
             
-            BaseVoxelEntity voxel = createVoxel(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration, spellContext);
+            int splitLevel = spellStats.getBuffCount(SplitAugment.INSTANCE);
+            if (splitLevel > 0) {
+                createSplitVoxels(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration, spellContext, shooter, resolver, splitLevel);
+            } else {
+                BaseVoxelEntity voxel = createVoxel(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration, spellContext);
+                
+                SpellContext newContext = spellContext.makeChildContext();
+                spellContext.setCanceled(true);
+                
+                voxel.setCaster(shooter);
+                voxel.setResolver(resolver.getNewResolver(newContext));
+                
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
+                    voxel.setNoGravityCustom(true);
+                }
+                
+                serverLevel.addFreshEntity(voxel);
+                updateTemporalContext(shooter, voxel);
+            }
+        }
+    }
+    
+    private void createSplitVoxels(ServerLevel level, double x, double y, double z, int duration, SpellContext context, LivingEntity shooter, SpellResolver resolver, int splitLevel) {
+        int maxSplitLevel = 3;
+        int actualSplitLevel = Math.min(splitLevel, maxSplitLevel);
+        
+        int entityCount;
+        float size;
+        
+        switch (actualSplitLevel) {
+            case 1:
+                entityCount = 3;
+                size = 0.1875f; // 3x3x3 pixels (3/16 of a block)
+                break;
+            case 2:
+                entityCount = 5;
+                size = 0.125f; // 2x2x2 pixels (2/16 of a block)
+                break;
+            case 3:
+                entityCount = 7;
+                size = 0.0625f; // 1x1x1 pixels (1/16 of a block)
+                break;
+            default:
+                entityCount = 1;
+                size = 0.25f; // 4x4x4 pixels (4/16 of a block)
+                break;
+        }
+        
+        java.util.List<BaseVoxelEntity> createdVoxels = new java.util.ArrayList<>();
+        
+        for (int i = 0; i < entityCount; i++) {
+            double offsetX = (level.random.nextDouble() - 0.5) * 0.5;
+            double offsetY = (level.random.nextDouble() - 0.5) * 0.5;
+            double offsetZ = (level.random.nextDouble() - 0.5) * 0.5;
             
-            SpellContext newContext = spellContext.makeChildContext();
-            spellContext.setCanceled(true);
+            BaseVoxelEntity voxel = createVoxel(level, x + offsetX, y + offsetY, z + offsetZ, duration, context);
+            voxel.setSize(size);
+            voxel.refreshDimensions();
+            
+            SpellContext newContext = context.makeChildContext();
+            context.setCanceled(true);
             
             voxel.setCaster(shooter);
             voxel.setResolver(resolver.getNewResolver(newContext));
@@ -85,9 +148,11 @@ public class ConjureVoxelEffect extends AbstractEffect {
                 voxel.setNoGravityCustom(true);
             }
             
-            serverLevel.addFreshEntity(voxel);
-            updateTemporalContext(shooter, voxel);
+            level.addFreshEntity(voxel);
+            createdVoxels.add(voxel);
         }
+        
+        updateTemporalContextMultiple(shooter, createdVoxels);
     }
     
     private BaseVoxelEntity createVoxel(ServerLevel level, double x, double y, double z, int duration, SpellContext context) {
@@ -158,6 +223,35 @@ public class ConjureVoxelEffect extends AbstractEffect {
         context.beginResults.add(voxelResult);
     }
     
+    private void updateTemporalContextMultiple(LivingEntity shooter, java.util.List<BaseVoxelEntity> voxels) {
+        if (!(shooter instanceof net.minecraft.world.entity.player.Player player)) {
+            return;
+        }
+        
+        StaffCastContext context = ArsZeroStaff.getStaffContext(player);
+        if (context == null) {
+            return;
+        }
+        
+        if (!context.beginResults.isEmpty()) {
+            SpellResult oldResult = context.beginResults.get(0);
+            if (oldResult.targetEntity instanceof ArcaneVoxelEntity oldVoxel && oldVoxel.isAlive()) {
+                oldVoxel.discard();
+            }
+        }
+        
+        context.beginResults.clear();
+        
+        for (BaseVoxelEntity voxel : voxels) {
+            SpellResult voxelResult = SpellResult.fromHitResultWithCaster(
+                new net.minecraft.world.phys.EntityHitResult(voxel), 
+                SpellEffectType.RESOLVED, 
+                player
+            );
+            context.beginResults.add(voxelResult);
+        }
+    }
+    
     private int getDuration(SpellStats spellStats) {
         double durationMultiplier = spellStats.getDurationMultiplier();
         if (durationMultiplier <= 0) {
@@ -174,7 +268,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
     @NotNull
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
-        return Set.of(AugmentExtendTime.INSTANCE, AugmentSensitive.INSTANCE);
+        return Set.of(AugmentExtendTime.INSTANCE, AugmentSensitive.INSTANCE, SplitAugment.INSTANCE);
     }
 
     @Override
@@ -182,6 +276,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
         super.addAugmentDescriptions(map);
         map.put(AugmentSensitive.INSTANCE, "Places a voxel at a target entity's position.");
         map.put(AugmentExtendTime.INSTANCE, "Increases the duration the voxel remains.");
+        map.put(SplitAugment.INSTANCE, "Splits the voxel into multiple smaller entities.");
     }
 
     @Override

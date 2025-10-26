@@ -59,11 +59,10 @@ public class TemporalContextForm extends AbstractCastMethod {
                 return CastResolveType.FAILURE;
             }
             
-            SpellResult result = staffContext.beginResults.get(0);
-            resolver.hitResult = result.hitResult;
-            
-            
-            resolver.onResolveEffect(world, result.hitResult);
+            for (SpellResult result : staffContext.beginResults) {
+                resolver.hitResult = result.hitResult;
+                resolver.onResolveEffect(world, result.hitResult);
+            }
         }
         return CastResolveType.SUCCESS;
     }
@@ -77,9 +76,10 @@ public class TemporalContextForm extends AbstractCastMethod {
                 return CastResolveType.FAILURE;
             }
             
-            SpellResult result = staffContext.beginResults.get(0);
-            resolver.hitResult = result.hitResult;
-            resolver.onResolveEffect(context.getLevel(), result.hitResult);
+            for (SpellResult result : staffContext.beginResults) {
+                resolver.hitResult = result.hitResult;
+                resolver.onResolveEffect(context.getLevel(), result.hitResult);
+            }
         }
         return CastResolveType.SUCCESS;
     }
@@ -92,9 +92,10 @@ public class TemporalContextForm extends AbstractCastMethod {
                 return CastResolveType.FAILURE;
             }
             
-            SpellResult result = staffContext.beginResults.get(0);
-            resolver.hitResult = result.hitResult;
-            resolver.onResolveEffect(caster.getCommandSenderWorld(), result.hitResult);
+            for (SpellResult result : staffContext.beginResults) {
+                resolver.hitResult = result.hitResult;
+                resolver.onResolveEffect(caster.getCommandSenderWorld(), result.hitResult);
+            }
         }
         return CastResolveType.SUCCESS;
     }
@@ -107,9 +108,10 @@ public class TemporalContextForm extends AbstractCastMethod {
                 return CastResolveType.FAILURE;
             }
             
-            SpellResult result = staffContext.beginResults.get(0);
-            resolver.hitResult = result.hitResult;
-            resolver.onResolveEffect(caster.getCommandSenderWorld(), result.hitResult);
+            for (SpellResult result : staffContext.beginResults) {
+                resolver.hitResult = result.hitResult;
+                resolver.onResolveEffect(caster.getCommandSenderWorld(), result.hitResult);
+            }
         }
         return CastResolveType.SUCCESS;
     }
