@@ -20,7 +20,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
-import com.github.ars_zero.common.glyph.SplitAugment;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSplit;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
 import net.minecraft.resources.ResourceLocation;
@@ -52,7 +52,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
             Vec3 pos = target.position();
             
             int duration = getDuration(spellStats);
-            int splitLevel = spellStats.getBuffCount(SplitAugment.INSTANCE);
+            int splitLevel = spellStats.getBuffCount(AugmentSplit.INSTANCE);
             if (splitLevel > 0) {
                 createSplitVoxels(serverLevel, pos.x, pos.y, pos.z, duration, spellContext, shooter, resolver, splitLevel);
             } else {
@@ -79,7 +79,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
             Vec3 hitLocation = rayTraceResult.getLocation();
             int duration = getDuration(spellStats);
             
-            int splitLevel = spellStats.getBuffCount(SplitAugment.INSTANCE);
+            int splitLevel = spellStats.getBuffCount(AugmentSplit.INSTANCE);
             if (splitLevel > 0) {
                 createSplitVoxels(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration, spellContext, shooter, resolver, splitLevel);
             } else {
@@ -268,7 +268,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
     @NotNull
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
-        return Set.of(AugmentExtendTime.INSTANCE, AugmentSensitive.INSTANCE, SplitAugment.INSTANCE);
+        return Set.of(AugmentExtendTime.INSTANCE, AugmentSensitive.INSTANCE, AugmentSplit.INSTANCE);
     }
 
     @Override
@@ -276,7 +276,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
         super.addAugmentDescriptions(map);
         map.put(AugmentSensitive.INSTANCE, "Places a voxel at a target entity's position.");
         map.put(AugmentExtendTime.INSTANCE, "Increases the duration the voxel remains.");
-        map.put(SplitAugment.INSTANCE, "Splits the voxel into multiple smaller entities.");
+        map.put(AugmentSplit.INSTANCE, "Splits the voxel into multiple smaller entities.");
     }
 
     @Override
