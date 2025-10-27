@@ -22,7 +22,6 @@ import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -41,7 +40,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
     public static final ConjureVoxelEffect INSTANCE = new ConjureVoxelEffect();
 
     public ConjureVoxelEffect() {
-        super(ID, "Conjure Voxel");
+        super(ArsZero.prefix(ID), "Conjure Voxel");
     }
 
     @Override
@@ -198,10 +197,5 @@ public class ConjureVoxelEffect extends AbstractEffect {
     @Override
     public Set<SpellSchool> getSchools() {
         return Set.of(SpellSchools.MANIPULATION);
-    }
-
-    @Override
-    public ResourceLocation getRegistryName() {
-        return ArsZero.prefix(ID);
     }
 }

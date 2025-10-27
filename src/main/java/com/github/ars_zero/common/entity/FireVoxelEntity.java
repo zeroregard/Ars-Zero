@@ -1,21 +1,22 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.registry.ModEntities;
+import com.hollingsworth.arsnouveau.setup.registry.SoundRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 public class FireVoxelEntity extends BaseVoxelEntity {
     
     private static final int COLOR = 0xFF6A00;
-    private boolean hasPlayedSpawnSound = false;
     
     public FireVoxelEntity(EntityType<? extends FireVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -159,16 +160,13 @@ public class FireVoxelEntity extends BaseVoxelEntity {
         return this.random.nextBoolean() ? ParticleTypes.FLAME : ParticleTypes.SMOKE;
     }
     
+    protected SoundEvent getSpawnSound() {
+        return SoundRegistry.FIRE_FAMILY.get();
+    }
+    
     @Override
     public void tick() {
         super.tick();
-        
-        if (!this.level().isClientSide && !hasPlayedSpawnSound) {
-            hasPlayedSpawnSound = true;
-            this.level().playSound(null, this.blockPosition(), 
-                com.hollingsworth.arsnouveau.setup.registry.SoundRegistry.FIRE_FAMILY.get(), 
-                SoundSource.NEUTRAL, 0.8f, 1.0f);
-        }
         
         if (!this.level().isClientSide) {
             Vec3 motion = this.getDeltaMovement();

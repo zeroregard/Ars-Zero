@@ -1,21 +1,22 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.registry.ModEntities;
+import com.hollingsworth.arsnouveau.setup.registry.SoundRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 public class WaterVoxelEntity extends BaseVoxelEntity {
     
     private static final int COLOR = 0x3F76E4;
-    private boolean hasPlayedSpawnSound = false;
     
     public WaterVoxelEntity(EntityType<? extends WaterVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -109,16 +110,9 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
         return Math.min(baseCount, 32);
     }
     
-    @Override
-    public void tick() {
-        super.tick();
-        
-        if (!this.level().isClientSide && !hasPlayedSpawnSound) {
-            hasPlayedSpawnSound = true;
-            this.level().playSound(null, this.blockPosition(), 
-                com.hollingsworth.arsnouveau.setup.registry.SoundRegistry.TEMPESTRY_FAMILY.get(), 
-                SoundSource.NEUTRAL, 0.8f, 1.0f);
-        }
+    @Nullable
+    protected SoundEvent getSpawnSound() {
+        return SoundRegistry.TEMPESTRY_FAMILY.get();
     }
     
     @Override

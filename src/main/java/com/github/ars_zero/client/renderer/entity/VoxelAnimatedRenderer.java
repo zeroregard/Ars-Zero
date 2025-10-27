@@ -21,9 +21,16 @@ public class VoxelAnimatedRenderer<T extends BaseVoxelEntity> extends VoxelBaseR
         if (shader != null && Minecraft.getInstance().level != null) {
             shader.apply();
             float time = (Minecraft.getInstance().level.getGameTime() + partialTick) / 20.0f;
-            var uniform = shader.getUniform("Time");
-            if (uniform != null) {
-                uniform.set(time);
+            var timeUniform = shader.getUniform("Time");
+            if (timeUniform != null) {
+                timeUniform.set(time);
+            }
+            
+            float size = animatable.getSize();
+            float scale = size / 0.25f;
+            var scaleUniform = shader.getUniform("VoxelScale");
+            if (scaleUniform != null) {
+                scaleUniform.set(scale);
             }
         }
         

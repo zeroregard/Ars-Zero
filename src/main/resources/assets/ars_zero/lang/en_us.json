@@ -21,35 +21,20 @@
   "itemGroup.ars_zero": "Ars Zero",
   
   "ars_zero.glyph_name.conjure_voxel_effect": "Conjure Voxel",
-  "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small 4x4x4 pixel (1/4 block) purple voxel entity that persists for 1 minute. The voxel does not collide with anything and can be grown using temporal effects like Enlarge.",
-  
-  "ars_zero.augment_desc.conjure_voxel_effect_sensitive": "Places a voxel at a target entity's position",
-  "ars_zero.augment_desc.conjure_voxel_effect_extend_time": "Increases the duration the voxel remains",
+  "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity",
   
   "ars_zero.glyph_name.temporal_context_form": "Temporal Context",
-  "ars_zero.glyph_desc.temporal_context_form": "A cast method that provides access to context from previous staff phases. When used in Tick or End phases, it will target the entity or block that was stored in the temporal context from previous phases.",
-  
+  "ars_zero.glyph_desc.temporal_context_form": "A cast method that provides access to the context of the previous spell phase (Staff only)",
+
   "ars_zero.glyph_name.near_form": "Near",
-  "ars_zero.glyph_desc.near_form": "Casts the spell at a short distance in front of you (1 block by default). Perfect for conjuring entities or blocks in front of you without needing to aim at something. Distance can be adjusted with Amplify/Dampen.",
-  
-  "ars_zero.augment_desc.near_form_amplify": "Increases the cast distance",
-  "ars_zero.augment_desc.near_form_dampen": "Decreases the cast distance",
-  
-  "ars_zero.glyph_name.translate_effect": "Translate",
-  "ars_zero.glyph_desc.translate_effect": "Maintains the relative position of a target entity to the caster. The entity will follow the caster's movement and rotation, staying in the same relative position. Duration can be extended with augments.",
-  
-  "ars_zero.augment_desc.translate_effect_amplify": "Increases the distance from the player",
-  "ars_zero.augment_desc.translate_effect_dampen": "Decreases the distance from the player",
-  
+  "ars_zero.glyph_desc.near_form": "Casts the spell at a short distance in front of your gaze",
+
+  "ars_zero.glyph_name.translate_effect": "Anchor",
+  "ars_zero.glyph_desc.translate_effect": "Maintains the relative position of a target entity to the caster",
+
   "ars_zero.glyph_name.push_effect": "Push",
-  "ars_zero.glyph_desc.push_effect": "Pushes the target entity in the direction you're looking. Unlike Knockback, this respects your full look direction including up and down. Perfect for launching entities carried with Translate in your END phase.",
-  
-  "ars_zero.augment_desc.push_effect_amplify": "Increases the push strength",
-  "ars_zero.augment_desc.push_effect_dampen": "Decreases the push strength",
-  
+  "ars_zero.glyph_desc.push_effect": "Pushes the target entity in the direction you're looking.",
+
   "ars_zero.glyph_name.enlarge_effect": "Enlarge",
-  "ars_zero.glyph_desc.enlarge_effect": "Gradually enlarges the target entity over time. Works best with Voxel entities when used with Temporal Context Form in the TICK phase. The entity grows by 1% per tick by default, with a maximum size of 16 blocks.",
-  
-  "ars_zero.augment_desc.enlarge_effect_amplify": "Increases the growth rate",
-  "ars_zero.augment_desc.enlarge_effect_dampen": "Decreases the growth rate"
+  "ars_zero.glyph_desc.enlarge_effect": "Increases the size of the target entity [NB: only works on Voxels so far]"
 }

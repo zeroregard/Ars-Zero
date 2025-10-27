@@ -44,7 +44,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -198,8 +197,6 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         return radialMenuSlots;
     }
 
-    // ICasterTool implementation - getSpellCaster is handled by SpellCasterRegistry registration
-
 
     private void beginPhase(Player player, ItemStack stack) {
         StaffCastContext context = getOrCreateContext(player);
@@ -214,7 +211,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         context.tickResults.clear();
         context.endResults.clear();
         
-        playPhaseSound(player, stack, StaffPhase.BEGIN);
+        // playPhaseSound(player, stack, StaffPhase.BEGIN);
         executeSpell(player, stack, StaffPhase.BEGIN);
         
         if (player instanceof ServerPlayer serverPlayer) {
@@ -250,7 +247,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         
         com.github.ars_zero.common.glyph.TranslateEffect.restoreEntityPhysics(context);
         
-        playPhaseSound(player, stack, StaffPhase.END);
+        // playPhaseSound(player, stack, StaffPhase.END);
         executeSpell(player, stack, StaffPhase.END);
         
         if (player instanceof ServerPlayer serverPlayer) {
@@ -383,9 +380,9 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         tag.putString("endSound", endSound.getSound() != null ? endSound.getSound().getId().toString() : "");
         tag.putFloat("endVolume", endSound.getVolume());
         tag.putFloat("endPitch", endSound.getPitch());
-        if (tickLoopingSound != null) {
-            tag.putString("tickLooping", tickLoopingSound.toString());
-        }
+        // if (tickLoopingSound != null) {
+        //     tag.putString("tickLooping", tickLoopingSound.toString());
+        // }
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
     
@@ -435,11 +432,12 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     }
     
     public static ResourceLocation getTickLoopingSound(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        if (data == null) return null;
-        CompoundTag tag = data.copyTag();
-        if (!tag.contains("tickLooping")) return null;
-        return ResourceLocation.parse(tag.getString("tickLooping"));
+        // CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        // if (data == null) return null;
+        // CompoundTag tag = data.copyTag();
+        // if (!tag.contains("tickLooping")) return null;
+        // return ResourceLocation.parse(tag.getString("tickLooping"));
+        return null;
     }
     
     
@@ -517,22 +515,22 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         PacketDistributor.sendToPlayer(player, packet);
     }
     
-    private void playPhaseSound(Player player, ItemStack stack, StaffPhase phase) {
-        switch (phase) {
-            case BEGIN -> {
-                player.level().playSound(null, player.blockPosition(), 
-                    net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 
-                    SoundSource.PLAYERS, 0.5f, 0.8f);
-            }
-            case END -> {
-                player.level().playSound(null, player.blockPosition(), 
-                    net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 
-                    SoundSource.PLAYERS, 0.5f, 1.2f);
-            }
-            case TICK -> {
-            }
-        }
-    }
+    // private void playPhaseSound(Player player, ItemStack stack, StaffPhase phase) {
+    //     switch (phase) {
+    //         case BEGIN -> {
+    //             player.level().playSound(null, player.blockPosition(), 
+    //                 net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 
+    //                 SoundSource.PLAYERS, 0.5f, 0.8f);
+    //         }
+    //         case END -> {
+    //             player.level().playSound(null, player.blockPosition(), 
+    //                 net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 
+    //                 SoundSource.PLAYERS, 0.5f, 1.2f);
+    //         }
+    //         case TICK -> {
+    //         }
+    //     }
+    // }
 
     // GeckoLib implementation
     @Override
