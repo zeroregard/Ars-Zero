@@ -9,6 +9,7 @@ import com.github.ars_zero.common.item.ArsZeroStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.StaffCastContext;
+import com.github.ars_zero.common.util.MathHelper;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
@@ -151,18 +152,6 @@ public class ConjureVoxelEffect extends AbstractEffect {
             level.addFreshEntity(voxel);
             createdVoxels.add(voxel);
         } else {
-            Vec3 lookDir = shooter.getLookAngle().normalize();
-            
-            Vec3 right;
-            if (Math.abs(lookDir.y) < 0.99) {
-                Vec3 up = new Vec3(0, 1, 0);
-                right = lookDir.cross(up).normalize();
-            } else {
-                Vec3 forward = new Vec3(0, 0, 1);
-                right = lookDir.cross(forward).normalize();
-            }
-            Vec3 up = right.cross(lookDir).normalize();
-            
             SpellContext peekContext = context.clone();
             boolean hasWater = false;
             boolean hasFire = false;
@@ -181,20 +170,18 @@ public class ConjureVoxelEffect extends AbstractEffect {
                 }
             }
             
-            for (int i = 0; i < entityCount; i++) {
-                double angle = (2.0 * Math.PI * i) / entityCount;
-                double offsetRight = Math.cos(angle) * circleRadius;
-                double offsetUp = Math.sin(angle) * circleRadius;
-                
-                Vec3 offset = right.scale(offsetRight).add(up.scale(offsetUp));
-                
+            Vec3 center = new Vec3(x, y, z);
+            Vec3 lookDirection = shooter.getLookAngle();
+            java.util.List<Vec3> positions = MathHelper.getCirclePositions(center, lookDirection, circleRadius, entityCount);
+            
+            for (Vec3 pos : positions) {
                 BaseVoxelEntity voxel;
                 if (hasWater) {
-                    voxel = new WaterVoxelEntity(level, x + offset.x, y + offset.y, z + offset.z, duration);
+                    voxel = new WaterVoxelEntity(level, pos.x, pos.y, pos.z, duration);
                 } else if (hasFire) {
-                    voxel = new FireVoxelEntity(level, x + offset.x, y + offset.y, z + offset.z, duration);
+                    voxel = new FireVoxelEntity(level, pos.x, pos.y, pos.z, duration);
                 } else {
-                    voxel = new ArcaneVoxelEntity(level, x + offset.x, y + offset.y, z + offset.z, duration);
+                    voxel = new ArcaneVoxelEntity(level, pos.x, pos.y, pos.z, duration);
                 }
                 
                 voxel.setSize(size);

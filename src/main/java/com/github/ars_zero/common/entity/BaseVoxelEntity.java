@@ -134,8 +134,9 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     }
     
     protected EntityHitResult findHitEntity(Vec3 startVec, Vec3 endVec) {
+        double inflateAmount = Math.max(0.1, this.getSize() * 0.5);
         return ProjectileUtil.getEntityHitResult(this.level(), this, startVec, endVec,
-                this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(1.0), this::canHitEntity);
+                this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(inflateAmount), this::canHitEntity);
     }
     
     @Override
