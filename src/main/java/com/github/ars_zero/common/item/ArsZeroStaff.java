@@ -3,7 +3,9 @@ package com.github.ars_zero.common.item;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
+import com.github.ars_zero.common.glyph.TranslateEffect;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
+import com.github.ars_zero.registry.ModSounds;
 import com.github.ars_zero.common.network.PacketSetStaffSlot;
 import com.github.ars_zero.common.spell.CastPhase;
 import com.github.ars_zero.common.spell.StaffCastContext;
@@ -41,6 +43,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -228,6 +231,20 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         context.currentPhase = StaffPhase.TICK;
         context.tickCount++;
         context.sequenceTick++;
+        
+        AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
+        if (caster != null) {
+            int currentLogicalSlot = caster.getCurrentSlot();
+            if (currentLogicalSlot >= 0 && currentLogicalSlot < 10) {
+                int physicalSlot = currentLogicalSlot * 3 + StaffPhase.TICK.ordinal();
+                Spell spell = caster.getSpell(physicalSlot);
+                
+                if (hasTranslateEffect(spell) && context.tickCount % 5 == 0) {
+                    player.level().playSound(null, player.getX(), player.getY(), player.getZ(), 
+                        ModSounds.EFFECT_ANCHOR.get(), SoundSource.NEUTRAL, 1.0f, 1.0f);
+                }
+            }
+        }
         
         executeSpell(player, stack, StaffPhase.TICK);
         
@@ -447,8 +464,18 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     private boolean isTemporalContextFormSpell(Spell spell) {
         if (spell.isEmpty()) return false;
         
-        // Check if the first glyph in the spell is TemporalContextForm
         return spell.recipe().iterator().next() instanceof TemporalContextForm;
+    }
+    
+    private boolean hasTranslateEffect(Spell spell) {
+        if (spell.isEmpty()) return false;
+        
+        for (AbstractSpellPart part : spell.recipe()) {
+            if (part instanceof TranslateEffect) {
+                return true;
+            }
+        }
+        return false;
     }
     
 

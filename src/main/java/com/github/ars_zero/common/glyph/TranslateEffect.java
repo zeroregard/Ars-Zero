@@ -4,7 +4,6 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.item.ArsZeroStaff;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.StaffCastContext;
-import com.github.ars_zero.registry.ModSounds;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -16,7 +15,6 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
 import net.minecraft.core.BlockPos;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -54,43 +52,33 @@ public class TranslateEffect extends AbstractEffect {
             return;
         }
         
-        
-        SpellResult beginResult = staffContext.beginResults.get(0);
-        Entity target = beginResult.targetEntity;
-        
-        com.github.ars_zero.ArsZero.LOGGER.info("TranslateEffect targeting: {}, type: {}", 
-            target != null ? target.getName().getString() : "null", 
-            target != null ? target.getClass().getSimpleName() : "null");
-        
-        if (target == null || !target.isAlive()) {
-            return;
-        }
-        
-        
-        if (beginResult.relativeOffset == null) {
-            return;
-        }
-        
-        Vec3 newPosition = beginResult.transformLocalToWorld(
-            player.getYRot(), 
-            player.getXRot(), 
-            player.getEyePosition(1.0f),
-            staffContext.distanceMultiplier
-        );
-        
-        if (newPosition != null) {
-            if (canMoveToPosition(newPosition, world)) {
-                target.setPos(newPosition.x, newPosition.y, newPosition.z);
-                target.setDeltaMovement(Vec3.ZERO);
-                target.setNoGravity(true);
-                
-                if (target instanceof com.github.ars_zero.common.entity.BaseVoxelEntity voxel) {
-                    voxel.freezePhysics();
-                }
-                
-                if (target.tickCount % 5 == 0) {
-                    world.playSound(null, player.getX(), player.getY(), player.getZ(), 
-                        ModSounds.EFFECT_ANCHOR.get(), SoundSource.NEUTRAL, 1.0f, 1.0f);
+        for (SpellResult beginResult : staffContext.beginResults) {
+            Entity target = beginResult.targetEntity;
+            
+            if (target == null || !target.isAlive()) {
+                continue;
+            }
+            
+            if (beginResult.relativeOffset == null) {
+                continue;
+            }
+            
+            Vec3 newPosition = beginResult.transformLocalToWorld(
+                player.getYRot(), 
+                player.getXRot(), 
+                player.getEyePosition(1.0f),
+                staffContext.distanceMultiplier
+            );
+            
+            if (newPosition != null) {
+                if (canMoveToPosition(newPosition, world)) {
+                    target.setPos(newPosition.x, newPosition.y, newPosition.z);
+                    target.setDeltaMovement(Vec3.ZERO);
+                    target.setNoGravity(true);
+                    
+                    if (target instanceof com.github.ars_zero.common.entity.BaseVoxelEntity voxel) {
+                        voxel.freezePhysics();
+                    }
                 }
             }
         }
@@ -107,12 +95,13 @@ public class TranslateEffect extends AbstractEffect {
             return;
         }
         
-        SpellResult beginResult = context.beginResults.get(0);
-        Entity target = beginResult.targetEntity;
-        
-        if (target != null && target.isAlive()) {
-            target.noPhysics = false;
-            target.setNoGravity(false);
+        for (SpellResult beginResult : context.beginResults) {
+            Entity target = beginResult.targetEntity;
+            
+            if (target != null && target.isAlive()) {
+                target.noPhysics = false;
+                target.setNoGravity(false);
+            }
         }
     }
 
