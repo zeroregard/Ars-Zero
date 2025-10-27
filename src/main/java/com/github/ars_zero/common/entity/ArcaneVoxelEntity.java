@@ -1,11 +1,14 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.registry.ModEntities;
+import com.hollingsworth.arsnouveau.setup.registry.SoundRegistry;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 public class ArcaneVoxelEntity extends BaseVoxelEntity {
@@ -30,6 +33,10 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity {
     @Override
     public boolean isEmissive() {
         return true;
+    }
+    
+    protected SoundEvent getSpawnSound() {
+        return SoundRegistry.GAIA_FAMILY.get();
     }
     
     @Override

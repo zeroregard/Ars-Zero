@@ -15,7 +15,6 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -40,7 +39,7 @@ public class TranslateEffect extends AbstractEffect {
     public static final TranslateEffect INSTANCE = new TranslateEffect();
 
     public TranslateEffect() {
-        super(ID, "Translate");
+        super(ArsZero.prefix(ID), "Translate");
     }
 
     @Override
@@ -67,7 +66,8 @@ public class TranslateEffect extends AbstractEffect {
             Vec3 newPosition = beginResult.transformLocalToWorld(
                 player.getYRot(), 
                 player.getXRot(), 
-                player.getEyePosition(1.0f)
+                player.getEyePosition(1.0f),
+                staffContext.distanceMultiplier
             );
             
             if (newPosition != null) {
@@ -142,10 +142,5 @@ public class TranslateEffect extends AbstractEffect {
     @Override
     public Set<SpellSchool> getSchools() {
         return Set.of(SpellSchools.MANIPULATION);
-    }
-
-    @Override
-    public ResourceLocation getRegistryName() {
-        return ArsZero.prefix(ID);
     }
 }

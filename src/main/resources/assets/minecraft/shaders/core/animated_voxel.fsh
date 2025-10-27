@@ -11,6 +11,7 @@ uniform float FogStart;
 uniform float FogEnd;
 uniform vec4 FogColor;
 uniform float Time;
+uniform float VoxelScale;
 
 in float vertexDistance;
 in vec4 vertexColor;
@@ -32,9 +33,8 @@ void main() {
     // Add slow horizontal scrolling (wraps at 1.0)
     float horizontalScroll = mod(Time * 0.02, 1.0);
 
-    // Map model UVs (0-1 for a 16x16 face) to the current frame in the 16x1024 texture
-    // Don't multiply texCoord0.y by frameHeight first - scale it within the frame offset
-    vec2 animatedUV = vec2(mod(texCoord0.x + horizontalScroll, 1.0), vOffset + texCoord0.y * frameHeight);
+    vec2 scaledTexCoord = texCoord0 * (VoxelScale / 4.0);
+    vec2 animatedUV = vec2(mod(scaledTexCoord.x + horizontalScroll, 1.0), vOffset + mod(scaledTexCoord.y, 1.0) * frameHeight);
     
     // Sample texture with animated UVs
     vec4 color = texture(Sampler0, animatedUV);

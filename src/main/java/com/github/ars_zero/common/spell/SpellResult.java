@@ -100,7 +100,13 @@ public class SpellResult {
     }
     
     public Vec3 transformLocalToWorld(float currentYaw, float currentPitch, Vec3 currentCasterPos) {
+        return transformLocalToWorld(currentYaw, currentPitch, currentCasterPos, 1.0);
+    }
+    
+    public Vec3 transformLocalToWorld(float currentYaw, float currentPitch, Vec3 currentCasterPos, double distanceMultiplier) {
         if (relativeOffset == null) return null;
+        
+        Vec3 scaledOffset = relativeOffset.scale(distanceMultiplier);
         
         double yawRad = Math.toRadians(currentYaw);
         double pitchRad = Math.toRadians(currentPitch);
@@ -110,11 +116,11 @@ public class SpellResult {
         double cosPitch = Math.cos(pitchRad);
         double sinPitch = Math.sin(pitchRad);
         
-        double rotatedZ = relativeOffset.z * cosPitch + relativeOffset.y * sinPitch;
-        double rotatedY = relativeOffset.y * cosPitch - relativeOffset.z * sinPitch;
+        double rotatedZ = scaledOffset.z * cosPitch + scaledOffset.y * sinPitch;
+        double rotatedY = scaledOffset.y * cosPitch - scaledOffset.z * sinPitch;
         
-        double worldX = relativeOffset.x * cosYaw - rotatedZ * sinYaw;
-        double worldZ = relativeOffset.x * sinYaw + rotatedZ * cosYaw;
+        double worldX = scaledOffset.x * cosYaw - rotatedZ * sinYaw;
+        double worldZ = scaledOffset.x * sinYaw + rotatedZ * cosYaw;
         
         Vec3 worldOffset = new Vec3(worldX, rotatedY, worldZ);
         Vec3 result = currentCasterPos.add(worldOffset);

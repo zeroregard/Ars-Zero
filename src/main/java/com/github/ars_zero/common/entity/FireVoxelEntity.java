@@ -1,15 +1,18 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.registry.ModEntities;
+import com.hollingsworth.arsnouveau.setup.registry.SoundRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 public class FireVoxelEntity extends BaseVoxelEntity {
     
@@ -41,7 +44,7 @@ public class FireVoxelEntity extends BaseVoxelEntity {
         BlockState hitState = this.level().getBlockState(hitPos);
         
         if (hitState.getBlock() == Blocks.WATER) {
-            if (canEvaporateWaterSource()) {
+            if (canEvaporateWater(hitState)) {
                 this.level().setBlock(hitPos, Blocks.AIR.defaultBlockState(), 3);
                 spawnEvaporationParticles(Vec3.atCenterOf(hitPos));
             }
@@ -52,7 +55,7 @@ public class FireVoxelEntity extends BaseVoxelEntity {
         BlockState placeState = this.level().getBlockState(placePos);
         
         if (placeState.getBlock() == Blocks.WATER) {
-            if (canEvaporateWaterSource()) {
+            if (canEvaporateWater(placeState)) {
                 this.level().setBlock(placePos, Blocks.AIR.defaultBlockState(), 3);
                 spawnEvaporationParticles(Vec3.atCenterOf(placePos));
             }
@@ -84,7 +87,7 @@ public class FireVoxelEntity extends BaseVoxelEntity {
             
             for (BlockPos pos : BlockPos.betweenClosed(centerPos.offset(-1, -1, -1), centerPos.offset(1, 1, 1))) {
                 BlockState state = this.level().getBlockState(pos);
-                if (state.getBlock() == Blocks.WATER && canEvaporateWaterSource()) {
+                if (state.getBlock() == Blocks.WATER && canEvaporateWater(state)) {
                     this.level().setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                     spawnEvaporationParticles(Vec3.atCenterOf(pos));
                     break;
@@ -97,9 +100,18 @@ public class FireVoxelEntity extends BaseVoxelEntity {
         this.discard();
     }
     
-    private boolean canEvaporateWaterSource() {
-        float size = this.getSize();
-        return size >= 1.0f;
+    private boolean canEvaporateWater(BlockState waterState) {
+        if (waterState.getBlock() != Blocks.WATER) {
+            return false;
+        }
+        
+        int waterLevel = waterState.getValue(net.minecraft.world.level.block.LiquidBlock.LEVEL);
+        
+        if (waterLevel == 0) {
+            return this.getSize() >= 1.0f;
+        }
+        
+        return true;
     }
     
     private void spawnEvaporationParticles(Vec3 location) {
@@ -146,6 +158,10 @@ public class FireVoxelEntity extends BaseVoxelEntity {
     @Override
     protected net.minecraft.core.particles.ParticleOptions getAmbientParticle() {
         return this.random.nextBoolean() ? ParticleTypes.FLAME : ParticleTypes.SMOKE;
+    }
+    
+    protected SoundEvent getSpawnSound() {
+        return SoundRegistry.FIRE_FAMILY.get();
     }
     
     @Override

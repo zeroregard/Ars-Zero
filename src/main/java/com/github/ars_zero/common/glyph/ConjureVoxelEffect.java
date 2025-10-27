@@ -23,7 +23,6 @@ import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSplit;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -42,7 +41,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
     public static final ConjureVoxelEffect INSTANCE = new ConjureVoxelEffect();
 
     public ConjureVoxelEffect() {
-        super(ID, "Conjure Voxel");
+        super(ArsZero.prefix(ID), "Conjure Voxel");
     }
 
     @Override
@@ -164,6 +163,24 @@ public class ConjureVoxelEffect extends AbstractEffect {
             }
             Vec3 up = right.cross(lookDir).normalize();
             
+            SpellContext peekContext = context.clone();
+            boolean hasWater = false;
+            boolean hasFire = false;
+            
+            while (peekContext.hasNextPart()) {
+                AbstractSpellPart next = peekContext.nextPart();
+                if (next instanceof AbstractEffect) {
+                    if (next == EffectConjureWater.INSTANCE) {
+                        hasWater = true;
+                        hasFire = false;
+                    } else if (next == EffectIgnite.INSTANCE) {
+                        hasFire = true;
+                        hasWater = false;
+                    }
+                    break;
+                }
+            }
+            
             for (int i = 0; i < entityCount; i++) {
                 double angle = (2.0 * Math.PI * i) / entityCount;
                 double offsetRight = Math.cos(angle) * circleRadius;
@@ -171,7 +188,15 @@ public class ConjureVoxelEffect extends AbstractEffect {
                 
                 Vec3 offset = right.scale(offsetRight).add(up.scale(offsetUp));
                 
-                BaseVoxelEntity voxel = createVoxel(level, x + offset.x, y + offset.y, z + offset.z, duration, context);
+                BaseVoxelEntity voxel;
+                if (hasWater) {
+                    voxel = new WaterVoxelEntity(level, x + offset.x, y + offset.y, z + offset.z, duration);
+                } else if (hasFire) {
+                    voxel = new FireVoxelEntity(level, x + offset.x, y + offset.y, z + offset.z, duration);
+                } else {
+                    voxel = new ArcaneVoxelEntity(level, x + offset.x, y + offset.y, z + offset.z, duration);
+                }
+                
                 voxel.setSize(size);
                 voxel.refreshDimensions();
                 
@@ -332,10 +357,5 @@ public class ConjureVoxelEffect extends AbstractEffect {
     @Override
     public Set<SpellSchool> getSchools() {
         return Set.of(SpellSchools.MANIPULATION);
-    }
-
-    @Override
-    public ResourceLocation getRegistryName() {
-        return ArsZero.prefix(ID);
     }
 }

@@ -1,0 +1,18 @@
+{
+  "effect_push": {
+    "sounds": [
+      {
+        "name": "ars_zero:effect_push",
+        "stream": false
+      }
+    ]
+  },
+  "effect_anchor": {
+    "sounds": [
+      {
+        "name": "ars_zero:effect_anchor",
+        "stream": false
+      }
+    ]
+  }
+}

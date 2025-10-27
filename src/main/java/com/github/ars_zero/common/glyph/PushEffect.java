@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.registry.ModSounds;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -11,7 +12,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
@@ -28,7 +29,7 @@ public class PushEffect extends AbstractEffect {
     public static final PushEffect INSTANCE = new PushEffect();
 
     public PushEffect() {
-        super(ID, "Push");
+        super(ArsZero.prefix(ID), "Push");
     }
 
     @Override
@@ -50,6 +51,9 @@ public class PushEffect extends AbstractEffect {
         target.setDeltaMovement(velocity);
         target.hurtMarked = true;
         target.fallDistance = 0.0f;
+        
+        float pitch = 0.95f + (world.random.nextFloat() * 0.1f);
+        world.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(), ModSounds.EFFECT_PUSH.get(), SoundSource.NEUTRAL, 1.0f, pitch);
     }
 
     @Override
@@ -84,11 +88,6 @@ public class PushEffect extends AbstractEffect {
     @Override
     public Set<SpellSchool> getSchools() {
         return Set.of(SpellSchools.ELEMENTAL_AIR);
-    }
-
-    @Override
-    public ResourceLocation getRegistryName() {
-        return ArsZero.prefix(ID);
     }
 }
 

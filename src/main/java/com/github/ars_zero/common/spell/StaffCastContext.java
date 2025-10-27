@@ -21,6 +21,8 @@ public class StaffCastContext {
     public final List<SpellResult> endResults = new ArrayList<>();
     public long createdAt = System.currentTimeMillis();
     
+    public double distanceMultiplier = 1.0;
+    
     public StaffCastContext(UUID playerId) {
         this.castId = UUID.randomUUID();
         this.playerId = playerId;

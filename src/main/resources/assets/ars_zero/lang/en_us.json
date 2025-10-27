@@ -6,9 +6,13 @@
   "block.ars_zero.fire_voxel_spawner": "Fire Voxel Spawner",
   "block.ars_zero.water_voxel_spawner": "Water Voxel Spawner",
   
+  "entity.ars_zero.arcane_voxel_entity": "Arcane Voxel",
+  "entity.ars_zero.water_voxel_entity": "Water Voxel",
+  "entity.ars_zero.fire_voxel_entity": "Fire Voxel",
+  
   "gui.ars_zero.staff_title": "Creative Spell Staff",
   "gui.ars_zero.phase.begin": "Begin",
-  "gui.ars_zero.phase.tick": "Tick", 
+  "gui.ars_zero.phase.tick": "Tick",
   "gui.ars_zero.phase.end": "End",
   "gui.ars_zero.current_phase": "Current Phase: %s",
   
@@ -16,41 +20,21 @@
   
   "itemGroup.ars_zero": "Ars Zero",
   
-  "ars_zero.glyph_name.glyph_conjure_voxel_effect": "Conjure Voxel",
-  "ars_zero.glyph_desc.glyph_conjure_voxel_effect": "Conjures a small voxel entity that persists for a duration. The voxel is a quarter the size of a normal block and does not collide with anything. Can be augmented with AOE, Pierce, Extend Time, and Sensitive.",
+  "ars_zero.glyph_name.conjure_voxel_effect": "Conjure Voxel",
+  "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity",
   
-  "ars_zero.glyph_name.glyph_temporal_context_form": "Temporal Context Form",
-  "ars_zero.glyph_desc.glyph_temporal_context_form": "A cast method that provides access to context from previous staff phases. When used in Tick or End phases, it will target the entity or block that was stored in the temporal context from previous phases.",
-  
-  "ars_zero.glyph_name.glyph_translate_effect": "Translate",
-  "ars_zero.glyph_desc.glyph_translate_effect": "Maintains the relative position of a target entity to the caster. The entity will follow the caster's movement and rotation, staying in the same relative position. Duration can be extended with augments.",
-  
-  "ars_nouveau.glyph_name.temporal_context_form": "Temporal Context",
-  "ars_nouveau.glyph_desc.temporal_context_form": "A cast method that provides access to context from previous staff phases. When used in Tick or End phases, it will target the entity or block that was stored in the temporal context from previous phases.",
-  
-  "ars_nouveau.glyph_name.near_form": "Near",
-  "ars_nouveau.glyph_desc.near_form": "Casts the spell at a short distance in front of you (1 block by default). Perfect for conjuring entities or blocks without needing to aim at something. Distance can be adjusted with Amplify/Dampen.",
-  
-  "ars_nouveau.augment_desc.near_form_amplify": "Increases the cast distance",
-  "ars_nouveau.augment_desc.near_form_dampen": "Decreases the cast distance",
-  
-  "ars_nouveau.glyph_name.translate_effect": "Translate",
-  "ars_nouveau.glyph_desc.translate_effect": "When used with Temporal Context Form in TICK phase, keeps the target entity locked to the same position on your screen. The entity will follow your look direction and movement.",
-  
-  "ars_nouveau.augment_desc.translate_effect_amplify": "Increases the distance from the player",
-  "ars_nouveau.augment_desc.translate_effect_dampen": "Decreases the distance from the player",
-  
-  "ars_nouveau.glyph_name.push_effect": "Push",
-  "ars_nouveau.glyph_desc.push_effect": "Pushes the target entity in the direction you're looking. Unlike Knockback, this respects your full look direction including up and down. Perfect for launching entities carried with Translate.",
-  
-  "ars_nouveau.augment_desc.push_effect_amplify": "Increases the push strength",
-  "ars_nouveau.augment_desc.push_effect_dampen": "Decreases the push strength",
-  
-  "ars_nouveau.glyph_name.enlarge_effect": "Enlarge",
-  "ars_nouveau.glyph_desc.enlarge_effect": "Gradually enlarges the target entity over time. Works best with Voxel entities when used with Temporal Context Form in the TICK phase. The entity grows by 0.5% per tick by default, with a maximum size of 16 blocks.",
-  
-  "ars_nouveau.augment_desc.enlarge_effect_amplify": "Increases the growth rate",
-  "ars_nouveau.augment_desc.enlarge_effect_dampen": "Decreases the growth rate",
-  
-  "ars_nouveau.augment_desc.select_effect_sensitive": "Only selects entities, ignoring blocks"
+  "ars_zero.glyph_name.temporal_context_form": "Temporal Context",
+  "ars_zero.glyph_desc.temporal_context_form": "A cast method that provides access to the context of the previous spell phase (Staff only)",
+
+  "ars_zero.glyph_name.near_form": "Near",
+  "ars_zero.glyph_desc.near_form": "Casts the spell at a short distance in front of your gaze",
+
+  "ars_zero.glyph_name.translate_effect": "Anchor",
+  "ars_zero.glyph_desc.translate_effect": "Maintains the relative position of a target entity to the caster",
+
+  "ars_zero.glyph_name.push_effect": "Push",
+  "ars_zero.glyph_desc.push_effect": "Pushes the target entity in the direction you're looking.",
+
+  "ars_zero.glyph_name.enlarge_effect": "Enlarge",
+  "ars_zero.glyph_desc.enlarge_effect": "Increases the size of the target entity [NB: only works on Voxels so far]"
 }

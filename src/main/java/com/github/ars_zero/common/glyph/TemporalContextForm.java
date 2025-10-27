@@ -9,7 +9,6 @@ import com.hollingsworth.arsnouveau.api.spell.CastResolveType;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -46,7 +45,7 @@ public class TemporalContextForm extends AbstractCastMethod {
     public static final TemporalContextForm INSTANCE = new TemporalContextForm();
 
     public TemporalContextForm() {
-        super(ID, "Temporal Context Form");
+        super(ArsZero.prefix(ID), "Temporal Context Form");
     }
 
     @Override
@@ -136,10 +135,5 @@ public class TemporalContextForm extends AbstractCastMethod {
     @Override
     public String getBookDescription() {
         return "A form that acts as a marker for temporal context usage. When used in Tick or End phases, it will target the entity or block that was stored in the temporal context from previous phases.";
-    }
-
-    @Override
-    public ResourceLocation getRegistryName() {
-        return ArsZero.prefix(ID);
     }
 }
