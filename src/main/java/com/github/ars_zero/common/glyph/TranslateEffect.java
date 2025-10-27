@@ -53,37 +53,32 @@ public class TranslateEffect extends AbstractEffect {
             return;
         }
         
-        
-        SpellResult beginResult = staffContext.beginResults.get(0);
-        Entity target = beginResult.targetEntity;
-        
-        com.github.ars_zero.ArsZero.LOGGER.info("TranslateEffect targeting: {}, type: {}", 
-            target != null ? target.getName().getString() : "null", 
-            target != null ? target.getClass().getSimpleName() : "null");
-        
-        if (target == null || !target.isAlive()) {
-            return;
-        }
-        
-        
-        if (beginResult.relativeOffset == null) {
-            return;
-        }
-        
-        Vec3 newPosition = beginResult.transformLocalToWorld(
-            player.getYRot(), 
-            player.getXRot(), 
-            player.getEyePosition(1.0f)
-        );
-        
-        if (newPosition != null) {
-            if (canMoveToPosition(newPosition, world)) {
-                target.setPos(newPosition.x, newPosition.y, newPosition.z);
-                target.setDeltaMovement(Vec3.ZERO);
-                target.setNoGravity(true);
-                
-                if (target instanceof com.github.ars_zero.common.entity.BaseVoxelEntity voxel) {
-                    voxel.freezePhysics();
+        for (SpellResult beginResult : staffContext.beginResults) {
+            Entity target = beginResult.targetEntity;
+            
+            if (target == null || !target.isAlive()) {
+                continue;
+            }
+            
+            if (beginResult.relativeOffset == null) {
+                continue;
+            }
+            
+            Vec3 newPosition = beginResult.transformLocalToWorld(
+                player.getYRot(), 
+                player.getXRot(), 
+                player.getEyePosition(1.0f)
+            );
+            
+            if (newPosition != null) {
+                if (canMoveToPosition(newPosition, world)) {
+                    target.setPos(newPosition.x, newPosition.y, newPosition.z);
+                    target.setDeltaMovement(Vec3.ZERO);
+                    target.setNoGravity(true);
+                    
+                    if (target instanceof com.github.ars_zero.common.entity.BaseVoxelEntity voxel) {
+                        voxel.freezePhysics();
+                    }
                 }
             }
         }
@@ -100,12 +95,13 @@ public class TranslateEffect extends AbstractEffect {
             return;
         }
         
-        SpellResult beginResult = context.beginResults.get(0);
-        Entity target = beginResult.targetEntity;
-        
-        if (target != null && target.isAlive()) {
-            target.noPhysics = false;
-            target.setNoGravity(false);
+        for (SpellResult beginResult : context.beginResults) {
+            Entity target = beginResult.targetEntity;
+            
+            if (target != null && target.isAlive()) {
+                target.noPhysics = false;
+                target.setNoGravity(false);
+            }
         }
     }
 

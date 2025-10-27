@@ -107,34 +107,35 @@ public class ConjureVoxelEffect extends AbstractEffect {
         
         int entityCount;
         float size;
+        double circleRadius;
         
         switch (actualSplitLevel) {
             case 1:
                 entityCount = 3;
-                size = 0.1875f; // 3x3x3 pixels (3/16 of a block)
+                size = 0.1875f;
+                circleRadius = 0.3;
                 break;
             case 2:
                 entityCount = 5;
-                size = 0.125f; // 2x2x2 pixels (2/16 of a block)
+                size = 0.125f;
+                circleRadius = 0.5;
                 break;
             case 3:
                 entityCount = 7;
-                size = 0.0625f; // 1x1x1 pixels (1/16 of a block)
+                size = 0.0625f;
+                circleRadius = 0.7;
                 break;
             default:
                 entityCount = 1;
-                size = 0.25f; // 4x4x4 pixels (4/16 of a block)
+                size = 0.25f;
+                circleRadius = 0.0;
                 break;
         }
         
         java.util.List<BaseVoxelEntity> createdVoxels = new java.util.ArrayList<>();
         
-        for (int i = 0; i < entityCount; i++) {
-            double offsetX = (level.random.nextDouble() - 0.5) * 0.5;
-            double offsetY = (level.random.nextDouble() - 0.5) * 0.5;
-            double offsetZ = (level.random.nextDouble() - 0.5) * 0.5;
-            
-            BaseVoxelEntity voxel = createVoxel(level, x + offsetX, y + offsetY, z + offsetZ, duration, context);
+        if (entityCount == 1) {
+            BaseVoxelEntity voxel = createVoxel(level, x, y, z, duration, context);
             voxel.setSize(size);
             voxel.refreshDimensions();
             
@@ -150,6 +151,43 @@ public class ConjureVoxelEffect extends AbstractEffect {
             
             level.addFreshEntity(voxel);
             createdVoxels.add(voxel);
+        } else {
+            Vec3 lookDir = shooter.getLookAngle().normalize();
+            
+            Vec3 right;
+            if (Math.abs(lookDir.y) < 0.99) {
+                Vec3 up = new Vec3(0, 1, 0);
+                right = lookDir.cross(up).normalize();
+            } else {
+                Vec3 forward = new Vec3(0, 0, 1);
+                right = lookDir.cross(forward).normalize();
+            }
+            Vec3 up = right.cross(lookDir).normalize();
+            
+            for (int i = 0; i < entityCount; i++) {
+                double angle = (2.0 * Math.PI * i) / entityCount;
+                double offsetRight = Math.cos(angle) * circleRadius;
+                double offsetUp = Math.sin(angle) * circleRadius;
+                
+                Vec3 offset = right.scale(offsetRight).add(up.scale(offsetUp));
+                
+                BaseVoxelEntity voxel = createVoxel(level, x + offset.x, y + offset.y, z + offset.z, duration, context);
+                voxel.setSize(size);
+                voxel.refreshDimensions();
+                
+                SpellContext newContext = context.makeChildContext();
+                context.setCanceled(true);
+                
+                voxel.setCaster(shooter);
+                voxel.setResolver(resolver.getNewResolver(newContext));
+                
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
+                    voxel.setNoGravityCustom(true);
+                }
+                
+                level.addFreshEntity(voxel);
+                createdVoxels.add(voxel);
+            }
         }
         
         updateTemporalContextMultiple(shooter, createdVoxels);
@@ -234,9 +272,10 @@ public class ConjureVoxelEffect extends AbstractEffect {
         }
         
         if (!context.beginResults.isEmpty()) {
-            SpellResult oldResult = context.beginResults.get(0);
-            if (oldResult.targetEntity instanceof ArcaneVoxelEntity oldVoxel && oldVoxel.isAlive()) {
-                oldVoxel.discard();
+            for (SpellResult oldResult : context.beginResults) {
+                if (oldResult.targetEntity instanceof BaseVoxelEntity oldVoxel && oldVoxel.isAlive()) {
+                    oldVoxel.discard();
+                }
             }
         }
         
