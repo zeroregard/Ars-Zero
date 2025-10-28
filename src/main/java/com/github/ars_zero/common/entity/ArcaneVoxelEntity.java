@@ -13,10 +13,8 @@ import org.joml.Vector3f;
 
 public class ArcaneVoxelEntity extends BaseVoxelEntity implements CompressibleEntity {
     
-    private static final int COLOR = 0x8A2BE2;
+    private static final int COLOR = 0xAA8A2BE2;
     
-    private float compressionLevel = 0.0f;
-    private float emissiveIntensity = 0.0f;
     private boolean damageEnabled = false;
     
     public ArcaneVoxelEntity(EntityType<? extends ArcaneVoxelEntity> entityType, Level level) {
@@ -36,7 +34,7 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity implements CompressibleEn
     
     @Override
     public boolean isEmissive() {
-        return true;
+        return this.getCompressionLevel() > 0.5f;
     }
     
     protected SoundEvent getSpawnSound() {
@@ -73,22 +71,26 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity implements CompressibleEn
     
     @Override
     public void setCompressionLevel(float compressionLevel) {
-        this.compressionLevel = compressionLevel;
+        if (this.level() != null && !this.level().isClientSide) {
+            this.entityData.set(BaseVoxelEntity.COMPRESSION_LEVEL, compressionLevel);
+        }
     }
     
     @Override
     public float getCompressionLevel() {
-        return this.compressionLevel;
+        return this.entityData.get(BaseVoxelEntity.COMPRESSION_LEVEL);
     }
     
     @Override
     public void setEmissiveIntensity(float intensity) {
-        this.emissiveIntensity = intensity;
+        if (this.level() != null && !this.level().isClientSide) {
+            this.entityData.set(BaseVoxelEntity.EMISSIVE_INTENSITY, intensity);
+        }
     }
     
     @Override
     public float getEmissiveIntensity() {
-        return this.emissiveIntensity;
+        return this.entityData.get(BaseVoxelEntity.EMISSIVE_INTENSITY);
     }
     
     @Override

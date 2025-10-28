@@ -65,7 +65,15 @@ public class CompressionEffect extends AbstractEffect {
                 return;
             }
             
+            float distanceToMin = currentSize - minSize;
+            float totalDistance = baseSize - minSize;
+            float progressRatio = distanceToMin / totalDistance;
+            
             float compressionRate = COMPRESSION_RATE + ((float)spellStats.getAmpMultiplier() * 0.01f);
+            
+            float easeOut = 1.0f - (progressRatio * progressRatio);
+            compressionRate *= (0.1f + 0.9f * easeOut);
+            
             float newSize = currentSize * (1.0f - compressionRate);
             
             if (newSize < minSize) {
@@ -73,7 +81,7 @@ public class CompressionEffect extends AbstractEffect {
             }
             
             float compressionLevel = 1.0f - (newSize / baseSize);
-            compressionLevel = Math.min(compressionLevel, MAX_COMPRESSION);
+            compressionLevel = Math.min(compressionLevel, 1.0f);
             
             ArsZero.LOGGER.info("CompressionEffect: Setting size from {} to {} (base: {}, compression level: {})", currentSize, newSize, baseSize, compressionLevel);
             
@@ -81,7 +89,10 @@ public class CompressionEffect extends AbstractEffect {
             voxel.refreshDimensions();
             
             if (voxel instanceof com.github.ars_zero.common.entity.ArcaneVoxelEntity arcaneVoxel) {
+                ArsZero.LOGGER.info("CompressionEffect: Updating compression state, level: {}", compressionLevel);
                 updateCompressionState(arcaneVoxel, compressionLevel);
+                ArsZero.LOGGER.info("CompressionEffect: After update, getCompressionLevel(): {}, getEmissiveIntensity(): {}", 
+                    arcaneVoxel.getCompressionLevel(), arcaneVoxel.getEmissiveIntensity());
             }
         }
     }

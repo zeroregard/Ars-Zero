@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class WaterVoxelEntity extends BaseVoxelEntity {
     
-    private static final int COLOR = 0x3F76E4;
+    private static final int COLOR = 0xAA3F76E4;
     
     public WaterVoxelEntity(EntityType<? extends WaterVoxelEntity> entityType, Level level) {
         super(entityType, level);

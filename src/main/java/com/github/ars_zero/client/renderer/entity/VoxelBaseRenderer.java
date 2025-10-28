@@ -17,13 +17,6 @@ public class VoxelBaseRenderer<T extends BaseVoxelEntity> extends GeoEntityRende
     }
     
     @Override
-    public RenderType getRenderType(T animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-        return animatable.isEmissive()
-            ? RenderType.entityTranslucentEmissive(texture, false)
-            : RenderType.entityTranslucent(texture);
-    }
-    
-    @Override
     public void preRender(PoseStack poseStack, T animatable, BakedGeoModel model, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int color) {
         float size = animatable.getSize();
         float scale = size / 0.25f;
@@ -33,22 +26,18 @@ public class VoxelBaseRenderer<T extends BaseVoxelEntity> extends GeoEntityRende
     
     @Override
     public void actuallyRender(PoseStack poseStack, T animatable, BakedGeoModel model, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int color) {
-        int entityColor = animatable.getColor();
-        int alpha = 128;
+        int finalColor;
+        int finalLight;
         
-        if (animatable instanceof com.github.ars_zero.common.entity.CompressibleEntity compressible) {
-            float compressionLevel = compressible.getCompressionLevel();
-            float emissiveIntensity = compressible.getEmissiveIntensity();
-            
-            alpha = (int) (128 + 127 * compressionLevel);
-            
-            if (emissiveIntensity > 0.5f) {
-                alpha = 255;
-            }
+        if (animatable instanceof com.github.ars_zero.common.entity.CompressibleEntity compressible && compressible.getCompressionLevel() > 0.5f) {
+            finalColor = 0xFFFFFFFF;
+            finalLight = 15728880;
+        } else {
+            int entityColor = animatable.getColor();
+            finalColor = entityColor;
+            finalLight = packedLight;
         }
         
-        int finalColor = entityColor | (alpha << 24);
-        
-        super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, finalColor);
+        super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer, isReRender, partialTick, finalLight, packedOverlay, finalColor);
     }
 }

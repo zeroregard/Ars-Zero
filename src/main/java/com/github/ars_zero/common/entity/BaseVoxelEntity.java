@@ -33,13 +33,15 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
-    private static final EntityDataAccessor<Integer> LIFETIME = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> SIZE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Float> BASE_SIZE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Long> FROZEN_UNTIL_TICK = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.LONG);
-    private static final EntityDataAccessor<Boolean> PICKABLE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> SPAWNER_OWNED = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> NO_GRAVITY_CUSTOM = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.BOOLEAN);
+    protected static final EntityDataAccessor<Integer> LIFETIME = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.INT);
+    protected static final EntityDataAccessor<Float> SIZE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.FLOAT);
+    protected static final EntityDataAccessor<Float> BASE_SIZE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.FLOAT);
+    protected static final EntityDataAccessor<Long> FROZEN_UNTIL_TICK = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.LONG);
+    protected static final EntityDataAccessor<Boolean> PICKABLE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.BOOLEAN);
+    protected static final EntityDataAccessor<Boolean> SPAWNER_OWNED = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.BOOLEAN);
+    protected static final EntityDataAccessor<Boolean> NO_GRAVITY_CUSTOM = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.BOOLEAN);
+    protected static final EntityDataAccessor<Float> COMPRESSION_LEVEL = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.FLOAT);
+    protected static final EntityDataAccessor<Float> EMISSIVE_INTENSITY = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.FLOAT);
     
     protected int age = 0;
     protected SpellResolver resolver;
@@ -64,6 +66,8 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         pBuilder.define(PICKABLE, true);
         pBuilder.define(SPAWNER_OWNED, false);
         pBuilder.define(NO_GRAVITY_CUSTOM, false);
+        pBuilder.define(COMPRESSION_LEVEL, 0.0f);
+        pBuilder.define(EMISSIVE_INTENSITY, 0.0f);
     }
     
     @Override

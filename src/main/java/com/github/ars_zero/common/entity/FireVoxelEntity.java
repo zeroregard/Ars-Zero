@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class FireVoxelEntity extends BaseVoxelEntity {
     
-    private static final int COLOR = 0xFF6A00;
+    private static final int COLOR = 0xAAFF6A00;
     
     public FireVoxelEntity(EntityType<? extends FireVoxelEntity> entityType, Level level) {
         super(entityType, level);

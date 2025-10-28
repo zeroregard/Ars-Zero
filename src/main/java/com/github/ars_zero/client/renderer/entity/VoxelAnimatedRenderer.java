@@ -17,25 +17,43 @@ public class VoxelAnimatedRenderer<T extends BaseVoxelEntity> extends VoxelBaseR
     
     @Override
     public RenderType getRenderType(T animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
+        float compressionLevel = 0.0f;
+        float emissiveIntensity = 0.0f;
+        
+        if (animatable instanceof com.github.ars_zero.common.entity.CompressibleEntity compressible) {
+            compressionLevel = compressible.getCompressionLevel();
+            emissiveIntensity = compressible.getEmissiveIntensity();
+        }
+        
+        boolean isEmissive = compressionLevel > 0.5f;
+        
+        System.out.println("=== VoxelAnimatedRenderer.getRenderType ===");
+        System.out.println("Compression: " + compressionLevel + ", Emissive: " + emissiveIntensity);
+        System.out.println("Is Emissive: " + isEmissive);
+        System.out.println("Entity isEmissive(): " + animatable.isEmissive());
+        System.out.println("Texture: " + texture);
+        
+        RenderType renderType = ArsZeroRenderTypes.animatedVoxel(texture, isEmissive);
+        System.out.println("RenderType: " + renderType);
+        
         var shader = ArsZeroShaders.ANIMATED_VOXEL;
+        System.out.println("Shader: " + shader);
+        
         if (shader != null && Minecraft.getInstance().level != null) {
-            shader.apply();
             float time = (Minecraft.getInstance().level.getGameTime() + partialTick) / 20.0f;
             var timeUniform = shader.getUniform("Time");
             if (timeUniform != null) {
                 timeUniform.set(time);
             }
             
-            if (animatable instanceof com.github.ars_zero.common.entity.CompressibleEntity compressible) {
-                var compressionUniform = shader.getUniform("CompressionLevel");
-                if (compressionUniform != null) {
-                    compressionUniform.set(compressible.getCompressionLevel());
-                }
-                
-                var emissiveUniform = shader.getUniform("EmissiveIntensity");
-                if (emissiveUniform != null) {
-                    emissiveUniform.set(compressible.getEmissiveIntensity());
-                }
+            var compressionUniform = shader.getUniform("CompressionLevel");
+            if (compressionUniform != null) {
+                compressionUniform.set(compressionLevel);
+            }
+            
+            var emissiveUniform = shader.getUniform("EmissiveIntensity");
+            if (emissiveUniform != null) {
+                emissiveUniform.set(emissiveIntensity);
             }
             
             float size = animatable.getSize();
@@ -44,8 +62,10 @@ public class VoxelAnimatedRenderer<T extends BaseVoxelEntity> extends VoxelBaseR
             if (scaleUniform != null) {
                 scaleUniform.set(scale);
             }
+        } else {
+            System.out.println("WARNING: Shader is null or level is null!");
         }
         
-        return ArsZeroRenderTypes.animatedVoxel(texture);
+        return renderType;
     }
 }
