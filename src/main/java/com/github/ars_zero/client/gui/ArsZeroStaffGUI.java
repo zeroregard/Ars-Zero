@@ -1,32 +1,24 @@
 package com.github.ars_zero.client.gui;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.ArsZeroStaff;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
-import com.hollingsworth.arsnouveau.api.sound.ConfiguredSpellSound;
-import net.minecraft.resources.ResourceLocation;
 import com.hollingsworth.arsnouveau.api.spell.*;
 import com.hollingsworth.arsnouveau.client.gui.book.SpellSlottedScreen;
 import com.hollingsworth.arsnouveau.client.gui.buttons.ClearButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.CreateSpellButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.CraftingButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.GlyphButton;
-import com.hollingsworth.arsnouveau.client.gui.buttons.GuiImageButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.GuiSpellSlot;
 import com.hollingsworth.arsnouveau.client.gui.SearchBar;
-import com.hollingsworth.arsnouveau.api.documentation.DocAssets;
 import com.hollingsworth.arsnouveau.client.gui.book.EnterTextField;
 import com.hollingsworth.arsnouveau.common.network.Networking;
 import com.hollingsworth.arsnouveau.common.network.PacketUpdateCaster;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.PageButton;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -291,28 +283,6 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     private void addLeftSideTabs() {
-        // Add left side tabs like the spellbook
-        addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 22, DocAssets.DOCUMENTATION_TAB, this::onDocumentationClick)
-                .withTooltip(Component.translatable("ars_nouveau.gui.notebook")));
-
-addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 44, DocAssets.SPELL_STYLE_TAB, (b) -> {
-            openSoundScreen();
-        }).withTooltip(Component.translatable("ars_nouveau.gui.spell_style")));
-
-        addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 68, DocAssets.FAMILIAR_TAB, this::onFamiliarClick)
-                .withTooltip(Component.translatable("ars_nouveau.gui.familiar")));
-
-        addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 92, DocAssets.SETTINGS_TAB, (b) -> {
-            // TODO: Implement settings screen
-        }).withTooltip(Component.translatable("ars_nouveau.gui.settings")));
-
-        addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 116, DocAssets.DISCORD_TAB, (b) -> {
-            try {
-                java.net.URI.create("https://discord.com/invite/y7TMXZu").toURL().openStream().close();
-            } catch (Exception e) {
-                // Ignore
-            }
-        }).withTooltip(Component.translatable("ars_nouveau.gui.discord")));
     }
 
     private void selectPhase(StaffPhase phase) {
@@ -658,32 +628,6 @@ addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 44, DocAssets.SP
         buttons.clear();
     }
 
-    // Event handlers for left side tabs
-    private void onDocumentationClick(Button button) {
-        // For now, just show a message - can be implemented later
-        ArsZero.LOGGER.info("Documentation button clicked - feature coming soon");
-    }
-
-    private void onFamiliarClick(Button button) {
-        ArsZero.LOGGER.info("Familiar button clicked - feature coming soon");
-    }
-    
-    private void openSoundScreen() {
-        Player player = Minecraft.getInstance().player;
-        if (player == null) return;
-        
-        ItemStack stack = player.getMainHandItem();
-        if (!(stack.getItem() instanceof ArsZeroStaff)) {
-            stack = player.getOffhandItem();
-        }
-        
-        ConfiguredSpellSound beginSound = ArsZeroStaff.getBeginSound(stack);
-        ConfiguredSpellSound tickSound = ArsZeroStaff.getTickSound(stack);
-        ConfiguredSpellSound endSound = ArsZeroStaff.getEndSound(stack);
-        ResourceLocation tickLooping = ArsZeroStaff.getTickLoopingSound(stack);
-        
-        Minecraft.getInstance().setScreen(new StaffSoundScreen(beginSound, tickSound, endSound, tickLooping, hand, (Screen) this));
-    }
 
     @Override
     public void drawBackgroundElements(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {

@@ -33,7 +33,7 @@ public class SelectEffect extends AbstractEffect {
     public static final SelectEffect INSTANCE = new SelectEffect();
 
     public SelectEffect() {
-        super(ID, "Select");
+        super(ArsZero.prefix(ID), "Select");
     }
 
     @Override
@@ -103,11 +103,6 @@ public class SelectEffect extends AbstractEffect {
     @Override
     public Set<SpellSchool> getSchools() {
         return setOf(SpellSchools.MANIPULATION);
-    }
-
-    @Override
-    public ResourceLocation getRegistryName() {
-        return ArsZero.prefix(ID);
     }
 
     @Override

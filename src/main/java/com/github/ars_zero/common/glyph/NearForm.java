@@ -9,7 +9,6 @@ import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -36,7 +35,7 @@ public class NearForm extends AbstractCastMethod {
     public static final NearForm INSTANCE = new NearForm();
 
     public NearForm() {
-        super(ID, "Near");
+        super(ArsZero.prefix(ID), "Near");
     }
 
     @Override
@@ -98,11 +97,6 @@ public class NearForm extends AbstractCastMethod {
     @Override
     public String getBookDescription() {
         return "Casts the spell at a short distance in front of you (1 block by default). Perfect for conjuring entities or blocks in front of you without needing to aim at something. Distance can be adjusted with Amplify/Dampen.";
-    }
-
-    @Override
-    public ResourceLocation getRegistryName() {
-        return ArsZero.prefix(ID);
     }
 }
 

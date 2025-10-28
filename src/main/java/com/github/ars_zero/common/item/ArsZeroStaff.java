@@ -3,7 +3,9 @@ package com.github.ars_zero.common.item;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
+import com.github.ars_zero.common.glyph.TranslateEffect;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
+import com.github.ars_zero.registry.ModSounds;
 import com.github.ars_zero.common.network.PacketSetStaffSlot;
 import com.github.ars_zero.common.spell.CastPhase;
 import com.github.ars_zero.common.spell.StaffCastContext;
@@ -34,8 +36,6 @@ import com.hollingsworth.arsnouveau.client.gui.radial_menu.RadialMenuSlot;
 import com.hollingsworth.arsnouveau.client.gui.radial_menu.SecondaryIconPosition;
 import com.hollingsworth.arsnouveau.client.gui.utils.RenderUtils;
 import com.hollingsworth.arsnouveau.api.sound.ConfiguredSpellSound;
-import com.hollingsworth.arsnouveau.common.network.Networking;
-import com.hollingsworth.arsnouveau.common.network.PacketSetCasterSlot;
 import com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -43,11 +43,10 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -72,9 +71,6 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, GeoItem {
     
@@ -204,8 +200,6 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         return radialMenuSlots;
     }
 
-    // ICasterTool implementation - getSpellCaster is handled by SpellCasterRegistry registration
-
 
     private void beginPhase(Player player, ItemStack stack) {
         StaffCastContext context = getOrCreateContext(player);
@@ -220,7 +214,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         context.tickResults.clear();
         context.endResults.clear();
         
-        playPhaseSound(player, stack, StaffPhase.BEGIN);
+        // playPhaseSound(player, stack, StaffPhase.BEGIN);
         executeSpell(player, stack, StaffPhase.BEGIN);
         
         if (player instanceof ServerPlayer serverPlayer) {
@@ -238,8 +232,18 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         context.tickCount++;
         context.sequenceTick++;
         
-        if (context.tickCount % 20 == 0) {
-            playPhaseSound(player, stack, StaffPhase.TICK);
+        AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
+        if (caster != null) {
+            int currentLogicalSlot = caster.getCurrentSlot();
+            if (currentLogicalSlot >= 0 && currentLogicalSlot < 10) {
+                int physicalSlot = currentLogicalSlot * 3 + StaffPhase.TICK.ordinal();
+                Spell spell = caster.getSpell(physicalSlot);
+                
+                if (hasTranslateEffect(spell) && context.tickCount % 5 == 0) {
+                    player.level().playSound(null, player.getX(), player.getY(), player.getZ(), 
+                        ModSounds.EFFECT_ANCHOR.get(), SoundSource.NEUTRAL, 1.0f, 1.0f);
+                }
+            }
         }
         
         executeSpell(player, stack, StaffPhase.TICK);
@@ -260,7 +264,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         
         com.github.ars_zero.common.glyph.TranslateEffect.restoreEntityPhysics(context);
         
-        playPhaseSound(player, stack, StaffPhase.END);
+        // playPhaseSound(player, stack, StaffPhase.END);
         executeSpell(player, stack, StaffPhase.END);
         
         if (player instanceof ServerPlayer serverPlayer) {
@@ -393,9 +397,9 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         tag.putString("endSound", endSound.getSound() != null ? endSound.getSound().getId().toString() : "");
         tag.putFloat("endVolume", endSound.getVolume());
         tag.putFloat("endPitch", endSound.getPitch());
-        if (tickLoopingSound != null) {
-            tag.putString("tickLooping", tickLoopingSound.toString());
-        }
+        // if (tickLoopingSound != null) {
+        //     tag.putString("tickLooping", tickLoopingSound.toString());
+        // }
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
     
@@ -445,11 +449,12 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     }
     
     public static ResourceLocation getTickLoopingSound(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        if (data == null) return null;
-        CompoundTag tag = data.copyTag();
-        if (!tag.contains("tickLooping")) return null;
-        return ResourceLocation.parse(tag.getString("tickLooping"));
+        // CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        // if (data == null) return null;
+        // CompoundTag tag = data.copyTag();
+        // if (!tag.contains("tickLooping")) return null;
+        // return ResourceLocation.parse(tag.getString("tickLooping"));
+        return null;
     }
     
     
@@ -459,8 +464,18 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     private boolean isTemporalContextFormSpell(Spell spell) {
         if (spell.isEmpty()) return false;
         
-        // Check if the first glyph in the spell is TemporalContextForm
         return spell.recipe().iterator().next() instanceof TemporalContextForm;
+    }
+    
+    private boolean hasTranslateEffect(Spell spell) {
+        if (spell.isEmpty()) return false;
+        
+        for (AbstractSpellPart part : spell.recipe()) {
+            if (part instanceof TranslateEffect) {
+                return true;
+            }
+        }
+        return false;
     }
     
 
@@ -527,26 +542,22 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         PacketDistributor.sendToPlayer(player, packet);
     }
     
-    private void playPhaseSound(Player player, ItemStack stack, StaffPhase phase) {
-        ConfiguredSpellSound sound = switch (phase) {
-            case BEGIN -> getBeginSound(stack);
-            case TICK -> getTickSound(stack);
-            case END -> getEndSound(stack);
-        };
-        
-        if (phase == StaffPhase.TICK) {
-            ResourceLocation loopingSound = getTickLoopingSound(stack);
-            if (loopingSound != null) {
-                SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(loopingSound);
-                player.level().playSound(null, player.blockPosition(), soundEvent, SoundSource.PLAYERS, sound.getVolume(), sound.getPitch());
-                return;
-            }
-        }
-        
-        if (sound != ConfiguredSpellSound.EMPTY && sound.getSound() != null) {
-            player.level().playSound(null, player.blockPosition(), sound.getSound().getSoundEvent().value(), SoundSource.PLAYERS, sound.getVolume(), sound.getPitch());
-        }
-    }
+    // private void playPhaseSound(Player player, ItemStack stack, StaffPhase phase) {
+    //     switch (phase) {
+    //         case BEGIN -> {
+    //             player.level().playSound(null, player.blockPosition(), 
+    //                 net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 
+    //                 SoundSource.PLAYERS, 0.5f, 0.8f);
+    //         }
+    //         case END -> {
+    //             player.level().playSound(null, player.blockPosition(), 
+    //                 net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 
+    //                 SoundSource.PLAYERS, 0.5f, 1.2f);
+    //         }
+    //         case TICK -> {
+    //         }
+    //     }
+    // }
 
     // GeckoLib implementation
     @Override

@@ -36,7 +36,7 @@ public class VoxelBaseRenderer<T extends BaseVoxelEntity> extends GeoEntityRende
         int entityColor = animatable.getColor();
         int alpha = 128;
         
-        if (animatable instanceof com.github.ars_zero.common.entity.CompressibleVoxelEntity compressible) {
+        if (animatable instanceof com.github.ars_zero.common.entity.CompressibleEntity compressible) {
             float compressionLevel = compressible.getCompressionLevel();
             float emissiveIntensity = compressible.getEmissiveIntensity();
             

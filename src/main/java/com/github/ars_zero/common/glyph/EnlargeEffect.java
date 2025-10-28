@@ -12,7 +12,6 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
@@ -29,7 +28,7 @@ public class EnlargeEffect extends AbstractEffect {
     public static final EnlargeEffect INSTANCE = new EnlargeEffect();
 
     public EnlargeEffect() {
-        super(ID, "Enlarge");
+        super(ArsZero.prefix(ID), "Enlarge");
     }
 
     @Override
@@ -52,7 +51,7 @@ public class EnlargeEffect extends AbstractEffect {
                 newSize = maxSize;
             }
             
-            voxel.setSize(newSize);
+            voxel.setSizeOnly(newSize);
             voxel.refreshDimensions();
         }
     }
@@ -94,11 +93,6 @@ public class EnlargeEffect extends AbstractEffect {
     @Override
     public Set<SpellSchool> getSchools() {
         return Set.of(SpellSchools.MANIPULATION);
-    }
-
-    @Override
-    public ResourceLocation getRegistryName() {
-        return ArsZero.prefix(ID);
     }
 }
 

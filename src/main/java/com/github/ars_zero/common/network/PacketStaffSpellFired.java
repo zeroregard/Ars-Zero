@@ -2,7 +2,9 @@ package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.common.item.ArsZeroStaff;
 import com.github.ars_zero.client.renderer.StaffDebugHUD;
+import com.github.ars_zero.client.sound.StaffSoundManager;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -28,6 +30,15 @@ public record PacketStaffSpellFired(int phaseOrdinal) implements CustomPacketPay
         context.enqueueWork(() -> {
             ArsZeroStaff.StaffPhase phase = ArsZeroStaff.StaffPhase.values()[packet.phaseOrdinal];
             StaffDebugHUD.onSpellFired(phase);
+            
+            var player = Minecraft.getInstance().player;
+            if (player != null) {
+                if (phase == ArsZeroStaff.StaffPhase.BEGIN) {
+                    StaffSoundManager.startLoopingSound(player);
+                } else if (phase == ArsZeroStaff.StaffPhase.END) {
+                    StaffSoundManager.stopLoopingSound();
+                }
+            }
         });
     }
 }

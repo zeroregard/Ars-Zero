@@ -13,6 +13,7 @@ uniform vec4 FogColor;
 uniform float Time;
 uniform float CompressionLevel;
 uniform float EmissiveIntensity;
+uniform float VoxelScale;
 
 in float vertexDistance;
 in vec4 vertexColor;
@@ -23,48 +24,39 @@ in vec4 normal;
 out vec4 fragColor;
 
 void main() {
-    // Calculate frame from Time (64 frames, 2 ticks per frame)
-    // Time is already in ticks (we set it as gameTime/20 in Java, so multiply back)
     int frame = int(mod((Time * 20.0) / 4.0, 64.0));
-    
-    // Each frame is 1/64th of the total texture height
+
     float frameHeight = 1.0 / 64.0;
     float vOffset = float(frame) * frameHeight;
-    
-    // Add slow horizontal scrolling (wraps at 1.0)
+
     float horizontalScroll = mod(Time * 0.02, 1.0);
 
-    // Map model UVs (0-1 for a 16x16 face) to the current frame in the 16x1024 texture
-    // Don't multiply texCoord0.y by frameHeight first - scale it within the frame offset
-    vec2 animatedUV = vec2(mod(texCoord0.x + horizontalScroll, 1.0), vOffset + texCoord0.y * frameHeight);
-    
-    // Sample texture with animated UVs
+    vec2 scaledTexCoord = texCoord0 * (VoxelScale / 4.0);
+    vec2 animatedUV = vec2(mod(scaledTexCoord.x + horizontalScroll, 1.0), vOffset + mod(scaledTexCoord.y, 1.0) * frameHeight);
+
     vec4 color = texture(Sampler0, animatedUV);
-    
+
     if (color.a < 0.1) {
         discard;
     }
 
-    // Apply compression effects
     if (CompressionLevel > 0.0) {
-        // Color transition from purple to white-blue
-        vec3 baseColor = vec3(0.54, 0.17, 0.89); // Purple
-        vec3 compressedColor = vec3(0.53, 0.81, 0.92); // White-blue
-        vec3 finalColor = mix(baseColor, compressedColor, CompressionLevel);
+        vec3 baseColor = vec3(0.54, 0.17, 0.89);
+        vec3 compressedColor = vec3(1.0, 1.0, 1.0);
         
-        // Apply emissive intensity
-        float emissive = EmissiveIntensity * CompressionLevel;
-        finalColor += vec3(emissive * 0.3);
+        float normalizedCompression = CompressionLevel / 0.7;
+        normalizedCompression = clamp(normalizedCompression, 0.0, 1.0);
         
-        color.rgb = mix(color.rgb, finalColor, CompressionLevel * 0.7);
+        vec3 finalColor = mix(baseColor, compressedColor, normalizedCompression);
         
-        // Increase alpha with compression
-        color.a = min(1.0, color.a + CompressionLevel * 0.5);
+        finalColor += vec3(EmissiveIntensity * normalizedCompression);
+
+        color.rgb = finalColor;
+
+        color.a = min(1.0, 0.5 + normalizedCompression * 0.5);
     }
 
-    // Apply vertex color + color modulator
     color *= vertexColor * ColorModulator;
 
-    // Fog
     fragColor = linear_fog(color, vertexDistance, FogStart, FogEnd, FogColor);
 }

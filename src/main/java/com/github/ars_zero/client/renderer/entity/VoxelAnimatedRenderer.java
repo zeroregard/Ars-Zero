@@ -26,7 +26,7 @@ public class VoxelAnimatedRenderer<T extends BaseVoxelEntity> extends VoxelBaseR
                 timeUniform.set(time);
             }
             
-            if (animatable instanceof com.github.ars_zero.common.entity.CompressibleVoxelEntity compressible) {
+            if (animatable instanceof com.github.ars_zero.common.entity.CompressibleEntity compressible) {
                 var compressionUniform = shader.getUniform("CompressionLevel");
                 if (compressionUniform != null) {
                     compressionUniform.set(compressible.getCompressionLevel());
@@ -36,6 +36,13 @@ public class VoxelAnimatedRenderer<T extends BaseVoxelEntity> extends VoxelBaseR
                 if (emissiveUniform != null) {
                     emissiveUniform.set(compressible.getEmissiveIntensity());
                 }
+            }
+            
+            float size = animatable.getSize();
+            float scale = size / 0.25f;
+            var scaleUniform = shader.getUniform("VoxelScale");
+            if (scaleUniform != null) {
+                scaleUniform.set(scale);
             }
         }
         

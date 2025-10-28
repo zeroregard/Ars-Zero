@@ -1,17 +1,19 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.registry.ModEntities;
+import com.hollingsworth.arsnouveau.setup.registry.SoundRegistry;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-public class ArcaneVoxelEntity extends BaseVoxelEntity implements CompressibleVoxelEntity {
+public class ArcaneVoxelEntity extends BaseVoxelEntity implements CompressibleEntity {
     
     private static final int COLOR = 0x8A2BE2;
-    private static final int COMPRESSED_COLOR = 0x87CEEB;
     
     private float compressionLevel = 0.0f;
     private float emissiveIntensity = 0.0f;
@@ -29,24 +31,16 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity implements CompressibleVo
     
     @Override
     public int getColor() {
-        if (compressionLevel > 0.5f) {
-            return getCompressedColor();
-        }
         return COLOR;
-    }
-    
-    @Override
-    public int getCompressedColor() {
-        float t = Math.min(compressionLevel * 2.0f, 1.0f);
-        int r = (int) (0x8A + (0x87 - 0x8A) * t);
-        int g = (int) (0x2B + (0xCE - 0x2B) * t);
-        int b = (int) (0xE2 + (0xEB - 0xE2) * t);
-        return (r << 16) | (g << 8) | b;
     }
     
     @Override
     public boolean isEmissive() {
         return true;
+    }
+    
+    protected SoundEvent getSpawnSound() {
+        return SoundRegistry.GAIA_FAMILY.get();
     }
     
     @Override
@@ -79,22 +73,22 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity implements CompressibleVo
     
     @Override
     public void setCompressionLevel(float compressionLevel) {
-        this.compressionLevel = Math.max(0.0f, Math.min(1.0f, compressionLevel));
+        this.compressionLevel = compressionLevel;
     }
     
     @Override
     public float getCompressionLevel() {
-        return compressionLevel;
+        return this.compressionLevel;
     }
     
     @Override
     public void setEmissiveIntensity(float intensity) {
-        this.emissiveIntensity = Math.max(0.0f, intensity);
+        this.emissiveIntensity = intensity;
     }
     
     @Override
     public float getEmissiveIntensity() {
-        return emissiveIntensity;
+        return this.emissiveIntensity;
     }
     
     @Override
@@ -104,7 +98,12 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity implements CompressibleVo
     
     @Override
     public boolean isDamageEnabled() {
-        return damageEnabled;
+        return this.damageEnabled;
+    }
+    
+    @Override
+    public int getCompressedColor() {
+        return 0x87CEEB;
     }
 }
 

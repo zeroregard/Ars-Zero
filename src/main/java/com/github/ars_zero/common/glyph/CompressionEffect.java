@@ -2,7 +2,7 @@ package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
-import com.github.ars_zero.common.entity.CompressibleVoxelEntity;
+import com.github.ars_zero.common.entity.CompressibleEntity;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -26,7 +26,7 @@ import java.util.Set;
 
 public class CompressionEffect extends AbstractEffect {
     
-    public static final String ID = "compression_effect";
+    public static final String ID = "compress_effect";
     public static final CompressionEffect INSTANCE = new CompressionEffect();
     
     private static final float MIN_SCALE = 0.3f;
@@ -35,38 +35,53 @@ public class CompressionEffect extends AbstractEffect {
     private static final float EMISSION_FACTOR = 2.0f;
 
     public CompressionEffect() {
-        super(ID, "Compression");
+        super(ArsZero.prefix(ID), "Compress");
     }
 
     @Override
     public void onResolveEntity(EntityHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (world.isClientSide) return;
         
+        ArsZero.LOGGER.info("CompressionEffect.onResolveEntity called");
+        
         Entity target = rayTraceResult.getEntity();
         
         if (target == null || !target.isAlive()) {
+            ArsZero.LOGGER.info("CompressionEffect: Target null or not alive");
             return;
         }
         
+        ArsZero.LOGGER.info("CompressionEffect: Target is {}", target.getClass().getSimpleName());
+        
         if (target instanceof BaseVoxelEntity voxel) {
+            ArsZero.LOGGER.info("CompressionEffect: Target is BaseVoxelEntity, current size: {}", voxel.getSize());
             float currentSize = voxel.getSize();
             float baseSize = voxel.getBaseSize();
             
-            float compressionRate = COMPRESSION_RATE + ((float)spellStats.getAmpMultiplier() * 0.01f);
-            float compressionFactor = Math.min(1.0f - (currentSize / baseSize), MAX_COMPRESSION);
+            float minSize = baseSize * MIN_SCALE;
             
-            float exponentialDecay = (float) Math.exp(-compressionFactor * 3.0);
-            float newSize = baseSize * (MIN_SCALE + (1.0f - MIN_SCALE) * exponentialDecay);
-            
-            if (newSize < baseSize * MIN_SCALE) {
-                newSize = baseSize * MIN_SCALE;
+            if (currentSize <= minSize) {
+                ArsZero.LOGGER.info("CompressionEffect: Already at minimum size ({}), skipping", minSize);
+                return;
             }
             
-            voxel.setSize(newSize);
+            float compressionRate = COMPRESSION_RATE + ((float)spellStats.getAmpMultiplier() * 0.01f);
+            float newSize = currentSize * (1.0f - compressionRate);
+            
+            if (newSize < minSize) {
+                newSize = minSize;
+            }
+            
+            float compressionLevel = 1.0f - (newSize / baseSize);
+            compressionLevel = Math.min(compressionLevel, MAX_COMPRESSION);
+            
+            ArsZero.LOGGER.info("CompressionEffect: Setting size from {} to {} (base: {}, compression level: {})", currentSize, newSize, baseSize, compressionLevel);
+            
+            voxel.setSizeOnly(newSize);
             voxel.refreshDimensions();
             
             if (voxel instanceof com.github.ars_zero.common.entity.ArcaneVoxelEntity arcaneVoxel) {
-                updateCompressionState(arcaneVoxel, compressionFactor);
+                updateCompressionState(arcaneVoxel, compressionLevel);
             }
         }
     }
@@ -77,7 +92,7 @@ public class CompressionEffect extends AbstractEffect {
     }
 
     private void updateCompressionState(com.github.ars_zero.common.entity.ArcaneVoxelEntity voxel, float compressionFactor) {
-        if (voxel instanceof CompressibleVoxelEntity compressibleVoxel) {
+        if (voxel instanceof CompressibleEntity compressibleVoxel) {
             compressibleVoxel.setCompressionLevel(compressionFactor);
             compressibleVoxel.setEmissiveIntensity(compressionFactor * EMISSION_FACTOR);
             

@@ -34,10 +34,10 @@ public class PacketSetStaffSound implements CustomPacketPayload {
         beginSound = ConfiguredSpellSound.STREAM.decode(buf);
         tickSound = ConfiguredSpellSound.STREAM.decode(buf);
         endSound = ConfiguredSpellSound.STREAM.decode(buf);
-        boolean hasLoopingSound = buf.readBoolean();
-        if (hasLoopingSound) {
-            tickLoopingSoundId = buf.readResourceLocation();
-        }
+        // boolean hasLoopingSound = buf.readBoolean();
+        // if (hasLoopingSound) {
+        //     tickLoopingSoundId = buf.readResourceLocation();
+        // }
         mainHand = buf.readBoolean();
     }
 
@@ -45,10 +45,10 @@ public class PacketSetStaffSound implements CustomPacketPayload {
         ConfiguredSpellSound.STREAM.encode(buf, beginSound);
         ConfiguredSpellSound.STREAM.encode(buf, tickSound);
         ConfiguredSpellSound.STREAM.encode(buf, endSound);
-        buf.writeBoolean(tickLoopingSoundId != null);
-        if (tickLoopingSoundId != null) {
-            buf.writeResourceLocation(tickLoopingSoundId);
-        }
+        // buf.writeBoolean(tickLoopingSoundId != null);
+        // if (tickLoopingSoundId != null) {
+        //     buf.writeResourceLocation(tickLoopingSoundId);
+        // }
         buf.writeBoolean(mainHand);
     }
 

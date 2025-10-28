@@ -9,6 +9,8 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -20,6 +22,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -49,6 +52,9 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         refreshDimensions();
     }
     
+    @Nullable
+    protected abstract SoundEvent getSpawnSound();
+    
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder pBuilder) {
         pBuilder.define(LIFETIME, 1200);
@@ -64,6 +70,14 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     public void tick() {
         super.tick();
         this.age++;
+        
+        if (!this.level().isClientSide && this.age == 1) {
+            SoundEvent spawnSound = getSpawnSound();
+            if (spawnSound != null) {
+                this.level().playSound(null, this.blockPosition(), 
+                    spawnSound, SoundSource.NEUTRAL, 0.8f, 1.0f);
+            }
+        }
         
         if (!this.level().isClientSide && this.age >= this.getLifetime()) {
             resolveAndDiscard(null);
@@ -109,7 +123,6 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         Vec3 deltaMovement = this.getDeltaMovement();
         this.setPos(this.getX() + deltaMovement.x, this.getY() + deltaMovement.y, this.getZ() + deltaMovement.z);
         
-        this.setDeltaMovement(deltaMovement.scale(0.98));
         if (!this.entityData.get(NO_GRAVITY_CUSTOM)) {
             this.applyGravity();
         }
@@ -121,8 +134,9 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     }
     
     protected EntityHitResult findHitEntity(Vec3 startVec, Vec3 endVec) {
+        double inflateAmount = Math.max(0.1, this.getSize() * 0.5);
         return ProjectileUtil.getEntityHitResult(this.level(), this, startVec, endVec,
-                this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(1.0), this::canHitEntity);
+                this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(inflateAmount), this::canHitEntity);
     }
     
     @Override
@@ -147,7 +161,7 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
             }
         }
         
-        if (this instanceof CompressibleVoxelEntity compressible && compressible.isDamageEnabled()) {
+        if (this instanceof CompressibleEntity compressible && compressible.isDamageEnabled()) {
             if (hitEntity instanceof net.minecraft.world.entity.LivingEntity living) {
                 float damage = 2.0f * compressible.getCompressionLevel();
                 living.hurt(this.damageSources().magic(), damage);
@@ -290,6 +304,10 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     public void setSize(float size) {
         this.entityData.set(SIZE, size);
         this.entityData.set(BASE_SIZE, size);
+    }
+    
+    public void setSizeOnly(float size) {
+        this.entityData.set(SIZE, size);
     }
     
     public float getBaseSize() {
