@@ -1,9 +1,11 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.item.ArsZeroStaff;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.StaffCastContext;
+import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -15,6 +17,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -22,6 +25,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.ArrayList;
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -99,15 +105,53 @@ public class TranslateEffect extends AbstractEffect {
             Entity target = beginResult.targetEntity;
             
             if (target != null && target.isAlive()) {
-                target.noPhysics = false;
-                target.setNoGravity(false);
+                if (target instanceof BlockGroupEntity blockGroup) {
+                    float nearestRotation = blockGroup.getNearest90DegreeRotation(0.0f);
+                    blockGroup.placeBlocks(nearestRotation);
+                    blockGroup.discard();
+                } else {
+                    target.noPhysics = false;
+                    target.setNoGravity(false);
+                }
             }
         }
     }
 
     @Override
     public void onResolveBlock(BlockHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        ArsZero.LOGGER.debug("TranslateEffect: Block hit, effect only works on entities");
+        if (world.isClientSide) return;
+        if (!(shooter instanceof Player player)) return;
+        if (!(world instanceof ServerLevel serverLevel)) return;
+        
+        StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+        if (staffContext == null || staffContext.beginResults.isEmpty()) {
+            return;
+        }
+        
+        for (SpellResult beginResult : staffContext.beginResults) {
+            if (beginResult.blockGroup != null) {
+                BlockGroupEntity blockGroup = beginResult.blockGroup;
+                
+                if (beginResult.relativeOffset == null) {
+                    continue;
+                }
+                
+                Vec3 newPosition = beginResult.transformLocalToWorld(
+                    player.getYRot(), 
+                    player.getXRot(), 
+                    player.getEyePosition(1.0f),
+                    staffContext.distanceMultiplier
+                );
+                
+                if (newPosition != null) {
+                    if (canMoveToPosition(newPosition, world)) {
+                        blockGroup.setPos(newPosition.x, newPosition.y, newPosition.z);
+                        blockGroup.setDeltaMovement(Vec3.ZERO);
+                        blockGroup.setNoGravity(true);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -130,7 +174,7 @@ public class TranslateEffect extends AbstractEffect {
 
     @Override
     public String getBookDescription() {
-        return "When used with Temporal Context Form in TICK phase, keeps the target entity locked to the same position on your screen. The entity will follow your look direction and movement. Use with Touch + [Target] in BEGIN, then Temporal Context Form + Translate in TICK. Amplify increases distance from player.";
+        return "When used with Temporal Context Form in TICK phase, keeps the target entity or block group locked to the same position on your screen. The target will follow your look direction and movement. Use with Touch + [Target] in BEGIN, then Temporal Context Form + Translate in TICK. For blocks, use Select + [Target] in BEGIN. Amplify increases distance from player.";
     }
 
     @Override
