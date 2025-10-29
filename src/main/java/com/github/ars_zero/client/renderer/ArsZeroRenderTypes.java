@@ -14,38 +14,24 @@ public class ArsZeroRenderTypes extends RenderType {
     }
     
     public static RenderType animatedVoxel(ResourceLocation texture, boolean emissive) {
-        System.out.println("=== ArsZeroRenderTypes.animatedVoxel ===");
-        System.out.println("Creating render type - Emissive: " + emissive);
-        System.out.println("Shader: " + ArsZeroShaders.ANIMATED_VOXEL);
-        
         CompositeState.CompositeStateBuilder builder = CompositeState.builder()
             .setShaderState(new RenderStateShard.ShaderStateShard(() -> ArsZeroShaders.ANIMATED_VOXEL))
             .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
             .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+            .setLightmapState(LIGHTMAP)
             .setOverlayState(OVERLAY)
-            .setCullState(NO_CULL);
+            .setCullState(NO_CULL)
+            .setWriteMaskState(COLOR_DEPTH_WRITE);
         
-        if (emissive) {
-            System.out.println("Using COLOR_WRITE (no lightmap)");
-            builder.setWriteMaskState(COLOR_WRITE);
-        } else {
-            System.out.println("Using LIGHTMAP + COLOR_DEPTH_WRITE");
-            builder.setLightmapState(LIGHTMAP);
-            builder.setWriteMaskState(COLOR_DEPTH_WRITE);
-        }
-        
-        RenderType result = create(
-            emissive ? "animated_voxel_emissive" : "animated_voxel",
+        return create(
+            "animated_voxel",
             DefaultVertexFormat.NEW_ENTITY,
             VertexFormat.Mode.QUADS,
             1536,
             true,
             true,
-            builder.createCompositeState(emissive)
+            builder.createCompositeState(true)
         );
-        
-        System.out.println("Created RenderType: " + result);
-        return result;
     }
 }
 

@@ -173,7 +173,7 @@ public class FireVoxelEntity extends BaseVoxelEntity {
     public void tick() {
         super.tick();
         
-        if (!this.level().isClientSide) {
+        if (!this.level().isClientSide && shouldEmitBaseParticles()) {
             Vec3 motion = this.getDeltaMovement();
             double speed = motion.length();
             

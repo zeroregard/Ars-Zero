@@ -42,26 +42,19 @@ public class CompressionEffect extends AbstractEffect {
     public void onResolveEntity(EntityHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (world.isClientSide) return;
         
-        ArsZero.LOGGER.info("CompressionEffect.onResolveEntity called");
-        
         Entity target = rayTraceResult.getEntity();
         
         if (target == null || !target.isAlive()) {
-            ArsZero.LOGGER.info("CompressionEffect: Target null or not alive");
             return;
         }
         
-        ArsZero.LOGGER.info("CompressionEffect: Target is {}", target.getClass().getSimpleName());
-        
         if (target instanceof BaseVoxelEntity voxel) {
-            ArsZero.LOGGER.info("CompressionEffect: Target is BaseVoxelEntity, current size: {}", voxel.getSize());
             float currentSize = voxel.getSize();
             float baseSize = voxel.getBaseSize();
             
             float minSize = baseSize * MIN_SCALE;
             
             if (currentSize <= minSize) {
-                ArsZero.LOGGER.info("CompressionEffect: Already at minimum size ({}), skipping", minSize);
                 return;
             }
             
@@ -80,26 +73,25 @@ public class CompressionEffect extends AbstractEffect {
                 newSize = minSize;
             }
             
-            float compressionLevel = 1.0f - (newSize / baseSize);
-            compressionLevel = Math.min(compressionLevel, 1.0f);
-            
-            ArsZero.LOGGER.info("CompressionEffect: Setting size from {} to {} (base: {}, compression level: {})", currentSize, newSize, baseSize, compressionLevel);
+            float sizeRatio = newSize / baseSize;
+            float compressionLevel;
+            if (sizeRatio <= MIN_SCALE) {
+                compressionLevel = 1.0f;
+            } else {
+                compressionLevel = (1.0f - sizeRatio) / (1.0f - MIN_SCALE);
+            }
             
             voxel.setSizeOnly(newSize);
             voxel.refreshDimensions();
             
             if (voxel instanceof com.github.ars_zero.common.entity.ArcaneVoxelEntity arcaneVoxel) {
-                ArsZero.LOGGER.info("CompressionEffect: Updating compression state, level: {}", compressionLevel);
                 updateCompressionState(arcaneVoxel, compressionLevel);
-                ArsZero.LOGGER.info("CompressionEffect: After update, getCompressionLevel(): {}, getEmissiveIntensity(): {}", 
-                    arcaneVoxel.getCompressionLevel(), arcaneVoxel.getEmissiveIntensity());
             }
         }
     }
 
     @Override
     public void onResolveBlock(BlockHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        ArsZero.LOGGER.debug("CompressionEffect: Block hit, effect only works on entities");
     }
 
     private void updateCompressionState(com.github.ars_zero.common.entity.ArcaneVoxelEntity voxel, float compressionFactor) {

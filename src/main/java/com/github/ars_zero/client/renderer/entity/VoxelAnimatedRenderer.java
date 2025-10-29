@@ -27,23 +27,22 @@ public class VoxelAnimatedRenderer<T extends BaseVoxelEntity> extends VoxelBaseR
         
         boolean isEmissive = compressionLevel > 0.5f;
         
-        System.out.println("=== VoxelAnimatedRenderer.getRenderType ===");
-        System.out.println("Compression: " + compressionLevel + ", Emissive: " + emissiveIntensity);
-        System.out.println("Is Emissive: " + isEmissive);
-        System.out.println("Entity isEmissive(): " + animatable.isEmissive());
-        System.out.println("Texture: " + texture);
-        
         RenderType renderType = ArsZeroRenderTypes.animatedVoxel(texture, isEmissive);
-        System.out.println("RenderType: " + renderType);
         
         var shader = ArsZeroShaders.ANIMATED_VOXEL;
-        System.out.println("Shader: " + shader);
         
         if (shader != null && Minecraft.getInstance().level != null) {
             float time = (Minecraft.getInstance().level.getGameTime() + partialTick) / 20.0f;
             var timeUniform = shader.getUniform("Time");
             if (timeUniform != null) {
                 timeUniform.set(time);
+            }
+            
+            float size = animatable.getSize();
+            float scale = size / 0.25f;
+            var scaleUniform = shader.getUniform("VoxelScale");
+            if (scaleUniform != null) {
+                scaleUniform.set(scale);
             }
             
             var compressionUniform = shader.getUniform("CompressionLevel");
@@ -55,15 +54,6 @@ public class VoxelAnimatedRenderer<T extends BaseVoxelEntity> extends VoxelBaseR
             if (emissiveUniform != null) {
                 emissiveUniform.set(emissiveIntensity);
             }
-            
-            float size = animatable.getSize();
-            float scale = size / 0.25f;
-            var scaleUniform = shader.getUniform("VoxelScale");
-            if (scaleUniform != null) {
-                scaleUniform.set(scale);
-            }
-        } else {
-            System.out.println("WARNING: Shader is null or level is null!");
         }
         
         return renderType;

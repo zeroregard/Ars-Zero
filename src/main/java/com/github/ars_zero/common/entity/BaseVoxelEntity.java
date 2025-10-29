@@ -46,6 +46,13 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     protected int age = 0;
     protected SpellResolver resolver;
     
+    protected boolean shouldEmitBaseParticles() {
+        if (this instanceof CompressibleEntity compressible) {
+            return compressible.getCompressionLevel() < 0.3f;
+        }
+        return true;
+    }
+    
     public BaseVoxelEntity(EntityType<? extends BaseVoxelEntity> entityType, Level level) {
         super(entityType, level);
         this.noCulling = true;
@@ -88,7 +95,7 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
             return;
         }
         
-        if (this.age % 10 == 0) {
+        if (this.age % 10 == 0 && shouldEmitBaseParticles()) {
             emitAmbientParticle();
         }
         
@@ -172,13 +179,17 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
             }
         }
         
-        spawnHitParticles(result.getLocation());
+        if (shouldEmitBaseParticles()) {
+            spawnHitParticles(result.getLocation());
+        }
         resolveAndDiscard(result);
     }
     
     @Override
     protected void onHitBlock(BlockHitResult result) {
-        spawnHitParticles(result.getLocation());
+        if (shouldEmitBaseParticles()) {
+            spawnHitParticles(result.getLocation());
+        }
         resolveAndDiscard(result);
     }
     
@@ -325,24 +336,26 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     protected void applyInteractionResult(VoxelInteractionResult result, BaseVoxelEntity other) {
         Vec3 location = result.getInteractionLocation();
         
-        result.getParticleType().ifPresent(particleType -> {
-            if (!this.level().isClientSide) {
-                for (int i = 0; i < result.getParticleCount(); i++) {
-                    double offsetX = (this.random.nextDouble() - 0.5) * 0.5;
-                    double offsetY = (this.random.nextDouble() - 0.5) * 0.5;
-                    double offsetZ = (this.random.nextDouble() - 0.5) * 0.5;
-                    ((ServerLevel) this.level()).sendParticles(
-                        particleType,
-                        location.x + offsetX,
-                        location.y + offsetY,
-                        location.z + offsetZ,
-                        1,
-                        0.0, 0.1, 0.0,
-                        0.02
-                    );
+        if (shouldEmitBaseParticles()) {
+            result.getParticleType().ifPresent(particleType -> {
+                if (!this.level().isClientSide) {
+                    for (int i = 0; i < result.getParticleCount(); i++) {
+                        double offsetX = (this.random.nextDouble() - 0.5) * 0.5;
+                        double offsetY = (this.random.nextDouble() - 0.5) * 0.5;
+                        double offsetZ = (this.random.nextDouble() - 0.5) * 0.5;
+                        ((ServerLevel) this.level()).sendParticles(
+                            particleType,
+                            location.x + offsetX,
+                            location.y + offsetY,
+                            location.z + offsetZ,
+                            1,
+                            0.0, 0.1, 0.0,
+                            0.02
+                        );
+                    }
                 }
-            }
-        });
+            });
+        }
         
         result.getSoundEvent().ifPresent(sound -> {
             if (!this.level().isClientSide) {
@@ -478,6 +491,15 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     }
     
     private PlayState predicate(AnimationState<BaseVoxelEntity> state) {
+        float animationSpeed = 1.0f;
+        
+        if (this instanceof CompressibleEntity compressible) {
+            float compressionLevel = compressible.getCompressionLevel();
+            animationSpeed = Math.max(0.0f, 1.0f - compressionLevel);
+        }
+        
+        state.getController().setAnimationSpeed(animationSpeed);
+        
         if (this.age <= 7) {
             return state.setAndContinue(RawAnimation.begin().thenPlay("spawn"));
         } else {
