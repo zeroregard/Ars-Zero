@@ -3,6 +3,7 @@ package com.github.ars_zero.common.entity;
 import com.github.ars_zero.common.entity.interaction.VoxelInteraction;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionResult;
+import com.github.ars_zero.setup.config.ServerConfig;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -11,6 +12,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -172,10 +174,31 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
             }
         }
         
-        if (this instanceof CompressibleEntity compressible && compressible.isDamageEnabled()) {
-            if (hitEntity instanceof net.minecraft.world.entity.LivingEntity living) {
-                float damage = 2.0f * compressible.getCompressionLevel();
-                living.hurt(this.damageSources().magic(), damage);
+        if (this instanceof CompressibleEntity compressible) {
+            float compressionLevel = compressible.getCompressionLevel();
+            
+            if (compressionLevel >= 0.3f) {
+                Vec3 velocity = this.getDeltaMovement();
+                double speed = velocity.length();
+                
+                Vec3 knockbackDirection = velocity.normalize();
+                double knockbackStrength = compressionLevel * 0.5;
+                hitEntity.setDeltaMovement(hitEntity.getDeltaMovement().add(knockbackDirection.scale(knockbackStrength)));
+                hitEntity.hurtMarked = true;
+                
+                if (compressible.isDamageEnabled() && hitEntity instanceof net.minecraft.world.entity.LivingEntity living) {
+                    float damageScaling = 6.67f;
+                    float damage = (float) (compressionLevel * speed * damageScaling);
+                    damage = Math.min(damage, 20.0f);
+                    
+                    DamageSource damageSource = this.damageSources().magic();
+                    
+                    if (compressionLevel >= 0.6f && ServerConfig.COMPRESSION_BYPASS_DAMAGE_COOLDOWN.get()) {
+                        living.invulnerableTime = 0;
+                    }
+                    
+                    living.hurt(damageSource, damage);
+                }
             }
         }
         

@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.entity.CompressibleEntity;
 import com.github.ars_zero.registry.ModSounds;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
@@ -45,6 +46,11 @@ public class PushEffect extends AbstractEffect {
         
         double baseStrength = 1.5;
         double strength = baseStrength + spellStats.getAmpMultiplier() * 0.5;
+        
+        if (target instanceof CompressibleEntity compressible) {
+            float compressionLevel = compressible.getCompressionLevel();
+            strength *= (1.0 + compressionLevel * 2.0);
+        }
         
         Vec3 velocity = lookVec.scale(strength);
         
