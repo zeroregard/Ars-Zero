@@ -1,28 +1,28 @@
 {
   "item.ars_zero.ars_zero_staff": "Creative Spell Staff",
   "item.ars_zero.ars_zero_staff.desc": "A creative magical staff that can cast spells in three phases: Begin, Tick, and End. All glyphs are available.",
-  
+
   "block.ars_zero.arcane_voxel_spawner": "Arcane Voxel Spawner",
   "block.ars_zero.fire_voxel_spawner": "Fire Voxel Spawner",
   "block.ars_zero.water_voxel_spawner": "Water Voxel Spawner",
-  
+
   "entity.ars_zero.arcane_voxel_entity": "Arcane Voxel",
   "entity.ars_zero.water_voxel_entity": "Water Voxel",
   "entity.ars_zero.fire_voxel_entity": "Fire Voxel",
-  
+
   "gui.ars_zero.staff_title": "Creative Spell Staff",
   "gui.ars_zero.phase.begin": "Begin",
   "gui.ars_zero.phase.tick": "Tick",
   "gui.ars_zero.phase.end": "End",
   "gui.ars_zero.current_phase": "Current Phase: %s",
-  
+
   "key.category.ars_zero.general": "Ars Zero",
-  
+
   "itemGroup.ars_zero": "Ars Zero",
-  
+
   "ars_zero.glyph_name.conjure_voxel_effect": "Conjure Voxel",
   "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity",
-  
+
   "ars_zero.glyph_name.temporal_context_form": "Temporal Context",
   "ars_zero.glyph_desc.temporal_context_form": "A cast method that provides access to the context of the previous spell phase (Staff only)",
 
@@ -30,7 +30,7 @@
   "ars_zero.glyph_desc.near_form": "Casts the spell at a short distance in front of your gaze",
 
   "ars_zero.glyph_name.translate_effect": "Anchor",
-  "ars_zero.glyph_desc.translate_effect": "Maintains the relative position of a target entity to the caster",
+  "ars_zero.glyph_desc.translate_effect": "Maintains the relative position of a target(s) to the caster",
 
   "ars_zero.glyph_name.push_effect": "Push",
   "ars_zero.glyph_desc.push_effect": "Pushes the target entity in the direction you're looking.",
