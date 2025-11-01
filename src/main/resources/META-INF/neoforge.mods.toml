@@ -31,6 +31,6 @@ config="ars_zero.mixins.json"
 [[dependencies.ars_zero]]
     modId="ars_nouveau"
     mandatory=true
-    versionRange="[5.8.2,)"
+    versionRange="[1.21.1-5.9,)"
     ordering="AFTER"
     side="BOTH"
