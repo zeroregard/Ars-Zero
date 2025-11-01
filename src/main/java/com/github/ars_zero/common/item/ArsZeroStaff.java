@@ -4,9 +4,11 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.glyph.TranslateEffect;
+import com.github.ars_zero.client.renderer.item.CreativeSpellStaffRenderer;
+import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
-import com.github.ars_zero.registry.ModSounds;
 import com.github.ars_zero.common.network.PacketSetStaffSlot;
+import com.github.ars_zero.registry.ModSounds;
 import com.github.ars_zero.common.spell.CastPhase;
 import com.github.ars_zero.common.spell.StaffCastContext;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
@@ -128,7 +130,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
 
     
     @Override
-    public void onUseTick(Level level, net.minecraft.world.entity.LivingEntity livingEntity, ItemStack stack, int remainingUseDuration) {
+    public void onUseTick(Level level, LivingEntity livingEntity, ItemStack stack, int remainingUseDuration) {
         if (livingEntity instanceof Player player && !level.isClientSide) {
             int totalDuration = getUseDuration(stack, livingEntity);
             boolean isFirstTick = remainingUseDuration == totalDuration - 1;
@@ -165,7 +167,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
 
     public RadialMenu<AbstractSpellPart> getRadialMenuProviderForSpellpart(ItemStack itemStack) {
         return new RadialMenu<>((int logicalSlot) -> {
-            com.github.ars_zero.common.network.Networking.sendToServer(new PacketSetStaffSlot(logicalSlot));
+            Networking.sendToServer(new PacketSetStaffSlot(logicalSlot));
         },
                 getRadialMenuSlotsForSpellpart(itemStack),
                 SecondaryIconPosition.NORTH,
@@ -239,10 +241,12 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
                 int physicalSlot = currentLogicalSlot * 3 + StaffPhase.TICK.ordinal();
                 Spell spell = caster.getSpell(physicalSlot);
                 
+                /* TODO: make a nicer sound effect for this (change the .ogg, length is fine)
                 if (hasTranslateEffect(spell) && context.tickCount % 5 == 0) {
                     player.level().playSound(null, player.getX(), player.getY(), player.getZ(), 
                         ModSounds.EFFECT_ANCHOR.get(), SoundSource.NEUTRAL, 1.0f, 1.0f);
                 }
+                */
             }
         }
         
@@ -262,7 +266,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         
         context.currentPhase = StaffPhase.END;
         
-        com.github.ars_zero.common.glyph.TranslateEffect.restoreEntityPhysics(context);
+        TranslateEffect.restoreEntityPhysics(context);
         
         // playPhaseSound(player, stack, StaffPhase.END);
         executeSpell(player, stack, StaffPhase.END);
@@ -518,7 +522,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     }
     
     @Override
-    public int getUseDuration(ItemStack stack, net.minecraft.world.entity.LivingEntity livingEntity) {
+    public int getUseDuration(ItemStack stack, LivingEntity livingEntity) {
         return 72000; // 1 hour - effectively infinite for our purposes
     }
     
@@ -528,7 +532,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     }
     
     @Override
-    public ItemStack finishUsingItem(ItemStack stack, Level level, net.minecraft.world.entity.LivingEntity livingEntity) {
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity livingEntity) {
         return stack;
     }
 
@@ -579,7 +583,7 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     @OnlyIn(Dist.CLIENT)
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
         consumer.accept(new GeoRenderProvider() {
-            private final BlockEntityWithoutLevelRenderer renderer = new com.github.ars_zero.client.renderer.item.CreativeSpellStaffRenderer();
+            private final BlockEntityWithoutLevelRenderer renderer = new CreativeSpellStaffRenderer();
 
             @Override
             public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {

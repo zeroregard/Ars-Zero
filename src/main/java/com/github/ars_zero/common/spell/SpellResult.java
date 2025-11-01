@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.spell;
 
+import com.github.ars_zero.common.entity.BlockGroupEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -7,6 +8,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.List;
 
 public class SpellResult {
     public final Entity targetEntity;
@@ -20,8 +23,17 @@ public class SpellResult {
     public final float casterPitch;
     public final Vec3 casterPosition;
     
+    public final BlockGroupEntity blockGroup;
+    public final List<BlockPos> blockPositions;
+    
     public SpellResult(Entity targetEntity, BlockPos targetPosition, HitResult hitResult, SpellEffectType effectType,
                       Vec3 relativeOffset, float casterYaw, float casterPitch, Vec3 casterPosition) {
+        this(targetEntity, targetPosition, hitResult, effectType, relativeOffset, casterYaw, casterPitch, casterPosition, null, null);
+    }
+    
+    public SpellResult(Entity targetEntity, BlockPos targetPosition, HitResult hitResult, SpellEffectType effectType,
+                      Vec3 relativeOffset, float casterYaw, float casterPitch, Vec3 casterPosition,
+                      BlockGroupEntity blockGroup, List<BlockPos> blockPositions) {
         this.targetEntity = targetEntity;
         this.targetPosition = targetPosition;
         this.hitResult = hitResult;
@@ -31,6 +43,8 @@ public class SpellResult {
         this.casterYaw = casterYaw;
         this.casterPitch = casterPitch;
         this.casterPosition = casterPosition;
+        this.blockGroup = blockGroup;
+        this.blockPositions = blockPositions;
     }
     
     public static SpellResult fromHitResult(HitResult hitResult, SpellEffectType effectType) {
@@ -75,6 +89,29 @@ public class SpellResult {
         
         return new SpellResult(entity, blockPos, hitResult, effectType, 
                              relativeOffset, casterYaw, casterPitch, casterPosition);
+    }
+    
+    public static SpellResult fromBlockGroup(BlockGroupEntity blockGroup, List<BlockPos> blockPositions, Player caster) {
+        Vec3 relativeOffset = null;
+        float casterYaw = 0;
+        float casterPitch = 0;
+        Vec3 casterPosition = null;
+        
+        if (caster != null) {
+            casterPosition = caster.getEyePosition(1.0f);
+            casterYaw = caster.getYRot();
+            casterPitch = caster.getXRot();
+            
+            Vec3 groupCenter = blockGroup.position();
+            relativeOffset = calculateRelativeOffsetInLocalSpace(
+                casterPosition, groupCenter, casterYaw, casterPitch
+            );
+        }
+        
+        EntityHitResult fakeHit = new EntityHitResult(blockGroup);
+        return new SpellResult(blockGroup, null, fakeHit, SpellEffectType.RESOLVED,
+                             relativeOffset, casterYaw, casterPitch, casterPosition,
+                             blockGroup, blockPositions);
     }
     
     private static Vec3 calculateRelativeOffsetInLocalSpace(Vec3 casterPos, Vec3 targetPos, float yaw, float pitch) {
