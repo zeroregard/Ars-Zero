@@ -239,10 +239,12 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
                 int physicalSlot = currentLogicalSlot * 3 + StaffPhase.TICK.ordinal();
                 Spell spell = caster.getSpell(physicalSlot);
                 
+                /* TODO: make a nicer sound effect for this (change the .ogg, length is fine)
                 if (hasTranslateEffect(spell) && context.tickCount % 5 == 0) {
                     player.level().playSound(null, player.getX(), player.getY(), player.getZ(), 
                         ModSounds.EFFECT_ANCHOR.get(), SoundSource.NEUTRAL, 1.0f, 1.0f);
                 }
+                */
             }
         }
         

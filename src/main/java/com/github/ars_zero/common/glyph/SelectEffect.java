@@ -58,11 +58,15 @@ public class SelectEffect extends AbstractEffect {
         if (!(shooter instanceof Player player)) return;
         if (!(world instanceof ServerLevel serverLevel)) return;
         
+        ArsZero.LOGGER.info("[SelectEffect] Block hit at {}", rayTraceResult.getBlockPos());
+        
         if (spellStats.isSensitive()) {
+            ArsZero.LOGGER.debug("[SelectEffect] Spell is sensitive, ignoring blocks");
             return;
         }
         
         if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, rayTraceResult.getBlockPos())) {
+            ArsZero.LOGGER.debug("[SelectEffect] Block claim check failed");
             return;
         }
         
@@ -71,36 +75,55 @@ public class SelectEffect extends AbstractEffect {
         int pierceBuff = spellStats.getBuffCount(AugmentPierce.INSTANCE);
         List<BlockPos> posList = SpellUtil.calcAOEBlocks(shooter, pos, rayTraceResult, aoeBuff, pierceBuff);
         
+        ArsZero.LOGGER.info("[SelectEffect] Calculated {} AOE blocks (AOE={}, Pierce={})", posList.size(), aoeBuff, pierceBuff);
+        
         List<BlockPos> validBlocks = new ArrayList<>();
         for (BlockPos blockPos : posList) {
             if (!world.isOutsideBuildHeight(blockPos) && BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)) {
                 validBlocks.add(blockPos);
-                ArsZero.LOGGER.debug("Selected block at: {}", blockPos);
+                ArsZero.LOGGER.debug("[SelectEffect] Valid block at: {}", blockPos);
             }
         }
         
+        ArsZero.LOGGER.info("[SelectEffect] Found {} valid blocks to select", validBlocks.size());
+        
         if (!validBlocks.isEmpty()) {
+            ArsZero.LOGGER.info("[SelectEffect] Creating BlockGroupEntity with {} blocks", validBlocks.size());
             createBlockGroup(serverLevel, validBlocks, player);
         }
     }
     
     private void createBlockGroup(ServerLevel level, List<BlockPos> blockPositions, Player player) {
-        if (blockPositions.isEmpty()) return;
+        if (blockPositions.isEmpty()) {
+            ArsZero.LOGGER.warn("[SelectEffect] createBlockGroup called with empty block list");
+            return;
+        }
         
         Vec3 centerPos = calculateCenter(blockPositions);
+        ArsZero.LOGGER.info("[SelectEffect] Creating BlockGroupEntity at center: {}", centerPos);
+        
         BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), level);
         blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
         
         blockGroup.addBlocks(blockPositions);
+        ArsZero.LOGGER.info("[SelectEffect] BlockGroupEntity added {} blocks", blockGroup.getBlockCount());
+        
         blockGroup.removeOriginalBlocks();
+        ArsZero.LOGGER.info("[SelectEffect] Removed original blocks from world");
         
         level.addFreshEntity(blockGroup);
+        ArsZero.LOGGER.info("[SelectEffect] BlockGroupEntity spawned with ID {}", blockGroup.getId());
         
         StaffCastContext context = ArsZeroStaff.getStaffContext(player);
         if (context != null) {
             SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, blockPositions, player);
             context.beginResults.clear();
             context.beginResults.add(blockResult);
+            ArsZero.LOGGER.info("[SelectEffect] Added BlockGroupEntity to beginResults. BlockGroup: {}, BlockPositions: {}", 
+                blockResult.blockGroup != null ? blockResult.blockGroup.getId() : "null",
+                blockResult.blockPositions != null ? blockResult.blockPositions.size() : "null");
+        } else {
+            ArsZero.LOGGER.warn("[SelectEffect] StaffCastContext is null for player {}", player.getName().getString());
         }
     }
     

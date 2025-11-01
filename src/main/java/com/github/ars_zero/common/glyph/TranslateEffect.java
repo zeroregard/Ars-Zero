@@ -101,13 +101,29 @@ public class TranslateEffect extends AbstractEffect {
             return;
         }
         
+        net.minecraft.world.entity.player.Player player = null;
+        if (context.playerId != null && context.beginResults.get(0).casterPosition != null) {
+            if (context.beginResults.get(0).targetEntity != null && context.beginResults.get(0).targetEntity.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                player = serverLevel.getPlayerByUUID(context.playerId);
+            }
+        }
+        
+        float playerYaw = 0.0f;
+        if (player != null) {
+            playerYaw = player.getYRot();
+        } else if (!context.beginResults.isEmpty() && context.beginResults.get(0).casterYaw != 0.0f) {
+            playerYaw = context.beginResults.get(0).casterYaw;
+        }
+        
         for (SpellResult beginResult : context.beginResults) {
             Entity target = beginResult.targetEntity;
             
             if (target != null && target.isAlive()) {
                 if (target instanceof BlockGroupEntity blockGroup) {
-                    float nearestRotation = blockGroup.getNearest90DegreeRotation(0.0f);
+                    float nearestRotation = blockGroup.getNearest90DegreeRotation(playerYaw);
                     blockGroup.placeBlocks(nearestRotation);
+                    // Clear blocks after placing to prevent double placement when discard() calls remove()
+                    blockGroup.clearBlocks();
                     blockGroup.discard();
                 } else {
                     target.noPhysics = false;
@@ -123,16 +139,36 @@ public class TranslateEffect extends AbstractEffect {
         if (!(shooter instanceof Player player)) return;
         if (!(world instanceof ServerLevel serverLevel)) return;
         
+        ArsZero.LOGGER.info("[TranslateEffect] Block resolve called at {}", rayTraceResult.getBlockPos());
+        
         StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
-        if (staffContext == null || staffContext.beginResults.isEmpty()) {
+        if (staffContext == null) {
+            ArsZero.LOGGER.warn("[TranslateEffect] StaffCastContext is null");
             return;
         }
         
-        for (SpellResult beginResult : staffContext.beginResults) {
+        if (staffContext.beginResults.isEmpty()) {
+            ArsZero.LOGGER.warn("[TranslateEffect] beginResults is empty");
+            return;
+        }
+        
+        ArsZero.LOGGER.info("[TranslateEffect] Found {} beginResults", staffContext.beginResults.size());
+        
+        for (int i = 0; i < staffContext.beginResults.size(); i++) {
+            SpellResult beginResult = staffContext.beginResults.get(i);
+            ArsZero.LOGGER.info("[TranslateEffect] beginResult[{}]: blockGroup={}, targetEntity={}, relativeOffset={}", 
+                i,
+                beginResult.blockGroup != null ? beginResult.blockGroup.getId() : "null",
+                beginResult.targetEntity != null ? beginResult.targetEntity.getId() : "null",
+                beginResult.relativeOffset != null ? beginResult.relativeOffset : "null");
+            
             if (beginResult.blockGroup != null) {
                 BlockGroupEntity blockGroup = beginResult.blockGroup;
+                ArsZero.LOGGER.info("[TranslateEffect] Found BlockGroupEntity with ID {} at position {}", 
+                    blockGroup.getId(), blockGroup.position());
                 
                 if (beginResult.relativeOffset == null) {
+                    ArsZero.LOGGER.warn("[TranslateEffect] relativeOffset is null, skipping");
                     continue;
                 }
                 
@@ -143,13 +179,24 @@ public class TranslateEffect extends AbstractEffect {
                     staffContext.distanceMultiplier
                 );
                 
+                ArsZero.LOGGER.info("[TranslateEffect] Calculated new position: {} (player yaw={}, pitch={})", 
+                    newPosition, player.getYRot(), player.getXRot());
+                
                 if (newPosition != null) {
                     if (canMoveToPosition(newPosition, world)) {
+                        ArsZero.LOGGER.info("[TranslateEffect] Moving BlockGroupEntity from {} to {}", 
+                            blockGroup.position(), newPosition);
                         blockGroup.setPos(newPosition.x, newPosition.y, newPosition.z);
                         blockGroup.setDeltaMovement(Vec3.ZERO);
                         blockGroup.setNoGravity(true);
+                    } else {
+                        ArsZero.LOGGER.warn("[TranslateEffect] Cannot move to position {} (blocked)", newPosition);
                     }
+                } else {
+                    ArsZero.LOGGER.warn("[TranslateEffect] newPosition is null");
                 }
+            } else {
+                ArsZero.LOGGER.debug("[TranslateEffect] beginResult has no blockGroup");
             }
         }
     }
