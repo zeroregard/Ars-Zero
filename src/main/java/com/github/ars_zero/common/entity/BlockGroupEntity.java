@@ -1,7 +1,9 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.registry.ModEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
@@ -10,10 +12,15 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -25,7 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BlockGroupEntity extends net.minecraft.world.entity.Entity {
+public class BlockGroupEntity extends Entity {
     private static final EntityDataAccessor<CompoundTag> BLOCK_DATA = SynchedEntityData.defineId(BlockGroupEntity.class, EntityDataSerializers.COMPOUND_TAG);
     
     private final List<BlockData> blocks = new ArrayList<>();
@@ -38,87 +45,57 @@ public class BlockGroupEntity extends net.minecraft.world.entity.Entity {
     }
     
     public static BlockGroupEntity create(Level level, List<BlockPos> positions) {
-        BlockGroupEntity entity = new BlockGroupEntity(com.github.ars_zero.registry.ModEntities.BLOCK_GROUP.get(), level);
+        BlockGroupEntity entity = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), level);
         entity.addBlocks(positions);
         return entity;
     }
     
     public void addBlocks(List<BlockPos> positions) {
-        ArsZero.LOGGER.info("[BlockGroupEntity] addBlocks called with {} positions. Entity position: {}", positions.size(), this.position());
-        
         for (BlockPos pos : positions) {
             if (level().isOutsideBuildHeight(pos)) {
-                ArsZero.LOGGER.debug("[BlockGroupEntity] Position {} is outside build height", pos);
                 continue;
             }
             
             BlockState state = level().getBlockState(pos);
-            ArsZero.LOGGER.info("[BlockGroupEntity] Block at {}: state={}, isAir={}", pos, state.getBlock().getDescriptionId(), state.isAir());
-            
             if (state.isAir()) {
-                ArsZero.LOGGER.warn("[BlockGroupEntity] Block at {} is air, skipping", pos);
                 continue;
             }
             
             BlockEntity tileEntity = level().getBlockEntity(pos);
             if (tileEntity != null) {
                 blockEntityData.put(pos, tileEntity.saveWithoutMetadata(level().registryAccess()));
-                ArsZero.LOGGER.debug("[BlockGroupEntity] Saved BlockEntity data for {}", pos);
             }
             
             Vec3 entityPos = this.position();
             Vec3 worldCenterPos = Vec3.atCenterOf(pos);
             Vec3 relativePos = worldCenterPos.subtract(entityPos);
             
-            ArsZero.LOGGER.info("[BlockGroupEntity] Calculated relative position for {}: {} (world pos: {}, entity pos: {})", 
-                pos, relativePos, worldCenterPos, entityPos);
-            
-            // Verify entity position is set correctly
-            if (entityPos.equals(Vec3.ZERO)) {
-                ArsZero.LOGGER.error("[BlockGroupEntity] WARNING: Entity position is (0,0,0)! Relative positions will be wrong!");
-            }
-            
             blocks.add(new BlockData(state, relativePos, pos));
-            ArsZero.LOGGER.info("[BlockGroupEntity] Added block to list. Total blocks: {}", blocks.size());
         }
-        
-        ArsZero.LOGGER.info("[BlockGroupEntity] addBlocks finished. Total blocks in list: {}", blocks.size());
         
         updateBoundingBox();
         syncBlockData();
     }
     
-    public void addBlocksWithStates(List<BlockPos> positions, java.util.Map<BlockPos, BlockState> capturedStates) {
-        ArsZero.LOGGER.info("[BlockGroupEntity] addBlocksWithStates called with {} positions. Entity position: {}", positions.size(), this.position());
-        
+    public void addBlocksWithStates(List<BlockPos> positions, Map<BlockPos, BlockState> capturedStates) {
         for (BlockPos pos : positions) {
             BlockState state = capturedStates.get(pos);
             if (state == null || state.isAir()) {
-                ArsZero.LOGGER.warn("[BlockGroupEntity] No captured state for {} or state is air, skipping", pos);
                 continue;
             }
-            
-            ArsZero.LOGGER.info("[BlockGroupEntity] Adding block at {}: state={}", pos, state.getBlock().getDescriptionId());
             
             // Capture BlockEntity data from world before it might be removed
             BlockEntity tileEntity = level().getBlockEntity(pos);
             if (tileEntity != null) {
                 blockEntityData.put(pos, tileEntity.saveWithoutMetadata(level().registryAccess()));
-                ArsZero.LOGGER.debug("[BlockGroupEntity] Saved BlockEntity data for {}", pos);
             }
             
             Vec3 entityPos = this.position();
             Vec3 worldCenterPos = Vec3.atCenterOf(pos);
             Vec3 relativePos = worldCenterPos.subtract(entityPos);
             
-            ArsZero.LOGGER.info("[BlockGroupEntity] Calculated relative position for {}: {} (world pos: {}, entity pos: {})", 
-                pos, relativePos, worldCenterPos, entityPos);
-            
             blocks.add(new BlockData(state, relativePos, pos));
-            ArsZero.LOGGER.info("[BlockGroupEntity] Added block to list. Total blocks: {}", blocks.size());
         }
-        
-        ArsZero.LOGGER.info("[BlockGroupEntity] addBlocksWithStates finished. Total blocks in list: {}", blocks.size());
         
         updateBoundingBox();
         syncBlockData();
@@ -143,25 +120,16 @@ public class BlockGroupEntity extends net.minecraft.world.entity.Entity {
     }
     
     public void removeOriginalBlocks() {
-        ArsZero.LOGGER.info("[BlockGroupEntity] removeOriginalBlocks called with {} blocks", blocks.size());
         for (BlockData blockData : blocks) {
             BlockPos originalPos = blockData.originalPosition;
-            ArsZero.LOGGER.info("[BlockGroupEntity] Removing block at {}", originalPos);
             if (!level().isOutsideBuildHeight(originalPos)) {
                 BlockState beforeState = level().getBlockState(originalPos);
-                ArsZero.LOGGER.info("[BlockGroupEntity] Block state before removal at {}: {}", originalPos, beforeState.getBlock().getDescriptionId());
                 
                 // Only remove if the block is not already air
                 // This prevents removing blocks that were already removed by effects
                 if (!beforeState.isAir()) {
-                    boolean removed = level().setBlock(originalPos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-                    BlockState afterState = level().getBlockState(originalPos);
-                    ArsZero.LOGGER.info("[BlockGroupEntity] Block removal result: {}, state after: {}", removed, afterState.getBlock().getDescriptionId());
-                } else {
-                    ArsZero.LOGGER.info("[BlockGroupEntity] Block at {} is already air, skipping removal", originalPos);
+                    level().setBlock(originalPos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                 }
-            } else {
-                ArsZero.LOGGER.warn("[BlockGroupEntity] Cannot remove block at {} - outside build height", originalPos);
             }
         }
     }
@@ -173,8 +141,6 @@ public class BlockGroupEntity extends net.minecraft.world.entity.Entity {
     public void placeBlocks(float rotationYaw) {
         if (!(level() instanceof ServerLevel serverLevel)) return;
         
-        ArsZero.LOGGER.info("[BlockGroupEntity] placeBlocks called with {} blocks, rotationYaw={}", blocks.size(), rotationYaw);
-        
         for (BlockData blockData : blocks) {
             Vec3 rotatedPos = rotateVector(blockData.relativePosition, rotationYaw);
             BlockPos targetPos = BlockPos.containing(this.position().add(rotatedPos));
@@ -182,17 +148,13 @@ public class BlockGroupEntity extends net.minecraft.world.entity.Entity {
             BlockState state = blockData.blockState;
             boolean placed = false;
             
-            if (level().isOutsideBuildHeight(targetPos)) {
-                ArsZero.LOGGER.info("[BlockGroupEntity] Target position {} is outside build height, dropping as item", targetPos);
-                placed = false;
-            } else {
+            if (!level().isOutsideBuildHeight(targetPos)) {
                 BlockState existingState = level().getBlockState(targetPos);
                 
                 if (existingState.canBeReplaced()) {
                     if (state.canSurvive(level(), targetPos)) {
                         if (level().setBlock(targetPos, state, Block.UPDATE_ALL)) {
                             placed = true;
-                            ArsZero.LOGGER.info("[BlockGroupEntity] Successfully placed block at {} - NOT dropping as item", targetPos);
                             
                             // Restore BlockEntity data if needed
                             CompoundTag entityData = blockEntityData.get(blockData.originalPosition);
@@ -207,39 +169,27 @@ public class BlockGroupEntity extends net.minecraft.world.entity.Entity {
                                     }
                                 }
                             }
-                        } else {
-                            ArsZero.LOGGER.info("[BlockGroupEntity] setBlock returned false for {}, dropping as item", targetPos);
-                            placed = false;
                         }
-                    } else {
-                        ArsZero.LOGGER.info("[BlockGroupEntity] Block cannot survive at {}, dropping as item", targetPos);
-                        placed = false;
                     }
-                } else {
-                    ArsZero.LOGGER.info("[BlockGroupEntity] Existing block at {} cannot be replaced, dropping as item", targetPos);
-                    placed = false;
                 }
             }
             
             // Only drop as item if placement failed
             if (!placed) {
-                ArsZero.LOGGER.info("[BlockGroupEntity] Placement failed, dropping block as item");
                 dropBlockAsItem(state, blockData.originalPosition);
-            } else {
-                ArsZero.LOGGER.info("[BlockGroupEntity] Placement succeeded, NOT dropping item");
             }
         }
     }
     
     private void dropBlockAsItem(BlockState state, BlockPos originalPos) {
-        if (level().isClientSide || !level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOENTITYDROPS)) {
+        if (level().isClientSide || !level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
             return;
         }
         
         Block block = state.getBlock();
-        net.minecraft.world.item.ItemStack itemStack = new net.minecraft.world.item.ItemStack(block);
+        ItemStack itemStack = new ItemStack(block);
         
-        net.minecraft.world.Containers.dropItemStack(level(), 
+        Containers.dropItemStack(level(), 
             this.getX(), this.getY(), this.getZ(), itemStack);
     }
     
@@ -321,7 +271,6 @@ public class BlockGroupEntity extends net.minecraft.world.entity.Entity {
     }
     
     public void clearBlocks() {
-        ArsZero.LOGGER.info("[BlockGroupEntity] Clearing {} blocks to prevent double placement", blocks.size());
         blocks.clear();
         blockEntityData.clear();
         syncBlockData();
@@ -330,8 +279,6 @@ public class BlockGroupEntity extends net.minecraft.world.entity.Entity {
     @Override
     public void remove(@NotNull RemovalReason reason) {
         if (!level().isClientSide && reason == RemovalReason.DISCARDED && !blocks.isEmpty()) {
-            ArsZero.LOGGER.info("[BlockGroupEntity] Entity being removed with reason: {}. Placing {} blocks", reason, blocks.size());
-            
             float rotation = 0.0f;
             if (level() instanceof ServerLevel serverLevel && getYRot() != 0.0f) {
                 rotation = getNearest90DegreeRotation(getYRot());
@@ -354,7 +301,7 @@ public class BlockGroupEntity extends net.minecraft.world.entity.Entity {
             
             for (int i = 0; i < blocksTag.size(); i++) {
                 CompoundTag blockTag = blocksTag.getCompound(i);
-                BlockState state = NbtUtils.readBlockState(level().holderLookup(net.minecraft.core.registries.Registries.BLOCK), blockTag.getCompound("state"));
+                BlockState state = NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK), blockTag.getCompound("state"));
                 CompoundTag posTag = blockTag.getCompound("pos");
                 Vec3 relativePos = new Vec3(posTag.getDouble("x"), posTag.getDouble("y"), posTag.getDouble("z"));
                 BlockPos originalPos = NbtUtils.readBlockPos(blockTag, "original").orElse(BlockPos.ZERO);
@@ -411,7 +358,7 @@ public class BlockGroupEntity extends net.minecraft.world.entity.Entity {
             for (int i = 0; i < blocksTag.size(); i++) {
                 CompoundTag blockTag = blocksTag.getCompound(i);
                 try {
-                    BlockState state = NbtUtils.readBlockState(level().holderLookup(net.minecraft.core.registries.Registries.BLOCK), blockTag.getCompound("state"));
+                    BlockState state = NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK), blockTag.getCompound("state"));
                     CompoundTag posTag = blockTag.getCompound("pos");
                     Vec3 relativePos = new Vec3(posTag.getDouble("x"), posTag.getDouble("y"), posTag.getDouble("z"));
                     BlockPos originalPos = NbtUtils.readBlockPos(blockTag, "original").orElse(BlockPos.ZERO);

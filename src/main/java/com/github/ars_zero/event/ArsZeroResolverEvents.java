@@ -9,6 +9,8 @@ import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.StaffCastContext;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
 import com.github.ars_zero.registry.ModEntities;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import com.hollingsworth.arsnouveau.api.event.EffectResolveEvent;
 import com.hollingsworth.arsnouveau.api.event.SpellResolveEvent;
 import com.hollingsworth.arsnouveau.api.util.BlockUtil;
@@ -17,6 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -24,13 +27,16 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @EventBusSubscriber(modid = "ars_zero")
 public class ArsZeroResolverEvents {
     
     // Store block states captured before effects run
-    private static final java.util.Map<net.minecraft.server.level.ServerLevel, java.util.Map<BlockPos, net.minecraft.world.level.block.state.BlockState>> capturedBlockStates = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<ServerLevel, Map<BlockPos, BlockState>> capturedBlockStates = new ConcurrentHashMap<>();
     
     @SubscribeEvent
     public static void onEffectResolving(com.hollingsworth.arsnouveau.api.event.EffectResolveEvent.Pre event) {
@@ -51,11 +57,9 @@ public class ArsZeroResolverEvents {
             BlockPos pos = blockHit.getBlockPos();
             if (!event.world.isOutsideBuildHeight(pos)) {
                 var state = event.world.getBlockState(pos);
-                ArsZero.LOGGER.info("[ResolverEvents] PRE: Capturing block at {}: state={}, isAir={}", 
-                    pos, state.getBlock().getDescriptionId(), state.isAir());
                 
                 // Store in map keyed by level and position
-                capturedBlockStates.computeIfAbsent(serverLevel, k -> new java.util.HashMap<>()).put(pos, state);
+                capturedBlockStates.computeIfAbsent(serverLevel, k -> new HashMap<>()).put(pos, state);
                 
                 // Also capture AOE blocks and remove them immediately
                 double aoeBuff = event.spellStats.getAoeMultiplier();
@@ -67,21 +71,17 @@ public class ArsZeroResolverEvents {
                         if (!event.world.isOutsideBuildHeight(aoePos)) {
                             var aoeState = event.world.getBlockState(aoePos);
                             if (!aoeState.isAir()) {
-                                ArsZero.LOGGER.info("[ResolverEvents] PRE: Capturing AOE block at {}: state={}", 
-                                    aoePos, aoeState.getBlock().getDescriptionId());
                                 capturedBlockStates.get(serverLevel).put(aoePos, aoeState);
                                 
                                 // Remove block immediately in PRE event, before effects run
-                                boolean removed = event.world.setBlock(aoePos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), net.minecraft.world.level.block.Block.UPDATE_ALL);
-                                ArsZero.LOGGER.info("[ResolverEvents] PRE: Removed block at {}: result={}", aoePos, removed);
+                                event.world.setBlock(aoePos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                             }
                         }
                     }
                     
                     // Also remove the main block
                     if (!state.isAir()) {
-                        boolean removed = event.world.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), net.minecraft.world.level.block.Block.UPDATE_ALL);
-                        ArsZero.LOGGER.info("[ResolverEvents] PRE: Removed main block at {}: result={}", pos, removed);
+                        event.world.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                     }
                 }
             }
@@ -109,18 +109,13 @@ public class ArsZeroResolverEvents {
         
         StaffCastContext context = ArsZeroStaff.getStaffContext(player);
         if (context == null) {
-            ArsZero.LOGGER.debug("[ResolverEvents] StaffCastContext is null for player {}", player.getName().getString());
             return;
         }
         
         HitResult hitResult = event.rayTraceResult;
-        ArsZero.LOGGER.info("[ResolverEvents] Effect resolved in BEGIN phase. HitResult type: {}", hitResult.getType());
-        
         SpellResult result = null;
         
         if (hitResult instanceof BlockHitResult blockHit && event.world instanceof ServerLevel serverLevel) {
-            ArsZero.LOGGER.info("[ResolverEvents] Block hit at {}", blockHit.getBlockPos());
-            
             BlockPos pos = blockHit.getBlockPos();
             if (!event.world.isOutsideBuildHeight(pos) && BlockUtil.destroyRespectsClaim(player, event.world, pos)) {
                 BlockPos targetPos = pos;
@@ -128,12 +123,9 @@ public class ArsZeroResolverEvents {
                 int pierceBuff = event.spellStats.getBuffCount(com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce.INSTANCE);
                 List<BlockPos> posList = SpellUtil.calcAOEBlocks(player, targetPos, blockHit, aoeBuff, pierceBuff);
                 
-                ArsZero.LOGGER.info("[ResolverEvents] Calculated {} AOE blocks", posList.size());
-                
                 List<BlockPos> validBlocks = new ArrayList<>();
                 // Use captured states from PRE event
-                java.util.Map<BlockPos, net.minecraft.world.level.block.state.BlockState> capturedStates = capturedBlockStates.getOrDefault(serverLevel, new java.util.HashMap<>());
-                ArsZero.LOGGER.info("[ResolverEvents] POST: Retrieved {} captured states from PRE event", capturedStates.size());
+                Map<BlockPos, BlockState> capturedStates = capturedBlockStates.getOrDefault(serverLevel, new HashMap<>());
                 
                 for (BlockPos blockPos : posList) {
                     if (!event.world.isOutsideBuildHeight(blockPos) && BlockUtil.destroyRespectsClaim(player, event.world, blockPos)) {
@@ -141,19 +133,12 @@ public class ArsZeroResolverEvents {
                         var state = capturedStates.get(blockPos);
                         if (state == null) {
                             state = event.world.getBlockState(blockPos);
-                            ArsZero.LOGGER.warn("[ResolverEvents] POST: No captured state for {}, reading from world: state={}, isAir={}", 
-                                blockPos, state.getBlock().getDescriptionId(), state.isAir());
-                        } else {
-                            ArsZero.LOGGER.info("[ResolverEvents] POST: Using captured state for {}: state={}", 
-                                blockPos, state.getBlock().getDescriptionId());
                         }
                         
                         // Only add if not air
                         if (state != null && !state.isAir()) {
                             validBlocks.add(blockPos);
                             capturedStates.put(blockPos, state); // Ensure it's in the map
-                        } else {
-                            ArsZero.LOGGER.warn("[ResolverEvents] POST: Block at {} is air (state={}), skipping", blockPos, state);
                         }
                     }
                 }
@@ -162,49 +147,30 @@ public class ArsZeroResolverEvents {
                 capturedBlockStates.remove(serverLevel);
                 
                 if (!validBlocks.isEmpty()) {
-                    ArsZero.LOGGER.info("[ResolverEvents] Creating BlockGroupEntity with {} valid blocks", validBlocks.size());
-                    
                     Vec3 centerPos = calculateCenter(validBlocks);
-                    ArsZero.LOGGER.info("[ResolverEvents] Center position calculated: {}", centerPos);
                     
                     BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), serverLevel);
                     blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
-                    ArsZero.LOGGER.info("[ResolverEvents] BlockGroupEntity created at position: {}", blockGroup.position());
                     
                     // Add blocks using captured states - this bypasses reading from world
                     blockGroup.addBlocksWithStates(validBlocks, capturedStates);
-                    ArsZero.LOGGER.info("[ResolverEvents] BlockGroupEntity added {} blocks", blockGroup.getBlockCount());
                     
-                    if (blockGroup.isEmpty()) {
-                        ArsZero.LOGGER.error("[ResolverEvents] ERROR: BlockGroupEntity is empty after addBlocks! Valid blocks were: {}", validBlocks);
-                        ArsZero.LOGGER.error("[ResolverEvents] This means blocks were not added properly. Check block states.");
-                    } else {
-                        // Blocks were already removed in PRE event, so we skip removal here
-                        ArsZero.LOGGER.info("[ResolverEvents] Blocks were already removed in PRE event, skipping removal");
-                    }
+                    // Blocks were already removed in PRE event, so we skip removal here
                     
                     serverLevel.addFreshEntity(blockGroup);
-                    ArsZero.LOGGER.info("[ResolverEvents] BlockGroupEntity spawned with ID {} at position {}", blockGroup.getId(), blockGroup.position());
                     
                     result = SpellResult.fromBlockGroup(blockGroup, validBlocks, player);
-                    ArsZero.LOGGER.info("[ResolverEvents] Created SpellResult with BlockGroupEntity. BlockGroup: {}, BlockPositions: {}", 
-                        result.blockGroup != null ? result.blockGroup.getId() : "null",
-                        result.blockPositions != null ? result.blockPositions.size() : "null");
                 }
-            } else {
-                ArsZero.LOGGER.debug("[ResolverEvents] Block validation failed - outside build height or claim check failed");
             }
         }
         
         if (result == null) {
             result = SpellResult.fromHitResultWithCaster(hitResult, SpellEffectType.RESOLVED, player);
-            ArsZero.LOGGER.debug("[ResolverEvents] Created SpellResult from HitResult (entity or invalid block)");
         }
         
         switch (wrapped.getPhase()) {
             case BEGIN -> {
                 context.beginResults.add(result);
-                ArsZero.LOGGER.info("[ResolverEvents] Added SpellResult to beginResults. Total results: {}", context.beginResults.size());
             }
             case TICK -> {
                 context.tickResults.add(result);

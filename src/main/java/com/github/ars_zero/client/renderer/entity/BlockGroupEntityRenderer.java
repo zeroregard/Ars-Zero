@@ -1,5 +1,6 @@
 package com.github.ars_zero.client.renderer.entity;
 
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -34,12 +35,6 @@ public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
             return;
         }
         
-        // Debug logging (only occasionally to avoid spam)
-        if (entity.tickCount % 40 == 0) {
-            com.github.ars_zero.ArsZero.LOGGER.info("[BlockGroupRenderer] Rendering BlockGroupEntity {} with {} blocks at position {}", 
-                entity.getId(), blocks.size(), entity.position());
-        }
-        
         Vec3 entityPos = entity.position();
         
         poseStack.pushPose();
@@ -56,8 +51,6 @@ public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
             poseStack.pushPose();
             poseStack.translate(blockData.relativePosition.x - 0.5, blockData.relativePosition.y - 0.5, blockData.relativePosition.z - 0.5);
             
-            poseStack.scale(0.99f, 0.99f, 0.99f);
-            
             BlockPos renderPos = BlockPos.containing(blockWorldPos);
             int combinedLight = LevelRenderer.getLightColor(entity.level(), blockState, renderPos);
             
@@ -70,7 +63,7 @@ public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
                     OverlayTexture.NO_OVERLAY
                 );
             } catch (Exception e) {
-                com.github.ars_zero.ArsZero.LOGGER.warn("Failed to render block {} for BlockGroupEntity", blockState, e);
+                ArsZero.LOGGER.warn("Failed to render block {} for BlockGroupEntity", blockState, e);
             }
             
             poseStack.popPose();
