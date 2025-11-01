@@ -6,7 +6,7 @@ license="MIT"
 modId="ars_zero"
 version="1.0.0-alpha"
 displayName="Ars Zero"
-authors="mathi"
+authors="zeroregard"
 description='''
 A mod focused on staff-based spellcasting with temporal context for Ars Nouveau.
 '''

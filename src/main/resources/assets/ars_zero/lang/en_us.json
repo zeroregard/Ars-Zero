@@ -30,10 +30,10 @@
   "ars_zero.glyph_desc.near_form": "Casts the spell at a short distance in front of your gaze",
 
   "ars_zero.glyph_name.translate_effect": "Anchor",
-  "ars_zero.glyph_desc.translate_effect": "Maintains the relative position of a target(s) to the caster",
+  "ars_zero.glyph_desc.translate_effect": "Maintains the relative position of the target(s) to the caster",
 
   "ars_zero.glyph_name.push_effect": "Push",
-  "ars_zero.glyph_desc.push_effect": "Pushes the target entity in the direction you're looking.",
+  "ars_zero.glyph_desc.push_effect": "Pushes the target in the direction you're looking.",
 
   "ars_zero.glyph_name.enlarge_effect": "Enlarge",
   "ars_zero.glyph_desc.enlarge_effect": "Increases the size of the target entity [NB: only works on Voxels so far]"
