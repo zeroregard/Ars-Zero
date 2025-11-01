@@ -58,8 +58,8 @@ public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
             
             poseStack.scale(0.99f, 0.99f, 0.99f);
             
-            // Use full brightness for now (ignore lighting)
-            int combinedLight = 0xF000F0; // Full sky and block light
+            BlockPos renderPos = BlockPos.containing(blockWorldPos);
+            int combinedLight = LevelRenderer.getLightColor(entity.level(), blockState, renderPos);
             
             try {
                 this.blockRenderer.renderSingleBlock(
