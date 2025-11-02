@@ -1,8 +1,10 @@
 package com.github.ars_zero.event;
 
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.glyph.TranslateEffect;
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.StaffCastContext;
+import com.github.ars_zero.registry.ModAttachments;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -17,19 +19,19 @@ public class StaffCleanupHandler {
         Player player = event.getEntity();
         if (player.level().isClientSide) return;
         
-        StaffCastContext context = ArsZeroStaff.getStaffContext(player);
+        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
         if (context == null || !context.isHoldingStaff) {
             return;
         }
         
         ItemStack heldItem = player.getMainHandItem();
-        boolean isHoldingStaff = heldItem.getItem() instanceof ArsZeroStaff;
+        boolean isHoldingStaff = heldItem.getItem() instanceof AbstractSpellStaff;
         boolean isUsingItem = player.isUsingItem();
         
         if (!isHoldingStaff || !isUsingItem) {
             TranslateEffect.restoreEntityPhysics(context);
-            player.removeData(com.github.ars_zero.registry.ModAttachments.STAFF_CONTEXT);
-            com.github.ars_zero.ArsZero.LOGGER.debug("Cleaned up staff context for {} (switched items or stopped using)", player.getName().getString());
+            player.removeData(ModAttachments.STAFF_CONTEXT);
+            ArsZero.LOGGER.debug("Cleaned up staff context for {} (switched items or stopped using)", player.getName().getString());
         }
     }
 }

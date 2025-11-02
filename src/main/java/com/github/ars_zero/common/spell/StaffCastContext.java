@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.spell;
 
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.UUID;
 public class StaffCastContext {
     public final UUID castId;
     public final UUID playerId;
-    public ArsZeroStaff.StaffPhase currentPhase = ArsZeroStaff.StaffPhase.BEGIN;
+    public AbstractSpellStaff.StaffPhase currentPhase = AbstractSpellStaff.StaffPhase.BEGIN;
     public boolean isHoldingStaff = false;
     public int tickCount = 0;
     public int sequenceTick = 0;

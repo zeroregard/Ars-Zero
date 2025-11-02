@@ -1,6 +1,15 @@
 {
-  "item.ars_zero.ars_zero_staff": "Creative Spell Staff",
-  "item.ars_zero.ars_zero_staff.desc": "A creative magical staff that can cast spells in three phases: Begin, Tick, and End. All glyphs are available.",
+  "item.ars_zero.novice_spell_staff": "Novice Spell Staff",
+  "item.ars_zero.novice_spell_staff.desc": "A novice magical staff that can cast spells in three phases: Begin, Tick, and End. Only Tier 1 glyphs are available.",
+
+  "item.ars_zero.mage_spell_staff": "Mage Spell Staff",
+  "item.ars_zero.mage_spell_staff.desc": "A mage magical staff that can cast spells in three phases: Begin, Tick, and End. Only Tier 1 and Tier 2 glyphs are available.",
+
+  "item.ars_zero.archmage_spell_staff": "Archmage Spell Staff",
+  "item.ars_zero.archmage_spell_staff.desc": "An archmage magical staff that can cast spells in three phases: Begin, Tick, and End. Only Tier 1, Tier 2, and Tier 3 glyphs are available.",
+
+  "item.ars_zero.creative_spell_staff": "Creative Spell Staff",
+  "item.ars_zero.creative_spell_staff.desc": "A creative magical staff that can cast spells in three phases: Begin, Tick, and End. All glyphs are available.",
 
   "block.ars_zero.arcane_voxel_spawner": "Arcane Voxel Spawner",
   "block.ars_zero.fire_voxel_spawner": "Fire Voxel Spawner",

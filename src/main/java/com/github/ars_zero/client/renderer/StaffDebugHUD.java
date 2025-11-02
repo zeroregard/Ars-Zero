@@ -1,6 +1,7 @@
 package com.github.ars_zero.client.renderer;
 
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.spell.StaffCastContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Player;
@@ -38,7 +39,7 @@ public class StaffDebugHUD {
         Player player = mc.player;
         ItemStack mainHandItem = player.getMainHandItem();
         
-        if (!(mainHandItem.getItem() instanceof ArsZeroStaff staff)) {
+        if (!(mainHandItem.getItem() instanceof AbstractSpellStaff staff)) {
             if (wasHolding) {
                 reset();
             }
@@ -63,7 +64,7 @@ public class StaffDebugHUD {
         debugInfo.add(String.format("Session Time: %.1fs", sessionStartTime > 0 ? (currentTime - sessionStartTime) / 1000.0 : 0));
         debugInfo.add("");
         
-        com.github.ars_zero.common.spell.StaffCastContext context = ArsZeroStaff.getStaffContext(player);
+        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
         
         debugInfo.add("Current State:");
         debugInfo.add(String.format("  Phase: %s", context != null ? context.currentPhase : "NONE"));
@@ -125,7 +126,7 @@ public class StaffDebugHUD {
         }
     }
     
-    public static void onSpellFired(ArsZeroStaff.StaffPhase phase) {
+    public static void onSpellFired(AbstractSpellStaff.StaffPhase phase) {
         long currentTime = System.currentTimeMillis();
         lastSpellFired = phase.name();
         lastPhaseChangeTime = currentTime;
