@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.StaffCastContext;
 import com.github.ars_zero.registry.ModEntities;
@@ -18,6 +19,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -116,22 +118,47 @@ public class TranslateEffect extends AbstractEffect {
             playerYaw = context.beginResults.get(0).casterYaw;
         }
         
+        List<SpellResult> newResults = new ArrayList<>();
+        
         for (SpellResult beginResult : context.beginResults) {
             Entity target = beginResult.targetEntity;
             
             if (target != null && target.isAlive()) {
                 if (target instanceof BlockGroupEntity blockGroup) {
                     float nearestRotation = blockGroup.getNearest90DegreeRotation(playerYaw);
-                    blockGroup.placeBlocks(nearestRotation);
-                    // Clear blocks after placing to prevent double placement when discard() calls remove()
+                    List<BlockPos> placedPositions = blockGroup.placeBlocks(nearestRotation);
                     blockGroup.clearBlocks();
+                    
+                    if (player != null && !placedPositions.isEmpty()) {
+                        for (BlockPos placedPos : placedPositions) {
+                            BlockHitResult blockHit = new BlockHitResult(
+                                Vec3.atCenterOf(placedPos),
+                                Direction.UP,
+                                placedPos,
+                                false
+                            );
+                            SpellResult placedBlockResult = SpellResult.fromHitResultWithCaster(
+                                blockHit,
+                                SpellEffectType.RESOLVED,
+                                player
+                            );
+                            newResults.add(placedBlockResult);
+                        }
+                    }
+                    
                     blockGroup.discard();
                 } else {
                     target.noPhysics = false;
                     target.setNoGravity(false);
+                    newResults.add(beginResult);
                 }
+            } else {
+                newResults.add(beginResult);
             }
         }
+        
+        context.beginResults.clear();
+        context.beginResults.addAll(newResults);
     }
 
     @Override

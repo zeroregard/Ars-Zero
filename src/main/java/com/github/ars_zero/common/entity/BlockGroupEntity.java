@@ -134,12 +134,13 @@ public class BlockGroupEntity extends Entity {
         }
     }
     
-    public void placeBlocks() {
-        placeBlocks(0.0f);
+    public List<BlockPos> placeBlocks() {
+        return placeBlocks(0.0f);
     }
     
-    public void placeBlocks(float rotationYaw) {
-        if (!(level() instanceof ServerLevel serverLevel)) return;
+    public List<BlockPos> placeBlocks(float rotationYaw) {
+        List<BlockPos> placedPositions = new ArrayList<>();
+        if (!(level() instanceof ServerLevel serverLevel)) return placedPositions;
         
         for (BlockData blockData : blocks) {
             Vec3 rotatedPos = rotateVector(blockData.relativePosition, rotationYaw);
@@ -155,6 +156,7 @@ public class BlockGroupEntity extends Entity {
                     if (state.canSurvive(level(), targetPos)) {
                         if (level().setBlock(targetPos, state, Block.UPDATE_ALL)) {
                             placed = true;
+                            placedPositions.add(targetPos);
                             
                             // Restore BlockEntity data if needed
                             CompoundTag entityData = blockEntityData.get(blockData.originalPosition);
@@ -179,6 +181,8 @@ public class BlockGroupEntity extends Entity {
                 dropBlockAsItem(state, blockData.originalPosition);
             }
         }
+        
+        return placedPositions;
     }
     
     private void dropBlockAsItem(BlockState state, BlockPos originalPos) {
@@ -285,7 +289,6 @@ public class BlockGroupEntity extends Entity {
             }
             
             placeBlocks(rotation);
-            // Clear blocks after placing to ensure we don't place them again
             clearBlocks();
         }
         
