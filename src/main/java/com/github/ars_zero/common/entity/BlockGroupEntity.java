@@ -13,9 +13,12 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
@@ -269,9 +272,39 @@ public class BlockGroupEntity extends Entity {
         super.tick();
         
         if (!level().isClientSide) {
-            this.move(MoverType.SELF, this.getDeltaMovement());
-            this.setDeltaMovement(this.getDeltaMovement().scale(0.98));
+            Vec3 deltaMovement = this.getDeltaMovement();
+            this.move(MoverType.SELF, deltaMovement);
+            this.setDeltaMovement(deltaMovement.scale(0.98));
         }
+    }
+    
+    @Override
+    public boolean canBeHitByProjectile() {
+        return true;
+    }
+    
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
+            return false;
+        }
+        
+        if (source.getDirectEntity() instanceof Projectile projectile) {
+            projectile.discard();
+            return true;
+        }
+        
+        return false;
+    }
+    
+    @Override
+    public boolean isPickable() {
+        return true;
+    }
+    
+    @Override
+    public boolean isPushable() {
+        return false;
     }
     
     public void clearBlocks() {
