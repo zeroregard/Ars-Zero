@@ -4,13 +4,10 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemDisplayContext;
-import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.model.GeoModel;
 
-public class CreativeSpellStaffModel extends GeoModel<AbstractSpellStaff> {
+public class SpellStaffModel extends GeoModel<AbstractSpellStaff> {
     
-    // Cache ResourceLocation objects to prevent creation every frame
     private static final ResourceLocation MODEL_RESOURCE = ArsZero.prefix("geo/spell_staff.geo.json");
     private static final ResourceLocation TEXTURE_RESOURCE = ArsZero.prefix("textures/item/spell_staff.png");
     private static final ResourceLocation ANIMATION_RESOURCE = ArsZero.prefix("animations/spell_staff.animation.json");
@@ -35,3 +32,4 @@ public class CreativeSpellStaffModel extends GeoModel<AbstractSpellStaff> {
         return RenderType.entityCutoutNoCull(texture);
     }
 }
+

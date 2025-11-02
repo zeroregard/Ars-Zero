@@ -43,6 +43,11 @@ public class DyeRecipe extends ShapelessRecipe {
     public @NotNull RecipeSerializer<?> getSerializer() {
         return ModRecipes.DYE_RECIPE.get();
     }
+    
+    @Override
+    public @NotNull RecipeType<?> getType() {
+        return ModRecipes.DYE_TYPE.get();
+    }
 
 }
 

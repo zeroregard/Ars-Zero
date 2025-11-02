@@ -1,80 +1,33 @@
 {
   "credit": "Made with Blockbench",
   "parent": "builtin/entity",
-  "texture_size": [
-    128,
-    128
-  ],
+  "texture_size": [128, 128],
   "textures": {
-    "0": "ars_zero:item/creative_spell_staff"
+    "0": "ars_zero:item/spell_staff"
   },
   "display": {
     "thirdperson_righthand": {
-      "translation": [
-        0,
-        -6,
-        1
-      ]
+      "translation": [0, -6, 1]
     },
     "thirdperson_lefthand": {
-      "translation": [
-        0,
-        -6,
-        0
-      ]
+      "translation": [0, -6, 0]
     },
     "firstperson_righthand": {
-      "rotation": [
-        -12,
-        -9,
-        0
-      ],
-      "translation": [
-        1.5,
-        -7.5,
-        0.5
-      ]
+      "rotation": [-12, -9, 0],
+      "translation": [1.5, -7.5, 0.5]
     },
     "firstperson_lefthand": {
-      "rotation": [
-        -12,
-        -9,
-        0
-      ],
-      "translation": [
-        1.5,
-        -7.5,
-        0.5
-      ]
+      "rotation": [-12, -9, 0],
+      "translation": [1.5, -7.5, 0.5]
     },
     "ground": {
-      "rotation": [
-        90,
-        0,
-        0
-      ],
-      "translation": [
-        0,
-        0,
-        -8
-      ]
+      "rotation": [90, 0, 0],
+      "translation": [0, 0, -8]
     },
     "fixed": {
-      "rotation": [
-        4,
-        0,
-        45
-      ],
-      "translation": [
-        4.5,
-        -4.75,
-        0
-      ],
-      "scale": [
-        0.75,
-        0.75,
-        0.75
-      ]
+      "rotation": [4, 0, 45],
+      "translation": [4.5, -4.75, 0],
+      "scale": [0.75, 0.75, 0.75]
     }
   },
   "overrides": [
@@ -82,7 +35,7 @@
       "predicate": {
         "custom_model_data": 1
       },
-      "model": "ars_zero:item/creative_spell_staff_icon"
+      "model": "ars_zero:item/spell_staff_icon"
     }
   ]
 }

@@ -4,7 +4,6 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.glyph.TranslateEffect;
-import com.github.ars_zero.client.renderer.item.CreativeSpellStaffRenderer;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.network.PacketSetStaffSlot;
@@ -543,16 +542,7 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
-        consumer.accept(new GeoRenderProvider() {
-            private final BlockEntityWithoutLevelRenderer renderer = new CreativeSpellStaffRenderer();
-
-            @Override
-            public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
-                return renderer;
-            }
-        });
-    }
+    public abstract void createGeoRenderer(Consumer<GeoRenderProvider> consumer);
 
 
 }

@@ -40,8 +40,8 @@ public class ArsZero {
         ModCreativeTabs.TABS.register(modEventBus);
         ModGlyphs.registerGlyphs();
         ModAttachments.ATTACHMENT_TYPES.register(modEventBus);
-        ModRecipes.RECIPE_TYPES.register(modEventBus);
         ModRecipes.RECIPE_SERIALIZERS.register(modEventBus);
+        ModRecipes.RECIPE_TYPES.register(modEventBus);
         
         modEventBus.addListener(Networking::register);
         modEventBus.addListener(this::gatherData); 
