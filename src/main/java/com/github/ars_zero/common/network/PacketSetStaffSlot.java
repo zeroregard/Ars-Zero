@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -37,10 +37,10 @@ public record PacketSetStaffSlot(int logicalSlot) implements CustomPacketPayload
                 ItemStack offStack = player.getOffhandItem();
                 
                 ItemStack stack;
-                if (mainStack.getItem() instanceof ArsZeroStaff) {
+                if (mainStack.getItem() instanceof AbstractSpellStaff) {
                     stack = mainStack;
                     hand = InteractionHand.MAIN_HAND;
-                } else if (offStack.getItem() instanceof ArsZeroStaff) {
+                } else if (offStack.getItem() instanceof AbstractSpellStaff) {
                     stack = offStack;
                     hand = InteractionHand.OFF_HAND;
                 } else {

@@ -1,6 +1,6 @@
 package com.github.ars_zero.client;
 
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.common.network.PacketAdjustStaffDistance;
 import net.minecraft.client.Minecraft;
@@ -23,8 +23,8 @@ public class StaffScrollHandler {
         ItemStack mainHandItem = player.getMainHandItem();
         ItemStack offHandItem = player.getOffhandItem();
         
-        boolean usingStaffInMainHand = mainHandItem.getItem() instanceof ArsZeroStaff && player.isUsingItem() && player.getUsedItemHand() == net.minecraft.world.InteractionHand.MAIN_HAND;
-        boolean usingStaffInOffHand = offHandItem.getItem() instanceof ArsZeroStaff && player.isUsingItem() && player.getUsedItemHand() == net.minecraft.world.InteractionHand.OFF_HAND;
+        boolean usingStaffInMainHand = mainHandItem.getItem() instanceof AbstractSpellStaff && player.isUsingItem() && player.getUsedItemHand() == net.minecraft.world.InteractionHand.MAIN_HAND;
+        boolean usingStaffInOffHand = offHandItem.getItem() instanceof AbstractSpellStaff && player.isUsingItem() && player.getUsedItemHand() == net.minecraft.world.InteractionHand.OFF_HAND;
         
         if (usingStaffInMainHand || usingStaffInOffHand) {
             event.setCanceled(true);

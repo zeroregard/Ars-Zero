@@ -4,7 +4,6 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.glyph.TranslateEffect;
-import com.github.ars_zero.client.renderer.item.CreativeSpellStaffRenderer;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.network.PacketSetStaffSlot;
@@ -22,6 +21,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellCaster;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
+import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
 import com.hollingsworth.arsnouveau.api.util.SpellUtil;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
@@ -74,7 +74,7 @@ import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, GeoItem {
+public abstract class AbstractSpellStaff extends Item implements ICasterTool, IRadialProvider, GeoItem {
     
     public enum StaffPhase {
         BEGIN,
@@ -108,14 +108,19 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         }
     }
     
-    // GeckoLib
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    protected final SpellTier tier;
 
-    public ArsZeroStaff() {
+    public AbstractSpellStaff(SpellTier tier) {
         super(new Item.Properties()
             .stacksTo(1)
             .component(DataComponents.BASE_COLOR, DyeColor.PURPLE)
             .component(DataComponentRegistry.SPELL_CASTER, new SpellCaster(30)));
+        this.tier = tier;
+    }
+    
+    public SpellTier getTier() {
+        return this.tier;
     }
     
     @Override
@@ -216,7 +221,6 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         context.tickResults.clear();
         context.endResults.clear();
         
-        // playPhaseSound(player, stack, StaffPhase.BEGIN);
         executeSpell(player, stack, StaffPhase.BEGIN);
         
         if (player instanceof ServerPlayer serverPlayer) {
@@ -240,13 +244,6 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
             if (currentLogicalSlot >= 0 && currentLogicalSlot < 10) {
                 int physicalSlot = currentLogicalSlot * 3 + StaffPhase.TICK.ordinal();
                 Spell spell = caster.getSpell(physicalSlot);
-                
-                /* TODO: make a nicer sound effect for this (change the .ogg, length is fine)
-                if (hasTranslateEffect(spell) && context.tickCount % 5 == 0) {
-                    player.level().playSound(null, player.getX(), player.getY(), player.getZ(), 
-                        ModSounds.EFFECT_ANCHOR.get(), SoundSource.NEUTRAL, 1.0f, 1.0f);
-                }
-                */
             }
         }
         
@@ -268,7 +265,6 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         
         TranslateEffect.restoreEntityPhysics(context);
         
-        // playPhaseSound(player, stack, StaffPhase.END);
         executeSpell(player, stack, StaffPhase.END);
         
         if (player instanceof ServerPlayer serverPlayer) {
@@ -320,7 +316,6 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         }
         
         if (isTemporalContextFormSpell(spell)) {
-            // Temporal context is now handled via events
         }
         
         checkManaAndCast(player, stack, spell, phase);
@@ -401,9 +396,6 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         tag.putString("endSound", endSound.getSound() != null ? endSound.getSound().getId().toString() : "");
         tag.putFloat("endVolume", endSound.getVolume());
         tag.putFloat("endPitch", endSound.getPitch());
-        // if (tickLoopingSound != null) {
-        //     tag.putString("tickLooping", tickLoopingSound.toString());
-        // }
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
     
@@ -453,18 +445,10 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     }
     
     public static ResourceLocation getTickLoopingSound(ItemStack stack) {
-        // CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        // if (data == null) return null;
-        // CompoundTag tag = data.copyTag();
-        // if (!tag.contains("tickLooping")) return null;
-        // return ResourceLocation.parse(tag.getString("tickLooping"));
         return null;
     }
     
     
-    /**
-     * Check if a spell starts with TemporalContextForm
-     */
     private boolean isTemporalContextFormSpell(Spell spell) {
         if (spell.isEmpty()) return false;
         
@@ -523,12 +507,12 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
     
     @Override
     public int getUseDuration(ItemStack stack, LivingEntity livingEntity) {
-        return 72000; // 1 hour - effectively infinite for our purposes
+        return 72000;
     }
     
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.BOW; // Use bow animation for staff
+        return UseAnim.BOW;
     }
     
     @Override
@@ -536,34 +520,11 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
         return stack;
     }
 
-    @Override
-    public Component getDescription() {
-        return Component.translatable("item.ars_zero.ars_zero_staff.desc");
-    }
-    
     private void sendSpellFiredPacket(ServerPlayer player, StaffPhase phase) {
         PacketStaffSpellFired packet = new PacketStaffSpellFired(phase.ordinal());
         PacketDistributor.sendToPlayer(player, packet);
     }
-    
-    // private void playPhaseSound(Player player, ItemStack stack, StaffPhase phase) {
-    //     switch (phase) {
-    //         case BEGIN -> {
-    //             player.level().playSound(null, player.blockPosition(), 
-    //                 net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 
-    //                 SoundSource.PLAYERS, 0.5f, 0.8f);
-    //         }
-    //         case END -> {
-    //             player.level().playSound(null, player.blockPosition(), 
-    //                 net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 
-    //                 SoundSource.PLAYERS, 0.5f, 1.2f);
-    //         }
-    //         case TICK -> {
-    //         }
-    //     }
-    // }
 
-    // GeckoLib implementation
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
         controllerRegistrar.add(new AnimationController<>(this, "idle_controller", 20, this::idlePredicate));
@@ -581,16 +542,8 @@ public class ArsZeroStaff extends Item implements ICasterTool, IRadialProvider, 
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
-        consumer.accept(new GeoRenderProvider() {
-            private final BlockEntityWithoutLevelRenderer renderer = new CreativeSpellStaffRenderer();
-
-            @Override
-            public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
-                return renderer;
-            }
-        });
-    }
+    public abstract void createGeoRenderer(Consumer<GeoRenderProvider> consumer);
 
 
 }
+

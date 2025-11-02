@@ -3,7 +3,7 @@ package com.github.ars_zero.common.glyph;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.StaffCastContext;
@@ -56,7 +56,7 @@ public class TranslateEffect extends AbstractEffect {
         if (world.isClientSide) return;
         if (!(shooter instanceof Player player)) return;
         
-        StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+        StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
         if (staffContext == null || staffContext.beginResults.isEmpty()) {
             return;
         }
@@ -166,7 +166,7 @@ public class TranslateEffect extends AbstractEffect {
         if (world.isClientSide) return;
         if (!(shooter instanceof Player player)) return;
         
-        StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+        StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
         if (staffContext == null || staffContext.beginResults.isEmpty()) {
             return;
         }

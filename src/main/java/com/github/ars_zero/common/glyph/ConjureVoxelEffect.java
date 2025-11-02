@@ -5,7 +5,7 @@ import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.StaffCastContext;
@@ -251,7 +251,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
             return;
         }
         
-        StaffCastContext context = ArsZeroStaff.getStaffContext(player);
+        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
         if (context == null) {
             return;
         }
@@ -278,7 +278,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
             return;
         }
         
-        StaffCastContext context = ArsZeroStaff.getStaffContext(player);
+        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
         if (context == null) {
             return;
         }

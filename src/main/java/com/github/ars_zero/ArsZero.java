@@ -40,8 +40,8 @@ public class ArsZero {
         ModCreativeTabs.TABS.register(modEventBus);
         ModGlyphs.registerGlyphs();
         ModAttachments.ATTACHMENT_TYPES.register(modEventBus);
-        ModRecipes.RECIPE_TYPES.register(modEventBus);
         ModRecipes.RECIPE_SERIALIZERS.register(modEventBus);
+        ModRecipes.RECIPE_TYPES.register(modEventBus);
         
         modEventBus.addListener(Networking::register);
         modEventBus.addListener(this::gatherData); 
@@ -108,6 +108,7 @@ public class ArsZero {
         
         if (event.includeServer()) {
             generator.addProvider(true, new com.github.ars_zero.common.datagen.DyeRecipeDatagen(generator));
+            generator.addProvider(true, new com.github.ars_zero.common.datagen.StaffRecipeDatagen(generator));
         }
     }
 }

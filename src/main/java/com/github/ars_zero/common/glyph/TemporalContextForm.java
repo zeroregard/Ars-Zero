@@ -1,8 +1,9 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellResult;
+import com.github.ars_zero.common.spell.StaffCastContext;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCastMethod;
 import com.hollingsworth.arsnouveau.api.spell.CastResolveType;
@@ -51,7 +52,7 @@ public class TemporalContextForm extends AbstractCastMethod {
     @Override
     public CastResolveType onCast(ItemStack stack, LivingEntity caster, Level world, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (caster instanceof Player player) {
-            com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+            StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
             
             
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
@@ -69,7 +70,7 @@ public class TemporalContextForm extends AbstractCastMethod {
     @Override
     public CastResolveType onCastOnBlock(UseOnContext context, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (context.getPlayer() instanceof Player player) {
-            com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+            StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
             
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
                 return CastResolveType.FAILURE;
@@ -86,7 +87,7 @@ public class TemporalContextForm extends AbstractCastMethod {
     @Override
     public CastResolveType onCastOnBlock(BlockHitResult blockHitResult, LivingEntity caster, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (caster instanceof Player player) {
-            com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+            StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
                 return CastResolveType.FAILURE;
             }
@@ -102,7 +103,7 @@ public class TemporalContextForm extends AbstractCastMethod {
     @Override
     public CastResolveType onCastOnEntity(ItemStack stack, LivingEntity caster, Entity target, InteractionHand hand, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (caster instanceof Player player) {
-            com.github.ars_zero.common.spell.StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+            StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
             if (staffContext == null || staffContext.beginResults.isEmpty()) {
                 return CastResolveType.FAILURE;
             }

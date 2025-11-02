@@ -2,7 +2,7 @@ package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.StaffCastContext;
@@ -97,7 +97,7 @@ public class SelectEffect extends AbstractEffect {
         
         level.addFreshEntity(blockGroup);
         
-        StaffCastContext context = ArsZeroStaff.getStaffContext(player);
+        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
         if (context != null) {
             SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, blockPositions, player);
             context.beginResults.clear();

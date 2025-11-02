@@ -1,6 +1,7 @@
 package com.github.ars_zero.client.gui;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 import com.hollingsworth.arsnouveau.api.spell.*;
 import com.hollingsworth.arsnouveau.client.gui.book.SpellSlottedScreen;
@@ -11,8 +12,13 @@ import com.hollingsworth.arsnouveau.client.gui.buttons.GlyphButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.GuiSpellSlot;
 import com.hollingsworth.arsnouveau.client.gui.SearchBar;
 import com.hollingsworth.arsnouveau.client.gui.book.EnterTextField;
-import com.hollingsworth.arsnouveau.common.network.Networking;
+import com.github.ars_zero.common.network.Networking;
+import com.github.ars_zero.common.network.PacketSetStaffSlot;
+import com.hollingsworth.arsnouveau.api.spell.SpellValidationError;
+import com.hollingsworth.arsnouveau.common.capability.IPlayerCap;
 import com.hollingsworth.arsnouveau.common.network.PacketUpdateCaster;
+import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
+import com.hollingsworth.arsnouveau.common.spell.validation.GlyphMaxTierValidator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
@@ -100,9 +106,25 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             }
         }
         
-        List<AbstractSpellPart> parts = new ArrayList<>(GlyphRegistry.getSpellpartMap().values().stream().filter(AbstractSpellPart::shouldShowInSpellBook).toList());
+        IPlayerCap playerCapData = CapabilityRegistry.getPlayerDataCap(player);
+        List<AbstractSpellPart> parts = playerCapData == null ? new ArrayList<>() : new ArrayList<>(playerCapData.getKnownGlyphs().stream().filter(AbstractSpellPart::shouldShowInSpellBook).toList());
+        parts.addAll(GlyphRegistry.getDefaultStartingSpells());
+        
+        int tier = 1;
+        if (bookStack.getItem() instanceof AbstractSpellStaff staff) {
+            tier = staff.getTier().value;
+            if (staff.getTier() == SpellTier.CREATIVE) {
+                parts = new ArrayList<>(GlyphRegistry.getSpellpartMap().values().stream().filter(AbstractSpellPart::shouldShowInSpellBook).toList());
+            }
+        }
+        
         this.unlockedSpells = parts;
         this.displayedGlyphs = new ArrayList<>(this.unlockedSpells);
+        
+        int finalTier = tier;
+        this.displayedGlyphs = this.displayedGlyphs.stream()
+            .filter(part -> part.getConfigTier().value <= finalTier)
+            .toList();
         
         initSpellSlots();
         
@@ -426,8 +448,15 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         return phaseSpells.get(currentPhase.ordinal());
     }
     
-    private List<com.hollingsworth.arsnouveau.api.spell.SpellValidationError> getValidationErrors() {
-        return new ArrayList<>();
+    private List<SpellValidationError> getValidationErrors() {
+        int tier = 1;
+        if (bookStack.getItem() instanceof AbstractSpellStaff staff) {
+            tier = staff.getTier().value;
+        }
+        
+        List<AbstractSpellPart> spellParts = getCurrentPhaseSpell().stream().filter(part -> part != null).toList();
+        GlyphMaxTierValidator validator = new GlyphMaxTierValidator(tier);
+        return validator.validate(spellParts);
     }
 
     public void resetCraftingCells() {
@@ -499,14 +528,14 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             ArsZero.LOGGER.info("Sending PacketUpdateCaster for phase {} to slot {} with {} glyphs", 
                 StaffPhase.values()[phase], physicalSlot, filteredPhase.size());
             
-            Networking.sendToServer(new PacketUpdateCaster(spell, physicalSlot, spellName, true));
+            com.hollingsworth.arsnouveau.common.network.Networking.sendToServer(new PacketUpdateCaster(spell, physicalSlot, spellName, true));
             
             ArsZero.LOGGER.info("Sent PacketUpdateCaster for phase {}", StaffPhase.values()[phase]);
         }
         
         spellSlots[selectedSpellSlot].spellName = spellName;
         
-        com.github.ars_zero.common.network.Networking.sendToServer(new com.github.ars_zero.common.network.PacketSetStaffSlot(selectedSpellSlot));
+        Networking.sendToServer(new PacketSetStaffSlot(selectedSpellSlot));
         ArsZero.LOGGER.info("Sent PacketSetStaffSlot with slot {}", selectedSpellSlot);
         
         ArsZero.LOGGER.debug("Saved all 3 phases for logical slot {} (physical slots: {}, {}, {})", 
@@ -526,7 +555,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             
             int physicalSlot = selectedSpellSlot * 3 + phase;
             Spell emptySpell = new Spell();
-            Networking.sendToServer(new PacketUpdateCaster(emptySpell, physicalSlot, "", false));
+            com.hollingsworth.arsnouveau.common.network.Networking.sendToServer(new PacketUpdateCaster(emptySpell, physicalSlot, "", false));
         }
         
         resetCraftingCells();
@@ -586,27 +615,40 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         if (!str.isEmpty()) {
             searchBar.setSuggestion("");
             displayedGlyphs = new ArrayList<>();
+            
+            int tier = 1;
+            if (bookStack.getItem() instanceof AbstractSpellStaff staff) {
+                tier = staff.getTier().value;
+            }
+            int finalTier = tier;
 
             for (AbstractSpellPart spellPart : unlockedSpells) {
-                if (spellPart.getLocaleName().toLowerCase().contains(str.toLowerCase())) {
+                if (spellPart.getLocaleName().toLowerCase().contains(str.toLowerCase()) 
+                    && spellPart.getConfigTier().value <= finalTier) {
                     displayedGlyphs.add(spellPart);
                 }
             }
-            // Set visibility of Cast Methods and Augments
             for (net.minecraft.client.gui.components.Renderable w : renderables) {
                 if (w instanceof GlyphButton glyphButton) {
                     if (glyphButton.abstractSpellPart.getRegistryName() != null) {
                         AbstractSpellPart part = GlyphRegistry.getSpellpartMap().get(glyphButton.abstractSpellPart.getRegistryName());
                         if (part != null) {
-                            glyphButton.visible = part.getLocaleName().toLowerCase().contains(str.toLowerCase());
+                            glyphButton.visible = part.getLocaleName().toLowerCase().contains(str.toLowerCase()) 
+                                && part.getConfigTier().value <= finalTier;
                         }
                     }
                 }
             }
         } else {
-            // Reset our book on clear
             searchBar.setSuggestion(Component.translatable("ars_nouveau.spell_book_gui.search").getString());
-            displayedGlyphs = new ArrayList<>(unlockedSpells);
+            int tier = 1;
+            if (bookStack.getItem() instanceof AbstractSpellStaff staff) {
+                tier = staff.getTier().value;
+            }
+            int finalTier = tier;
+            displayedGlyphs = new ArrayList<>(unlockedSpells.stream()
+                .filter(part -> part.getConfigTier().value <= finalTier)
+                .toList());
             for (net.minecraft.client.gui.components.Renderable w : renderables) {
                 if (w instanceof GlyphButton) {
                     ((GlyphButton) w).visible = true;
@@ -669,7 +711,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
 
     @Override
     public void onClose() {
-        com.github.ars_zero.common.network.Networking.sendToServer(new com.github.ars_zero.common.network.PacketSetStaffSlot(selectedSpellSlot));
+        Networking.sendToServer(new PacketSetStaffSlot(selectedSpellSlot));
         ArsZero.LOGGER.info("onClose: sent PacketSetStaffSlot with slot {}", selectedSpellSlot);
         super.onClose();
     }

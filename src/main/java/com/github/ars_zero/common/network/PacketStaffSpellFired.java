@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.network;
 
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.client.sound.StaffSoundManager;
 import io.netty.buffer.ByteBuf;
@@ -13,7 +14,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 public record PacketStaffSpellFired(int phaseOrdinal) implements CustomPacketPayload {
     
     public static final CustomPacketPayload.Type<PacketStaffSpellFired> TYPE = 
-        new CustomPacketPayload.Type<>(com.github.ars_zero.ArsZero.prefix("staff_spell_fired"));
+        new CustomPacketPayload.Type<>(ArsZero.prefix("staff_spell_fired"));
     
     public static final StreamCodec<ByteBuf, PacketStaffSpellFired> STREAM_CODEC = StreamCodec.composite(
         ByteBufCodecs.INT,
@@ -28,14 +29,14 @@ public record PacketStaffSpellFired(int phaseOrdinal) implements CustomPacketPay
     
     public static void handle(PacketStaffSpellFired packet, IPayloadContext context) {
         context.enqueueWork(() -> {
-            ArsZeroStaff.StaffPhase phase = ArsZeroStaff.StaffPhase.values()[packet.phaseOrdinal];
+            AbstractSpellStaff.StaffPhase phase = AbstractSpellStaff.StaffPhase.values()[packet.phaseOrdinal];
             StaffDebugHUD.onSpellFired(phase);
             
             var player = Minecraft.getInstance().player;
             if (player != null) {
-                if (phase == ArsZeroStaff.StaffPhase.BEGIN) {
+                if (phase == AbstractSpellStaff.StaffPhase.BEGIN) {
                     StaffSoundManager.startLoopingSound(player);
-                } else if (phase == ArsZeroStaff.StaffPhase.END) {
+                } else if (phase == AbstractSpellStaff.StaffPhase.END) {
                     StaffSoundManager.stopLoopingSound();
                 }
             }

@@ -15,18 +15,57 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 import software.bernie.geckolib.util.Color;
-import com.github.ars_zero.client.renderer.item.SpellStaffModel;
 
 import javax.annotation.Nullable;
+import java.util.Set;
 
-public class CreativeSpellStaffRenderer extends GeoItemRenderer<AbstractSpellStaff> {
+public class SpellStaffRenderer extends GeoItemRenderer<AbstractSpellStaff> {
+    
+    private final Set<String> hiddenBones;
 
-    public CreativeSpellStaffRenderer() {
+    public SpellStaffRenderer(Set<String> hiddenBones) {
         super(new SpellStaffModel());
+        this.hiddenBones = hiddenBones;
     }
-
+    
+    @Override
+    public void preRender(PoseStack poseStack, AbstractSpellStaff animatable, BakedGeoModel model, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int color) {
+        resetBoneVisibility(model, "tier2");
+        resetBoneVisibility(model, "tier3");
+        
+        for (String boneName : hiddenBones) {
+            model.getBone(boneName).ifPresent(bone -> {
+                bone.setHidden(true);
+                hideChildBones(bone);
+            });
+        }
+        super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, color);
+    }
+    
+    private void resetBoneVisibility(BakedGeoModel model, String boneName) {
+        model.getBone(boneName).ifPresent(bone -> {
+            bone.setHidden(false);
+            resetChildBoneVisibility(bone);
+        });
+    }
+    
+    private void resetChildBoneVisibility(GeoBone bone) {
+        for (GeoBone child : bone.getChildBones()) {
+            child.setHidden(false);
+            resetChildBoneVisibility(child);
+        }
+    }
+    
+    private void hideChildBones(GeoBone bone) {
+        for (GeoBone child : bone.getChildBones()) {
+            child.setHidden(true);
+            hideChildBones(child);
+        }
+    }
+    
     @Override
     protected void renderInGui(ItemDisplayContext transformType, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay, float partialTick) {
         this.animatable.getAnimatableInstanceCache().getManagerForId(this.animatable.hashCode()).getAnimationControllers().values().forEach(controller -> controller.stop());
@@ -96,6 +135,7 @@ public class CreativeSpellStaffRenderer extends GeoItemRenderer<AbstractSpellSta
         this.renderFinal(poseStack, animatable, model, bufferSource, buffer, partialTick, packedLight, packedOverlay, packedColor);
     }
 
+
     @Override
     public ResourceLocation getTextureLocation(AbstractSpellStaff o) {
         String base = "textures/item/spell_staff_";
@@ -109,15 +149,4 @@ public class CreativeSpellStaffRenderer extends GeoItemRenderer<AbstractSpellSta
         return RenderType.entityTranslucent(texture);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
 

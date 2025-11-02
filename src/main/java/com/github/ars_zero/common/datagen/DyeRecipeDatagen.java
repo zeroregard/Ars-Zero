@@ -29,7 +29,10 @@ public class DyeRecipeDatagen extends SimpleDataProvider {
 
     @Override
     public void collectJsons(CachedOutput pOutput) {
-        addDyeRecipe(ModItems.ARS_ZERO_STAFF.get());
+        addDyeRecipe(ModItems.NOVICE_SPELL_STAFF.get());
+        addDyeRecipe(ModItems.MAGE_SPELL_STAFF.get());
+        addDyeRecipe(ModItems.ARCHMAGE_SPELL_STAFF.get());
+        addDyeRecipe(ModItems.CREATIVE_SPELL_STAFF.get());
 
         for (FileObj fileObj : files) {
             saveStable(pOutput, fileObj.element, fileObj.path);

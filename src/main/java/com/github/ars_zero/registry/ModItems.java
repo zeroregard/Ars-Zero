@@ -1,7 +1,11 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.ArchmageSpellStaff;
+import com.github.ars_zero.common.item.CreativeSpellStaff;
+import com.github.ars_zero.common.item.MageSpellStaff;
+import com.github.ars_zero.common.item.NoviceSpellStaff;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.setup.registry.ItemRegistryWrapper;
 import net.minecraft.core.registries.Registries;
@@ -13,13 +17,17 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class ModItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Registries.ITEM, ArsZero.MOD_ID);
     
-    // Flag to track if spell casters have been registered
     public static boolean SPELL_CASTERS_REGISTERED = false;
     
-    public static final ItemRegistryWrapper<ArsZeroStaff> ARS_ZERO_STAFF = register("ars_zero_staff", () -> {
-        ArsZero.LOGGER.debug("Creating ArsZeroStaff item instance for registration");
-        return new ArsZeroStaff();
-    });
+    public static final ItemRegistryWrapper<NoviceSpellStaff> NOVICE_SPELL_STAFF = register("novice_spell_staff", NoviceSpellStaff::new);
+    
+    public static final ItemRegistryWrapper<MageSpellStaff> MAGE_SPELL_STAFF = register("mage_spell_staff", MageSpellStaff::new);
+    
+    public static final ItemRegistryWrapper<ArchmageSpellStaff> ARCHMAGE_SPELL_STAFF = register("archmage_spell_staff", ArchmageSpellStaff::new);
+    
+    public static final ItemRegistryWrapper<CreativeSpellStaff> CREATIVE_SPELL_STAFF = register("creative_spell_staff", CreativeSpellStaff::new);
+    
+    public static final ItemRegistryWrapper<Item> ARCHWOOD_ROD = register("archwood_rod", () -> new Item(defaultItemProperties()));
     
     public static final DeferredHolder<Item, BlockItem> ARCANE_VOXEL_SPAWNER = ITEMS.register(
         "arcane_voxel_spawner",
@@ -46,14 +54,17 @@ public class ModItems {
     }
 
     public static void registerSpellCasters() {
-        ArsZero.LOGGER.info("Registering Ars Zero staff with SpellCasterRegistry");
-        ArsZero.LOGGER.debug("Staff item: {}", ARS_ZERO_STAFF.get());
-        // Register our staff with the SpellCasterRegistry so Ars Nouveau can detect it
-        // Use the same pattern as Ars Nouveau items - extract SpellCaster from data component
-        SpellCasterRegistry.register(ARS_ZERO_STAFF.get(), (stack) -> {
-            // Extract SpellCaster from the data component (same as Ars Nouveau items)
+        ArsZero.LOGGER.info("Registering Ars Zero staves with SpellCasterRegistry");
+        registerStaff(NOVICE_SPELL_STAFF.get());
+        registerStaff(MAGE_SPELL_STAFF.get());
+        registerStaff(ARCHMAGE_SPELL_STAFF.get());
+        registerStaff(CREATIVE_SPELL_STAFF.get());
+        ArsZero.LOGGER.info("SpellCasterRegistry registration completed");
+    }
+    
+    private static void registerStaff(AbstractSpellStaff staff) {
+        SpellCasterRegistry.register(staff, (stack) -> {
             return stack.get(com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry.SPELL_CASTER);
         });
-        ArsZero.LOGGER.info("SpellCasterRegistry registration completed");
     }
 }

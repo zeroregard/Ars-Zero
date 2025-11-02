@@ -1,7 +1,8 @@
 package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.entity.BaseVoxelEntity;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.StaffCastContext;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -33,7 +34,7 @@ public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPac
     public static void handle(PacketAdjustStaffDistance packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
-                StaffCastContext staffContext = ArsZeroStaff.getStaffContext(player);
+                StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
                 
                 if (staffContext == null || !staffContext.isHoldingStaff) {
                     return;
@@ -49,7 +50,7 @@ public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPac
                 float entitySize = 1.0f;
                 
                 // TODO: Replace voxel instanceof check with general entity scale attachment for any scalable entity
-                if (targetEntity instanceof com.github.ars_zero.common.entity.BaseVoxelEntity voxel) {
+                if (targetEntity instanceof BaseVoxelEntity voxel) {
                     entitySize = voxel.getSize();
                     scrollSensitivity *= entitySize;
                 }

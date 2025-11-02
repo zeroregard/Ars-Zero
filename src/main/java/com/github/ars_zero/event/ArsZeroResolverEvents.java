@@ -2,7 +2,7 @@ package com.github.ars_zero.event;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.CastPhase;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
@@ -107,7 +107,7 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        StaffCastContext context = ArsZeroStaff.getStaffContext(player);
+        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
         if (context == null) {
             return;
         }
@@ -214,7 +214,7 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        StaffCastContext context = ArsZeroStaff.getStaffContext(player);
+        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
         if (context == null) {
             return;
         }

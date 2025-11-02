@@ -16,11 +16,14 @@ public class ModCreativeTabs {
                 .title(Component.translatable("itemGroup.ars_zero"))
                 .icon(() -> {
                     ArsZero.LOGGER.debug("Getting icon for Ars Zero creative tab");
-                    return ModItems.ARS_ZERO_STAFF.get().getDefaultInstance();
+                    return ModItems.CREATIVE_SPELL_STAFF.get().getDefaultInstance();
                 })
                 .displayItems((params, output) -> {
                     ArsZero.LOGGER.debug("Populating Ars Zero creative tab with items");
-                    output.accept(ModItems.ARS_ZERO_STAFF.get().getDefaultInstance());
+                    output.accept(ModItems.NOVICE_SPELL_STAFF.get().getDefaultInstance());
+                    output.accept(ModItems.MAGE_SPELL_STAFF.get().getDefaultInstance());
+                    output.accept(ModItems.ARCHMAGE_SPELL_STAFF.get().getDefaultInstance());
+                    output.accept(ModItems.CREATIVE_SPELL_STAFF.get().getDefaultInstance());
                     output.accept(ModItems.ARCANE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.FIRE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.WATER_VOXEL_SPAWNER.get().getDefaultInstance());

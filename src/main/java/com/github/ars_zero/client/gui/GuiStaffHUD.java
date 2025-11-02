@@ -1,6 +1,6 @@
 package com.github.ars_zero.client.gui;
 
-import com.github.ars_zero.common.item.ArsZeroStaff;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
 import com.hollingsworth.arsnouveau.api.util.StackUtil;
@@ -22,7 +22,7 @@ public class GuiStaffHUD {
         }
         
         ItemStack stack = StackUtil.getHeldCasterToolOrEmpty(minecraft.player);
-        if (stack != ItemStack.EMPTY && stack.getItem() instanceof ArsZeroStaff) {
+        if (stack != ItemStack.EMPTY && stack.getItem() instanceof AbstractSpellStaff) {
             int offsetLeft = Config.SPELLNAME_X_OFFSET.get();
             AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
             

@@ -11,19 +11,21 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class ModRecipes {
-    
-    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = 
+
+    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
         DeferredRegister.create(BuiltInRegistries.RECIPE_SERIALIZER, ArsZero.MOD_ID);
-    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES = 
+    
+    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES =
         DeferredRegister.create(BuiltInRegistries.RECIPE_TYPE, ArsZero.MOD_ID);
-    
+
     public static final String DYE_RECIPE_ID = "dye";
-    
+
     public static final DeferredHolder<RecipeType<?>, ModRecipeType<DyeRecipe>> DYE_TYPE = 
         RECIPE_TYPES.register(DYE_RECIPE_ID, () -> new ModRecipeType<>());
-    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<DyeRecipe>> DYE_RECIPE = 
-        RECIPE_SERIALIZERS.register(DYE_RECIPE_ID, () -> ExtendableShapelessSerializer.create(DyeRecipe::new));
     
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<DyeRecipe>> DYE_RECIPE =
+        RECIPE_SERIALIZERS.register(DYE_RECIPE_ID, () -> ExtendableShapelessSerializer.create(DyeRecipe::new));
+
     public static class ModRecipeType<T extends Recipe<?>> implements RecipeType<T> {
         @Override
         public String toString() {
@@ -31,4 +33,3 @@ public class ModRecipes {
         }
     }
 }
-
