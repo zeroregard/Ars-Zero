@@ -27,6 +27,8 @@ public class ModItems {
     
     public static final ItemRegistryWrapper<CreativeSpellStaff> CREATIVE_SPELL_STAFF = register("creative_spell_staff", CreativeSpellStaff::new);
     
+    public static final ItemRegistryWrapper<Item> ARCHWOOD_ROD = register("archwood_rod", () -> new Item(defaultItemProperties()));
+    
     public static final DeferredHolder<Item, BlockItem> ARCANE_VOXEL_SPAWNER = ITEMS.register(
         "arcane_voxel_spawner",
         () -> new BlockItem(ModBlocks.ARCANE_VOXEL_SPAWNER.get(), defaultItemProperties())
