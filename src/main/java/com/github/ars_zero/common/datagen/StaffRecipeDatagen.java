@@ -39,9 +39,9 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
         json.addProperty("category", "misc");
 
         JsonArray pattern = new JsonArray();
-        pattern.add("A  ");
-        pattern.add(" A ");
         pattern.add("  A");
+        pattern.add(" A ");
+        pattern.add("A  ");
         json.add("pattern", pattern);
 
         JsonObject key = new JsonObject();
