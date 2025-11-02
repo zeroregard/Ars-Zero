@@ -47,7 +47,7 @@ public class DyeRecipeDatagen extends SimpleDataProvider {
         var dyeRecipe = new DyeRecipe("", CraftingBookCategory.MISC, inputItem.asItem().getDefaultInstance(), NonNullList.of(Ingredient.EMPTY, Ingredient.of(Tags.Items.DYES), Ingredient.of(inputItem)));
         String itemName = ITEM.getKey(inputItem.asItem()).getPath();
         JsonElement recipeJson = Recipe.CODEC.encodeStart(JsonOps.INSTANCE, dyeRecipe).getOrThrow();
-        files.add(new FileObj(resolvePath("data/ars_zero/recipes/dye_" + itemName + ".json"), recipeJson));
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/dye_" + itemName + ".json"), recipeJson));
     }
 
     @Override

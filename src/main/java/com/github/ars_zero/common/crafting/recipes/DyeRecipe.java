@@ -46,7 +46,7 @@ public class DyeRecipe extends ShapelessRecipe {
     
     @Override
     public @NotNull RecipeType<?> getType() {
-        return ModRecipes.DYE_TYPE.get();
+        return RecipeType.CRAFTING;
     }
 
 }
