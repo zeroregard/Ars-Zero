@@ -528,11 +528,28 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
         controllerRegistrar.add(new AnimationController<>(this, "idle_controller", 20, this::idlePredicate));
+        controllerRegistrar.add(new AnimationController<>(this, "gui_controller", 0, this::guiOpenPredicate));
     }
 
     private <P extends Item & GeoAnimatable> PlayState idlePredicate(AnimationState<P> event) {
+        if (isStaffGuiOpen()) {
+            return PlayState.STOP;
+        }
         event.getController().setAnimation(RawAnimation.begin().thenLoop("idle"));
         return PlayState.CONTINUE;
+    }
+
+    private <P extends Item & GeoAnimatable> PlayState guiOpenPredicate(AnimationState<P> event) {
+        if (isStaffGuiOpen()) {
+            event.getController().setAnimation(RawAnimation.begin().thenPlay("interface_active"));
+            return PlayState.CONTINUE;
+        }
+        return PlayState.STOP;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private boolean isStaffGuiOpen() {
+        return Minecraft.getInstance().screen instanceof ArsZeroStaffGUI;
     }
 
     @Override

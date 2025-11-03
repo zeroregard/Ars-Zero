@@ -14,11 +14,16 @@ import com.hollingsworth.arsnouveau.client.gui.SearchBar;
 import com.hollingsworth.arsnouveau.client.gui.book.EnterTextField;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.common.network.PacketSetStaffSlot;
+import com.hollingsworth.arsnouveau.api.ArsNouveauAPI;
+import com.hollingsworth.arsnouveau.api.spell.ISpellValidator;
 import com.hollingsworth.arsnouveau.api.spell.SpellValidationError;
 import com.hollingsworth.arsnouveau.common.capability.IPlayerCap;
 import com.hollingsworth.arsnouveau.common.network.PacketUpdateCaster;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
+import com.hollingsworth.arsnouveau.common.spell.validation.CombinedSpellValidator;
+import com.hollingsworth.arsnouveau.common.spell.validation.GlyphKnownValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.GlyphMaxTierValidator;
+import com.hollingsworth.arsnouveau.common.spell.validation.StartingCastMethodSpellValidator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
@@ -28,6 +33,7 @@ import net.minecraft.world.InteractionHand;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 
 public class ArsZeroStaffGUI extends SpellSlottedScreen {
@@ -71,6 +77,9 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     
     // Phase-specific spell storage (3 phases, each with 10 crafting cells)
     private List<List<AbstractSpellPart>> phaseSpells = new ArrayList<>();
+    
+    private ISpellValidator spellValidator;
+    private List<SpellValidationError> validationErrors = new LinkedList<>();
 
     public ArsZeroStaffGUI() {
         super(InteractionHand.MAIN_HAND);
@@ -111,12 +120,21 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         parts.addAll(GlyphRegistry.getDefaultStartingSpells());
         
         int tier = 1;
+        boolean isCreativeStaff = false;
         if (bookStack.getItem() instanceof AbstractSpellStaff staff) {
             tier = staff.getTier().value;
             if (staff.getTier() == SpellTier.CREATIVE) {
+                isCreativeStaff = true;
                 parts = new ArrayList<>(GlyphRegistry.getSpellpartMap().values().stream().filter(AbstractSpellPart::shouldShowInSpellBook).toList());
             }
         }
+        
+        this.spellValidator = new CombinedSpellValidator(
+                ArsNouveauAPI.getInstance().getSpellCraftingSpellValidator(),
+                new GlyphMaxTierValidator(tier),
+                new GlyphKnownValidator(player.isCreative() || isCreativeStaff ? null : playerCapData),
+                new StartingCastMethodSpellValidator()
+        );
         
         this.unlockedSpells = parts;
         this.displayedGlyphs = new ArrayList<>(this.unlockedSpells);
@@ -149,17 +167,15 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         // Add pagination buttons
         addPaginationButtons();
         
-        // Load the current spell slot into all phases
         loadSpellFromSlot();
         
-        // Ensure phase buttons are properly initialized
         updateCraftingCellVisibility();
         
-        // Ensure BEGIN phase is selected by default
         selectPhase(StaffPhase.BEGIN);
         
-        // Force refresh of crafting cells to show loaded spell
         resetCraftingCells();
+        
+        validate();
     }
 
     private void initSpellSlots() {
@@ -191,15 +207,15 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     private void onSpellSlotChanged() {
-        // When a spell slot is selected, load that spell into the current phase
         loadSpellFromSlot();
         resetCraftingCells();
         
-        // Update the spell name box (get name from BEGIN phase)
         if (spellNameBox != null) {
             int beginPhysicalSlot = selectedSpellSlot * 3 + StaffPhase.BEGIN.ordinal();
             spellNameBox.setValue(caster.getSpellName(beginPhysicalSlot));
         }
+        
+        validate();
     }
 
     private void loadSpellFromSlot() {
@@ -311,13 +327,12 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         ArsZero.LOGGER.debug("Selecting phase: {}", phase);
         currentPhase = phase;
         
-        // Update button states - active means clickable, inactive means selected
         beginPhaseButton.active = (phase != StaffPhase.BEGIN);
         tickPhaseButton.active = (phase != StaffPhase.TICK);
         endPhaseButton.active = (phase != StaffPhase.END);
         
-        // Don't hide crafting cells - show all phases but highlight current one
         updateCraftingCellVisibility();
+        validate();
     }
     
     private void updateCraftingCellVisibility() {
@@ -418,7 +433,6 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             return;
         }
         
-        // Find the first empty crafting cell in the current phase
         int currentPhaseIndex = currentPhase.ordinal();
         for (int i = 0; i < 10; i++) {
             int cellIndex = currentPhaseIndex * 10 + i;
@@ -427,10 +441,8 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             if (cell.getAbstractSpellPart() == null) {
                 cell.setAbstractSpellPart(glyphButton.abstractSpellPart);
                 
-                // Add to the current phase's spell
                 List<AbstractSpellPart> currentSpell = getCurrentPhaseSpell();
                 if (i >= currentSpell.size()) {
-                    // Extend the list if needed
                     while (currentSpell.size() <= i) {
                         currentSpell.add(null);
                     }
@@ -439,6 +451,8 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
                 
                 ArsZero.LOGGER.debug("Added glyph {} to {} phase at slot {}", 
                     glyphButton.abstractSpellPart.getLocaleName(), currentPhase, i);
+                
+                validate();
                 return;
             }
         }
@@ -449,14 +463,37 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
     
     private List<SpellValidationError> getValidationErrors() {
-        int tier = 1;
-        if (bookStack.getItem() instanceof AbstractSpellStaff staff) {
-            tier = staff.getTier().value;
+        return validationErrors;
+    }
+    
+    private void validate() {
+        List<AbstractSpellPart> currentSpell = getCurrentPhaseSpell().stream().filter(part -> part != null).toList();
+        
+        for (CraftingButton b : craftingCells) {
+            b.validationErrors.clear();
         }
         
-        List<AbstractSpellPart> spellParts = getCurrentPhaseSpell().stream().filter(part -> part != null).toList();
-        GlyphMaxTierValidator validator = new GlyphMaxTierValidator(tier);
-        return validator.validate(spellParts);
+        List<SpellValidationError> errors = spellValidator.validate(currentSpell);
+        for (SpellValidationError ve : errors) {
+            int cellIndex = currentPhase.ordinal() * 10 + ve.getPosition();
+            if (cellIndex >= 0 && cellIndex < craftingCells.size()) {
+                CraftingButton b = craftingCells.get(cellIndex);
+                b.validationErrors.add(ve);
+            }
+        }
+        
+        this.validationErrors = errors;
+        
+        for (GlyphButton glyphButton : glyphButtons) {
+            glyphButton.validationErrors.clear();
+            List<AbstractSpellPart> simulatedSpell = new ArrayList<>(currentSpell);
+            simulatedSpell.add(GlyphRegistry.getSpellpartMap().get(glyphButton.abstractSpellPart.getRegistryName()));
+            
+            glyphButton.validationErrors.addAll(
+                    spellValidator.validate(simulatedSpell).stream()
+                            .filter(ve -> ve.getPosition() >= currentSpell.size()).toList()
+            );
+        }
     }
 
     public void resetCraftingCells() {
@@ -494,23 +531,29 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     public void onCraftingSlotClick(Button button) {
         CraftingButton cell = (CraftingButton) button;
         if (cell.getAbstractSpellPart() != null) {
-            // Find which phase this cell belongs to
             int cellIndex = craftingCells.indexOf(cell);
             int phase = cellIndex / 10;
             int slot = cellIndex % 10;
             
-            // Remove the glyph from the correct phase
             List<AbstractSpellPart> phaseSpell = phaseSpells.get(phase);
             if (slot < phaseSpell.size()) {
                 phaseSpell.set(slot, null);
             }
             cell.setAbstractSpellPart(null);
             ArsZero.LOGGER.debug("Removed glyph from phase {} at slot {}", phase, slot);
+            
+            validate();
         }
     }
 
     public void saveSpell() {
         ArsZero.LOGGER.info("saveSpell() called for slot {}", selectedSpellSlot);
+        
+        validate();
+        if (!validationErrors.isEmpty()) {
+            ArsZero.LOGGER.warn("Cannot save spell - validation errors present");
+            return;
+        }
         
         String spellName = spellNameBox.getValue();
         ArsZero.LOGGER.info("Spell name: {}", spellName);
@@ -559,6 +602,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         }
         
         resetCraftingCells();
+        validate();
         ArsZero.LOGGER.debug("Cleared all phase spells from slot {}", selectedSpellSlot);
     }
 
@@ -583,6 +627,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         previousButton.active = true;
         previousButton.visible = true;
         layoutAllGlyphs(page);
+        validate();
     }
 
     public void onPageDec(Button button) {
@@ -601,6 +646,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             nextButton.active = true;
         }
         layoutAllGlyphs(page);
+        validate();
     }
 
     public int getNumPages() {
@@ -660,6 +706,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         previousButton.active = false;
         previousButton.visible = false;
         layoutAllGlyphs(page);
+        validate();
     }
 
     private void clearGlyphButtons(List<GlyphButton> buttons) {
