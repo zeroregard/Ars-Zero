@@ -4,7 +4,7 @@
     "srcrgb": "srcalpha",
     "dstrgb": "1-srcalpha"
   },
-  "vertex": "animated_voxel",
+  "vertex": "rendertype_entity_translucent",
   "fragment": "animated_voxel",
   "attributes": [
     "Position",

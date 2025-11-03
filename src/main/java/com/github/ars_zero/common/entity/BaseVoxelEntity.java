@@ -48,6 +48,9 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     protected int age = 0;
     protected SpellResolver resolver;
     
+    private final java.util.LinkedList<Vec3> trailPositions = new java.util.LinkedList<>();
+    private static final int MAX_TRAIL_LENGTH = 20;
+    
     protected boolean shouldEmitBaseParticles() {
         if (this instanceof CompressibleEntity compressible) {
             return compressible.getCompressionLevel() < 0.3f;
@@ -83,6 +86,10 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     public void tick() {
         super.tick();
         this.age++;
+        
+        if (this.level().isClientSide) {
+            updateTrail();
+        }
         
         if (!this.level().isClientSide && this.age == 1) {
             SoundEvent spawnSound = getSpawnSound();
@@ -354,6 +361,22 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     
     public void setBaseSize(float baseSize) {
         this.entityData.set(BASE_SIZE, baseSize);
+    }
+    
+    private void updateTrail() {
+        if (this instanceof CompressibleEntity compressible && compressible.getCompressionLevel() > 0.5f) {
+            trailPositions.addFirst(this.position());
+            
+            while (trailPositions.size() > MAX_TRAIL_LENGTH) {
+                trailPositions.removeLast();
+            }
+        } else {
+            trailPositions.clear();
+        }
+    }
+    
+    public java.util.List<Vec3> getTrailPositions() {
+        return new java.util.ArrayList<>(trailPositions);
     }
     
     protected void applyInteractionResult(VoxelInteractionResult result, BaseVoxelEntity other) {

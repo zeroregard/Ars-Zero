@@ -23,7 +23,6 @@ in vec2 texCoord1;
 in vec2 texCoord2;
 in vec4 normal;
 in vec4 overlayColor;
-in vec3 morphedNormal;
 
 out vec4 fragColor;
 
