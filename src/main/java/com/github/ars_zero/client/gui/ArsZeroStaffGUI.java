@@ -1,6 +1,7 @@
 package com.github.ars_zero.client.gui;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
@@ -29,6 +30,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.PageButton;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -83,17 +85,18 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     private ISpellValidator spellValidator;
     private List<SpellValidationError> validationErrors = new LinkedList<>();
     private ItemStack staffStack;
+    private InteractionHand guiHand;
 
     public ArsZeroStaffGUI(ItemStack stack, InteractionHand hand) {
         super(hand);
         this.staffStack = stack;
+        this.guiHand = hand;
         if (this.caster == null && stack != null && !stack.isEmpty()) {
             this.caster = SpellCasterRegistry.from(stack);
             if (this.caster != null) {
                 this.selectedSpellSlot = this.caster.getCurrentSlot();
             }
         }
-        ArsZero.LOGGER.debug("Creating Ars Zero Staff GUI with stack: {} caster: {}", stack, this.caster);
         
         // Initialize unlocked spells - we'll do this in init() when playerCap is available
         this.unlockedSpells = new ArrayList<>();
@@ -186,6 +189,13 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         resetCraftingCells();
         
         validate();
+        
+        // Trigger GUI open animation
+        var player = Minecraft.getInstance().player;
+        if (player instanceof AbstractClientPlayer clientPlayer) {
+            boolean isMainHand = guiHand == InteractionHand.MAIN_HAND;
+            StaffAnimationHandler.onGuiOpen(clientPlayer, isMainHand);
+        }
     }
 
     private void initSpellSlots() {
@@ -334,7 +344,6 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     private void selectPhase(StaffPhase phase) {
-        ArsZero.LOGGER.debug("Selecting phase: {}", phase);
         currentPhase = phase;
         
         beginPhaseButton.active = (phase != StaffPhase.BEGIN);
@@ -459,8 +468,6 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
                 }
                 currentSpell.set(i, glyphButton.abstractSpellPart);
                 
-                ArsZero.LOGGER.debug("Added glyph {} to {} phase at slot {}", 
-                    glyphButton.abstractSpellPart.getLocaleName(), currentPhase, i);
                 
                 validate();
                 return;
@@ -550,7 +557,6 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
                 phaseSpell.set(slot, null);
             }
             cell.setAbstractSpellPart(null);
-            ArsZero.LOGGER.debug("Removed glyph from phase {} at slot {}", phase, slot);
             
             validate();
         }
@@ -590,12 +596,6 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         
         Networking.sendToServer(new PacketSetStaffSlot(selectedSpellSlot));
         ArsZero.LOGGER.info("Sent PacketSetStaffSlot with slot {}", selectedSpellSlot);
-        
-        ArsZero.LOGGER.debug("Saved all 3 phases for logical slot {} (physical slots: {}, {}, {})", 
-            selectedSpellSlot, 
-            selectedSpellSlot * 3 + 0, 
-            selectedSpellSlot * 3 + 1, 
-            selectedSpellSlot * 3 + 2);
     }
 
     public void clear() {
@@ -613,7 +613,6 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         
         resetCraftingCells();
         validate();
-        ArsZero.LOGGER.debug("Cleared all phase spells from slot {}", selectedSpellSlot);
     }
 
     public void updateNextPageButtons() {
@@ -768,6 +767,13 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
 
     @Override
     public void onClose() {
+        // Trigger GUI close animation
+        var player = Minecraft.getInstance().player;
+        if (player instanceof AbstractClientPlayer clientPlayer) {
+            boolean isMainHand = guiHand == InteractionHand.MAIN_HAND;
+            StaffAnimationHandler.onGuiClose(clientPlayer, isMainHand);
+        }
+        
         Networking.sendToServer(new PacketSetStaffSlot(selectedSpellSlot));
         ArsZero.LOGGER.info("onClose: sent PacketSetStaffSlot with slot {}", selectedSpellSlot);
         super.onClose();

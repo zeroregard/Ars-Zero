@@ -153,21 +153,11 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
 
     @OnlyIn(Dist.CLIENT)
     private void openStaffGUI(ItemStack stack, Player player, InteractionHand hand) {
-        ArsZero.LOGGER.debug("Attempting to open staff GUI. Stack: {}, Item: {}, Hand: {}", 
-            stack, stack.getItem(), hand);
-        
-        ItemStack handStack = player.getItemInHand(hand);
-        ArsZero.LOGGER.debug("Stack in hand: {}, Matches passed stack: {}", handStack, ItemStack.matches(stack, handStack));
-        
         AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
-        ArsZero.LOGGER.debug("Caster from registry: {}", caster);
-        
         if (caster == null) {
-            ArsZero.LOGGER.error("Cannot open staff GUI: caster is null for stack: {}", stack);
             player.sendSystemMessage(Component.literal("§cError: Staff has no spell data! Try crafting a new one."));
             return;
         }
-        ArsZero.LOGGER.debug("Opening staff GUI with valid caster, hand: {}", hand);
         Minecraft.getInstance().setScreen(new ArsZeroStaffGUI(stack, hand));
     }
 
@@ -526,7 +516,7 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
     
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.BOW;
+        return UseAnim.NONE;
     }
     
     @Override

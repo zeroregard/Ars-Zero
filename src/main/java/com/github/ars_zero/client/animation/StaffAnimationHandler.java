@@ -19,12 +19,14 @@ public class StaffAnimationHandler {
     public static final ResourceLocation SPELL_STAFF_RESET_ANIM = ResourceLocation.parse(ArsZero.MOD_ID + ":spell_staff_reset");
     public static final ResourceLocation SPELL_STAFF_CAST_LEFT_ANIM = ResourceLocation.parse(ArsZero.MOD_ID + ":spell_staff_cast_left");
     public static final ResourceLocation SPELL_STAFF_RESET_LEFT_ANIM = ResourceLocation.parse(ArsZero.MOD_ID + ":spell_staff_reset_left");
+    public static final ResourceLocation SPELL_STAFF_GUI_ANIM = ResourceLocation.parse(ArsZero.MOD_ID + ":spell_staff_gui");
+    public static final ResourceLocation SPELL_STAFF_GUI_LEFT_ANIM = ResourceLocation.parse(ArsZero.MOD_ID + ":spell_staff_gui_left");
+    public static final ResourceLocation SPELL_STAFF_GUI_CLOSE_ANIM = ResourceLocation.parse(ArsZero.MOD_ID + ":spell_staff_gui_close");
+    public static final ResourceLocation SPELL_STAFF_GUI_CLOSE_LEFT_ANIM = ResourceLocation.parse(ArsZero.MOD_ID + ":spell_staff_gui_close_left");
     
     private static final Map<UUID, Integer> playerTickCountMap = new HashMap<>();
     
     public static void init() {
-        ArsZero.LOGGER.info("Initializing Staff Animation Handler");
-        
         PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(
             SPELL_STAFF_LAYER_ID,
             1000,
@@ -50,29 +52,37 @@ public class StaffAnimationHandler {
                 ResourceLocation animation = isMainHand ? SPELL_STAFF_CAST_ANIM : SPELL_STAFF_CAST_LEFT_ANIM;
                 controller.triggerAnimation(animation);
                 playerTickCountMap.put(playerId, 0);
-                ArsZero.LOGGER.debug("BEGIN: Playing staff cast animation ({}) for player: {}", isMainHand ? "right" : "left", player.getName().getString());
             }
             case "TICK" -> {
                 Integer currentTicks = playerTickCountMap.get(playerId);
                 if (currentTicks != null) {
                     playerTickCountMap.put(playerId, currentTicks + 1);
                 }
-                ArsZero.LOGGER.debug("TICK: Tick {} for player: {}", currentTicks != null ? currentTicks + 1 : "unknown", player.getName().getString());
             }
             case "END" -> {
                 Integer totalTicks = playerTickCountMap.remove(playerId);
-                if (totalTicks != null) {
-                    if (totalTicks >= 5) {
-                        // Long hold - play reset animation
-                        ResourceLocation animation = isMainHand ? SPELL_STAFF_RESET_ANIM : SPELL_STAFF_RESET_LEFT_ANIM;
-                        controller.triggerAnimation(animation);
-                        ArsZero.LOGGER.debug("END: Long hold ({} ticks), resetting staff animation ({}) for player: {}", totalTicks, isMainHand ? "right" : "left", player.getName().getString());
-                    } else {
-                        // Quick click - don't play reset animation, let cast animation naturally return
-                        ArsZero.LOGGER.debug("END: Quick click ({} ticks), letting animation naturally return for player: {}", totalTicks, player.getName().getString());
-                    }
-                }
+                // Always play reset animation regardless of tick count
+                ResourceLocation animation = isMainHand ? SPELL_STAFF_RESET_ANIM : SPELL_STAFF_RESET_LEFT_ANIM;
+                controller.triggerAnimation(animation);
             }
+        }
+    }
+    
+    public static void onGuiOpen(AbstractClientPlayer player, boolean isMainHand) {
+        PlayerAnimationController controller = (PlayerAnimationController) PlayerAnimationAccess.getPlayerAnimationLayer(
+            player, SPELL_STAFF_LAYER_ID);
+        if (controller != null) {
+            ResourceLocation animation = isMainHand ? SPELL_STAFF_GUI_ANIM : SPELL_STAFF_GUI_LEFT_ANIM;
+            controller.triggerAnimation(animation);
+        }
+    }
+    
+    public static void onGuiClose(AbstractClientPlayer player, boolean isMainHand) {
+        PlayerAnimationController controller = (PlayerAnimationController) PlayerAnimationAccess.getPlayerAnimationLayer(
+            player, SPELL_STAFF_LAYER_ID);
+        if (controller != null) {
+            ResourceLocation animation = isMainHand ? SPELL_STAFF_GUI_CLOSE_ANIM : SPELL_STAFF_GUI_CLOSE_LEFT_ANIM;
+            controller.triggerAnimation(animation);
         }
     }
 }

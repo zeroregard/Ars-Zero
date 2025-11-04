@@ -31,7 +31,6 @@ public class StaffCleanupHandler {
         if (!isHoldingStaff || !isUsingItem) {
             TranslateEffect.restoreEntityPhysics(context);
             player.removeData(ModAttachments.STAFF_CONTEXT);
-            ArsZero.LOGGER.debug("Cleaned up staff context for {} (switched items or stopped using)", player.getName().getString());
         }
     }
 }
