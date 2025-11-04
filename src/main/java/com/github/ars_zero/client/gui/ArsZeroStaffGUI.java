@@ -3,6 +3,7 @@ package com.github.ars_zero.client.gui;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
+import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.*;
 import com.hollingsworth.arsnouveau.client.gui.book.SpellSlottedScreen;
 import com.hollingsworth.arsnouveau.client.gui.buttons.ClearButton;
@@ -30,6 +31,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.PageButton;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -80,10 +82,18 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     
     private ISpellValidator spellValidator;
     private List<SpellValidationError> validationErrors = new LinkedList<>();
+    private ItemStack staffStack;
 
-    public ArsZeroStaffGUI() {
-        super(InteractionHand.MAIN_HAND);
-        ArsZero.LOGGER.debug("Creating Ars Zero Staff GUI");
+    public ArsZeroStaffGUI(ItemStack stack, InteractionHand hand) {
+        super(hand);
+        this.staffStack = stack;
+        if (this.caster == null && stack != null && !stack.isEmpty()) {
+            this.caster = SpellCasterRegistry.from(stack);
+            if (this.caster != null) {
+                this.selectedSpellSlot = this.caster.getCurrentSlot();
+            }
+        }
+        ArsZero.LOGGER.debug("Creating Ars Zero Staff GUI with stack: {} caster: {}", stack, this.caster);
         
         // Initialize unlocked spells - we'll do this in init() when playerCap is available
         this.unlockedSpells = new ArrayList<>();

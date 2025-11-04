@@ -152,14 +152,30 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
     
 
     @OnlyIn(Dist.CLIENT)
-    private void openStaffGUI(Player player) {
-        Minecraft.getInstance().setScreen(new ArsZeroStaffGUI());
+    private void openStaffGUI(ItemStack stack, Player player, InteractionHand hand) {
+        ArsZero.LOGGER.debug("Attempting to open staff GUI. Stack: {}, Item: {}, Hand: {}", 
+            stack, stack.getItem(), hand);
+        
+        ItemStack handStack = player.getItemInHand(hand);
+        ArsZero.LOGGER.debug("Stack in hand: {}, Matches passed stack: {}", handStack, ItemStack.matches(stack, handStack));
+        
+        AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
+        ArsZero.LOGGER.debug("Caster from registry: {}", caster);
+        
+        if (caster == null) {
+            ArsZero.LOGGER.error("Cannot open staff GUI: caster is null for stack: {}", stack);
+            player.sendSystemMessage(Component.literal("§cError: Staff has no spell data! Try crafting a new one."));
+            return;
+        }
+        ArsZero.LOGGER.debug("Opening staff GUI with valid caster, hand: {}", hand);
+        Minecraft.getInstance().setScreen(new ArsZeroStaffGUI(stack, hand));
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
     public void onOpenBookMenuKeyPressed(ItemStack stack, Player player) {
-        openStaffGUI(player);
+        InteractionHand hand = player.getItemInHand(InteractionHand.MAIN_HAND) == stack ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        openStaffGUI(stack, player, hand);
     }
 
     @Override
@@ -471,15 +487,13 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         
-        if (level.isClientSide) {
-            return InteractionResultHolder.consume(stack);
-        }
-        
-        StaffCastContext context = getContext(player);
-        boolean isHolding = context != null && context.isHoldingStaff;
-        
-        if (isHolding) {
-            return InteractionResultHolder.pass(stack);
+        if (!level.isClientSide) {
+            StaffCastContext context = getContext(player);
+            boolean isHolding = context != null && context.isHoldingStaff;
+            
+            if (isHolding) {
+                return InteractionResultHolder.pass(stack);
+            }
         }
         
         player.startUsingItem(hand);
@@ -521,7 +535,15 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
     }
 
     private void sendSpellFiredPacket(ServerPlayer player, StaffPhase phase) {
-        PacketStaffSpellFired packet = new PacketStaffSpellFired(phase.ordinal());
+        boolean isMainHand = player.getUsedItemHand() == InteractionHand.MAIN_HAND;
+        
+        int tickCount = 0;
+        StaffCastContext context = getContext(player);
+        if (context != null) {
+            tickCount = context.tickCount;
+        }
+        
+        PacketStaffSpellFired packet = new PacketStaffSpellFired(phase.ordinal(), isMainHand, tickCount);
         PacketDistributor.sendToPlayer(player, packet);
     }
 

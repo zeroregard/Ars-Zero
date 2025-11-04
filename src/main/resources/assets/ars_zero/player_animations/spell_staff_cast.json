@@ -1,0 +1,24 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "spell_staff_cast": {
+      "animation_length": 0.1,
+      "loop": "hold_on_last_frame",
+      "bones": {
+        "rightArm": {
+          "rotation": {
+            "0.0": [-10, 0, 0],
+            "0.1": [-90, 0, 0]
+          }
+        },
+        "leftArm": {
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "0.1": [0, 0, 0]
+          }
+        }
+      }
+    }
+  }
+}
+

@@ -71,6 +71,10 @@ repositories {
     maven { url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/" }
     maven { url = "https://jitpack.io" }
     maven { url = "https://maven.octo-studios.com/releases" }
+    maven { 
+        name = "RedlanceMinecraft"
+        url = "https://repo.redlance.org/public"
+    }
     exclusiveContent {
         forRepository {
             maven {
@@ -101,6 +105,11 @@ dependencies {
 
     compileOnly("mezz.jei:jei-1.21.1-neoforge-api:19.21.0.247")
     runtimeOnly("mezz.jei:jei-1.21.1-neoforge:19.21.0.247")
+    
+    implementation("com.zigythebird.playeranim:PlayerAnimationLibNeo:${playeranim_version}") {
+        transitive = false
+    }
+    runtimeOnly("org.javassist:javassist:3.30.2-GA")
     
     jarJar(implementation('com.hollingsworth.nuggets:nuggets-neoforge-1.21') {
         version {
