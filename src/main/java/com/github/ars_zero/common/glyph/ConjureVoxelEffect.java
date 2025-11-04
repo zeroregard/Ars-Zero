@@ -58,11 +58,24 @@ public class ConjureVoxelEffect extends AbstractEffect {
             } else {
                 BaseVoxelEntity voxel = createVoxel(serverLevel, pos.x, pos.y, pos.z, duration, spellContext);
                 
-                SpellContext newContext = spellContext.makeChildContext();
-                spellContext.setCanceled(true);
+                boolean isArcane = voxel instanceof ArcaneVoxelEntity;
+                
+                if (isArcane) {
+                    SpellContext newContext = spellContext.makeChildContext();
+                    spellContext.setCanceled(true);
+                    voxel.setResolver(resolver.getNewResolver(newContext));
+                } else {
+                    voxel.setResolver(null);
+                    SpellContext remainingContext = spellContext.makeChildContext();
+                    spellContext.setCanceled(true);
+                    
+                    serverLevel.addFreshEntity(voxel);
+                    
+                    resolver.getNewResolver(remainingContext).onResolveEffect(serverLevel, new EntityHitResult(voxel));
+                    return;
+                }
                 
                 voxel.setCaster(shooter);
-                voxel.setResolver(resolver.getNewResolver(newContext));
                 
                 if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
                     voxel.setNoGravityCustom(true);
@@ -85,11 +98,25 @@ public class ConjureVoxelEffect extends AbstractEffect {
             } else {
                 BaseVoxelEntity voxel = createVoxel(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration, spellContext);
                 
-                SpellContext newContext = spellContext.makeChildContext();
-                spellContext.setCanceled(true);
+                boolean isArcane = voxel instanceof ArcaneVoxelEntity;
+                
+                if (isArcane) {
+                    SpellContext newContext = spellContext.makeChildContext();
+                    spellContext.setCanceled(true);
+                    voxel.setResolver(resolver.getNewResolver(newContext));
+                } else {
+                    voxel.setResolver(null);
+                    SpellContext remainingContext = spellContext.makeChildContext();
+                    spellContext.setCanceled(true);
+                    
+                    serverLevel.addFreshEntity(voxel);
+                    updateTemporalContext(shooter, voxel);
+                    
+                    resolver.getNewResolver(remainingContext).onResolveEffect(serverLevel, new EntityHitResult(voxel));
+                    return;
+                }
                 
                 voxel.setCaster(shooter);
-                voxel.setResolver(resolver.getNewResolver(newContext));
                 
                 if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
                     voxel.setNoGravityCustom(true);
@@ -133,17 +160,24 @@ public class ConjureVoxelEffect extends AbstractEffect {
         }
         
         java.util.List<BaseVoxelEntity> createdVoxels = new java.util.ArrayList<>();
+        boolean isArcane = true;
         
         if (entityCount == 1) {
             BaseVoxelEntity voxel = createVoxel(level, x, y, z, duration, context);
             voxel.setSize(size);
             voxel.refreshDimensions();
             
-            SpellContext newContext = context.makeChildContext();
-            context.setCanceled(true);
+            isArcane = voxel instanceof ArcaneVoxelEntity;
+            
+            if (isArcane) {
+                SpellContext newContext = context.makeChildContext();
+                context.setCanceled(true);
+                voxel.setResolver(resolver.getNewResolver(newContext));
+            } else {
+                voxel.setResolver(null);
+            }
             
             voxel.setCaster(shooter);
-            voxel.setResolver(resolver.getNewResolver(newContext));
             
             if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
                 voxel.setNoGravityCustom(true);
@@ -174,6 +208,14 @@ public class ConjureVoxelEffect extends AbstractEffect {
             Vec3 lookDirection = shooter.getLookAngle();
             java.util.List<Vec3> positions = MathHelper.getCirclePositions(center, lookDirection, circleRadius, entityCount);
             
+            isArcane = !hasWater && !hasFire;
+            SpellContext newContext = null;
+            
+            if (isArcane) {
+                newContext = context.makeChildContext();
+                context.setCanceled(true);
+            }
+            
             for (Vec3 pos : positions) {
                 BaseVoxelEntity voxel;
                 if (hasWater) {
@@ -187,11 +229,13 @@ public class ConjureVoxelEffect extends AbstractEffect {
                 voxel.setSize(size);
                 voxel.refreshDimensions();
                 
-                SpellContext newContext = context.makeChildContext();
-                context.setCanceled(true);
-                
                 voxel.setCaster(shooter);
-                voxel.setResolver(resolver.getNewResolver(newContext));
+                
+                if (isArcane) {
+                    voxel.setResolver(resolver.getNewResolver(newContext));
+                } else {
+                    voxel.setResolver(null);
+                }
                 
                 if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
                     voxel.setNoGravityCustom(true);
@@ -203,6 +247,14 @@ public class ConjureVoxelEffect extends AbstractEffect {
         }
         
         updateTemporalContextMultiple(shooter, createdVoxels);
+        
+        if (!isArcane && context.hasNextPart()) {
+            SpellContext remainingContext = context.makeChildContext();
+            context.setCanceled(true);
+            for (BaseVoxelEntity voxel : createdVoxels) {
+                resolver.getNewResolver(remainingContext.clone()).onResolveEffect(level, new EntityHitResult(voxel));
+            }
+        }
     }
     
     private BaseVoxelEntity createVoxel(ServerLevel level, double x, double y, double z, int duration, SpellContext context) {
@@ -332,7 +384,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
 
     @Override
     public String getBookDescription() {
-        return "Conjures a small 4x4x4 pixel (1/4 block) purple voxel entity that persists for 1 minute. The voxel does not collide with anything and can be grown using temporal effects like Enlarge.";
+        return "Conjures a small 4x4x4 pixel (1/4 block) purple voxel entity that persists for 1 minute. The voxel does not collide with anything and can be grown using temporal effects like Enlarge. Arcane voxels carry and resolve all following effects on impact. Water and Fire voxels act as delimiters - they do not carry effects, allowing subsequent spells to target the voxel itself.";
     }
 
     @Override
