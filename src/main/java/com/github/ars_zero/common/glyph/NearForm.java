@@ -78,7 +78,7 @@ public class NearForm extends AbstractCastMethod {
 
     @Override
     public int getDefaultManaCost() {
-        return 5;
+        return 0;
     }
 
     @NotNull

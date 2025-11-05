@@ -250,7 +250,15 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
             if (currentLogicalSlot >= 0 && currentLogicalSlot < 10) {
                 int physicalSlot = currentLogicalSlot * 3 + StaffPhase.TICK.ordinal();
                 Spell spell = caster.getSpell(physicalSlot);
+                
+                if (context.tickCount == 1) {
+                    context.tickCooldown = calculateTickCooldown(spell);
+                }
             }
+        }
+        
+        if (context.tickCooldown > 0 && (context.tickCount - 1) % (context.tickCooldown + 1) != 0) {
+            return;
         }
         
         executeSpell(player, stack, StaffPhase.TICK);
@@ -470,6 +478,59 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
             }
         }
         return false;
+    }
+    
+    private int calculateTickCooldown(Spell spell) {
+        if (spell.isEmpty()) return 0;
+        
+        List<AbstractSpellPart> recipe = new ArrayList<>();
+        for (AbstractSpellPart part : spell.recipe()) {
+            recipe.add(part);
+        }
+        
+        if (recipe.isEmpty()) return 0;
+        
+        int totalCooldown = 0;
+        int i = recipe.size() - 1;
+        
+        while (i >= 0) {
+            AbstractSpellPart part = recipe.get(i);
+            ResourceLocation partId = part.getRegistryName();
+            
+            if (partId.equals(ResourceLocation.fromNamespaceAndPath("ars_nouveau", "glyph_delay"))) {
+                int baseDelay = 1;
+                int extendCount = 0;
+                int durationDownCount = 0;
+                
+                int j = i + 1;
+                while (j < recipe.size()) {
+                    AbstractSpellPart augment = recipe.get(j);
+                    ResourceLocation augmentId = augment.getRegistryName();
+                    
+                    if (augmentId.equals(ResourceLocation.fromNamespaceAndPath("ars_nouveau", "glyph_extend_time"))) {
+                        extendCount++;
+                        j++;
+                    } else if (augmentId.equals(ResourceLocation.fromNamespaceAndPath("ars_nouveau", "glyph_duration_down"))) {
+                        durationDownCount++;
+                        j++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                int delayCooldown = baseDelay + extendCount - durationDownCount;
+                totalCooldown += Math.max(0, delayCooldown);
+                
+                i--;
+            } else if (partId.equals(ResourceLocation.fromNamespaceAndPath("ars_nouveau", "glyph_extend_time")) ||
+                       partId.equals(ResourceLocation.fromNamespaceAndPath("ars_nouveau", "glyph_duration_down"))) {
+                i--;
+            } else {
+                break;
+            }
+        }
+        
+        return totalCooldown;
     }
     
 

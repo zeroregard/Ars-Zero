@@ -3,6 +3,7 @@ package com.github.ars_zero.client.gui;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.hollingsworth.arsnouveau.api.documentation.DocAssets;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.*;
@@ -11,6 +12,7 @@ import com.hollingsworth.arsnouveau.client.gui.buttons.ClearButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.CreateSpellButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.CraftingButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.GlyphButton;
+import com.hollingsworth.arsnouveau.client.gui.buttons.GuiImageButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.GuiSpellSlot;
 import com.hollingsworth.arsnouveau.client.gui.SearchBar;
 import com.hollingsworth.arsnouveau.client.gui.book.EnterTextField;
@@ -341,6 +343,17 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     private void addLeftSideTabs() {
+        addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 22, DocAssets.SPELL_STYLE_TAB, (b) -> {
+            openParticleScreen();
+        }).withTooltip(Component.translatable("ars_nouveau.gui.spell_style")));
+    }
+    
+    private void openParticleScreen() {
+        StaffParticleScreen.openScreen(this, selectedSpellSlot, staffStack, this.hand);
+    }
+    
+    private int getSelectedPhysicalSlot() {
+        return selectedSpellSlot * 3 + currentPhase.ordinal();
     }
 
     private void selectPhase(StaffPhase phase) {

@@ -22,6 +22,7 @@ public class StaffCastContext {
     public long createdAt = System.currentTimeMillis();
     
     public double distanceMultiplier = 1.0;
+    public int tickCooldown = 0;
     
     public StaffCastContext(UUID playerId) {
         this.castId = UUID.randomUUID();

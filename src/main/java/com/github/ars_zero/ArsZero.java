@@ -8,6 +8,7 @@ import com.github.ars_zero.common.entity.interaction.ArcaneCollisionInteraction;
 import com.github.ars_zero.common.entity.interaction.FireWaterInteraction;
 import com.github.ars_zero.common.entity.interaction.MergeInteraction;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
+import com.github.ars_zero.common.event.WaterPowerCostReductionEvents;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.registry.ModAttachments;
 import com.github.ars_zero.registry.ModBlockEntities;
@@ -23,6 +24,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.common.NeoForge;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -52,6 +54,8 @@ public class ArsZero {
                 registerVoxelInteractions();
             });
         });
+        
+        NeoForge.EVENT_BUS.register(WaterPowerCostReductionEvents.class);
 
         if (FMLEnvironment.dist.isClient()) {
             ArsZeroClient.init(modEventBus);

@@ -31,6 +31,18 @@ public class Networking {
             PacketAdjustStaffDistance.CODEC,
             PacketAdjustStaffDistance::handle
         );
+        
+        registrar.playToServer(
+            PacketUpdateStaffParticleTimeline.TYPE,
+            PacketUpdateStaffParticleTimeline.CODEC,
+            PacketUpdateStaffParticleTimeline::handle
+        );
+        
+        registrar.playToClient(
+            PacketUpdateStaffGUI.TYPE,
+            PacketUpdateStaffGUI.CODEC,
+            PacketUpdateStaffGUI::handle
+        );
     }
     
     public static void sendToServer(PacketSetStaffSlot packet) {
@@ -42,6 +54,10 @@ public class Networking {
     }
     
     public static void sendToServer(PacketAdjustStaffDistance packet) {
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
+    }
+    
+    public static void sendToServer(PacketUpdateStaffParticleTimeline packet) {
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
     }
 }
