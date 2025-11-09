@@ -5,7 +5,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record PacketUpdateStaffGUI(ItemStack stack) implements CustomPacketPayload {
     
@@ -26,29 +25,6 @@ public record PacketUpdateStaffGUI(ItemStack stack) implements CustomPacketPaylo
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
         return TYPE;
-    }
-    
-    public static void handle(PacketUpdateStaffGUI packet, IPayloadContext context) {
-        context.enqueueWork(() -> {
-            var player = context.player();
-            if (player != null) {
-                ItemStack mainHandStack = player.getMainHandItem();
-                ItemStack offHandStack = player.getOffhandItem();
-                
-                if (mainHandStack.is(packet.stack.getItem())) {
-                    player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, packet.stack);
-                } else if (offHandStack.is(packet.stack.getItem())) {
-                    player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, packet.stack);
-                }
-                
-                var minecraft = net.minecraft.client.Minecraft.getInstance();
-                if (minecraft.screen instanceof com.github.ars_zero.client.gui.StaffParticleScreen staffScreen) {
-                    staffScreen.onStaffUpdated(packet.stack);
-                } else if (minecraft.screen instanceof com.github.ars_zero.client.gui.ArsZeroStaffGUI staffGUI) {
-                    staffGUI.onBookstackUpdated(packet.stack);
-                }
-            }
-        });
     }
 }
 

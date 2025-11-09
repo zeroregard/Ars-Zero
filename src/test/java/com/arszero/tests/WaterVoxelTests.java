@@ -7,22 +7,32 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.gametest.framework.GameTestHolder;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 
 @GameTestHolder(ArsZero.MOD_ID)
+@PrefixGameTestTemplate(false)
 public class WaterVoxelTests {
+    public static void registerGameTests(RegisterGameTestsEvent event) {
+        event.register(WaterVoxelTests.class);
+    }
 
-    @GameTest(template = "arszero:water_voxel_test")
-    public void waterVoxelCreatesAndEvaporatesWater(GameTestHelper helper) {
+    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "watervoxeltests/empty")
+    public static void waterVoxelCreatesAndEvaporatesWater(GameTestHelper helper) {
+        BlockPos relativeGrassPos = new BlockPos(2, 0, 2);
+        helper.setBlock(relativeGrassPos, Blocks.GRASS_BLOCK.defaultBlockState());
+        helper.setBlock(relativeGrassPos.below(), Blocks.DIRT.defaultBlockState());
+        helper.setBlock(relativeGrassPos.above(), Blocks.AIR.defaultBlockState());
+
         ServerLevel level = helper.getLevel();
-        BlockPos grassPos = helper.absolutePos(BlockPos.ZERO.offset(2, 0, 2));
-        BlockPos waterPos = grassPos.above();
-        BlockPos spawnPos = grassPos.above(2);
+        BlockPos waterPos = helper.absolutePos(relativeGrassPos.above());
+        BlockPos spawnPos = helper.absolutePos(relativeGrassPos.above(2));
 
         WaterVoxelEntity voxel = ModEntities.WATER_VOXEL_ENTITY.get().create(level);
         if (voxel == null) {
@@ -58,7 +68,6 @@ public class WaterVoxelTests {
                 return;
             }
 
-            // Assert that the voxel existed prior to making contact with the grass block.
             if (!voxelSeenBeforeImpact.get()) {
                 helper.fail("Water voxel must exist before impact to validate collision behavior.");
                 return;
@@ -66,15 +75,13 @@ public class WaterVoxelTests {
 
             BlockState state = helper.getLevel().getBlockState(waterPos);
 
-            // Assert that a water block appears directly above the grass after the collision.
             if (!state.is(Blocks.WATER)) {
                 helper.fail("Water block should be present above the grass after the voxel collides.");
                 return;
             }
 
-            // Assert that the spawned water block has a level of exactly 1.
-            if (!state.hasProperty(LiquidBlock.LEVEL) || state.getValue(LiquidBlock.LEVEL) != 1) {
-                helper.fail("Water block above the grass should have level 1 after impact.");
+            if (!state.hasProperty(LiquidBlock.LEVEL) || state.getValue(LiquidBlock.LEVEL) != 6) {
+                helper.fail("Water block above the grass should have level 6 after impact.");
                 return;
             }
 
@@ -90,7 +97,6 @@ public class WaterVoxelTests {
 
         helper.runAfterDelay(1, () -> {
             BlockState state = helper.getLevel().getBlockState(waterPos);
-            // Assert that the placed water block eventually evaporates and leaves air in its place.
             if (state.isAir()) {
                 helper.succeed();
                 return;

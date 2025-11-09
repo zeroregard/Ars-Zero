@@ -1,0 +1,17 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="ars_zero_tests"
+version="1.0.0"
+displayName="Ars Zero Game Tests"
+description="Game test harness for Ars Zero."
+
+[[dependencies.ars_zero_tests]]
+    modId="ars_zero"
+    type="required"
+    versionRange="*"
+    ordering="NONE"
+    side="BOTH"
+
