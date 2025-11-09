@@ -23,7 +23,7 @@ public class WaterVoxelTests {
         event.register(WaterVoxelTests.class);
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "watervoxeltests/empty")
+    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void waterVoxelCreatesAndEvaporatesWater(GameTestHelper helper) {
         BlockPos relativeGrassPos = new BlockPos(2, 0, 2);
         helper.setBlock(relativeGrassPos, Blocks.GRASS_BLOCK.defaultBlockState());

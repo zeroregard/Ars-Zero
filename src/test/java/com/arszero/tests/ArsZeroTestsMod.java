@@ -9,6 +9,7 @@ public final class ArsZeroTestsMod {
 
     public ArsZeroTestsMod(IEventBus modEventBus) {
         modEventBus.addListener(WaterVoxelTests::registerGameTests);
+        modEventBus.addListener(FireVoxelTests::registerGameTests);
     }
 }
 

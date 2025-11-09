@@ -157,3 +157,15 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
+tasks.named("runGameTestServer").configure {
+    doFirst {
+        def sourceDir = file("gameteststructures")
+        if (sourceDir.exists()) {
+            copy {
+                from(sourceDir)
+                into(file("run/gameteststructures"))
+            }
+        }
+    }
+}
+
