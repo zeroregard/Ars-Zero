@@ -20,6 +20,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -34,9 +35,13 @@ public class ArcaneVoxelTests {
     @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void arcaneVoxelExplodesBlock(GameTestHelper helper) {
         BlockPos relativeTargetPos = new BlockPos(2, 0, 2);
-        helper.setBlock(relativeTargetPos, Blocks.DIRT.defaultBlockState());
-        helper.setBlock(relativeTargetPos.below(), Blocks.DIRT.defaultBlockState());
-        helper.setBlock(relativeTargetPos.above(), Blocks.AIR.defaultBlockState());
+        VoxelTestUtils.prepareColumn(
+            helper,
+            relativeTargetPos,
+            Blocks.DIRT.defaultBlockState(),
+            Blocks.DIRT.defaultBlockState(),
+            Blocks.AIR.defaultBlockState()
+        );
 
         ServerLevel level = helper.getLevel();
         BlockPos absoluteTargetPos = helper.absolutePos(relativeTargetPos);
@@ -47,10 +52,6 @@ public class ArcaneVoxelTests {
             helper.fail("Failed to create ArcaneVoxelEntity for test setup.");
             return;
         }
-
-        voxel.setPos(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D);
-        voxel.setDeltaMovement(0.0D, -0.45D, 0.0D);
-        voxel.setLifetime(200);
 
         LivingEntity caster = ANFakePlayer.getPlayer(level);
         caster.setPos(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D);
@@ -70,44 +71,25 @@ public class ArcaneVoxelTests {
         voxel.setResolver(resolver);
         voxel.setCaster(caster);
 
-        level.addFreshEntity(voxel);
+        VoxelTestUtils.spawnVoxel(helper, voxel, spawnPos, new Vec3(0.0D, -0.45D, 0.0D), 200);
 
         AtomicBoolean voxelSeenBeforeImpact = new AtomicBoolean(voxel.isAlive());
-        waitForExplosion(helper, voxel, absoluteTargetPos, voxelSeenBeforeImpact, 200);
-    }
-
-    private static void waitForExplosion(
-        GameTestHelper helper,
-        ArcaneVoxelEntity voxel,
-        BlockPos targetPos,
-        AtomicBoolean voxelSeenBeforeImpact,
-        int ticksRemaining
-    ) {
-        if (ticksRemaining <= 0) {
-            helper.fail("Arcane voxel never reached the target block within the allotted time.");
-            return;
-        }
-
-        helper.runAfterDelay(1, () -> {
-            if (voxel.isAlive()) {
-                voxelSeenBeforeImpact.set(true);
-                waitForExplosion(helper, voxel, targetPos, voxelSeenBeforeImpact, ticksRemaining - 1);
-                return;
-            }
-
-            if (!voxelSeenBeforeImpact.get()) {
-                helper.fail("Arcane voxel must exist before impact to validate explosion behavior.");
-                return;
-            }
-
-            BlockState state = helper.getLevel().getBlockState(targetPos);
-            if (!state.isAir()) {
-                helper.fail("Target block should be destroyed by the arcane voxel explosion.");
-                return;
-            }
-
-            helper.succeed();
-        });
+        VoxelTestUtils.awaitVoxelRemoval(
+            helper,
+            voxel,
+            voxelSeenBeforeImpact,
+            200,
+            () -> {
+                BlockState state = helper.getLevel().getBlockState(absoluteTargetPos);
+                if (!state.isAir()) {
+                    helper.fail("Target block should be destroyed by the arcane voxel explosion.");
+                    return;
+                }
+                helper.succeed();
+            },
+            () -> helper.fail("Arcane voxel never reached the target block within the allotted time."),
+            () -> helper.fail("Arcane voxel must exist before impact to validate explosion behavior.")
+        );
     }
 }
 
