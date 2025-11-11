@@ -24,9 +24,11 @@ import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSplit;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
+import com.alexthw.sauce.registry.ModRegistry;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -53,8 +55,9 @@ public class ConjureVoxelEffect extends AbstractEffect {
             
             int duration = getDuration(spellStats);
             int splitLevel = spellStats.getBuffCount(AugmentSplit.INSTANCE);
+            float waterPower = getWaterPower(shooter);
             if (splitLevel > 0) {
-                createSplitVoxels(serverLevel, pos.x, pos.y, pos.z, duration, spellContext, shooter, resolver, splitLevel);
+                createSplitVoxels(serverLevel, pos.x, pos.y, pos.z, duration, spellContext, shooter, resolver, splitLevel, waterPower);
             } else {
                 BaseVoxelEntity voxel = createVoxel(serverLevel, pos.x, pos.y, pos.z, duration, spellContext);
                 
@@ -76,6 +79,9 @@ public class ConjureVoxelEffect extends AbstractEffect {
                 }
                 
                 voxel.setCaster(shooter);
+                if (voxel instanceof WaterVoxelEntity waterVoxel) {
+                    waterVoxel.setCasterWaterPower(waterPower);
+                }
                 
                 if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
                     voxel.setNoGravityCustom(true);
@@ -93,8 +99,9 @@ public class ConjureVoxelEffect extends AbstractEffect {
             int duration = getDuration(spellStats);
             
             int splitLevel = spellStats.getBuffCount(AugmentSplit.INSTANCE);
+            float waterPower = getWaterPower(shooter);
             if (splitLevel > 0) {
-                createSplitVoxels(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration, spellContext, shooter, resolver, splitLevel);
+                createSplitVoxels(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration, spellContext, shooter, resolver, splitLevel, waterPower);
             } else {
                 BaseVoxelEntity voxel = createVoxel(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration, spellContext);
                 
@@ -117,6 +124,9 @@ public class ConjureVoxelEffect extends AbstractEffect {
                 }
                 
                 voxel.setCaster(shooter);
+                if (voxel instanceof WaterVoxelEntity waterVoxel) {
+                    waterVoxel.setCasterWaterPower(waterPower);
+                }
                 
                 if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
                     voxel.setNoGravityCustom(true);
@@ -128,7 +138,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
         }
     }
     
-    private void createSplitVoxels(ServerLevel level, double x, double y, double z, int duration, SpellContext context, LivingEntity shooter, SpellResolver resolver, int splitLevel) {
+    private void createSplitVoxels(ServerLevel level, double x, double y, double z, int duration, SpellContext context, LivingEntity shooter, SpellResolver resolver, int splitLevel, float waterPower) {
         int maxSplitLevel = 3;
         int actualSplitLevel = Math.min(splitLevel, maxSplitLevel);
         
@@ -178,6 +188,9 @@ public class ConjureVoxelEffect extends AbstractEffect {
             }
             
             voxel.setCaster(shooter);
+            if (voxel instanceof WaterVoxelEntity waterVoxel) {
+                waterVoxel.setCasterWaterPower(waterPower);
+            }
             
             if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
                 voxel.setNoGravityCustom(true);
@@ -230,6 +243,9 @@ public class ConjureVoxelEffect extends AbstractEffect {
                 voxel.refreshDimensions();
                 
                 voxel.setCaster(shooter);
+                if (voxel instanceof WaterVoxelEntity waterVoxel) {
+                    waterVoxel.setCasterWaterPower(waterPower);
+                }
                 
                 if (isArcane) {
                     voxel.setResolver(resolver.getNewResolver(newContext));
@@ -296,6 +312,16 @@ public class ConjureVoxelEffect extends AbstractEffect {
         }
         
         return result;
+    }
+    
+    private float getWaterPower(LivingEntity shooter) {
+        if (shooter instanceof net.minecraft.world.entity.player.Player player) {
+            AttributeInstance instance = player.getAttribute(ModRegistry.WATER_POWER);
+            if (instance != null) {
+                return (float) instance.getValue();
+            }
+        }
+        return 0.0f;
     }
     
     private void updateTemporalContext(LivingEntity shooter, BaseVoxelEntity voxel) {

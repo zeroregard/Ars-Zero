@@ -31,10 +31,12 @@ import net.minecraft.world.level.Level;
 @PrefixGameTestTemplate(false)
 public class WaterVoxelTests {
     public static void registerGameTests(RegisterGameTestsEvent event) {
-        event.register(WaterVoxelTests.class);
+        if (TestRegistrationFilter.shouldRegister(WaterVoxelTests.class)) {
+            event.register(WaterVoxelTests.class);
+        }
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void waterVoxelCreatesAndEvaporatesWater(GameTestHelper helper) {
         BlockPos relativeGrassPos = new BlockPos(2, 0, 2);
         VoxelTestUtils.prepareColumn(
@@ -80,7 +82,7 @@ public class WaterVoxelTests {
         );
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void waterVoxelHydratesFarmland(GameTestHelper helper) {
         BlockPos relativeFarmlandPos = new BlockPos(2, 0, 2);
         VoxelTestUtils.prepareColumn(
@@ -122,7 +124,7 @@ public class WaterVoxelTests {
         });
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void waterVoxelFillsBucket(GameTestHelper helper) {
         BlockPos spawnRelativePos = new BlockPos(2, 1, 2);
 
@@ -160,7 +162,7 @@ public class WaterVoxelTests {
         });
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void waterVoxelFillsPotionsAndShrinks(GameTestHelper helper) {
         BlockPos spawnRelativePos = new BlockPos(2, 1, 2);
 
@@ -219,7 +221,7 @@ public class WaterVoxelTests {
         });
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void waterVoxelTurnsSourceLavaToObsidian(GameTestHelper helper) {
         BlockPos lavaRelativePos = new BlockPos(2, 0, 2);
         helper.setBlock(lavaRelativePos, Blocks.LAVA.defaultBlockState());
@@ -255,7 +257,7 @@ public class WaterVoxelTests {
         );
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void waterVoxelTurnsFlowingLavaToCobblestone(GameTestHelper helper) {
         BlockPos lavaRelativePos = new BlockPos(2, 0, 2);
         helper.setBlock(
@@ -294,7 +296,7 @@ public class WaterVoxelTests {
         );
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void waterVoxelHotBiomeEvaporationAtZeroWaterPower(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         WaterVoxelEntity voxel = ModEntities.WATER_VOXEL_ENTITY.get().create(level);
@@ -322,7 +324,7 @@ public class WaterVoxelTests {
         });
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void waterVoxelHotBiomeEvaporationAtOneWaterPower(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         WaterVoxelEntity voxel = ModEntities.WATER_VOXEL_ENTITY.get().create(level);
@@ -350,7 +352,7 @@ public class WaterVoxelTests {
         });
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void waterVoxelHotBiomeNoEvaporationAtHighWaterPower(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         WaterVoxelEntity voxel = ModEntities.WATER_VOXEL_ENTITY.get().create(level);
@@ -377,7 +379,7 @@ public class WaterVoxelTests {
         });
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void waterVoxelEvaporatesInstantlyInNether(GameTestHelper helper) {
         ServerLevel overworld = helper.getLevel();
         ServerLevel nether = overworld.getServer().getLevel(Level.NETHER);
@@ -427,7 +429,7 @@ public class WaterVoxelTests {
         });
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void waterVoxelIncreasesCauldronLevel(GameTestHelper helper) {
         BlockPos relativeCauldronPos = new BlockPos(2, 0, 2);
         VoxelTestUtils.prepareColumn(

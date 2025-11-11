@@ -19,10 +19,12 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public class FireVoxelTests {
     public static void registerGameTests(RegisterGameTestsEvent event) {
-        event.register(FireVoxelTests.class);
+        if (TestRegistrationFilter.shouldRegister(FireVoxelTests.class)) {
+            event.register(FireVoxelTests.class);
+        }
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "FireVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void fireVoxelIgnitesLog(GameTestHelper helper) {
         BlockPos logPos = new BlockPos(2, 0, 2);
         VoxelTestUtils.prepareColumn(

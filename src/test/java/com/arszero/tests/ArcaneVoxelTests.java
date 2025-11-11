@@ -29,10 +29,12 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public class ArcaneVoxelTests {
     public static void registerGameTests(RegisterGameTestsEvent event) {
-        event.register(ArcaneVoxelTests.class);
+        if (TestRegistrationFilter.shouldRegister(ArcaneVoxelTests.class)) {
+            event.register(ArcaneVoxelTests.class);
+        }
     }
 
-    @GameTest(templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "ArcaneVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void arcaneVoxelExplodesBlock(GameTestHelper helper) {
         BlockPos relativeTargetPos = new BlockPos(2, 0, 2);
         VoxelTestUtils.prepareColumn(

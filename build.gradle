@@ -31,6 +31,9 @@ neoForge {
         client {
             client()
             systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
+            def resolvedFilter = System.getProperty('filter', System.getProperty('ars_zero.testFilter', ''))
+            systemProperty 'filter', resolvedFilter
+            systemProperty 'ars_zero.testFilter', resolvedFilter
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             logLevel = org.slf4j.event.Level.DEBUG
         }
@@ -39,6 +42,9 @@ neoForge {
             server()
             programArgument '--nogui'
             systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
+            def resolvedFilter = System.getProperty('filter', System.getProperty('ars_zero.testFilter', ''))
+            systemProperty 'filter', resolvedFilter
+            systemProperty 'ars_zero.testFilter', resolvedFilter
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             logLevel = org.slf4j.event.Level.DEBUG
         }
@@ -46,6 +52,9 @@ neoForge {
         gameTestServer {
             type = "gameTestServer"
             systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
+            def resolvedFilter = System.getProperty('filter', System.getProperty('ars_zero.testFilter', ''))
+            systemProperty 'filter', resolvedFilter
+            systemProperty 'ars_zero.testFilter', resolvedFilter
             logLevel = org.slf4j.event.Level.DEBUG
         }
 
@@ -158,6 +167,10 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.named("runGameTestServer").configure {
+    def filterProperty = System.getProperty("ars_zero.testFilter")
+    if (filterProperty != null && !filterProperty.isBlank()) {
+        systemProperty "ars_zero.testFilter", filterProperty
+    }
     doFirst {
         def sourceDir = file("gameteststructures")
         if (sourceDir.exists()) {
