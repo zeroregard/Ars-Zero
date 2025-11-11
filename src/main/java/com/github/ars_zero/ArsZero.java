@@ -8,7 +8,9 @@ import com.github.ars_zero.common.entity.interaction.ArcaneCollisionInteraction;
 import com.github.ars_zero.common.entity.interaction.FireWaterInteraction;
 import com.github.ars_zero.common.entity.interaction.MergeInteraction;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
+import com.github.ars_zero.common.event.GravitySuppressionEvents;
 import com.github.ars_zero.common.event.WaterPowerCostReductionEvents;
+import com.github.ars_zero.common.event.ZeroGravityMobEffectEvents;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.registry.ModAttachments;
 import com.github.ars_zero.registry.ModBlockEntities;
@@ -17,6 +19,7 @@ import com.github.ars_zero.registry.ModCreativeTabs;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.registry.ModGlyphs;
+import com.github.ars_zero.registry.ModMobEffects;
 import com.github.ars_zero.registry.ModRecipes;
 import com.github.ars_zero.registry.ModSounds;
 import net.minecraft.resources.ResourceLocation;
@@ -40,6 +43,7 @@ public class ArsZero {
         ModItems.ITEMS.register(modEventBus);
         ModSounds.SOUNDS.register(modEventBus);
         ModCreativeTabs.TABS.register(modEventBus);
+        ModMobEffects.MOB_EFFECTS.register(modEventBus);
         ModGlyphs.registerGlyphs();
         ModAttachments.ATTACHMENT_TYPES.register(modEventBus);
         ModRecipes.RECIPE_SERIALIZERS.register(modEventBus);
@@ -56,6 +60,8 @@ public class ArsZero {
         });
         
         NeoForge.EVENT_BUS.register(WaterPowerCostReductionEvents.class);
+        NeoForge.EVENT_BUS.register(ZeroGravityMobEffectEvents.class);
+        NeoForge.EVENT_BUS.register(GravitySuppressionEvents.class);
 
         if (FMLEnvironment.dist.isClient()) {
             ArsZeroClient.init(modEventBus);

@@ -1,0 +1,12 @@
+# Normalize all text files to LF
+* text=auto eol=lf
+
+# Binary assets should never be converted
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.jar binary
+*.ogg binary
+*.wav binary
+*.zip binary

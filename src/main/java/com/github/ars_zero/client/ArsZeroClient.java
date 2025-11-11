@@ -2,6 +2,7 @@ package com.github.ars_zero.client;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
+import com.github.ars_zero.client.network.ClientNetworking;
 import com.github.ars_zero.client.registry.ModKeyBindings;
 import com.github.ars_zero.client.renderer.entity.ArcaneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.BlockGroupEntityRenderer;
@@ -23,6 +24,7 @@ public class ArsZeroClient {
         
         modEventBus.addListener(ArsZeroClient::onClientSetup);
         modEventBus.addListener(ArsZeroClient::registerGuiLayers);
+        modEventBus.addListener(ClientNetworking::register);
         
         NeoForge.EVENT_BUS.register(StaffScrollHandler.class);
         

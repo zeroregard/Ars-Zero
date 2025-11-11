@@ -47,5 +47,12 @@
   "ars_zero.glyph_desc.push_effect": "Pushes the target in the direction you're looking.",
 
   "ars_zero.glyph_name.enlarge_effect": "Enlarge",
-  "ars_zero.glyph_desc.enlarge_effect": "Increases the size of the target entity [NB: only works on Voxels so far]"
+  "ars_zero.glyph_desc.enlarge_effect": "Increases the size of the target entity [NB: only works on Voxels so far]",
+
+  "ars_zero.glyph_name.zero_gravity_effect": "Zero Gravity",
+  "ars_zero.glyph_desc.zero_gravity_effect": "Temporarily suspends the target by suppressing gravity, restoring it once the effect ends.",
+
+  "ars_zero.glyph_name.glyph_zero_gravity_effect": "Zero Gravity",
+  "ars_zero.glyph_desc.glyph_zero_gravity_effect": "Temporarily removes gravity from the target, but brings it back when the spell expires.",
+  "effect.ars_zero.zero_gravity": "Zero Gravity"
 }

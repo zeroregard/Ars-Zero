@@ -3,20 +3,45 @@ package com.github.ars_zero.common.entity;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.setup.registry.SoundRegistry;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ItemUtils;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FarmBlock;
+import net.minecraft.world.level.block.LayeredCauldronBlock;
 import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.tags.FluidTags;
 
 public class WaterVoxelEntity extends BaseVoxelEntity {
     
     private static final int COLOR = 0x3F76E4;
+    private static final float DEFAULT_BASE_SIZE = 0.25f;
+    private static final float POTION_SHRINK_STEP = DEFAULT_BASE_SIZE / 2.0f;
+    
+    private float casterWaterPower = 0.0f;
+    private boolean forceHotEnvironment = false;
     
     public WaterVoxelEntity(EntityType<? extends WaterVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -39,8 +64,90 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
     }
     
     @Override
+    public InteractionResult interact(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (stack.is(Items.BUCKET)) {
+            if (!this.level().isClientSide) {
+                ItemStack filled = ItemUtils.createFilledResult(stack, player, new ItemStack(Items.WATER_BUCKET));
+                player.setItemInHand(hand, filled);
+                player.awardStat(Stats.ITEM_USED.get(Items.BUCKET));
+                this.discard();
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
+        }
+        if (stack.is(Items.GLASS_BOTTLE)) {
+            if (!this.level().isClientSide) {
+                ItemStack filledBottle = new ItemStack(Items.POTION);
+                filledBottle.set(DataComponents.POTION_CONTENTS, new PotionContents(Potions.WATER));
+                ItemStack filledResult = ItemUtils.createFilledResult(stack, player, filledBottle);
+                player.setItemInHand(hand, filledResult);
+                player.awardStat(Stats.ITEM_USED.get(Items.GLASS_BOTTLE));
+                shrinkForPotionFill();
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
+        }
+        return super.interact(player, hand);
+    }
+    
+    @Override
+    public void tick() {
+        if (!this.level().isClientSide && this.isAlive()) {
+            if (handleLavaContact()) {
+                super.tick();
+                return;
+            }
+            if (this.tickCount % 20 == 0) {
+                updateFarmlandHydration(true);
+                handleHotBiomeEvaporation();
+            }
+        }
+        super.tick();
+    }
+    
+    @Override
     protected void onBlockCollision(BlockHitResult blockHit) {
-        BlockPos pos = blockHit.getBlockPos().relative(blockHit.getDirection());
+        BlockPos targetPos = blockHit.getBlockPos();
+        BlockState targetState = this.level().getBlockState(targetPos);
+        if (targetState.is(Blocks.FIRE)) {
+            extinguishFireAt(targetPos);
+            return;
+        }
+        if (blockHit.getDirection() == Direction.UP) {
+            BlockPos abovePos = targetPos.above();
+            BlockState aboveState = this.level().getBlockState(abovePos);
+            if (aboveState.is(Blocks.FIRE)) {
+                extinguishFireAt(abovePos);
+                return;
+            }
+        }
+        if (targetState.getFluidState().is(FluidTags.LAVA)) {
+            if (targetState.getFluidState().isSource()) {
+                this.level().setBlock(targetPos, Blocks.OBSIDIAN.defaultBlockState(), 3);
+            } else {
+                this.level().setBlock(targetPos, Blocks.COBBLESTONE.defaultBlockState(), 3);
+            }
+            return;
+        }
+        if (targetState.is(Blocks.CAULDRON)) {
+            this.level().setBlock(
+                targetPos,
+                Blocks.WATER_CAULDRON.defaultBlockState().setValue(LayeredCauldronBlock.LEVEL, 1),
+                3
+            );
+            return;
+        }
+        if (targetState.is(Blocks.WATER_CAULDRON)) {
+            int currentLevel = targetState.getValue(LayeredCauldronBlock.LEVEL);
+            if (currentLevel < LayeredCauldronBlock.MAX_FILL_LEVEL) {
+                this.level().setBlock(
+                    targetPos,
+                    targetState.setValue(LayeredCauldronBlock.LEVEL, currentLevel + 1),
+                    3
+                );
+                return;
+            }
+        }
+        BlockPos pos = targetPos.relative(blockHit.getDirection());
         if (this.level().getBlockState(pos).isAir()) {
             int waterLevel = calculateWaterLevel();
             this.level().setBlock(pos, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, waterLevel), 3);
@@ -54,12 +161,17 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
     
     @Override
     protected void onHitEntity(net.minecraft.world.phys.EntityHitResult result) {
-        if (result.getEntity() instanceof BaseVoxelEntity) {
+        Entity hit = result.getEntity();
+        if (hit instanceof BaseVoxelEntity) {
             super.onHitEntity(result);
             return;
         }
         
         if (!this.level().isClientSide) {
+            if (hit instanceof LivingEntity living && living.isOnFire()) {
+                living.clearFire();
+                spawnEvaporationFeedback(BlockPos.containing(living.position()), false);
+            }
             Vec3 hitLocation = result.getLocation();
             
             BlockPos centerPos = new BlockPos(
@@ -77,6 +189,149 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
             }
         }
         this.discard();
+    }
+    
+    private boolean updateFarmlandHydration(boolean hydrate) {
+        BlockPos center = this.blockPosition();
+        boolean farmlandFound = false;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                BlockPos targetPos = center.offset(dx, -1, dz);
+                BlockState targetState = this.level().getBlockState(targetPos);
+                if (targetState.getBlock() instanceof FarmBlock) {
+                    farmlandFound = true;
+                    if (hydrate && targetState.hasProperty(FarmBlock.MOISTURE)) {
+                        int currentMoisture = targetState.getValue(FarmBlock.MOISTURE);
+                        if (currentMoisture < FarmBlock.MAX_MOISTURE) {
+                            this.level().setBlock(
+                                targetPos,
+                                targetState.setValue(FarmBlock.MOISTURE, FarmBlock.MAX_MOISTURE),
+                                3
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        return farmlandFound;
+    }
+    
+    private void shrinkForPotionFill() {
+        if (!this.isAlive() || this.level().isClientSide) {
+            return;
+        }
+        float newSize = this.getSize() - POTION_SHRINK_STEP;
+        if (newSize < 0.0625f) {
+            this.discard();
+            return;
+        }
+        this.setSize(newSize);
+        this.refreshDimensions();
+    }
+    
+    private void handleHotBiomeEvaporation() {
+        if (!this.level().isClientSide && this.level() instanceof ServerLevel serverLevel) {
+            boolean ultraWarm = serverLevel.dimensionType().ultraWarm();
+            float biomeTemperature = serverLevel.getBiome(this.blockPosition()).value().getBaseTemperature();
+            boolean hot = ultraWarm || forceHotEnvironment || biomeTemperature > 1.0F;
+            if (!hot) {
+                return;
+            }
+            if (ultraWarm) {
+                spawnEvaporationFeedback(this.blockPosition(), true);
+                this.discard();
+                return;
+            }
+            float shrinkPercent = getEvaporationPercent();
+            if (shrinkPercent <= 0.0f) {
+                return;
+            }
+            float newSize = this.getSize() * (1.0f - shrinkPercent);
+            if (newSize <= 0.0f || newSize < 0.0625f) {
+                this.discard();
+                return;
+            }
+            this.setSize(newSize);
+            this.refreshDimensions();
+            spawnEvaporationFeedback(this.blockPosition(), false);
+        }
+    }
+    
+    private float getEvaporationPercent() {
+        if (casterWaterPower >= 2.0f) {
+            return 0.0f;
+        }
+        if (casterWaterPower >= 1.0f) {
+            return 0.025f;
+        }
+        return 0.05f;
+    }
+    
+    private boolean handleLavaContact() {
+        BlockPos currentPos = this.blockPosition();
+        BlockState state = this.level().getBlockState(currentPos);
+        if (state.getFluidState().is(FluidTags.LAVA)) {
+            if (state.getFluidState().isSource()) {
+                this.level().setBlock(currentPos, Blocks.OBSIDIAN.defaultBlockState(), 3);
+            } else {
+                this.level().setBlock(currentPos, Blocks.COBBLESTONE.defaultBlockState(), 3);
+            }
+            spawnEvaporationFeedback(currentPos, false);
+            this.discard();
+            return true;
+        }
+        return false;
+    }
+
+    private void extinguishFireAt(BlockPos firePos) {
+        if (this.level().isClientSide) {
+            return;
+        }
+        ServerLevel serverLevel = (ServerLevel) this.level();
+        BlockState fireState = serverLevel.getBlockState(firePos);
+        if (!fireState.is(Blocks.FIRE)) {
+            return;
+        }
+        serverLevel.removeBlock(firePos, false);
+        spawnEvaporationFeedback(firePos, false);
+        int waterLevel = calculateWaterLevel();
+        serverLevel.setBlock(
+            firePos,
+            Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, waterLevel),
+            3
+        );
+    }
+ 
+    public void setCasterWaterPower(float waterPower) {
+        this.casterWaterPower = Math.max(0.0f, waterPower);
+    }
+    
+    public float getCasterWaterPower() {
+        return this.casterWaterPower;
+    }
+    
+    public void setForceHotEnvironment(boolean forceHotEnvironment) {
+        this.forceHotEnvironment = forceHotEnvironment;
+    }
+    
+    @Override
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("WaterPower")) {
+            this.casterWaterPower = compound.getFloat("WaterPower");
+        }
+        if (compound.contains("ForceHotEnvironment")) {
+            this.forceHotEnvironment = compound.getBoolean("ForceHotEnvironment");
+        }
+    }
+    
+    @Override
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putFloat("WaterPower", this.casterWaterPower);
+        if (this.forceHotEnvironment) {
+            compound.putBoolean("ForceHotEnvironment", true);
+        }
     }
     
     private int calculateWaterLevel() {
@@ -108,6 +363,51 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
         
         int baseCount = (int) (ratio * 32);
         return Math.min(baseCount, 32);
+    }
+    
+    private void spawnEvaporationFeedback(BlockPos pos, boolean intense) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        double baseX = pos.getX() + 0.5;
+        double baseY = pos.getY() + 0.5;
+        double baseZ = pos.getZ() + 0.5;
+        int cloudCount = Math.max(4, (int) (this.getSize() * (intense ? 24 : 16)));
+        int smokeCount = Math.max(2, cloudCount / 3);
+        
+        for (int i = 0; i < cloudCount; i++) {
+            double offsetX = (this.random.nextDouble() - 0.5) * 0.6;
+            double offsetY = this.random.nextDouble() * 0.5;
+            double offsetZ = (this.random.nextDouble() - 0.5) * 0.6;
+            serverLevel.sendParticles(
+                ParticleTypes.CLOUD,
+                baseX + offsetX,
+                baseY + offsetY,
+                baseZ + offsetZ,
+                1,
+                0.0, 0.02, 0.0,
+                0.0
+            );
+        }
+        
+        for (int i = 0; i < smokeCount; i++) {
+            double offsetX = (this.random.nextDouble() - 0.5) * 0.4;
+            double offsetY = this.random.nextDouble() * 0.3;
+            double offsetZ = (this.random.nextDouble() - 0.5) * 0.4;
+            serverLevel.sendParticles(
+                ParticleTypes.SMOKE,
+                baseX + offsetX,
+                baseY + offsetY,
+                baseZ + offsetZ,
+                1,
+                0.0, 0.01, 0.0,
+                0.0
+            );
+        }
+        
+        float volume = intense ? 0.8f : 0.5f;
+        float pitch = 0.8f + this.random.nextFloat() * 0.4f;
+        serverLevel.playSound(null, baseX, baseY, baseZ, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, volume, pitch);
     }
     
     @Nullable

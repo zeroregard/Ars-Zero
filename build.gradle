@@ -30,7 +30,10 @@ neoForge {
     runs {
         client {
             client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
+            def resolvedFilter = System.getProperty('filter', System.getProperty('ars_zero.testFilter', ''))
+            systemProperty 'filter', resolvedFilter
+            systemProperty 'ars_zero.testFilter', resolvedFilter
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             logLevel = org.slf4j.event.Level.DEBUG
         }
@@ -38,8 +41,20 @@ neoForge {
         server {
             server()
             programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
+            def resolvedFilter = System.getProperty('filter', System.getProperty('ars_zero.testFilter', ''))
+            systemProperty 'filter', resolvedFilter
+            systemProperty 'ars_zero.testFilter', resolvedFilter
             systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
+            def resolvedFilter = System.getProperty('filter', System.getProperty('ars_zero.testFilter', ''))
+            systemProperty 'filter', resolvedFilter
+            systemProperty 'ars_zero.testFilter', resolvedFilter
             logLevel = org.slf4j.event.Level.DEBUG
         }
 
@@ -53,10 +68,19 @@ neoForge {
         "${mod_id}" {
             sourceSet sourceSets.main
         }
+        "ars_zero_tests" {
+            sourceSet sourceSets.test
+        }
     }
 }
 
 sourceSets.main.resources { srcDir "src/generated/resources" }
+sourceSets {
+    test {
+        compileClasspath += sourceSets.main.output + configurations.compileClasspath
+        runtimeClasspath += sourceSets.main.output + configurations.runtimeClasspath
+    }
+}
 
 repositories {
     mavenCentral()
@@ -117,6 +141,8 @@ dependencies {
             prefer '1.0.7.38'
         }
     })
+
+    testImplementation("net.neoforged:neoforge:${neo_version}")
 }
 
 tasks.withType(Copy).configureEach {
@@ -139,3 +165,20 @@ publishing {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
+
+tasks.named("runGameTestServer").configure {
+    def filterProperty = System.getProperty("ars_zero.testFilter")
+    if (filterProperty != null && !filterProperty.isBlank()) {
+        systemProperty "ars_zero.testFilter", filterProperty
+    }
+    doFirst {
+        def sourceDir = file("gameteststructures")
+        if (sourceDir.exists()) {
+            copy {
+                from(sourceDir)
+                into(file("run/gameteststructures"))
+            }
+        }
+    }
+}
+

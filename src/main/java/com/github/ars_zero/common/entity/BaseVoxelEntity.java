@@ -33,6 +33,7 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
+    public static final int DEFAULT_LIFETIME_TICKS = 1200;
     private static final EntityDataAccessor<Integer> LIFETIME = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> SIZE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> BASE_SIZE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.FLOAT);
@@ -57,7 +58,7 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder pBuilder) {
-        pBuilder.define(LIFETIME, 1200);
+        pBuilder.define(LIFETIME, DEFAULT_LIFETIME_TICKS);
         pBuilder.define(SIZE, 0.25f);
         pBuilder.define(BASE_SIZE, 0.25f);
         pBuilder.define(FROZEN_UNTIL_TICK, 0L);
@@ -433,6 +434,7 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     public boolean getNoGravityCustom() {
         return this.entityData.get(NO_GRAVITY_CUSTOM);
     }
+    
     
     @Override
     public boolean isPushable() {

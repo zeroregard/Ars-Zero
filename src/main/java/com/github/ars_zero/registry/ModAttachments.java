@@ -2,8 +2,8 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.attachment.FrozenPhysicsAttachment;
+import com.github.ars_zero.common.attachment.GravitySuppressionAttachment;
 import com.github.ars_zero.common.spell.StaffCastContext;
-import com.mojang.serialization.Codec;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
@@ -22,6 +22,14 @@ public class ModAttachments {
     public static final Supplier<AttachmentType<FrozenPhysicsAttachment>> FROZEN_PHYSICS = 
         ATTACHMENT_TYPES.register("frozen_physics", () -> 
             AttachmentType.builder(() -> new FrozenPhysicsAttachment()).build()
+        );
+
+    public static final Supplier<AttachmentType<GravitySuppressionAttachment>> GRAVITY_SUPPRESSION =
+        ATTACHMENT_TYPES.register("gravity_suppression", () ->
+            AttachmentType.builder(GravitySuppressionAttachment::new)
+                .serialize(GravitySuppressionAttachment.CODEC)
+                .copyOnDeath()
+                .build()
         );
 }
 
