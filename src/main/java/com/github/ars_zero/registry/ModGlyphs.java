@@ -47,9 +47,9 @@ public class ModGlyphs {
         GlyphRegistry.registerSpell(ENLARGE_EFFECT);
         ArsZero.LOGGER.info("Successfully registered EnlargeEffect glyph with ID: {}", ENLARGE_EFFECT.getRegistryName());
         
-        ArsZero.LOGGER.debug("Registering ZeroGravityEffect glyph...");
+        ArsZero.LOGGER.debug("Registering RemoveGravity glyph...");
         GlyphRegistry.registerSpell(ZERO_GRAVITY_EFFECT);
-        ArsZero.LOGGER.info("Successfully registered ZeroGravityEffect glyph with ID: {}", ZERO_GRAVITY_EFFECT.getRegistryName());
+        ArsZero.LOGGER.info("Successfully registered RemoveGravity glyph with ID: {}", ZERO_GRAVITY_EFFECT.getRegistryName());
         
         ArsZero.LOGGER.debug("Glyph registration completed");
     }

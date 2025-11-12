@@ -28,7 +28,7 @@ public class ZeroGravityEffect extends AbstractEffect {
     public static final ZeroGravityEffect INSTANCE = new ZeroGravityEffect();
 
     public ZeroGravityEffect() {
-        super(ArsZero.prefix(ID), "Zero Gravity");
+        super(ArsZero.prefix(ID), "Remove Gravity");
     }
 
     @Override
@@ -45,7 +45,7 @@ public class ZeroGravityEffect extends AbstractEffect {
 
     @Override
     public void onResolveBlock(BlockHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        ArsZero.LOGGER.debug("ZeroGravityEffect: Block hit ignored");
+        ArsZero.LOGGER.debug("RemoveGravityEffect: Block hit ignored");
     }
 
     @Override
@@ -62,13 +62,13 @@ public class ZeroGravityEffect extends AbstractEffect {
     @Override
     public void addAugmentDescriptions(Map<AbstractAugment, String> map) {
         super.addAugmentDescriptions(map);
-        map.put(AugmentExtendTime.INSTANCE, "Extends the zero-gravity duration");
-        map.put(AugmentDurationDown.INSTANCE, "Reduces the zero-gravity duration");
+        map.put(AugmentExtendTime.INSTANCE, "Extends the gravity suppression duration");
+        map.put(AugmentDurationDown.INSTANCE, "Reduces the gravity suppression duration");
     }
 
     @Override
     public String getBookDescription() {
-        return "Temporarily suspends the target in midair, preventing gravity from affecting it. Gravity is restored when the effect expires or the target is removed.";
+        return "Temporarily removes gravity from the target, allowing it to remain suspended until the effect ends or the target is removed.";
     }
 
     @Override

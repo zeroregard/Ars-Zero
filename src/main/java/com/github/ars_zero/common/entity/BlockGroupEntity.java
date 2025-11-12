@@ -16,7 +16,6 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
@@ -25,6 +24,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -143,27 +143,33 @@ public class BlockGroupEntity extends Entity {
     
     public List<BlockPos> placeBlocks(float rotationYaw) {
         List<BlockPos> placedPositions = new ArrayList<>();
-        if (!(level() instanceof ServerLevel serverLevel)) return placedPositions;
+        if (!(level() instanceof ServerLevel)) return placedPositions;
         
+        Rotation rotation = getRotationForYaw(rotationYaw);
+
         for (BlockData blockData : blocks) {
             Vec3 rotatedPos = rotateVector(blockData.relativePosition, rotationYaw);
             BlockPos targetPos = BlockPos.containing(this.position().add(rotatedPos));
             
-            BlockState state = blockData.blockState;
+            BlockState originalState = blockData.blockState;
+            BlockState stateForPlacement = originalState;
+            if (rotation != Rotation.NONE) {
+                stateForPlacement = stateForPlacement.rotate(level(), targetPos, rotation);
+            }
             boolean placed = false;
             
             if (!level().isOutsideBuildHeight(targetPos)) {
                 BlockState existingState = level().getBlockState(targetPos);
                 
                 if (existingState.canBeReplaced()) {
-                    if (state.canSurvive(level(), targetPos)) {
-                        if (level().setBlock(targetPos, state, Block.UPDATE_ALL)) {
+                    if (stateForPlacement.canSurvive(level(), targetPos)) {
+                        if (level().setBlock(targetPos, stateForPlacement, Block.UPDATE_ALL)) {
                             placed = true;
                             placedPositions.add(targetPos);
                             
                             // Restore BlockEntity data if needed
                             CompoundTag entityData = blockEntityData.get(blockData.originalPosition);
-                            if (entityData != null && state.hasBlockEntity()) {
+                            if (entityData != null && stateForPlacement.hasBlockEntity()) {
                                 BlockEntity blockEntity = level().getBlockEntity(targetPos);
                                 if (blockEntity != null) {
                                     try {
@@ -181,11 +187,25 @@ public class BlockGroupEntity extends Entity {
             
             // Only drop as item if placement failed
             if (!placed) {
-                dropBlockAsItem(state, blockData.originalPosition);
+                dropBlockAsItem(originalState, blockData.originalPosition);
             }
         }
         
         return placedPositions;
+    }
+
+    private Rotation getRotationForYaw(float yawDegrees) {
+        float normalized = ((yawDegrees % 360.0f) + 360.0f) % 360.0f;
+
+        if (normalized >= 315.0f || normalized < 45.0f) {
+            return Rotation.NONE;
+        } else if (normalized < 135.0f) {
+            return Rotation.CLOCKWISE_90;
+        } else if (normalized < 225.0f) {
+            return Rotation.CLOCKWISE_180;
+        } else {
+            return Rotation.COUNTERCLOCKWISE_90;
+        }
     }
     
     private void dropBlockAsItem(BlockState state, BlockPos originalPos) {
@@ -317,7 +337,7 @@ public class BlockGroupEntity extends Entity {
     public void remove(@NotNull RemovalReason reason) {
         if (!level().isClientSide && reason == RemovalReason.DISCARDED && !blocks.isEmpty()) {
             float rotation = 0.0f;
-            if (level() instanceof ServerLevel serverLevel && getYRot() != 0.0f) {
+            if (level() instanceof ServerLevel && getYRot() != 0.0f) {
                 rotation = getNearest90DegreeRotation(getYRot());
             }
             

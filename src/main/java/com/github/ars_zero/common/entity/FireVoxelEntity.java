@@ -4,19 +4,29 @@ import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.setup.registry.SoundRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.NetherPortalBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.core.Direction;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.tags.FluidTags;
 
 public class FireVoxelEntity extends BaseVoxelEntity {
     
     private static final int COLOR = 0xFF6A00;
+    private static final float MIN_SIZE_THRESHOLD = 0.0625f;
+    
+    private float casterFirePower = 0.0f;
     
     public FireVoxelEntity(EntityType<? extends FireVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -43,6 +53,41 @@ public class FireVoxelEntity extends BaseVoxelEntity {
         BlockPos hitPos = blockHit.getBlockPos();
         BlockState hitState = this.level().getBlockState(hitPos);
         
+        if (hitState.is(Blocks.CAMPFIRE) && !hitState.getValue(BlockStateProperties.LIT)) {
+            this.level().setBlock(hitPos, hitState.setValue(BlockStateProperties.LIT, true), 3);
+            return;
+        }
+        if (hitState.is(Blocks.TNT)) {
+            if (!this.level().isClientSide) {
+                this.level().removeBlock(hitPos, false);
+                PrimedTnt primedTnt = new PrimedTnt(this.level(), hitPos.getX() + 0.5D, hitPos.getY(), hitPos.getZ() + 0.5D, null);
+                this.level().addFreshEntity(primedTnt);
+                this.level().playSound(
+                    null,
+                    primedTnt.getX(),
+                    primedTnt.getY(),
+                    primedTnt.getZ(),
+                    SoundEvents.TNT_PRIMED,
+                    SoundSource.BLOCKS,
+                    1.0f,
+                    1.0f
+                );
+            }
+            return;
+        }
+        if (hitState.is(Blocks.ICE)) {
+            if (!this.level().isClientSide) {
+                this.level().setBlock(hitPos, Blocks.WATER.defaultBlockState(), 3);
+            }
+            return;
+        }
+        if (hitState.is(Blocks.SNOW) || hitState.is(Blocks.SNOW_BLOCK)) {
+            if (!this.level().isClientSide) {
+                this.level().removeBlock(hitPos, false);
+            }
+            return;
+        }
+        
         if (hitState.getBlock() == Blocks.WATER) {
             if (canEvaporateWater(hitState)) {
                 this.level().setBlock(hitPos, Blocks.AIR.defaultBlockState(), 3);
@@ -60,6 +105,9 @@ public class FireVoxelEntity extends BaseVoxelEntity {
                 spawnEvaporationParticles(Vec3.atCenterOf(placePos));
             }
         } else if (placeState.isAir()) {
+            if (tryActivatePortal(placePos)) {
+                return;
+            }
             this.level().setBlock(placePos, Blocks.FIRE.defaultBlockState(), 3);
         }
     }
@@ -154,6 +202,168 @@ public class FireVoxelEntity extends BaseVoxelEntity {
         int baseCount = (int) (ratio * 32);
         return Math.min(baseCount, 32);
     }
+
+    private boolean tryActivatePortal(BlockPos placePos) {
+        if (this.level().isClientSide) {
+            return false;
+        }
+        if (!this.level().getBlockState(placePos).isAir()) {
+            return false;
+        }
+        if (attemptPortalWithAxis(placePos, Direction.Axis.X)) {
+            return true;
+        }
+        return attemptPortalWithAxis(placePos, Direction.Axis.Z);
+    }
+
+    private boolean attemptPortalWithAxis(BlockPos origin, Direction.Axis axis) {
+        if (!isPortalFrameIntact(origin, axis)) {
+            return false;
+        }
+        BlockState portalState = Blocks.NETHER_PORTAL.defaultBlockState().setValue(NetherPortalBlock.AXIS, axis);
+        Direction horizontalStep = axis == Direction.Axis.X ? Direction.EAST : Direction.SOUTH;
+        for (int x = 0; x < 2; x++) {
+            BlockPos columnBase = origin.relative(horizontalStep, x);
+            for (int y = 0; y < 3; y++) {
+                this.level().setBlock(columnBase.above(y), portalState, 18);
+            }
+        }
+        return true;
+    }
+
+    private boolean isPortalFrameIntact(BlockPos origin, Direction.Axis axis) {
+        Direction horizontalStep = axis == Direction.Axis.X ? Direction.EAST : Direction.SOUTH;
+        Direction opposite = horizontalStep.getOpposite();
+        BlockPos belowOrigin = origin.below();
+        if (!isObsidian(belowOrigin)) {
+            return false;
+        }
+        for (int column = 0; column < 2; column++) {
+            BlockPos columnBase = origin.relative(horizontalStep, column);
+            if (!isObsidian(columnBase.below())) {
+                return false;
+            }
+            if (!isObsidian(columnBase.above(3))) {
+                return false;
+            }
+            for (int height = 0; height < 3; height++) {
+                BlockState interiorState = this.level().getBlockState(columnBase.above(height));
+                if (!interiorState.isAir() && !interiorState.is(Blocks.FIRE)) {
+                    return false;
+                }
+            }
+        }
+        BlockPos leftColumn = origin.relative(opposite);
+        BlockPos rightColumn = origin.relative(horizontalStep, 2);
+        for (int height = 0; height < 3; height++) {
+            if (!isObsidian(leftColumn.above(height))) {
+                return false;
+            }
+            if (!isObsidian(rightColumn.above(height))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isObsidian(BlockPos pos) {
+        return this.level().getBlockState(pos).is(Blocks.OBSIDIAN);
+    }
+    
+    private void handleRainDampening() {
+        if (!isInEffectiveRain()) {
+            return;
+        }
+        float shrinkPercent = getRainDampeningPercent();
+        if (shrinkPercent <= 0.0f) {
+            return;
+        }
+        float newSize = this.getSize() * (1.0f - shrinkPercent);
+        if (newSize < MIN_SIZE_THRESHOLD) {
+            this.discard();
+            return;
+        }
+        this.setSize(newSize);
+        this.refreshDimensions();
+    }
+    
+    private boolean isInEffectiveRain() {
+        if (this.level().isClientSide) {
+            return false;
+        }
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        if (!serverLevel.isRaining()) {
+            return false;
+        }
+        return serverLevel.isRainingAt(this.blockPosition());
+    }
+    
+    private float getRainDampeningPercent() {
+        if (this.casterFirePower >= 2.0f) {
+            return 0.0f;
+        }
+        if (this.casterFirePower >= 1.0f) {
+            return 0.025f;
+        }
+        return 0.05f;
+    }
+    
+    private void handleUnderwaterDampening() {
+        evaporateAdjacentWater();
+        float shrinkPercent = getUnderwaterDampeningPercent();
+        if (shrinkPercent <= 0.0f) {
+            return;
+        }
+        float newSize = this.getSize() * (1.0f - shrinkPercent);
+        if (newSize < MIN_SIZE_THRESHOLD) {
+            this.discard();
+            return;
+        }
+        this.setSize(newSize);
+        this.refreshDimensions();
+    }
+    
+    private void evaporateAdjacentWater() {
+        if (this.level().isClientSide) {
+            return;
+        }
+        boolean removedAny = false;
+        BlockPos center = this.blockPosition();
+        for (BlockPos pos : BlockPos.betweenClosed(center.offset(-1, -1, -1), center.offset(1, 1, 1))) {
+            BlockState state = this.level().getBlockState(pos);
+            if (state.getFluidState().is(FluidTags.WATER)) {
+                this.level().setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                spawnEvaporationParticles(Vec3.atCenterOf(pos));
+                removedAny = true;
+            }
+        }
+        if (removedAny) {
+            playEvaporationSound(Vec3.atCenterOf(center));
+        }
+    }
+    
+    private void playEvaporationSound(Vec3 location) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        serverLevel.playSound(null, location.x, location.y, location.z, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.7f, 1.2f + this.random.nextFloat() * 0.2f);
+    }
+    
+    private boolean isSubmergedInWater() {
+        return this.isInWater();
+    }
+    
+    private float getUnderwaterDampeningPercent() {
+        if (this.casterFirePower >= 2.0f) {
+            return 0.0f;
+        }
+        if (this.casterFirePower >= 1.0f) {
+            return 0.25f;
+        }
+        return 0.5f;
+    }
     
     @Override
     protected net.minecraft.core.particles.ParticleOptions getAmbientParticle() {
@@ -166,6 +376,20 @@ public class FireVoxelEntity extends BaseVoxelEntity {
     
     @Override
     public void tick() {
+        if (!this.level().isClientSide && this.isAlive()) {
+            if (isSubmergedInWater()) {
+                handleUnderwaterDampening();
+                if (!this.isAlive()) {
+                    return;
+                }
+            } else if (this.tickCount % 20 == 0) {
+                handleRainDampening();
+                if (!this.isAlive()) {
+                    return;
+                }
+            }
+        }
+        
         super.tick();
         
         if (!this.level().isClientSide) {
@@ -256,6 +480,30 @@ public class FireVoxelEntity extends BaseVoxelEntity {
                     0.0
                 );
             }
+        }
+    }
+    
+    public void setCasterFirePower(float firePower) {
+        this.casterFirePower = Math.max(0.0f, firePower);
+    }
+    
+    public float getCasterFirePower() {
+        return this.casterFirePower;
+    }
+    
+    @Override
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("FirePower")) {
+            this.casterFirePower = compound.getFloat("FirePower");
+        }
+    }
+    
+    @Override
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        if (this.casterFirePower != 0.0f) {
+            compound.putFloat("FirePower", this.casterFirePower);
         }
     }
 }

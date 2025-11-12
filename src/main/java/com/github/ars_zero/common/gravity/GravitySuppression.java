@@ -15,6 +15,7 @@ public final class GravitySuppression {
             return;
         }
         GravitySuppressionAttachment attachment = entity.getData(ModAttachments.GRAVITY_SUPPRESSION);
+        boolean wasInactive = !attachment.isActive();
         long expireTick = entity.level().getGameTime() + durationTicks;
         boolean useCustomSetter = entity instanceof BaseVoxelEntity;
         boolean originalNoGravity = useCustomSetter
@@ -24,6 +25,9 @@ public final class GravitySuppression {
             ? attachment.extend(useCustomSetter, expireTick)
             : attachment.activated(useCustomSetter, originalNoGravity, expireTick);
         entity.setData(ModAttachments.GRAVITY_SUPPRESSION, updated);
+        if (wasInactive) {
+            resetVerticalMotion(entity);
+        }
         enforce(entity, updated);
     }
 
@@ -81,8 +85,6 @@ public final class GravitySuppression {
         } else {
             entity.setNoGravity(true);
         }
-        Vec3 motion = entity.getDeltaMovement();
-        entity.setDeltaMovement(motion.x, 0.0, motion.z);
         entity.hasImpulse = true;
         entity.fallDistance = 0.0f;
     }
@@ -98,6 +100,14 @@ public final class GravitySuppression {
         }
         entity.fallDistance = 0.0f;
         entity.setData(ModAttachments.GRAVITY_SUPPRESSION, attachment.deactivate());
+    }
+
+    private static void resetVerticalMotion(Entity entity) {
+        Vec3 motion = entity.getDeltaMovement();
+        if (Math.abs(motion.y) > 1.0E-5) {
+            entity.setDeltaMovement(motion.x, 0.0, motion.z);
+            entity.hasImpulse = true;
+        }
     }
 }
 
