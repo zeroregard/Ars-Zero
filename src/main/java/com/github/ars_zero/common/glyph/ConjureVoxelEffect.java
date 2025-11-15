@@ -391,7 +391,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
 
     @Override
     public int getDefaultManaCost() {
-        return 50;
+        return 5;
     }
 
     @NotNull

@@ -77,6 +77,9 @@ neoForge {
 sourceSets.main.resources { srcDir "src/generated/resources" }
 sourceSets {
     test {
+        resources {
+            srcDirs = ['src/test/resources', 'src/main/resources']
+        }
         compileClasspath += sourceSets.main.output + configurations.compileClasspath
         runtimeClasspath += sourceSets.main.output + configurations.runtimeClasspath
     }
@@ -177,6 +180,34 @@ tasks.named("runGameTestServer").configure {
             copy {
                 from(sourceDir)
                 into(file("run/gameteststructures"))
+            }
+        }
+        def mainResourceStructuresDir = file("src/main/resources/data/ars_zero/structures")
+        if (mainResourceStructuresDir.exists()) {
+            copy {
+                from(mainResourceStructuresDir)
+                into(file("run/gameteststructures/ars_zero"))
+            }
+        }
+        def testResourceStructuresDir = file("src/test/resources/data/ars_zero/structures")
+        if (testResourceStructuresDir.exists()) {
+            copy {
+                from(testResourceStructuresDir)
+                into(file("run/gameteststructures/ars_zero"))
+            }
+        }
+        def buildMainResourceStructuresDir = file("build/resources/main/data/ars_zero/structures")
+        if (buildMainResourceStructuresDir.exists()) {
+            copy {
+                from(buildMainResourceStructuresDir)
+                into(file("run/gameteststructures/ars_zero"))
+            }
+        }
+        def buildTestResourceStructuresDir = file("build/resources/test/data/ars_zero/structures")
+        if (buildTestResourceStructuresDir.exists()) {
+            copy {
+                from(buildTestResourceStructuresDir)
+                into(file("run/gameteststructures/ars_zero"))
             }
         }
     }

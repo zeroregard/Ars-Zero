@@ -34,6 +34,32 @@
   "ars_zero.glyph_name.conjure_voxel_effect": "Conjure Voxel",
   "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity",
 
+  "ars_zero.glyph_name.select_effect": "Select",
+  "ars_zero.glyph_desc.select_effect": "Selects a target entity or block without performing any action.",
+
+  "ars_nouveau.augment_desc.select_effect_glyph_aoe": "Increases the area of blocks that can be selected",
+  "ars_nouveau.augment_desc.select_effect_glyph_pierce": "Increases the depth of blocks that can be selected",
+  "ars_nouveau.augment_desc.select_effect_glyph_sensitive": "Only selects entities, ignoring blocks.",
+
+  "ars_nouveau.augment_desc.conjure_voxel_effect_glyph_extend_time": "Increases the duration the voxel remains.",
+  "ars_nouveau.augment_desc.conjure_voxel_effect_glyph_sensitive": "Places a voxel at a target entity's position.",
+  "ars_nouveau.augment_desc.conjure_voxel_effect_glyph_split": "Splits the voxel into multiple smaller entities.",
+
+  "ars_nouveau.augment_desc.enlarge_effect_glyph_amplify": "Increases the growth rate",
+  "ars_nouveau.augment_desc.enlarge_effect_glyph_dampen": "Decreases the growth rate",
+
+  "ars_nouveau.augment_desc.near_form_glyph_amplify": "Increases the cast distance",
+  "ars_nouveau.augment_desc.near_form_glyph_dampen": "Decreases the cast distance",
+
+  "ars_nouveau.augment_desc.push_effect_glyph_amplify": "Increases the push strength",
+  "ars_nouveau.augment_desc.push_effect_glyph_dampen": "Decreases the push strength",
+
+  "ars_nouveau.augment_desc.translate_effect_glyph_amplify": "Increases the distance from the player",
+  "ars_nouveau.augment_desc.translate_effect_glyph_dampen": "Decreases the distance from the player",
+
+  "ars_nouveau.augment_desc.zero_gravity_effect_glyph_extend_time": "Extends the gravity suppression duration",
+  "ars_nouveau.augment_desc.zero_gravity_effect_glyph_duration_down": "Reduces the gravity suppression duration",
+
   "ars_zero.glyph_name.temporal_context_form": "Temporal Context",
   "ars_zero.glyph_desc.temporal_context_form": "A cast method that provides access to the context of the previous spell phase (Staff only)",
 
@@ -47,12 +73,13 @@
   "ars_zero.glyph_desc.push_effect": "Pushes the target in the direction you're looking.",
 
   "ars_zero.glyph_name.enlarge_effect": "Enlarge",
-  "ars_zero.glyph_desc.enlarge_effect": "Increases the size of the target entity [NB: only works on Voxels so far]",
+  "ars_zero.glyph_desc.enlarge_effect": "Increases the size of the target entity",
 
   "ars_zero.glyph_name.zero_gravity_effect": "Remove Gravity",
   "ars_zero.glyph_desc.zero_gravity_effect": "Temporarily removes gravity from the target, restoring it once the effect ends.",
 
   "ars_zero.glyph_name.glyph_zero_gravity_effect": "Remove Gravity",
   "ars_zero.glyph_desc.glyph_zero_gravity_effect": "Temporarily removes gravity from the target, bringing it back when the spell expires.",
-  "effect.ars_zero.zero_gravity": "Gravity-ridden"
+  "effect.ars_zero.zero_gravity": "Gravity-ridden",
+  "effect.ars_zero.zero_gravity.description": "Temporarily removes gravity from the entity"
 }

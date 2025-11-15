@@ -121,7 +121,7 @@ public class SelectEffect extends AbstractEffect {
 
     @Override
     public int getDefaultManaCost() {
-        return 5;
+        return 0;
     }
 
     @NotNull
@@ -137,7 +137,8 @@ public class SelectEffect extends AbstractEffect {
     @Override
     public void addAugmentDescriptions(Map<AbstractAugment, String> map) {
         super.addAugmentDescriptions(map);
-        addBlockAoeAugmentDescriptions(map);
+        map.put(AugmentAOE.INSTANCE, "Increases the area of blocks that can be selected");
+        map.put(AugmentPierce.INSTANCE, "Increases the depth of blocks that can be selected");
         map.put(AugmentSensitive.INSTANCE, "Only selects entities, ignoring blocks.");
     }
 

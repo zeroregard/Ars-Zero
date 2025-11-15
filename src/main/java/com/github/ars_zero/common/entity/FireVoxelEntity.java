@@ -280,11 +280,45 @@ public class FireVoxelEntity extends BaseVoxelEntity {
         }
         float newSize = this.getSize() * (1.0f - shrinkPercent);
         if (newSize < MIN_SIZE_THRESHOLD) {
+            spawnRainSteamParticles();
+            playRainSteamSound();
             this.discard();
             return;
         }
         this.setSize(newSize);
         this.refreshDimensions();
+        spawnRainSteamParticles();
+        playRainSteamSound();
+    }
+    
+    private void spawnRainSteamParticles() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        Vec3 pos = this.position();
+        int particleCount = 3 + this.random.nextInt(3);
+        for (int i = 0; i < particleCount; i++) {
+            double offsetX = (this.random.nextDouble() - 0.5) * this.getSize() * 0.6;
+            double offsetY = this.random.nextDouble() * this.getSize() * 0.4;
+            double offsetZ = (this.random.nextDouble() - 0.5) * this.getSize() * 0.6;
+            serverLevel.sendParticles(
+                ParticleTypes.CLOUD,
+                pos.x + offsetX,
+                pos.y + offsetY,
+                pos.z + offsetZ,
+                1,
+                0.0, 0.05, 0.0,
+                0.01
+            );
+        }
+    }
+    
+    private void playRainSteamSound() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        Vec3 pos = this.position();
+        serverLevel.playSound(null, pos.x, pos.y, pos.z, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.3f, 1.5f + this.random.nextFloat() * 0.3f);
     }
     
     private boolean isInEffectiveRain() {
@@ -297,7 +331,11 @@ public class FireVoxelEntity extends BaseVoxelEntity {
         if (!serverLevel.isRaining()) {
             return false;
         }
-        return serverLevel.isRainingAt(this.blockPosition());
+        BlockPos pos = this.blockPosition();
+        if (!serverLevel.canSeeSky(pos)) {
+            return false;
+        }
+        return serverLevel.isRainingAt(pos);
     }
     
     private float getRainDampeningPercent() {

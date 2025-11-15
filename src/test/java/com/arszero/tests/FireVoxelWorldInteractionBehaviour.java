@@ -223,14 +223,20 @@ public class FireVoxelWorldInteractionBehaviour {
         fire.setDeltaMovement(Vec3.ZERO);
         fire.setCasterFirePower(0.0f);
 
+        BlockPos voxelPos = helper.absolutePos(CENTER_RELATIVE);
+        if (!level.canSeeSky(voxelPos)) {
+            helper.fail("Test setup: voxel position must be directly exposed to sky for this test.");
+            return;
+        }
+
         float initialSize = fire.getSize();
-        VoxelTestUtils.spawnVoxel(helper, fire, helper.absolutePos(CENTER_RELATIVE), Vec3.ZERO, DEFAULT_LIFETIME);
+        VoxelTestUtils.spawnVoxel(helper, fire, voxelPos, Vec3.ZERO, DEFAULT_LIFETIME);
 
         helper.runAfterDelay(25, () -> {
             float expectedSize = initialSize * 0.95f;
             float actualSize = fire.getSize();
             if (Math.abs(actualSize - expectedSize) > FLOAT_TOLERANCE) {
-                helper.fail("Fire voxel should shrink by 5% in rain at fire power 0. Expected " + expectedSize + " but was " + actualSize + ".");
+                helper.fail("Fire voxel should shrink by 5% when directly in rain at fire power 0. Expected " + expectedSize + " but was " + actualSize + ".");
                 return;
             }
             helper.succeed();
@@ -284,6 +290,42 @@ public class FireVoxelWorldInteractionBehaviour {
             float actualSize = fire.getSize();
             if (Math.abs(actualSize - initialSize) > FLOAT_TOLERANCE) {
                 helper.fail("Fire voxel should not shrink in rain at fire power 2 or greater. Expected " + initialSize + " but was " + actualSize + ".");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    @GameTest(batch = "FireVoxelWorldInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    public static void fireVoxelNoShrinkInRainUnderBlock(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos voxelPos = helper.absolutePos(CENTER_RELATIVE);
+        BlockPos coverPos = CENTER_RELATIVE.above();
+        
+        helper.setBlock(coverPos, Blocks.STONE.defaultBlockState());
+
+        FireVoxelEntity fire = createFire(helper, DEFAULT_SIZE);
+        if (fire == null) {
+            return;
+        }
+
+        forceRain(level);
+        fire.setNoGravityCustom(true);
+        fire.setDeltaMovement(Vec3.ZERO);
+        fire.setCasterFirePower(0.0f);
+
+        if (level.canSeeSky(voxelPos)) {
+            helper.fail("Test setup: voxel position must NOT be exposed to sky for this test. Block above should prevent sky exposure.");
+            return;
+        }
+
+        float initialSize = fire.getSize();
+        VoxelTestUtils.spawnVoxel(helper, fire, voxelPos, Vec3.ZERO, DEFAULT_LIFETIME);
+
+        helper.runAfterDelay(25, () -> {
+            float actualSize = fire.getSize();
+            if (Math.abs(actualSize - initialSize) > FLOAT_TOLERANCE) {
+                helper.fail("Fire voxel should NOT shrink when raining but sheltered under a block. Expected " + initialSize + " but was " + actualSize + ".");
                 return;
             }
             helper.succeed();

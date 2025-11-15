@@ -118,7 +118,7 @@ public class TemporalContextForm extends AbstractCastMethod {
 
     @Override
     public int getDefaultManaCost() {
-        return 1;
+        return 0;
     }
 
     @NotNull
