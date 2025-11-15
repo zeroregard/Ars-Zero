@@ -11,6 +11,7 @@ import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
 import com.github.ars_zero.common.event.GravitySuppressionEvents;
 import com.github.ars_zero.common.event.WaterPowerCostReductionEvents;
 import com.github.ars_zero.common.event.ZeroGravityMobEffectEvents;
+import com.github.ars_zero.event.CurioCastingHandler;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.registry.ModAttachments;
 import com.github.ars_zero.registry.ModBlockEntities;
@@ -62,6 +63,7 @@ public class ArsZero {
         NeoForge.EVENT_BUS.register(WaterPowerCostReductionEvents.class);
         NeoForge.EVENT_BUS.register(ZeroGravityMobEffectEvents.class);
         NeoForge.EVENT_BUS.register(GravitySuppressionEvents.class);
+        NeoForge.EVENT_BUS.register(CurioCastingHandler.class);
 
         if (FMLEnvironment.dist.isClient()) {
             ArsZeroClient.init(modEventBus);

@@ -96,6 +96,11 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
     }
     
     private static void clearContext(Player player) {
+        StaffCastContext context = getContext(player);
+        if (context != null) {
+            context.castingStack = ItemStack.EMPTY;
+            context.source = StaffCastContext.CastSource.ITEM;
+        }
         player.removeData(ModAttachments.STAFF_CONTEXT);
     }
     
@@ -143,7 +148,7 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
             boolean alreadyHolding = context != null && context.isHoldingStaff;
             
             if (isFirstTick && !alreadyHolding) {
-                beginPhase(player, stack);
+                beginPhase(player, stack, StaffCastContext.CastSource.ITEM);
             } else if (!isFirstTick && alreadyHolding) {
                 tickPhase(player, stack);
             }
@@ -214,7 +219,7 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
     }
 
 
-    private void beginPhase(Player player, ItemStack stack) {
+    protected void beginPhase(Player player, ItemStack stack, StaffCastContext.CastSource source) {
         StaffCastContext context = getOrCreateContext(player);
         
         context.currentPhase = StaffPhase.BEGIN;
@@ -226,6 +231,8 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
         context.beginResults.clear();
         context.tickResults.clear();
         context.endResults.clear();
+        context.source = source;
+        context.castingStack = stack;
         
         executeSpell(player, stack, StaffPhase.BEGIN);
         
@@ -235,6 +242,12 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
     }
 
     public void tickPhase(Player player, ItemStack stack) {
+        ItemStack castingStack = resolveCastingStack(player, stack);
+        if (castingStack.isEmpty()) {
+            clearContext(player);
+            return;
+        }
+        
         StaffCastContext context = getContext(player);
         if (context == null || !context.isHoldingStaff) {
             return;
@@ -244,16 +257,17 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
         context.tickCount++;
         context.sequenceTick++;
         
-        AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
-        if (caster != null) {
-            int currentLogicalSlot = caster.getCurrentSlot();
-            if (currentLogicalSlot >= 0 && currentLogicalSlot < 10) {
-                int physicalSlot = currentLogicalSlot * 3 + StaffPhase.TICK.ordinal();
-                Spell spell = caster.getSpell(physicalSlot);
-                
-                if (context.tickCount == 1) {
-                    context.tickCooldown = calculateTickCooldown(spell);
-                }
+        AbstractCaster<?> caster = SpellCasterRegistry.from(castingStack);
+        if (caster == null) {
+            return;
+        }
+        int currentLogicalSlot = caster.getCurrentSlot();
+        if (currentLogicalSlot >= 0 && currentLogicalSlot < 10) {
+            int physicalSlot = currentLogicalSlot * 3 + StaffPhase.TICK.ordinal();
+            Spell spell = caster.getSpell(physicalSlot);
+            
+            if (context.tickCount == 1) {
+                context.tickCooldown = calculateTickCooldown(spell);
             }
         }
         
@@ -261,7 +275,7 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
             return;
         }
         
-        executeSpell(player, stack, StaffPhase.TICK);
+        executeSpell(player, castingStack, StaffPhase.TICK);
         
         if (player instanceof ServerPlayer serverPlayer) {
             sendSpellFiredPacket(serverPlayer, StaffPhase.TICK);
@@ -270,7 +284,12 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
     
 
     public void endPhase(Player player, ItemStack stack) {
+        ItemStack castingStack = resolveCastingStack(player, stack);
         StaffCastContext context = getContext(player);
+        if (castingStack.isEmpty()) {
+            clearContext(player);
+            return;
+        }
         if (context == null || !context.isHoldingStaff) {
             return;
         }
@@ -279,7 +298,7 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
         
         TranslateEffect.restoreEntityPhysics(context);
         
-        executeSpell(player, stack, StaffPhase.END);
+        executeSpell(player, castingStack, StaffPhase.END);
         
         if (player instanceof ServerPlayer serverPlayer) {
             sendSpellFiredPacket(serverPlayer, StaffPhase.END);
@@ -288,6 +307,17 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
         clearContext(player);
     }
 
+    private ItemStack resolveCastingStack(Player player, ItemStack stack) {
+        if (stack != null && !stack.isEmpty()) {
+            return stack;
+        }
+        StaffCastContext context = getContext(player);
+        if (context != null && !context.castingStack.isEmpty()) {
+            return context.castingStack;
+        }
+        return ItemStack.EMPTY;
+    }
+    
     private void executeSpell(Player player, ItemStack stack, StaffPhase phase) {
         AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
         if (caster == null) {
@@ -592,6 +622,9 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
         StaffCastContext context = getContext(player);
         if (context != null) {
             tickCount = context.tickCount;
+            if (context.source == StaffCastContext.CastSource.CURIO) {
+                isMainHand = false;
+            }
         }
         
         PacketStaffSpellFired packet = new PacketStaffSpellFired(phase.ordinal(), isMainHand, tickCount);

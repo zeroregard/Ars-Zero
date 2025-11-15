@@ -27,6 +27,7 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
         addNoviceStaffRecipe();
         addMageStaffRecipe();
         addArchmageStaffRecipe();
+        addSpellcastingCircletRecipe();
 
         for (FileObj fileObj : files) {
             saveStable(pOutput, fileObj.element, fileObj.path);
@@ -127,6 +128,27 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
         json.add("result", result);
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/archmage_spell_staff.json"), json));
+    }
+    
+    private void addSpellcastingCircletRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "minecraft:crafting_shapeless");
+        json.addProperty("category", "misc");
+        
+        JsonArray ingredients = new JsonArray();
+        ingredients.add(item(id(ModItems.ARCHMAGE_SPELL_STAFF.get().asItem())));
+        ingredients.add(item(id(Items.NETHER_STAR)));
+        ingredients.add(item("ars_nouveau:source_gem_block"));
+        ingredients.add(item(id(Items.AMETHYST_SHARD)));
+        ingredients.add(item(id(Items.PHANTOM_MEMBRANE)));
+        json.add("ingredients", ingredients);
+        
+        JsonObject result = new JsonObject();
+        result.addProperty("count", 1);
+        result.addProperty("id", id(ModItems.SPELLCASTING_CIRCLET.get().asItem()));
+        json.add("result", result);
+        
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/spellcasting_circlet.json"), json));
     }
 
     private static JsonObject item(String id) {

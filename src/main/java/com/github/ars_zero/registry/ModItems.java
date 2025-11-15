@@ -6,6 +6,7 @@ import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.MageSpellStaff;
 import com.github.ars_zero.common.item.NoviceSpellStaff;
+import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.setup.registry.ItemRegistryWrapper;
 import net.minecraft.core.registries.Registries;
@@ -26,6 +27,8 @@ public class ModItems {
     public static final ItemRegistryWrapper<ArchmageSpellStaff> ARCHMAGE_SPELL_STAFF = register("archmage_spell_staff", ArchmageSpellStaff::new);
     
     public static final ItemRegistryWrapper<CreativeSpellStaff> CREATIVE_SPELL_STAFF = register("creative_spell_staff", CreativeSpellStaff::new);
+    
+    public static final ItemRegistryWrapper<SpellcastingCirclet> SPELLCASTING_CIRCLET = register("spellcasting_circlet", SpellcastingCirclet::new);
     
     public static final ItemRegistryWrapper<Item> ARCHWOOD_ROD = register("archwood_rod", () -> new Item(defaultItemProperties()));
     
@@ -59,6 +62,7 @@ public class ModItems {
         registerStaff(MAGE_SPELL_STAFF.get());
         registerStaff(ARCHMAGE_SPELL_STAFF.get());
         registerStaff(CREATIVE_SPELL_STAFF.get());
+        registerStaff(SPELLCASTING_CIRCLET.get());
         ArsZero.LOGGER.info("SpellCasterRegistry registration completed");
     }
     
