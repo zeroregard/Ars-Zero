@@ -80,6 +80,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     private SearchBar searchBar;
     private EnterTextField spellNameBox;
     private String previousString = "";
+    private List<Button> categoryButtons = new ArrayList<>();
     
     // Phase-specific spell storage (3 phases, each with 10 crafting cells)
     private List<List<AbstractSpellPart>> phaseSpells = new ArrayList<>();
@@ -280,7 +281,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
 
     private void addPhaseButtons() {
         // Add 16x16 phase buttons for each row of crafting cells
-        int startY = bookTop + 196; // Move down by 16 pixels more (180 + 16)
+        int startY = bookTop + 116; // moved up by an additional 32 pixels
         int rowHeight = 20;
         int buttonSize = 16;
         int buttonX = bookLeft + 20; // Left side of each row
@@ -384,6 +385,10 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     private void layoutAllGlyphs(int page) {
+        for (Button b : categoryButtons) {
+            removeWidget(b);
+        }
+        categoryButtons.clear();
         clearGlyphButtons(glyphButtons);
         formTextRow = 0;
         augmentTextRow = 0;
@@ -394,9 +399,8 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         }
 
         final int PER_ROW = 6;
-        final int MAX_ROWS = 6;
+        final int MAX_ROWS = 5;
         boolean nextPage = false;
-        int xStart = nextPage ? bookLeft + 154 : bookLeft + 20;
         int adjustedRowsPlaced = 0;
         boolean foundForms = false;
         boolean foundAugments = false;
@@ -411,48 +415,108 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         sorted = sorted.subList(glyphsPerPage * page, Math.min(sorted.size(), glyphsPerPage * (page + 1)));
         int adjustedXPlaced = 0;
         int totalRowsPlaced = 0;
-        int rowOffset = page == 0 ? 2 : 0;
+        int rowOffset = 0;
 
-        int yStart = bookTop + 2 + (page != 0 || sorted.getFirst() instanceof AbstractCastMethod ? 18 : 0);
+        int yStart = bookTop + 18;
 
         for (AbstractSpellPart part : sorted) {
-            if (!foundForms && part instanceof AbstractCastMethod) {
-                foundForms = true;
-                adjustedRowsPlaced += 1;
-                totalRowsPlaced += 1;
-                formTextRow = page != 0 ? 0 : totalRowsPlaced;
-                adjustedXPlaced = 0;
-            } else if (!foundAugments && part instanceof AbstractAugment) {
-                foundAugments = true;
-                adjustedRowsPlaced += rowOffset;
-                totalRowsPlaced += rowOffset;
-                augmentTextRow = page != 0 ? 0 : totalRowsPlaced - 1;
-                adjustedXPlaced = 0;
-            } else if (!foundEffects && part instanceof AbstractEffect) {
-                foundEffects = true;
-                adjustedRowsPlaced += rowOffset;
-                totalRowsPlaced += rowOffset;
-                effectTextRow = page != 0 ? 0 : totalRowsPlaced - 1;
-                adjustedXPlaced = 0;
-            } else if (adjustedXPlaced >= PER_ROW) {
+            if (adjustedXPlaced >= PER_ROW) {
                 adjustedRowsPlaced++;
                 totalRowsPlaced++;
                 adjustedXPlaced = 0;
             }
 
-            if (adjustedRowsPlaced > MAX_ROWS) {
+            if (adjustedRowsPlaced >= MAX_ROWS) {
                 if (nextPage) {
                     break;
                 }
                 nextPage = true;
                 adjustedXPlaced = 0;
-                adjustedRowsPlaced = (adjustedRowsPlaced - 1) % MAX_ROWS;
+                adjustedRowsPlaced = 0; // reset to top for the right grid
             }
-            int xOffset = 20 * (adjustedXPlaced % PER_ROW) + (nextPage ? 134 : 0);
 
+            if (!foundForms && part instanceof AbstractCastMethod) {
+                if (adjustedXPlaced != 0) {
+                    adjustedRowsPlaced++;
+                    totalRowsPlaced++;
+                    adjustedXPlaced = 0;
+                }
+                if (adjustedRowsPlaced >= MAX_ROWS) {
+                    nextPage = true;
+                    adjustedXPlaced = 0;
+                    adjustedRowsPlaced = 0;
+                }
+                int baseX = nextPage ? (bookLeft + 154) : (bookLeft + 20);
+                int xOffsetPlaceholder = 20 * (adjustedXPlaced % PER_ROW);
+                int yPlacePlaceholder = adjustedRowsPlaced * 18 + yStart;
+                Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(baseX + xOffsetPlaceholder, yPlacePlaceholder, 16, 16).build();
+                btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.form")));
+                addRenderableWidget(btn);
+                categoryButtons.add(btn);
+                adjustedXPlaced++;
+                if (adjustedXPlaced >= PER_ROW) {
+                    adjustedRowsPlaced++;
+                    totalRowsPlaced++;
+                    adjustedXPlaced = 0;
+                }
+                foundForms = true;
+            } else if (!foundAugments && part instanceof AbstractAugment) {
+                if (adjustedXPlaced != 0) {
+                    adjustedRowsPlaced++;
+                    totalRowsPlaced++;
+                    adjustedXPlaced = 0;
+                }
+                if (adjustedRowsPlaced >= MAX_ROWS) {
+                    nextPage = true;
+                    adjustedXPlaced = 0;
+                    adjustedRowsPlaced = 0;
+                }
+                int baseX = nextPage ? (bookLeft + 154) : (bookLeft + 20);
+                int xOffsetPlaceholder = 20 * (adjustedXPlaced % PER_ROW);
+                int yPlacePlaceholder = adjustedRowsPlaced * 18 + yStart;
+                Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(baseX + xOffsetPlaceholder, yPlacePlaceholder, 16, 16).build();
+                btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.augment")));
+                addRenderableWidget(btn);
+                categoryButtons.add(btn);
+                adjustedXPlaced++;
+                if (adjustedXPlaced >= PER_ROW) {
+                    adjustedRowsPlaced++;
+                    totalRowsPlaced++;
+                    adjustedXPlaced = 0;
+                }
+                foundAugments = true;
+            } else if (!foundEffects && part instanceof AbstractEffect) {
+                if (adjustedXPlaced != 0) {
+                    adjustedRowsPlaced++;
+                    totalRowsPlaced++;
+                    adjustedXPlaced = 0;
+                }
+                if (adjustedRowsPlaced >= MAX_ROWS) {
+                    nextPage = true;
+                    adjustedXPlaced = 0;
+                    adjustedRowsPlaced = 0;
+                }
+                int baseX = nextPage ? (bookLeft + 154) : (bookLeft + 20);
+                int xOffsetPlaceholder = 20 * (adjustedXPlaced % PER_ROW);
+                int yPlacePlaceholder = adjustedRowsPlaced * 18 + yStart;
+                Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(baseX + xOffsetPlaceholder, yPlacePlaceholder, 16, 16).build();
+                btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.effect")));
+                addRenderableWidget(btn);
+                categoryButtons.add(btn);
+                adjustedXPlaced++;
+                if (adjustedXPlaced >= PER_ROW) {
+                    adjustedRowsPlaced++;
+                    totalRowsPlaced++;
+                    adjustedXPlaced = 0;
+                }
+                foundEffects = true;
+            }
+
+            int baseX = nextPage ? (bookLeft + 154) : (bookLeft + 20);
+            int xOffset = 20 * (adjustedXPlaced % PER_ROW);
             int yPlace = adjustedRowsPlaced * 18 + yStart;
 
-            GlyphButton cell = new GlyphButton(xStart + xOffset, yPlace, part, this::onGlyphClick);
+            GlyphButton cell = new GlyphButton(baseX + xOffset, yPlace, part, this::onGlyphClick);
             addRenderableWidget(cell);
             glyphButtons.add(cell);
             adjustedXPlaced++;
@@ -533,7 +597,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         craftingCells = new ArrayList<>();
         
         // Create 3 rows of 10 crafting cells each
-        int startY = bookTop + 196; // Move down by 16 pixels more (180 + 16)
+        int startY = bookTop + 116; // moved up by an additional 32 pixels
         int rowHeight = 20;
         int cellSpacing = 24;
         int startX = bookLeft + 40; // Start after the phase buttons
@@ -743,9 +807,6 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     @Override
     public void drawBackgroundElements(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         super.drawBackgroundElements(graphics, mouseX, mouseY, partialTicks);
-        
-        // Add category labels for glyphs
-        renderCategoryLabels(graphics);
     }
 
     @Override
@@ -753,24 +814,38 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         super.render(graphics, mouseX, mouseY, partialTicks);
     }
     
-    private void renderCategoryLabels(net.minecraft.client.gui.GuiGraphics graphics) {
-        // Render category labels for glyphs (Forms, Augment, Effect)
-        // Adjust Y position by 32 pixels to account for the taller GUI
+    private void refreshCategoryButtons() {
+        for (Button b : categoryButtons) {
+            removeWidget(b);
+        }
+        categoryButtons.clear();
+        
         int yOffset = 32;
         int formOffset = 0;
         if (formTextRow >= 1) {
-            graphics.drawString(font, Component.translatable("ars_nouveau.spell_book_gui.form").getString(), 
-                formTextRow > 6 ? 154 : 20, 5 + 18 * (formTextRow + (formTextRow == 1 ? 0 : 1)) + yOffset, -8355712, false);
+            int x = (formTextRow > 6 ? 154 : 20);
+            int y = 5 + 18 * (formTextRow + (formTextRow == 1 ? 0 : 1)) + yOffset;
+            Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(x, y, 16, 16).build();
+            btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.form")));
+            addRenderableWidget(btn);
+            categoryButtons.add(btn);
             formOffset = 1;
         }
-
         if (effectTextRow >= 1) {
-            graphics.drawString(font, Component.translatable("ars_nouveau.spell_book_gui.effect").getString(), 
-                effectTextRow > 6 ? 154 : 20, 5 + 18 * (effectTextRow % 7 + formOffset) + yOffset, -8355712, false);
+            int x = (effectTextRow > 6 ? 154 : 20);
+            int y = 5 + 18 * (effectTextRow % 7 + formOffset) + yOffset;
+            Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(x, y, 16, 16).build();
+            btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.effect")));
+            addRenderableWidget(btn);
+            categoryButtons.add(btn);
         }
         if (augmentTextRow >= 1) {
-            graphics.drawString(font, Component.translatable("ars_nouveau.spell_book_gui.augment").getString(), 
-                augmentTextRow > 6 ? 154 : 20, 5 + 18 * (augmentTextRow + formOffset) + yOffset, -8355712, false);
+            int x = (augmentTextRow > 6 ? 154 : 20);
+            int y = 5 + 18 * (augmentTextRow + formOffset) + yOffset;
+            Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(x, y, 16, 16).build();
+            btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.augment")));
+            addRenderableWidget(btn);
+            categoryButtons.add(btn);
         }
     }
 
