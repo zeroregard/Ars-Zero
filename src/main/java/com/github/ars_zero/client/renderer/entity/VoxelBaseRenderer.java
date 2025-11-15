@@ -26,7 +26,7 @@ public class VoxelBaseRenderer<T extends BaseVoxelEntity> extends GeoEntityRende
     @Override
     public void preRender(PoseStack poseStack, T animatable, BakedGeoModel model, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int color) {
         float size = animatable.getSize();
-        float scale = size / 0.25f;
+        float scale = size / BaseVoxelEntity.DEFAULT_BASE_SIZE;
         poseStack.scale(scale, scale, scale);
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, color);
     }

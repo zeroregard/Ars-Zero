@@ -37,8 +37,11 @@ import net.minecraft.tags.FluidTags;
 public class WaterVoxelEntity extends BaseVoxelEntity {
     
     private static final int COLOR = 0x3F76E4;
-    private static final float DEFAULT_BASE_SIZE = 0.25f;
+    private static final float DEFAULT_BASE_SIZE = BaseVoxelEntity.DEFAULT_BASE_SIZE;
+    private static final float AMPLIFY_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final float POTION_SHRINK_STEP = DEFAULT_BASE_SIZE / 2.0f;
+    private static final float MEDIUM_THRESHOLD = DEFAULT_BASE_SIZE + (AMPLIFY_STEP * 0.5f);
+    private static final float FULL_THRESHOLD = DEFAULT_BASE_SIZE + (AMPLIFY_STEP * 1.5f);
     
     private float casterWaterPower = 0.0f;
     private boolean forceHotEnvironment = false;
@@ -336,25 +339,13 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
     
     private int calculateWaterLevel() {
         float size = this.getSize();
-        float ratio = size / 1.0f;
-        
-        if (ratio >= 1.0f) {
+        if (size >= FULL_THRESHOLD) {
             return 0;
-        } else if (ratio >= 0.875f) {
-            return 1;
-        } else if (ratio >= 0.75f) {
-            return 2;
-        } else if (ratio >= 0.625f) {
-            return 3;
-        } else if (ratio >= 0.5f) {
-            return 4;
-        } else if (ratio >= 0.375f) {
-            return 5;
-        } else if (ratio >= 0.25f) {
-            return 6;
-        } else {
-            return 7;
         }
+        if (size >= MEDIUM_THRESHOLD) {
+            return 4;
+        }
+        return 6;
     }
     
     private int calculateParticleCount() {
