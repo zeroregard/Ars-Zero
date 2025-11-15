@@ -20,8 +20,6 @@ public class ArsZeroClient {
     public static void init(IEventBus modEventBus) {
         ArsZero.LOGGER.debug("Initializing Ars Zero client-side components...");
         
-        ModKeyBindings.registerKeyBindings(null);
-        
         modEventBus.addListener(ArsZeroClient::onClientSetup);
         modEventBus.addListener(ArsZeroClient::registerGuiLayers);
         modEventBus.addListener(ClientNetworking::register);

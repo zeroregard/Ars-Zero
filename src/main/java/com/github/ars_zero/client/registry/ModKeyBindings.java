@@ -12,17 +12,11 @@ import org.lwjgl.glfw.GLFW;
 public class ModKeyBindings {
 
     public static final String CATEGORY = "key.category.ars_zero.general";
-
-    // For now, we'll use the same key as Ars Nouveau (C) for opening the staff GUI
-    // This will be handled by Ars Nouveau's key handler since our staff implements ISpellHotkeyListener
-    // If we want our own key binding later, we can add it here:
-    // public static final KeyMapping OPEN_STAFF_GUI = new KeyMapping("key.ars_zero.open_staff_gui", GLFW.GLFW_KEY_C, CATEGORY);
+    public static final KeyMapping CURIO_CAST = new KeyMapping("key.ars_zero.curio_cast", GLFW.GLFW_KEY_V, CATEGORY);
 
     @SubscribeEvent
     public static void registerKeyBindings(RegisterKeyMappingsEvent event) {
         ArsZero.LOGGER.debug("Registering Ars Zero key bindings");
-        // For now, we don't need to register any key bindings since we're using Ars Nouveau's C key
-        // If we add custom key bindings later, register them here:
-        // event.register(OPEN_STAFF_GUI);
+        event.register(CURIO_CAST);
     }
 }

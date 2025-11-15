@@ -1,12 +1,18 @@
 package com.github.ars_zero.common.spell;
 
 import com.github.ars_zero.common.item.AbstractSpellStaff;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class StaffCastContext {
+    public enum CastSource {
+        ITEM,
+        CURIO
+    }
+    
     public final UUID castId;
     public final UUID playerId;
     public AbstractSpellStaff.StaffPhase currentPhase = AbstractSpellStaff.StaffPhase.BEGIN;
@@ -14,6 +20,8 @@ public class StaffCastContext {
     public int tickCount = 0;
     public int sequenceTick = 0;
     public boolean outOfMana = false;
+    public CastSource source = CastSource.ITEM;
+    public ItemStack castingStack = ItemStack.EMPTY;
     
     public volatile boolean beginFinished = false;
     public final List<SpellResult> beginResults = new ArrayList<>();
