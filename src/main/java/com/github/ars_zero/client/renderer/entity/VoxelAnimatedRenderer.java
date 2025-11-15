@@ -27,7 +27,7 @@ public class VoxelAnimatedRenderer<T extends BaseVoxelEntity> extends VoxelBaseR
             }
             
             float size = animatable.getSize();
-            float scale = size / 0.25f;
+            float scale = size / BaseVoxelEntity.DEFAULT_BASE_SIZE;
             var scaleUniform = shader.getUniform("VoxelScale");
             if (scaleUniform != null) {
                 scaleUniform.set(scale);

@@ -19,6 +19,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSplit;
@@ -42,6 +43,9 @@ public class ConjureVoxelEffect extends AbstractEffect {
     
     public static final String ID = "conjure_voxel_effect";
     public static final ConjureVoxelEffect INSTANCE = new ConjureVoxelEffect();
+    private static final int MAX_AMPLIFY_LEVEL = 2;
+    private static final float BASE_VOXEL_SIZE = BaseVoxelEntity.DEFAULT_BASE_SIZE;
+    private static final float AMPLIFY_SIZE_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
 
     public ConjureVoxelEffect() {
         super(ArsZero.prefix(ID), "Conjure Voxel");
@@ -55,11 +59,14 @@ public class ConjureVoxelEffect extends AbstractEffect {
             
             int duration = getDuration(spellStats);
             int splitLevel = spellStats.getBuffCount(AugmentSplit.INSTANCE);
+            int amplifyLevel = clampAmplifyLevel(spellStats);
+            float voxelSize = getVoxelSize(amplifyLevel);
             float waterPower = getWaterPower(shooter);
             if (splitLevel > 0) {
-                createSplitVoxels(serverLevel, pos.x, pos.y, pos.z, duration, spellContext, shooter, resolver, splitLevel, waterPower);
+                createSplitVoxels(serverLevel, pos.x, pos.y, pos.z, duration, spellContext, shooter, resolver, splitLevel, waterPower, voxelSize);
             } else {
                 BaseVoxelEntity voxel = createVoxel(serverLevel, pos.x, pos.y, pos.z, duration, spellContext);
+                applyVoxelSize(voxel, voxelSize);
                 
                 boolean isArcane = voxel instanceof ArcaneVoxelEntity;
                 
@@ -99,11 +106,14 @@ public class ConjureVoxelEffect extends AbstractEffect {
             int duration = getDuration(spellStats);
             
             int splitLevel = spellStats.getBuffCount(AugmentSplit.INSTANCE);
+            int amplifyLevel = clampAmplifyLevel(spellStats);
+            float voxelSize = getVoxelSize(amplifyLevel);
             float waterPower = getWaterPower(shooter);
             if (splitLevel > 0) {
-                createSplitVoxels(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration, spellContext, shooter, resolver, splitLevel, waterPower);
+                createSplitVoxels(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration, spellContext, shooter, resolver, splitLevel, waterPower, voxelSize);
             } else {
                 BaseVoxelEntity voxel = createVoxel(serverLevel, hitLocation.x, hitLocation.y, hitLocation.z, duration, spellContext);
+                applyVoxelSize(voxel, voxelSize);
                 
                 boolean isArcane = voxel instanceof ArcaneVoxelEntity;
                 
@@ -138,44 +148,39 @@ public class ConjureVoxelEffect extends AbstractEffect {
         }
     }
     
-    private void createSplitVoxels(ServerLevel level, double x, double y, double z, int duration, SpellContext context, LivingEntity shooter, SpellResolver resolver, int splitLevel, float waterPower) {
+    private void createSplitVoxels(ServerLevel level, double x, double y, double z, int duration, SpellContext context, LivingEntity shooter, SpellResolver resolver, int splitLevel, float waterPower, float voxelSize) {
         int maxSplitLevel = 3;
         int actualSplitLevel = Math.min(splitLevel, maxSplitLevel);
         
         int entityCount;
-        float size;
         double circleRadius;
         
         switch (actualSplitLevel) {
             case 1:
                 entityCount = 3;
-                size = 0.1875f;
-                circleRadius = 0.3;
+                circleRadius = 0.35;
                 break;
             case 2:
                 entityCount = 5;
-                size = 0.125f;
-                circleRadius = 0.5;
+                circleRadius = 0.55;
                 break;
             case 3:
                 entityCount = 7;
-                size = 0.0625f;
-                circleRadius = 0.7;
+                circleRadius = 0.75;
                 break;
             default:
                 entityCount = 1;
-                size = 0.25f;
                 circleRadius = 0.0;
                 break;
         }
+        circleRadius += voxelSize * 0.5;
         
         java.util.List<BaseVoxelEntity> createdVoxels = new java.util.ArrayList<>();
         boolean isArcane = true;
         
         if (entityCount == 1) {
             BaseVoxelEntity voxel = createVoxel(level, x, y, z, duration, context);
-            voxel.setSize(size);
-            voxel.refreshDimensions();
+            applyVoxelSize(voxel, voxelSize);
             
             isArcane = voxel instanceof ArcaneVoxelEntity;
             
@@ -239,8 +244,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
                     voxel = new ArcaneVoxelEntity(level, pos.x, pos.y, pos.z, duration);
                 }
                 
-                voxel.setSize(size);
-                voxel.refreshDimensions();
+                applyVoxelSize(voxel, voxelSize);
                 
                 voxel.setCaster(shooter);
                 if (voxel instanceof WaterVoxelEntity waterVoxel) {
@@ -312,6 +316,21 @@ public class ConjureVoxelEffect extends AbstractEffect {
         }
         
         return result;
+    }
+    
+    private int clampAmplifyLevel(SpellStats spellStats) {
+        int amplifyLevel = spellStats.getBuffCount(AugmentAmplify.INSTANCE);
+        return Math.min(amplifyLevel, MAX_AMPLIFY_LEVEL);
+    }
+    
+    private float getVoxelSize(int amplifyLevel) {
+        int clamped = Math.max(0, Math.min(amplifyLevel, MAX_AMPLIFY_LEVEL));
+        return BASE_VOXEL_SIZE + (AMPLIFY_SIZE_STEP * clamped);
+    }
+    
+    private void applyVoxelSize(BaseVoxelEntity voxel, float size) {
+        voxel.setSize(size);
+        voxel.refreshDimensions();
     }
     
     private float getWaterPower(LivingEntity shooter) {
@@ -397,20 +416,21 @@ public class ConjureVoxelEffect extends AbstractEffect {
     @NotNull
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
-        return Set.of(AugmentExtendTime.INSTANCE, AugmentSensitive.INSTANCE, AugmentSplit.INSTANCE);
+        return Set.of(AugmentAmplify.INSTANCE, AugmentExtendTime.INSTANCE, AugmentSensitive.INSTANCE, AugmentSplit.INSTANCE);
     }
 
     @Override
     public void addAugmentDescriptions(Map<AbstractAugment, String> map) {
         super.addAugmentDescriptions(map);
+        map.put(AugmentAmplify.INSTANCE, "Increases the voxel's size up to level 2, boosting water output.");
         map.put(AugmentSensitive.INSTANCE, "Places a voxel at a target entity's position.");
         map.put(AugmentExtendTime.INSTANCE, "Increases the duration the voxel remains.");
-        map.put(AugmentSplit.INSTANCE, "Splits the voxel into multiple smaller entities.");
+        map.put(AugmentSplit.INSTANCE, "Splits the voxel into multiple identical entities without changing their size.");
     }
 
     @Override
     public String getBookDescription() {
-        return "Conjures a small 4x4x4 pixel (1/4 block) purple voxel entity that persists for 1 minute. The voxel does not collide with anything and can be grown using temporal effects like Enlarge. Arcane voxels carry and resolve all following effects on impact. Water and Fire voxels act as delimiters - they do not carry effects, allowing subsequent spells to target the voxel itself.";
+        return "Conjures a compact 3x3x3 pixel purple voxel entity that persists for 1 minute. Amplify increases its size (up to level 2), which also boosts the amount of water a water voxel can place. The voxel does not collide with anything and can be grown using temporal effects like Enlarge. Arcane voxels carry and resolve all following effects on impact. Water and Fire voxels act as delimiters - they do not carry effects, allowing subsequent spells to target the voxel itself.";
     }
 
     @Override

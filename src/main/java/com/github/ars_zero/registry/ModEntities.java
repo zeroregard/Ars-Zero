@@ -2,6 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
+import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
@@ -18,7 +19,7 @@ public class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<ArcaneVoxelEntity>> ARCANE_VOXEL_ENTITY = ENTITIES.register(
             "arcane_voxel_entity",
             () -> EntityType.Builder.<ArcaneVoxelEntity>of(ArcaneVoxelEntity::new, MobCategory.MISC)
-                    .sized(0.25f, 0.25f)
+                    .sized(BaseVoxelEntity.DEFAULT_BASE_SIZE, BaseVoxelEntity.DEFAULT_BASE_SIZE)
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .setShouldReceiveVelocityUpdates(true)
@@ -28,7 +29,7 @@ public class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<WaterVoxelEntity>> WATER_VOXEL_ENTITY = ENTITIES.register(
             "water_voxel_entity",
             () -> EntityType.Builder.<WaterVoxelEntity>of(WaterVoxelEntity::new, MobCategory.MISC)
-                    .sized(0.25f, 0.25f)
+                    .sized(BaseVoxelEntity.DEFAULT_BASE_SIZE, BaseVoxelEntity.DEFAULT_BASE_SIZE)
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .setShouldReceiveVelocityUpdates(true)
@@ -38,7 +39,7 @@ public class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<FireVoxelEntity>> FIRE_VOXEL_ENTITY = ENTITIES.register(
             "fire_voxel_entity",
             () -> EntityType.Builder.<FireVoxelEntity>of(FireVoxelEntity::new, MobCategory.MISC)
-                    .sized(0.25f, 0.25f)
+                    .sized(BaseVoxelEntity.DEFAULT_BASE_SIZE, BaseVoxelEntity.DEFAULT_BASE_SIZE)
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .setShouldReceiveVelocityUpdates(true)

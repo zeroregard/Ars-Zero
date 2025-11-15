@@ -34,6 +34,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     public static final int DEFAULT_LIFETIME_TICKS = 1200;
+    public static final float DEFAULT_BASE_SIZE = 3.0f / 16.0f;
     private static final EntityDataAccessor<Integer> LIFETIME = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> SIZE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> BASE_SIZE = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.FLOAT);
@@ -48,8 +49,8 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     public BaseVoxelEntity(EntityType<? extends BaseVoxelEntity> entityType, Level level) {
         super(entityType, level);
         this.noCulling = true;
-        this.setBaseSize(0.25f);
-        this.setSize(0.25f);
+        this.setBaseSize(DEFAULT_BASE_SIZE);
+        this.setSize(DEFAULT_BASE_SIZE);
         refreshDimensions();
     }
     
@@ -59,8 +60,8 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder pBuilder) {
         pBuilder.define(LIFETIME, DEFAULT_LIFETIME_TICKS);
-        pBuilder.define(SIZE, 0.25f);
-        pBuilder.define(BASE_SIZE, 0.25f);
+        pBuilder.define(SIZE, DEFAULT_BASE_SIZE);
+        pBuilder.define(BASE_SIZE, DEFAULT_BASE_SIZE);
         pBuilder.define(FROZEN_UNTIL_TICK, 0L);
         pBuilder.define(PICKABLE, true);
         pBuilder.define(SPAWNER_OWNED, false);

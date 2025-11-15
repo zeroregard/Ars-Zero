@@ -37,8 +37,11 @@ import net.minecraft.tags.FluidTags;
 public class WaterVoxelEntity extends BaseVoxelEntity {
     
     private static final int COLOR = 0x3F76E4;
-    private static final float DEFAULT_BASE_SIZE = 0.25f;
+    private static final float DEFAULT_BASE_SIZE = BaseVoxelEntity.DEFAULT_BASE_SIZE;
+    private static final float AMPLIFY_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final float POTION_SHRINK_STEP = DEFAULT_BASE_SIZE / 2.0f;
+    private static final float MEDIUM_THRESHOLD = DEFAULT_BASE_SIZE + (AMPLIFY_STEP * 0.5f);
+    private static final float FULL_THRESHOLD = DEFAULT_BASE_SIZE + (AMPLIFY_STEP * 1.5f);
     
     private float casterWaterPower = 0.0f;
     private boolean forceHotEnvironment = false;
@@ -148,10 +151,7 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
             }
         }
         BlockPos pos = targetPos.relative(blockHit.getDirection());
-        if (this.level().getBlockState(pos).isAir()) {
-            int waterLevel = calculateWaterLevel();
-            this.level().setBlock(pos, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, waterLevel), 3);
-        }
+        placeWaterWithUnits(pos);
     }
     
     @Override
@@ -180,10 +180,8 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
                 (int) Math.round(hitLocation.z)
             );
             
-            int waterLevel = calculateWaterLevel();
             for (BlockPos pos : BlockPos.betweenClosed(centerPos.offset(-1, -1, -1), centerPos.offset(1, 1, 1))) {
-                if (this.level().getBlockState(pos).isAir()) {
-                    this.level().setBlock(pos, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, waterLevel), 3);
+                if (placeWaterWithUnits(pos)) {
                     break;
                 }
             }
@@ -294,12 +292,7 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
         }
         serverLevel.removeBlock(firePos, false);
         spawnEvaporationFeedback(firePos, false);
-        int waterLevel = calculateWaterLevel();
-        serverLevel.setBlock(
-            firePos,
-            Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, waterLevel),
-            3
-        );
+        placeWaterWithUnits(firePos);
     }
  
     public void setCasterWaterPower(float waterPower) {
@@ -334,28 +327,48 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
         }
     }
     
-    private int calculateWaterLevel() {
+    private int calculateWaterUnits() {
         float size = this.getSize();
-        float ratio = size / 1.0f;
-        
-        if (ratio >= 1.0f) {
-            return 0;
-        } else if (ratio >= 0.875f) {
-            return 1;
-        } else if (ratio >= 0.75f) {
-            return 2;
-        } else if (ratio >= 0.625f) {
-            return 3;
-        } else if (ratio >= 0.5f) {
+        if (size >= MEDIUM_THRESHOLD) {
             return 4;
-        } else if (ratio >= 0.375f) {
-            return 5;
-        } else if (ratio >= 0.25f) {
-            return 6;
-        } else {
-            return 7;
         }
+        return 1;
     }
+    private boolean placeWaterWithUnits(BlockPos pos) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        BlockState state = serverLevel.getBlockState(pos);
+        if (!state.isAir() && !state.is(Blocks.WATER)) {
+            return false;
+        }
+        int additionalUnits = calculateWaterUnits();
+        if (additionalUnits <= 0) {
+            return false;
+        }
+        int existingUnits = 0;
+        if (state.is(Blocks.WATER)) {
+            existingUnits = convertLevelToUnits(state.getValue(LiquidBlock.LEVEL));
+        }
+        int combinedUnits = Math.min(7, existingUnits + additionalUnits);
+        if (combinedUnits == existingUnits) {
+            return false;
+        }
+        int newLevel = convertUnitsToLevel(combinedUnits);
+        serverLevel.setBlock(pos, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, newLevel), 3);
+        return true;
+    }
+    
+    private int convertLevelToUnits(int level) {
+        int clamped = Math.max(0, Math.min(level, 7));
+        return 7 - clamped;
+    }
+    
+    private int convertUnitsToLevel(int units) {
+        int clamped = Math.max(0, Math.min(units, 7));
+        return 7 - clamped;
+    }
+    
     
     private int calculateParticleCount() {
         float size = this.getSize();
