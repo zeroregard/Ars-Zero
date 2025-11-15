@@ -13,10 +13,12 @@ public class ModKeyBindings {
 
     public static final String CATEGORY = "key.category.ars_zero.general";
     public static final KeyMapping CURIO_CAST = new KeyMapping("key.ars_zero.curio_cast", GLFW.GLFW_KEY_V, CATEGORY);
+    public static final KeyMapping CURIO_RADIAL = new KeyMapping("key.ars_zero.curio_radial", GLFW.GLFW_KEY_G, CATEGORY);
 
     @SubscribeEvent
     public static void registerKeyBindings(RegisterKeyMappingsEvent event) {
         ArsZero.LOGGER.debug("Registering Ars Zero key bindings");
         event.register(CURIO_CAST);
+        event.register(CURIO_RADIAL);
     }
 }

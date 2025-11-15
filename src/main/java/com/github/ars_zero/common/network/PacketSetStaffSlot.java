@@ -12,6 +12,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import top.theillusivec4.curios.api.CuriosApi;
+
+import java.util.Optional;
 
 public record PacketSetStaffSlot(int logicalSlot) implements CustomPacketPayload {
     
@@ -32,11 +35,12 @@ public record PacketSetStaffSlot(int logicalSlot) implements CustomPacketPayload
     public static void handle(PacketSetStaffSlot packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
+                ItemStack stack = ItemStack.EMPTY;
                 InteractionHand hand = null;
+                
                 ItemStack mainStack = player.getMainHandItem();
                 ItemStack offStack = player.getOffhandItem();
                 
-                ItemStack stack;
                 if (mainStack.getItem() instanceof AbstractSpellStaff) {
                     stack = mainStack;
                     hand = InteractionHand.MAIN_HAND;
@@ -44,8 +48,16 @@ public record PacketSetStaffSlot(int logicalSlot) implements CustomPacketPayload
                     stack = offStack;
                     hand = InteractionHand.OFF_HAND;
                 } else {
-                    ArsZero.LOGGER.warn("[SERVER] No staff found in hands!");
-                    return;
+                    Optional<ItemStack> curioStack = CuriosApi.getCuriosHelper().findEquippedCurio(
+                        equipped -> equipped.getItem() instanceof AbstractSpellStaff,
+                        player
+                    ).map(result -> result.getRight());
+                    
+                    if (curioStack.isEmpty()) {
+                        ArsZero.LOGGER.warn("[SERVER] No staff found in hands or curios!");
+                        return;
+                    }
+                    stack = curioStack.get();
                 }
                 
                 AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
