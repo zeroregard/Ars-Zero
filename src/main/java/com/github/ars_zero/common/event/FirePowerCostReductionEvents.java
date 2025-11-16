@@ -2,6 +2,7 @@ package com.github.ars_zero.common.event;
 
 import com.alexthw.sauce.registry.ModRegistry;
 import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
+import com.github.ars_zero.common.util.SpellDiscountUtil;
 import com.hollingsworth.arsnouveau.api.event.SpellCostCalcEvent;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
@@ -33,7 +34,8 @@ public class FirePowerCostReductionEvents {
         if (player instanceof FakePlayer) {
             return;
         }
-        if (!hasFireVoxelGlyphs(event.context.getSpell().recipe())) {
+        int adjacentPairCost = SpellDiscountUtil.computeAdjacentPairCost(event.context.getSpell().recipe(), EffectIgnite.class);
+        if (adjacentPairCost <= 0) {
             return;
         }
 
@@ -47,37 +49,11 @@ public class FirePowerCostReductionEvents {
             return;
         }
 
-        double reductionPercent;
-        if (power >= 4) {
-            reductionPercent = Math.min(85.0 + (power - 4) * 5.0, 95.0);
-        } else if (power >= 3) {
-            reductionPercent = 75.0;
-        } else if (power >= 2) {
-            reductionPercent = 60.0;
-        } else {
-            reductionPercent = 40.0;
-        }
+        double reductionPercent = SpellDiscountUtil.computeReductionPercent(power);
 
-        int totalReduction = (int) Math.ceil(event.currentCost * reductionPercent / 100.0);
+        int reducibleBase = Math.min(adjacentPairCost, event.currentCost);
+        int totalReduction = (int) Math.ceil(reducibleBase * reductionPercent / 100.0);
         event.currentCost = Math.max(0, event.currentCost - totalReduction);
     }
 
-    private static boolean hasFireVoxelGlyphs(Iterable<AbstractSpellPart> recipe) {
-        boolean hasVoxel = false;
-        boolean hasFire = false;
-
-        for (AbstractSpellPart part : recipe) {
-            if (part instanceof ConjureVoxelEffect) {
-                hasVoxel = true;
-            }
-            if (part instanceof EffectIgnite) {
-                hasFire = true;
-            }
-            if (hasVoxel && hasFire) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }
