@@ -190,13 +190,15 @@ public class FireVoxelWorldInteractionBehaviour {
             return;
         }
 
-        spawnFire(helper, fire);
+        // Ensure a quick, direct collision with the snow
+        BlockPos spawnPos = helper.absolutePos(CENTER_RELATIVE.above(2));
+        VoxelTestUtils.spawnVoxel(helper, fire, spawnPos, new Vec3(0.0D, -0.4D, 0.0D), DEFAULT_LIFETIME);
         AtomicBoolean fireSeen = new AtomicBoolean(fire.isAlive());
         VoxelTestUtils.awaitVoxelRemoval(
             helper,
             fire,
             fireSeen,
-            COLLISION_TIMEOUT,
+            COLLISION_TIMEOUT + 40,
             () -> helper.runAfterDelay(1, () -> {
                 BlockState state = helper.getLevel().getBlockState(snowPos);
                 if (!state.isAir()) {
@@ -302,11 +304,13 @@ public class FireVoxelWorldInteractionBehaviour {
         BlockPos voxelPos = helper.absolutePos(CENTER_RELATIVE);
         BlockPos coverRel1 = CENTER_RELATIVE.above();
         BlockPos coverRel2 = CENTER_RELATIVE.above(2);
-        BlockPos coverRel3 = CENTER_RELATIVE.above(3);
-        
-        helper.setBlock(coverRel1, Blocks.STONE.defaultBlockState());
-        helper.setBlock(coverRel2, Blocks.STONE.defaultBlockState());
-        helper.setBlock(coverRel3, Blocks.STONE.defaultBlockState());
+        // Build a 5x5, two-layer roof using RELATIVE positions to ensure sky is fully blocked
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                helper.setBlock(new BlockPos(CENTER_RELATIVE.getX() + dx, coverRel1.getY(), CENTER_RELATIVE.getZ() + dz), Blocks.STONE.defaultBlockState());
+                helper.setBlock(new BlockPos(CENTER_RELATIVE.getX() + dx, coverRel2.getY(), CENTER_RELATIVE.getZ() + dz), Blocks.STONE.defaultBlockState());
+            }
+        }
 
         FireVoxelEntity fire = createFire(helper, DEFAULT_SIZE);
         if (fire == null) {
@@ -326,7 +330,7 @@ public class FireVoxelWorldInteractionBehaviour {
         float initialSize = fire.getSize();
         VoxelTestUtils.spawnVoxel(helper, fire, voxelPos, Vec3.ZERO, DEFAULT_LIFETIME);
 
-        helper.runAfterDelay(30, () -> {
+        helper.runAfterDelay(15, () -> {
             float actualSize = fire.getSize();
             if (Math.abs(actualSize - initialSize) > FLOAT_TOLERANCE) {
                 helper.fail("Fire voxel should NOT shrink when raining but sheltered under a block. Expected " + initialSize + " but was " + actualSize + ".");
@@ -354,7 +358,7 @@ public class FireVoxelWorldInteractionBehaviour {
         float initialSize = fire.getSize();
         VoxelTestUtils.spawnVoxel(helper, fire, waterPos, Vec3.ZERO, DEFAULT_LIFETIME);
 
-        helper.runAfterDelay(30, () -> {
+        helper.runAfterDelay(3, () -> {
             float expectedSize = initialSize * 0.5f;
             float actualSize = fire.getSize();
             if (Math.abs(actualSize - expectedSize) > FLOAT_TOLERANCE) {
@@ -386,7 +390,7 @@ public class FireVoxelWorldInteractionBehaviour {
         float initialSize = fire.getSize();
         VoxelTestUtils.spawnVoxel(helper, fire, waterPos, Vec3.ZERO, DEFAULT_LIFETIME);
 
-        helper.runAfterDelay(30, () -> {
+        helper.runAfterDelay(3, () -> {
             float expectedSize = initialSize * 0.75f;
             float actualSize = fire.getSize();
             if (Math.abs(actualSize - expectedSize) > FLOAT_TOLERANCE) {

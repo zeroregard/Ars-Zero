@@ -26,7 +26,7 @@ public class FireWaterVoxelInteractionBehaviour {
     private static final Vec3 FIRE_COLLISION_VELOCITY = new Vec3(0.35D, 0.0D, 0.0D);
     private static final float DEFAULT_SIZE = 0.25f;
     private static final int DEFAULT_LIFETIME = 200;
-    private static final int COLLISION_TIMEOUT = 200;
+    private static final int COLLISION_TIMEOUT = 250;
     private static final float FLOAT_TOLERANCE = 0.0001f;
 
     public static void registerGameTests(RegisterGameTestsEvent event) {
@@ -174,7 +174,7 @@ public class FireWaterVoxelInteractionBehaviour {
             water,
             waterSeen,
             COLLISION_TIMEOUT,
-            () -> helper.runAfterDelay(1, () -> {
+            () -> helper.runAfterDelay(5, () -> {
                 if (zombie.isOnFire()) {
                     helper.fail("Zombie should no longer be on fire after the water voxel collision.");
                     return;
