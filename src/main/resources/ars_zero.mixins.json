@@ -4,7 +4,8 @@
   "package": "com.github.ars_zero.mixin",
   "compatibilityLevel": "JAVA_21",
   "refmap": "ars_zero.refmap.json",
-  "mixins": [],
+  "mixins": ["EntityGravityMixin", "LivingEntityGravityTravelMixin"],
+  "injectors": { "defaultRequire": 1 },
   "client": [],
   "server": []
 }

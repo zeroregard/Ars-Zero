@@ -37,7 +37,6 @@ public class ZeroGravityEffect extends AbstractEffect {
             return;
         }
         int duration = getDuration(spellStats);
-        GravitySuppression.apply(rayTraceResult.getEntity(), duration);
         if (rayTraceResult.getEntity() instanceof LivingEntity living && living.isAlive()) {
             living.addEffect(new MobEffectInstance(ModMobEffects.ZERO_GRAVITY, duration, 0, false, true, true));
         }
