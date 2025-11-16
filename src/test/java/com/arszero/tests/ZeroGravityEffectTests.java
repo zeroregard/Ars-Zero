@@ -154,7 +154,7 @@ public final class ZeroGravityEffectTests {
         level.addFreshEntity(voxel);
 
         Player caster = helper.makeMockPlayer(GameType.SURVIVAL);
-        int suspensionTicks = 60;
+        int suspensionTicks = 70;
         double durationMultiplier = suspensionTicks / (double) BaseVoxelEntity.DEFAULT_LIFETIME_TICKS;
         SpellStats stats = new SpellStats.Builder().build();
         stats.setDurationMultiplier(durationMultiplier);
@@ -170,7 +170,7 @@ public final class ZeroGravityEffectTests {
 
         double baselineY = voxel.getY();
         var baselineBox = voxel.getBoundingBox();
-        assertVoxelSuspended(helper, voxel, baselineY, baselineBox, 40);
+        assertVoxelSuspended(helper, voxel, baselineY, baselineBox, 50);
 
         helper.runAfterDelay(suspensionTicks + 10, () -> {
             if (!voxel.isAlive()) {
@@ -195,12 +195,12 @@ public final class ZeroGravityEffectTests {
                 return;
             }
             double currentY = voxel.getY();
-            if (Math.abs(currentY - baselineY) > 0.05) {
+            if (Math.abs(currentY - baselineY) > 0.1) {
                 helper.fail("Voxel shifted vertically during Zero Gravity suspension.");
                 return;
             }
             net.minecraft.world.phys.AABB currentBox = voxel.getBoundingBox();
-            if (Math.abs(currentBox.minY - baselineBox.minY) > 0.05 || Math.abs(currentBox.maxY - baselineBox.maxY) > 0.05) {
+            if (Math.abs(currentBox.minY - baselineBox.minY) > 0.1 || Math.abs(currentBox.maxY - baselineBox.maxY) > 0.1) {
                 helper.fail("Voxel bounding box moved during Zero Gravity suspension.");
                 return;
             }

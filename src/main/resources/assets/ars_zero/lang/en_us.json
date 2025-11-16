@@ -43,6 +43,7 @@
 
   "ars_nouveau.augment_desc.conjure_voxel_effect_glyph_extend_time": "Increases the duration the voxel remains.",
   "ars_nouveau.augment_desc.conjure_voxel_effect_glyph_sensitive": "Places a voxel at a target entity's position.",
+  "ars_nouveau.augment_desc.conjure_voxel_effect_glyph_amplify": "Increases the voxel's size up to level 2, boosting water output.",
   "ars_nouveau.augment_desc.conjure_voxel_effect_glyph_split": "Splits the voxel into multiple smaller entities.",
 
   "ars_nouveau.augment_desc.enlarge_effect_glyph_amplify": "Increases the growth rate",
