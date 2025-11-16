@@ -1,7 +1,7 @@
 package com.github.ars_zero.client.input;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.client.registry.ModKeyBindings;
+import com.hollingsworth.arsnouveau.client.registry.ModKeyBindings;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.common.network.Networking;
@@ -27,10 +27,10 @@ public class CurioCastKeyHandler {
         if (minecraft.player == null) {
             return;
         }
-        if (ModKeyBindings.CURIO_RADIAL.consumeClick()) {
+        if (ModKeyBindings.OPEN_RADIAL_HUD.consumeClick()) {
             openRadial(minecraft.player);
         }
-        boolean isPressed = ModKeyBindings.CURIO_CAST.isDown();
+        boolean isPressed = ModKeyBindings.HEAD_CURIO_HOTKEY.isDown();
         if (isPressed != wasPressed) {
             wasPressed = isPressed;
             Networking.sendToServer(new PacketCurioCastInput(isPressed));

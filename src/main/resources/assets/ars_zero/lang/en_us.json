@@ -35,6 +35,9 @@
 
   "itemGroup.ars_zero": "Ars Zero",
 
+  "ars_zero.tooltip.circlet.cast": "Press %s to channel circlet",
+  "ars_zero.tooltip.circlet.radial": "Press %s to open spell radial",
+
   "ars_zero.glyph_name.conjure_voxel_effect": "Conjure Voxel",
   "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity",
 

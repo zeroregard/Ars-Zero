@@ -157,7 +157,7 @@ public abstract class AbstractSpellStaff extends Item implements ICasterTool, IR
     
 
     @OnlyIn(Dist.CLIENT)
-    private void openStaffGUI(ItemStack stack, Player player, InteractionHand hand) {
+    protected void openStaffGUI(ItemStack stack, Player player, InteractionHand hand) {
         AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
         if (caster == null) {
             player.sendSystemMessage(Component.literal("§cError: Staff has no spell data! Try crafting a new one."));
