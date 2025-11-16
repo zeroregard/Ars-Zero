@@ -15,7 +15,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -307,7 +306,16 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
     }
     
     private int additionalUnitsFromSize() {
-        return levelToUnits(calculateWaterLevel());
+        float size = this.getSize();
+        float mediumThreshold = BaseVoxelEntity.DEFAULT_BASE_SIZE * 2.0f;
+        float fullThreshold = BaseVoxelEntity.DEFAULT_BASE_SIZE * 3.0f;
+        if (size >= fullThreshold) {
+            return 7;
+        }
+        if (size >= mediumThreshold) {
+            return 4;
+        }
+        return 1;
     }
     
     private boolean placeWaterWithUnits(BlockPos pos) {
