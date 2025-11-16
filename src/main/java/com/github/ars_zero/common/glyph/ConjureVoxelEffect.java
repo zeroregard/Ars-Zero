@@ -26,6 +26,7 @@ import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSplit;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
 import com.alexthw.sauce.registry.ModRegistry;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -417,6 +418,11 @@ public class ConjureVoxelEffect extends AbstractEffect {
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
         return Set.of(AugmentAmplify.INSTANCE, AugmentExtendTime.INSTANCE, AugmentSensitive.INSTANCE, AugmentSplit.INSTANCE);
+    }
+
+    @Override
+    protected void addDefaultAugmentLimits(java.util.Map<ResourceLocation, Integer> defaults) {
+        defaults.put(AugmentAmplify.INSTANCE.getRegistryName(), MAX_AMPLIFY_LEVEL);
     }
 
     @Override
