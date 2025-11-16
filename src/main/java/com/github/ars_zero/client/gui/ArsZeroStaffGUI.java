@@ -27,6 +27,7 @@ import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import com.hollingsworth.arsnouveau.common.spell.validation.CombinedSpellValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.GlyphKnownValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.GlyphMaxTierValidator;
+import com.hollingsworth.arsnouveau.common.spell.validation.ActionAugmentationPolicyValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.StartingCastMethodSpellValidator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -147,6 +148,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         
         this.spellValidator = new CombinedSpellValidator(
                 ArsNouveauAPI.getInstance().getSpellCraftingSpellValidator(),
+                new ActionAugmentationPolicyValidator(),
                 new GlyphMaxTierValidator(tier),
                 new GlyphKnownValidator(player.isCreative() || isCreativeStaff ? null : playerCapData),
                 new StartingCastMethodSpellValidator()
