@@ -563,12 +563,18 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
     
     private void validate() {
-        List<AbstractSpellPart> currentSpell = getCurrentPhaseSpell().stream().filter(part -> part != null).toList();
-        
+        List<AbstractSpellPart> phaseList = getCurrentPhaseSpell();
+        List<AbstractSpellPart> currentSpell = new ArrayList<>();
+        for (int i = 0; i < phaseList.size(); i++) {
+            AbstractSpellPart part = phaseList.get(i);
+            if (part == null) {
+                break;
+            }
+            currentSpell.add(part);
+        }
         for (CraftingButton b : craftingCells) {
             b.validationErrors.clear();
         }
-        
         List<SpellValidationError> errors = spellValidator.validate(currentSpell);
         for (SpellValidationError ve : errors) {
             int cellIndex = currentPhase.ordinal() * 10 + ve.getPosition();
@@ -577,18 +583,35 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
                 b.validationErrors.add(ve);
             }
         }
-        
         this.validationErrors = errors;
-        
+        AbstractSpellPart lastEffect = null;
+        int lastGlyphNoGap = -1;
+        for (int i = 0; i < phaseList.size(); i++) {
+            AbstractSpellPart part = phaseList.get(i);
+            if (part == null) {
+                break;
+            }
+            if (!(part instanceof AbstractAugment)) {
+                lastEffect = part;
+            }
+            lastGlyphNoGap = i;
+        }
+        List<AbstractSpellPart> slicedSpell = new ArrayList<>();
+        for (int i = 0; i <= lastGlyphNoGap; i++) {
+            if (i >= 0 && i < phaseList.size() && phaseList.get(i) != null) {
+                slicedSpell.add(phaseList.get(i));
+            }
+        }
         for (GlyphButton glyphButton : glyphButtons) {
             glyphButton.validationErrors.clear();
-            List<AbstractSpellPart> simulatedSpell = new ArrayList<>(currentSpell);
-            simulatedSpell.add(GlyphRegistry.getSpellpartMap().get(glyphButton.abstractSpellPart.getRegistryName()));
-            
+            glyphButton.augmentingParent = lastEffect;
+            AbstractSpellPart toAdd = GlyphRegistry.getSpellpartMap().get(glyphButton.abstractSpellPart.getRegistryName());
+            slicedSpell.add(toAdd);
             glyphButton.validationErrors.addAll(
-                    spellValidator.validate(simulatedSpell).stream()
-                            .filter(ve -> ve.getPosition() >= currentSpell.size()).toList()
+                spellValidator.validate(slicedSpell).stream()
+                    .filter(ve -> ve.getPosition() >= slicedSpell.size() - 1).toList()
             );
+            slicedSpell.remove(slicedSpell.size() - 1);
         }
     }
 

@@ -21,7 +21,6 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
-import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSplit;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
@@ -417,7 +416,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
     @NotNull
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
-        return Set.of(AugmentAmplify.INSTANCE, AugmentExtendTime.INSTANCE, AugmentSensitive.INSTANCE, AugmentSplit.INSTANCE);
+        return Set.of(AugmentAmplify.INSTANCE, AugmentExtendTime.INSTANCE, AugmentSplit.INSTANCE);
     }
 
     @Override
@@ -428,15 +427,14 @@ public class ConjureVoxelEffect extends AbstractEffect {
     @Override
     public void addAugmentDescriptions(Map<AbstractAugment, String> map) {
         super.addAugmentDescriptions(map);
-        map.put(AugmentAmplify.INSTANCE, "Increases the voxel's size up to level 2, boosting water output.");
-        map.put(AugmentSensitive.INSTANCE, "Places a voxel at a target entity's position.");
+        map.put(AugmentAmplify.INSTANCE, "Increases the size of the voxel");
         map.put(AugmentExtendTime.INSTANCE, "Increases the duration the voxel remains.");
-        map.put(AugmentSplit.INSTANCE, "Splits the voxel into multiple identical entities without changing their size.");
+        map.put(AugmentSplit.INSTANCE, "Splits the voxel into multiples");
     }
 
     @Override
     public String getBookDescription() {
-        return "Conjures a compact 3x3x3 pixel purple voxel entity that persists for 1 minute. Amplify increases its size (up to level 2), which also boosts the amount of water a water voxel can place. The voxel does not collide with anything and can be grown using temporal effects like Enlarge. Arcane voxels carry and resolve all following effects on impact. Water and Fire voxels act as delimiters - they do not carry effects, allowing subsequent spells to target the voxel itself.";
+        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water' & 'Ignite'";
     }
 
     @Override
