@@ -332,10 +332,7 @@ public class FireVoxelEntity extends BaseVoxelEntity {
             return false;
         }
         BlockPos pos = this.blockPosition();
-        if (!serverLevel.canSeeSky(pos)) {
-            return false;
-        }
-        return serverLevel.isRainingAt(pos);
+        return serverLevel.canSeeSky(pos);
     }
     
     private float getRainDampeningPercent() {
