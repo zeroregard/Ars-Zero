@@ -12,6 +12,8 @@ import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentRandomize;
+import net.minecraft.util.RandomSource;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -42,6 +44,10 @@ public class PushEffect extends AbstractEffect {
         }
         
         Vec3 lookVec = shooter.getLookAngle();
+        int randomizeLevel = spellStats.getBuffCount(AugmentRandomize.INSTANCE);
+        if (randomizeLevel > 0) {
+            lookVec = applySpread(lookVec, world.random, randomizeLevel);
+        }
         
         double baseStrength = 1.5;
         double strength = baseStrength + spellStats.getAmpMultiplier() * 0.5;
@@ -56,6 +62,13 @@ public class PushEffect extends AbstractEffect {
         world.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(), ModSounds.EFFECT_PUSH.get(), SoundSource.NEUTRAL, 1.0f, pitch);
     }
 
+    private Vec3 applySpread(Vec3 direction, RandomSource random, int randomizeLevel) {
+        float maxOffset = (float) Math.toRadians(randomizeLevel * 10.0);
+        float yawOffset = (random.nextFloat() * 2.0f - 1.0f) * maxOffset;
+        float pitchOffset = (random.nextFloat() * 2.0f - 1.0f) * maxOffset;
+        return direction.yRot(yawOffset).xRot(pitchOffset);
+    }
+
     @Override
     public int getDefaultManaCost() {
         return 25;
@@ -64,7 +77,7 @@ public class PushEffect extends AbstractEffect {
     @NotNull
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
-        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE);
+        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE, AugmentRandomize.INSTANCE);
     }
 
     @Override
@@ -72,6 +85,7 @@ public class PushEffect extends AbstractEffect {
         super.addAugmentDescriptions(map);
         map.put(AugmentAmplify.INSTANCE, "Increases the push strength");
         map.put(AugmentDampen.INSTANCE, "Decreases the push strength");
+        map.put(AugmentRandomize.INSTANCE, "Adds spread to the push direction");
     }
 
     @Override
