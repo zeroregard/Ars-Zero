@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.util;
 
-import com.github.arsnouveau.api.spell.AbstractSpellPart;
+import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
 
 public class SpellDiscountUtil {
