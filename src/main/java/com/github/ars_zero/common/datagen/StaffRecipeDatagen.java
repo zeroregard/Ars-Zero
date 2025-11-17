@@ -27,6 +27,7 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
         addNoviceStaffRecipe();
         addMageStaffRecipe();
         addArchmageStaffRecipe();
+        addDullCircletRecipe();
         addSpellcastingCircletRecipe();
 
         for (FileObj fileObj : files) {
@@ -130,17 +131,49 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/archmage_spell_staff.json"), json));
     }
     
+    private void addDullCircletRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "minecraft:crafting_shaped");
+        json.addProperty("category", "misc");
+
+        JsonArray pattern = new JsonArray();
+        pattern.add(" G ");
+        pattern.add("DDD");
+        pattern.add("D D");
+        json.add("pattern", pattern);
+
+        JsonObject key = new JsonObject();
+        JsonObject g = new JsonObject();
+        g.addProperty("tag", "c:ingots/gold");
+        key.add("G", g);
+        JsonObject d = new JsonObject();
+        d.addProperty("item", "ars_nouveau:source_gem");
+        key.add("D", d);
+        json.add("key", key);
+
+        JsonObject result = new JsonObject();
+        result.addProperty("count", 1);
+        result.addProperty("id", id(ModItems.DULL_CIRCLET.get().asItem()));
+        json.add("result", result);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/dull_circlet.json"), json));
+    }
+    
     private void addSpellcastingCircletRecipe() {
         JsonObject json = new JsonObject();
-        json.addProperty("type", "minecraft:crafting_shapeless");
+        json.addProperty("type", "ars_nouveau:book_upgrade");
         json.addProperty("category", "misc");
         
         JsonArray ingredients = new JsonArray();
-        ingredients.add(item(id(ModItems.ARCHMAGE_SPELL_STAFF.get().asItem())));
+        ingredients.add(item(id(ModItems.DULL_CIRCLET.get().asItem())));
+        ingredients.add(tag("c:ender_pearls"));
+        ingredients.add(tag("c:ender_pearls"));
+        ingredients.add(tag("c:ender_pearls"));
+        ingredients.add(tag("c:gems/emerald"));
+        ingredients.add(tag("c:gems/emerald"));
+        ingredients.add(item(id(Items.TOTEM_OF_UNDYING)));
         ingredients.add(item(id(Items.NETHER_STAR)));
-        ingredients.add(item("ars_nouveau:source_gem_block"));
-        ingredients.add(item(id(Items.AMETHYST_SHARD)));
-        ingredients.add(item(id(Items.PHANTOM_MEMBRANE)));
+        ingredients.add(item("ars_nouveau:wilden_tribute"));
         json.add("ingredients", ingredients);
         
         JsonObject result = new JsonObject();

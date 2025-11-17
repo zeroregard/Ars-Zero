@@ -30,6 +30,8 @@ public class ModItems {
     
     public static final ItemRegistryWrapper<SpellcastingCirclet> SPELLCASTING_CIRCLET = register("spellcasting_circlet", SpellcastingCirclet::new);
     
+    public static final ItemRegistryWrapper<Item> DULL_CIRCLET = register("dull_circlet", () -> new Item(defaultItemProperties()));
+    
     public static final ItemRegistryWrapper<Item> ARCHWOOD_ROD = register("archwood_rod", () -> new Item(defaultItemProperties()));
     
     public static final DeferredHolder<Item, BlockItem> ARCANE_VOXEL_SPAWNER = ITEMS.register(

@@ -59,37 +59,20 @@ public class AnchorEffect extends AbstractEffect {
         if (!(shooter instanceof Player player)) return;
         
         ItemStack casterTool = spellContext.getCasterTool();
-        ArsZero.LOGGER.info("[AnchorEffect.onResolveEntity] Player: {}, casterTool: {}, isEmpty: {}", 
-            player.getScoreboardName(), casterTool.getItem(), casterTool.isEmpty());
-        
         MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
-        ArsZero.LOGGER.info("[AnchorEffect.onResolveEntity] Context found: {}, beginResults size: {}", 
-            castContext != null, castContext != null ? castContext.beginResults.size() : 0);
-        
-        if (castContext != null) {
-            ArsZero.LOGGER.info("[AnchorEffect.onResolveEntity] Context source: {}, isCasting: {}", 
-                castContext.source, castContext.isCasting);
-        }
         
         if (castContext == null || castContext.beginResults.isEmpty()) {
-            ArsZero.LOGGER.warn("[AnchorEffect.onResolveEntity] EARLY RETURN: context={}, beginResults empty={}", 
-                castContext != null, castContext != null ? castContext.beginResults.isEmpty() : true);
             return;
         }
         
-        ArsZero.LOGGER.info("[AnchorEffect.onResolveEntity] Processing {} beginResults", castContext.beginResults.size());
         for (SpellResult beginResult : castContext.beginResults) {
             Entity target = beginResult.targetEntity;
-            ArsZero.LOGGER.info("[AnchorEffect.onResolveEntity] Processing result: target={}, alive={}, relativeOffset={}", 
-                target != null ? target.getType() : "null", target != null && target.isAlive(), beginResult.relativeOffset != null);
             
             if (target == null || !target.isAlive()) {
-                ArsZero.LOGGER.info("[AnchorEffect.onResolveEntity] Skipping: target null or not alive");
                 continue;
             }
             
             if (beginResult.relativeOffset == null) {
-                ArsZero.LOGGER.info("[AnchorEffect.onResolveEntity] Skipping: relativeOffset is null");
                 continue;
             }
             
@@ -100,24 +83,14 @@ public class AnchorEffect extends AbstractEffect {
                 castContext.distanceMultiplier
             );
             
-            ArsZero.LOGGER.info("[AnchorEffect.onResolveEntity] Calculated position: {}, canMove: {}", 
-                newPosition, newPosition != null ? canMoveToPosition(newPosition, world) : false);
-            
-            if (newPosition != null) {
-                if (canMoveToPosition(newPosition, world)) {
-                    target.setPos(newPosition.x, newPosition.y, newPosition.z);
-                    target.setDeltaMovement(Vec3.ZERO);
-                    target.setNoGravity(true);
-                    
-                    if (target instanceof BaseVoxelEntity voxel) {
-                        voxel.freezePhysics();
-                    }
-                    ArsZero.LOGGER.info("[AnchorEffect.onResolveEntity] Successfully moved entity to {}", newPosition);
-                } else {
-                    ArsZero.LOGGER.warn("[AnchorEffect.onResolveEntity] Cannot move to position: {}", newPosition);
+            if (newPosition != null && canMoveToPosition(newPosition, world)) {
+                target.setPos(newPosition.x, newPosition.y, newPosition.z);
+                target.setDeltaMovement(Vec3.ZERO);
+                target.setNoGravity(true);
+                
+                if (target instanceof BaseVoxelEntity voxel) {
+                    voxel.freezePhysics();
                 }
-            } else {
-                ArsZero.LOGGER.warn("[AnchorEffect.onResolveEntity] newPosition is null");
             }
         }
     }
@@ -196,21 +169,9 @@ public class AnchorEffect extends AbstractEffect {
         if (!(shooter instanceof Player player)) return;
         
         ItemStack casterTool = spellContext.getCasterTool();
-        ArsZero.LOGGER.info("[AnchorEffect.onResolveBlock] Player: {}, casterTool: {}, isEmpty: {}", 
-            player.getScoreboardName(), casterTool.getItem(), casterTool.isEmpty());
-        
         MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
-        ArsZero.LOGGER.info("[AnchorEffect.onResolveBlock] Context found: {}, beginResults size: {}", 
-            castContext != null, castContext != null ? castContext.beginResults.size() : 0);
-        
-        if (castContext != null) {
-            ArsZero.LOGGER.info("[AnchorEffect.onResolveBlock] Context source: {}, isCasting: {}", 
-                castContext.source, castContext.isCasting);
-        }
         
         if (castContext == null || castContext.beginResults.isEmpty()) {
-            ArsZero.LOGGER.warn("[AnchorEffect.onResolveBlock] EARLY RETURN: context={}, beginResults empty={}", 
-                castContext != null, castContext != null ? castContext.beginResults.isEmpty() : true);
             return;
         }
         

@@ -10,8 +10,9 @@
 
   "item.ars_zero.creative_spell_staff": "Creative Spell Staff",
   "item.ars_zero.creative_spell_staff.desc": "A creative magical staff that can cast spells in three phases: Begin, Tick, and End. All glyphs are available.",
+  "item.ars_zero.dull_circlet": "Dull Circlet",
   "item.ars_zero.spellcasting_circlet": "Spellcasting Circlet",
-  "item.ars_zero.spellcasting_circlet.desc": "A Curios-compatible circlet that channels spells from your head slot with Begin, Tick, and End phases.",
+  "item.ars_zero.spellcasting_circlet.desc": "A circlet that channels spells from your head slot with Begin, Tick, and End phases.",
 
   "item.ars_zero.archwood_rod": "Archwood Rod",
 

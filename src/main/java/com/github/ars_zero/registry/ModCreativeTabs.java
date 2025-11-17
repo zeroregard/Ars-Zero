@@ -24,6 +24,7 @@ public class ModCreativeTabs {
                     output.accept(ModItems.MAGE_SPELL_STAFF.get().getDefaultInstance());
                     output.accept(ModItems.ARCHMAGE_SPELL_STAFF.get().getDefaultInstance());
                     output.accept(ModItems.CREATIVE_SPELL_STAFF.get().getDefaultInstance());
+                    output.accept(ModItems.DULL_CIRCLET.get().getDefaultInstance());
                     output.accept(ModItems.SPELLCASTING_CIRCLET.get().getDefaultInstance());
                     output.accept(ModItems.ARCANE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.FIRE_VOXEL_SPAWNER.get().getDefaultInstance());
