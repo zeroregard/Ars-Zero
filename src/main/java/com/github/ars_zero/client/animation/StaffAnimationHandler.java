@@ -1,12 +1,18 @@
 package com.github.ars_zero.client.animation;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.zigythebird.playeranim.api.PlayerAnimationAccess;
 import com.zigythebird.playeranim.api.PlayerAnimationFactory;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
 import com.zigythebird.playeranimcore.enums.PlayState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +42,39 @@ public class StaffAnimationHandler {
     
     private static PlayerAnimationController createAnimationController(AbstractClientPlayer player) {
         return new PlayerAnimationController(player, (controller, state, animSetter) -> {
+            if (player == null) {
+                return PlayState.STOP;
+            }
+            
+            Minecraft mc = Minecraft.getInstance();
+            
+            ItemStack mainHand = player.getMainHandItem();
+            ItemStack offHand = player.getOffhandItem();
+            boolean isMainHand = mainHand.getItem() instanceof AbstractSpellStaff;
+            boolean isOffHand = offHand.getItem() instanceof AbstractSpellStaff;
+            
+            if (!isMainHand && !isOffHand) {
+                return PlayState.STOP;
+            }
+            
+            if (mc.screen instanceof ArsZeroStaffGUI) {
+                return PlayState.CONTINUE;
+            }
+            
+            if (isMainHand) {
+                MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, mainHand);
+                if (context != null && context.isCasting && context.source == MultiPhaseCastContext.CastSource.ITEM) {
+                    return PlayState.CONTINUE;
+                }
+            }
+            
+            if (isOffHand) {
+                MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, offHand);
+                if (context != null && context.isCasting && context.source == MultiPhaseCastContext.CastSource.ITEM) {
+                    return PlayState.CONTINUE;
+                }
+            }
+            
             return PlayState.STOP;
         });
     }

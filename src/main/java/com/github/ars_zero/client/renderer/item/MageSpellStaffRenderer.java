@@ -10,3 +10,4 @@ public class MageSpellStaffRenderer extends SpellStaffRenderer {
     }
 }
 
+

@@ -61,8 +61,8 @@
   "ars_nouveau.augment_desc.push_effect_glyph_amplify": "Increases the push strength",
   "ars_nouveau.augment_desc.push_effect_glyph_dampen": "Decreases the push strength",
 
-  "ars_nouveau.augment_desc.translate_effect_glyph_amplify": "Increases the distance from the player",
-  "ars_nouveau.augment_desc.translate_effect_glyph_dampen": "Decreases the distance from the player",
+  "ars_nouveau.augment_desc.anchor_effect_glyph_amplify": "Increases the distance from the player",
+  "ars_nouveau.augment_desc.anchor_effect_glyph_dampen": "Decreases the distance from the player",
 
   "ars_nouveau.augment_desc.zero_gravity_effect_glyph_extend_time": "Extends the gravity suppression duration",
   "ars_nouveau.augment_desc.zero_gravity_effect_glyph_duration_down": "Reduces the gravity suppression duration",
@@ -73,8 +73,12 @@
   "ars_zero.glyph_name.near_form": "Near",
   "ars_zero.glyph_desc.near_form": "Casts the spell at a short distance in front of your gaze",
 
-  "ars_zero.glyph_name.translate_effect": "Anchor",
-  "ars_zero.glyph_desc.translate_effect": "Maintains the relative position of the target(s) to the caster",
+  "item.ars_zero.anchor_effect": "Anchor",
+  "ars_zero.glyph_name.anchor_effect": "Anchor",
+  "ars_zero.glyph_desc.anchor_effect": "Maintains the relative position of the target(s) to the caster",
+  "ars_zero.glyph_name.glyph_anchor_effect": "Anchor",
+  "ars_zero.glyph_desc.glyph_anchor_effect": "Maintains the relative position of the target(s) to the caster",
+  "ars_nouveau.glyph_name.anchor_effect": "Anchor",
 
   "ars_zero.glyph_name.push_effect": "Push",
   "ars_zero.glyph_desc.push_effect": "Pushes the target in the direction you're looking.",

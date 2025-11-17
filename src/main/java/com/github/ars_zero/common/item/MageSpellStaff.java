@@ -14,7 +14,6 @@ public class MageSpellStaff extends AbstractSpellStaff {
         super(SpellTier.TWO);
     }
     
-    @Override
     @OnlyIn(Dist.CLIENT)
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
         consumer.accept(new GeoRenderProvider() {

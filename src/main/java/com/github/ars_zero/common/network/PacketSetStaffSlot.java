@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -41,15 +41,15 @@ public record PacketSetStaffSlot(int logicalSlot) implements CustomPacketPayload
                 ItemStack mainStack = player.getMainHandItem();
                 ItemStack offStack = player.getOffhandItem();
                 
-                if (mainStack.getItem() instanceof AbstractSpellStaff) {
+                if (mainStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
                     stack = mainStack;
                     hand = InteractionHand.MAIN_HAND;
-                } else if (offStack.getItem() instanceof AbstractSpellStaff) {
+                } else if (offStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
                     stack = offStack;
                     hand = InteractionHand.OFF_HAND;
                 } else {
                     Optional<ItemStack> curioStack = CuriosApi.getCuriosHelper().findEquippedCurio(
-                        equipped -> equipped.getItem() instanceof AbstractSpellStaff,
+                        equipped -> equipped.getItem() instanceof AbstractMultiPhaseCastDevice,
                         player
                     ).map(result -> result.getRight());
                     

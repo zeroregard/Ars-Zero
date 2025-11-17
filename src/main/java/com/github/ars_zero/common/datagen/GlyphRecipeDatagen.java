@@ -108,10 +108,10 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
 
         JsonObject outputObj = new JsonObject();
         outputObj.addProperty("count", 1);
-        outputObj.addProperty("id", "ars_zero:translate_effect");
+        outputObj.addProperty("id", "ars_zero:anchor_effect");
         json.add("output", outputObj);
 
-        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_translate_effect.json"), json));
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_anchor_effect.json"), json));
     }
 
     private void addEnlargeRecipe() {

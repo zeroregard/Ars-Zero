@@ -62,12 +62,18 @@ public class ModItems {
         registerStaff(MAGE_SPELL_STAFF.get());
         registerStaff(ARCHMAGE_SPELL_STAFF.get());
         registerStaff(CREATIVE_SPELL_STAFF.get());
-        registerStaff(SPELLCASTING_CIRCLET.get());
+        registerDevice(SPELLCASTING_CIRCLET.get());
         ArsZero.LOGGER.info("SpellCasterRegistry registration completed");
     }
     
     private static void registerStaff(AbstractSpellStaff staff) {
         SpellCasterRegistry.register(staff, (stack) -> {
+            return stack.get(com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry.SPELL_CASTER);
+        });
+    }
+    
+    private static void registerDevice(com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice device) {
+        SpellCasterRegistry.register(device, (stack) -> {
             return stack.get(com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry.SPELL_CASTER);
         });
     }

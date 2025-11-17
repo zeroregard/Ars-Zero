@@ -27,10 +27,10 @@ public class CurioCastKeyHandler {
         if (minecraft.player == null) {
             return;
         }
-        if (ModKeyBindings.OPEN_RADIAL_HUD.consumeClick()) {
+        if (ModKeyBindings.HEAD_CURIO_HOTKEY.consumeClick()) {
             openRadial(minecraft.player);
         }
-        boolean isPressed = ModKeyBindings.HEAD_CURIO_HOTKEY.isDown();
+        boolean isPressed = com.github.ars_zero.client.registry.ModKeyBindings.CURIO_CAST.isDown();
         if (isPressed != wasPressed) {
             wasPressed = isPressed;
             Networking.sendToServer(new PacketCurioCastInput(isPressed));
@@ -39,8 +39,8 @@ public class CurioCastKeyHandler {
     
     private static void openRadial(Player player) {
         findCirclet(player).ifPresent(stack -> {
-            if (stack.getItem() instanceof AbstractSpellStaff staff) {
-                staff.onRadialKeyPressed(stack, player);
+            if (stack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice device) {
+                device.onRadialKeyPressed(stack, player);
             }
         });
     }

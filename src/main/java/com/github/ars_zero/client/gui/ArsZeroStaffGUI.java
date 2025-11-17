@@ -2,6 +2,7 @@ package com.github.ars_zero.client.gui;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.hollingsworth.arsnouveau.api.documentation.DocAssets;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
@@ -140,6 +141,12 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         if (bookStack.getItem() instanceof AbstractSpellStaff staff) {
             tier = staff.getTier().value;
             if (staff.getTier() == SpellTier.CREATIVE) {
+                isCreativeStaff = true;
+                parts = new ArrayList<>(GlyphRegistry.getSpellpartMap().values().stream().filter(AbstractSpellPart::shouldShowInSpellBook).toList());
+            }
+        } else if (bookStack.getItem() instanceof AbstractMultiPhaseCastDevice device) {
+            tier = device.getTier().value;
+            if (device.getTier() == SpellTier.CREATIVE) {
                 isCreativeStaff = true;
                 parts = new ArrayList<>(GlyphRegistry.getSpellpartMap().values().stream().filter(AbstractSpellPart::shouldShowInSpellBook).toList());
             }
@@ -751,6 +758,8 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             int tier = 1;
             if (bookStack.getItem() instanceof AbstractSpellStaff staff) {
                 tier = staff.getTier().value;
+            } else if (bookStack.getItem() instanceof AbstractMultiPhaseCastDevice device) {
+                tier = device.getTier().value;
             }
             int finalTier = tier;
 
@@ -776,6 +785,8 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             int tier = 1;
             if (bookStack.getItem() instanceof AbstractSpellStaff staff) {
                 tier = staff.getTier().value;
+            } else if (bookStack.getItem() instanceof AbstractMultiPhaseCastDevice device) {
+                tier = device.getTier().value;
             }
             int finalTier = tier;
             displayedGlyphs = new ArrayList<>(unlockedSpells.stream()

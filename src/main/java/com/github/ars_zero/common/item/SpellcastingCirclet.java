@@ -2,7 +2,7 @@ package com.github.ars_zero.common.item;
 
 import com.github.ars_zero.client.renderer.item.ArchmageSpellStaffRenderer;
 import com.hollingsworth.arsnouveau.client.registry.ModKeyBindings;
-import com.github.ars_zero.common.spell.StaffCastContext;
+import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -24,13 +24,13 @@ import top.theillusivec4.curios.api.type.capability.ICurioItem;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class SpellcastingCirclet extends AbstractSpellStaff implements ICurioItem {
+public class SpellcastingCirclet extends AbstractMultiPhaseCastDevice implements ICurioItem {
     public SpellcastingCirclet() {
-        super(SpellTier.THREE);
+        super(SpellTier.THREE, new Properties());
     }
     
     public void beginCurioCast(Player player, ItemStack stack) {
-        beginPhase(player, stack, StaffCastContext.CastSource.CURIO);
+        beginPhase(player, stack, MultiPhaseCastContext.CastSource.CURIO);
     }
     
     @Override
@@ -41,12 +41,11 @@ public class SpellcastingCirclet extends AbstractSpellStaff implements ICurioIte
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (level.isClientSide) {
-            openStaffGUI(stack, player, hand);
+            openDeviceGUI(stack, player, hand);
         }
         return InteractionResultHolder.success(stack);
     }
     
-    @Override
     @OnlyIn(Dist.CLIENT)
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
         consumer.accept(new GeoRenderProvider() {
@@ -62,8 +61,8 @@ public class SpellcastingCirclet extends AbstractSpellStaff implements ICurioIte
     @Override
     public void appendHoverText(@NotNull ItemStack stack, @NotNull TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
-        Component castKey = KeyMapping.createNameSupplier(ModKeyBindings.HEAD_CURIO_HOTKEY.getName()).get();
-        Component radialKey = KeyMapping.createNameSupplier(ModKeyBindings.OPEN_RADIAL_HUD.getName()).get();
+        Component castKey = KeyMapping.createNameSupplier(com.github.ars_zero.client.registry.ModKeyBindings.CURIO_CAST.getName()).get();
+        Component radialKey = KeyMapping.createNameSupplier(ModKeyBindings.HEAD_CURIO_HOTKEY.getName()).get();
         tooltip.add(Component.translatable("ars_zero.tooltip.circlet.cast", castKey));
         tooltip.add(Component.translatable("ars_zero.tooltip.circlet.radial", radialKey));
     }

@@ -6,7 +6,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-public record PacketStaffSpellFired(int phaseOrdinal, boolean isMainHand, int tickCount) implements CustomPacketPayload {
+public record PacketStaffSpellFired(int phaseOrdinal, boolean isMainHand, int tickCount, boolean isCurio) implements CustomPacketPayload {
     
     public static final CustomPacketPayload.Type<PacketStaffSpellFired> TYPE = 
         new CustomPacketPayload.Type<>(ArsZero.prefix("staff_spell_fired"));
@@ -18,6 +18,8 @@ public record PacketStaffSpellFired(int phaseOrdinal, boolean isMainHand, int ti
         PacketStaffSpellFired::isMainHand,
         ByteBufCodecs.INT,
         PacketStaffSpellFired::tickCount,
+        ByteBufCodecs.BOOL,
+        PacketStaffSpellFired::isCurio,
         PacketStaffSpellFired::new
     );
     

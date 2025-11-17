@@ -2,11 +2,12 @@ package com.github.ars_zero.event;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.CastPhase;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
-import com.github.ars_zero.common.spell.StaffCastContext;
+import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
 import com.github.ars_zero.registry.ModEntities;
 import net.minecraft.world.level.block.Blocks;
@@ -18,6 +19,7 @@ import com.hollingsworth.arsnouveau.api.util.SpellUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.BlockHitResult;
@@ -107,7 +109,8 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
+        ItemStack casterTool = event.resolver.spellContext.getCasterTool();
+        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context == null) {
             return;
         }
@@ -214,7 +217,8 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
+        ItemStack casterTool = event.resolver.spellContext.getCasterTool();
+        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context == null) {
             return;
         }

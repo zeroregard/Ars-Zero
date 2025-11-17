@@ -1,9 +1,10 @@
 package com.github.ars_zero.event;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.glyph.TranslateEffect;
+import com.github.ars_zero.common.glyph.AnchorEffect;
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
-import com.github.ars_zero.common.spell.StaffCastContext;
+import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.registry.ModAttachments;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -19,8 +20,8 @@ public class StaffCleanupHandler {
         Player player = event.getEntity();
         if (player.level().isClientSide) return;
         
-        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
-        if (context == null || !context.isHoldingStaff) {
+        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.getCastContext(player, MultiPhaseCastContext.CastSource.ITEM);
+        if (context == null || !context.isCasting) {
             return;
         }
         
@@ -29,8 +30,8 @@ public class StaffCleanupHandler {
         boolean isUsingItem = player.isUsingItem();
         
         if (!isHoldingStaff || !isUsingItem) {
-            TranslateEffect.restoreEntityPhysics(context);
-            player.removeData(ModAttachments.STAFF_CONTEXT);
+            AnchorEffect.restoreEntityPhysics(context);
+            AbstractMultiPhaseCastDevice.clearContext(player, MultiPhaseCastContext.CastSource.ITEM);
         }
     }
 }

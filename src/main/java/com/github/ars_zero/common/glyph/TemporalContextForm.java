@@ -1,9 +1,10 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellResult;
-import com.github.ars_zero.common.spell.StaffCastContext;
+import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCastMethod;
 import com.hollingsworth.arsnouveau.api.spell.CastResolveType;
@@ -52,14 +53,27 @@ public class TemporalContextForm extends AbstractCastMethod {
     @Override
     public CastResolveType onCast(ItemStack stack, LivingEntity caster, Level world, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (caster instanceof Player player) {
-            StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
+            ItemStack casterTool = spellContext.getCasterTool();
+            ArsZero.LOGGER.info("[TemporalContextForm.onCast] Player: {}, casterTool: {}, isEmpty: {}", 
+                player.getScoreboardName(), casterTool.getItem(), casterTool.isEmpty());
             
+            MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+            ArsZero.LOGGER.info("[TemporalContextForm.onCast] Context found: {}, beginResults size: {}", 
+                castContext != null, castContext != null ? castContext.beginResults.size() : 0);
             
-            if (staffContext == null || staffContext.beginResults.isEmpty()) {
+            if (castContext != null) {
+                ArsZero.LOGGER.info("[TemporalContextForm.onCast] Context source: {}, isCasting: {}", 
+                    castContext.source, castContext.isCasting);
+            }
+            
+            if (castContext == null || castContext.beginResults.isEmpty()) {
+                ArsZero.LOGGER.warn("[TemporalContextForm.onCast] FAILURE: context={}, beginResults empty={}", 
+                    castContext != null, castContext != null ? castContext.beginResults.isEmpty() : true);
                 return CastResolveType.FAILURE;
             }
             
-            for (SpellResult result : staffContext.beginResults) {
+            ArsZero.LOGGER.info("[TemporalContextForm.onCast] Processing {} beginResults", castContext.beginResults.size());
+            for (SpellResult result : castContext.beginResults) {
                 resolver.hitResult = result.hitResult;
                 resolver.onResolveEffect(world, result.hitResult);
             }
@@ -70,13 +84,27 @@ public class TemporalContextForm extends AbstractCastMethod {
     @Override
     public CastResolveType onCastOnBlock(UseOnContext context, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (context.getPlayer() instanceof Player player) {
-            StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
+            ItemStack stack = spellContext.getCasterTool();
+            ArsZero.LOGGER.info("[TemporalContextForm.onCastOnBlock] Player: {}, casterTool: {}, isEmpty: {}", 
+                player.getScoreboardName(), stack.getItem(), stack.isEmpty());
             
-            if (staffContext == null || staffContext.beginResults.isEmpty()) {
+            MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, stack);
+            ArsZero.LOGGER.info("[TemporalContextForm.onCastOnBlock] Context found: {}, beginResults size: {}", 
+                castContext != null, castContext != null ? castContext.beginResults.size() : 0);
+            
+            if (castContext != null) {
+                ArsZero.LOGGER.info("[TemporalContextForm.onCastOnBlock] Context source: {}, isCasting: {}", 
+                    castContext.source, castContext.isCasting);
+            }
+            
+            if (castContext == null || castContext.beginResults.isEmpty()) {
+                ArsZero.LOGGER.warn("[TemporalContextForm.onCastOnBlock] FAILURE: context={}, beginResults empty={}", 
+                    castContext != null, castContext != null ? castContext.beginResults.isEmpty() : true);
                 return CastResolveType.FAILURE;
             }
             
-            for (SpellResult result : staffContext.beginResults) {
+            ArsZero.LOGGER.info("[TemporalContextForm.onCastOnBlock] Processing {} beginResults", castContext.beginResults.size());
+            for (SpellResult result : castContext.beginResults) {
                 resolver.hitResult = result.hitResult;
                 resolver.onResolveEffect(context.getLevel(), result.hitResult);
             }
@@ -87,12 +115,27 @@ public class TemporalContextForm extends AbstractCastMethod {
     @Override
     public CastResolveType onCastOnBlock(BlockHitResult blockHitResult, LivingEntity caster, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (caster instanceof Player player) {
-            StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
-            if (staffContext == null || staffContext.beginResults.isEmpty()) {
+            ItemStack stack = spellContext.getCasterTool();
+            ArsZero.LOGGER.info("[TemporalContextForm.onCastOnBlock(BlockHit)] Player: {}, casterTool: {}, isEmpty: {}", 
+                player.getScoreboardName(), stack.getItem(), stack.isEmpty());
+            
+            MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, stack);
+            ArsZero.LOGGER.info("[TemporalContextForm.onCastOnBlock(BlockHit)] Context found: {}, beginResults size: {}", 
+                castContext != null, castContext != null ? castContext.beginResults.size() : 0);
+            
+            if (castContext != null) {
+                ArsZero.LOGGER.info("[TemporalContextForm.onCastOnBlock(BlockHit)] Context source: {}, isCasting: {}", 
+                    castContext.source, castContext.isCasting);
+            }
+            
+            if (castContext == null || castContext.beginResults.isEmpty()) {
+                ArsZero.LOGGER.warn("[TemporalContextForm.onCastOnBlock(BlockHit)] FAILURE: context={}, beginResults empty={}", 
+                    castContext != null, castContext != null ? castContext.beginResults.isEmpty() : true);
                 return CastResolveType.FAILURE;
             }
             
-            for (SpellResult result : staffContext.beginResults) {
+            ArsZero.LOGGER.info("[TemporalContextForm.onCastOnBlock(BlockHit)] Processing {} beginResults", castContext.beginResults.size());
+            for (SpellResult result : castContext.beginResults) {
                 resolver.hitResult = result.hitResult;
                 resolver.onResolveEffect(caster.getCommandSenderWorld(), result.hitResult);
             }
@@ -103,12 +146,27 @@ public class TemporalContextForm extends AbstractCastMethod {
     @Override
     public CastResolveType onCastOnEntity(ItemStack stack, LivingEntity caster, Entity target, InteractionHand hand, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (caster instanceof Player player) {
-            StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
-            if (staffContext == null || staffContext.beginResults.isEmpty()) {
+            ItemStack casterTool = spellContext.getCasterTool();
+            ArsZero.LOGGER.info("[TemporalContextForm.onCastOnEntity] Player: {}, casterTool: {}, isEmpty: {}, hand: {}", 
+                player.getScoreboardName(), casterTool.getItem(), casterTool.isEmpty(), hand);
+            
+            MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+            ArsZero.LOGGER.info("[TemporalContextForm.onCastOnEntity] Context found: {}, beginResults size: {}", 
+                castContext != null, castContext != null ? castContext.beginResults.size() : 0);
+            
+            if (castContext != null) {
+                ArsZero.LOGGER.info("[TemporalContextForm.onCastOnEntity] Context source: {}, isCasting: {}", 
+                    castContext.source, castContext.isCasting);
+            }
+            
+            if (castContext == null || castContext.beginResults.isEmpty()) {
+                ArsZero.LOGGER.warn("[TemporalContextForm.onCastOnEntity] FAILURE: context={}, beginResults empty={}", 
+                    castContext != null, castContext != null ? castContext.beginResults.isEmpty() : true);
                 return CastResolveType.FAILURE;
             }
             
-            for (SpellResult result : staffContext.beginResults) {
+            ArsZero.LOGGER.info("[TemporalContextForm.onCastOnEntity] Processing {} beginResults", castContext.beginResults.size());
+            for (SpellResult result : castContext.beginResults) {
                 resolver.hitResult = result.hitResult;
                 resolver.onResolveEffect(caster.getCommandSenderWorld(), result.hitResult);
             }
