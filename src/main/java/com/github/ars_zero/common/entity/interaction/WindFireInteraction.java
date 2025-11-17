@@ -19,7 +19,7 @@ public class WindFireInteraction implements VoxelInteraction {
         return VoxelInteractionResult.builder(primary.position())
             .particles(ParticleTypes.CLOUD, 20)
             .particles(ParticleTypes.FLAME, 10)
-            .sound(SoundEvents.GENERIC_EXPLODE)
+            .sound(SoundEvents.GENERIC_EXPLODE.value())
             .primaryAction(VoxelInteractionResult.ActionType.DISCARD)
             .secondaryAction(VoxelInteractionResult.ActionType.DISCARD)
             .build();
