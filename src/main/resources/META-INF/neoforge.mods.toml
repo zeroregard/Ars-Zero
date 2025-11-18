@@ -34,3 +34,10 @@ config="ars_zero.mixins.json"
     versionRange="[1.21.1-5.9,)"
     ordering="AFTER"
     side="BOTH"
+
+[[dependencies.ars_zero]]
+    modId="player_animation_library"
+    mandatory=true
+    versionRange="[1.0.14,)"
+    ordering="AFTER"
+    side="BOTH"
