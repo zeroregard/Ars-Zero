@@ -1,7 +1,7 @@
 package com.github.ars_zero.client.animation;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
+import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
@@ -57,7 +57,7 @@ public class StaffAnimationHandler {
                 return PlayState.STOP;
             }
             
-            if (mc.screen instanceof ArsZeroStaffGUI) {
+            if (mc.screen instanceof AbstractMultiPhaseCastDeviceScreen) {
                 return PlayState.CONTINUE;
             }
             

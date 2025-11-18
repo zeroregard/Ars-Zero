@@ -1,7 +1,7 @@
 package com.github.ars_zero.client.network;
 
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
-import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
+import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.client.gui.StaffParticleScreen;
 import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.client.sound.StaffSoundManager;
@@ -60,7 +60,7 @@ final class ClientPacketHandlers {
                 return;
             }
 
-            if (minecraft.screen instanceof ArsZeroStaffGUI staffGUI) {
+            if (minecraft.screen instanceof AbstractMultiPhaseCastDeviceScreen staffGUI) {
                 staffGUI.onBookstackUpdated(packet.stack());
             }
         });

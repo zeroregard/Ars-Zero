@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.item;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
+import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.network.Networking;
@@ -143,13 +143,16 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     }
 
     @OnlyIn(Dist.CLIENT)
+    protected abstract AbstractMultiPhaseCastDeviceScreen createDeviceScreen(ItemStack stack, InteractionHand hand);
+
+    @OnlyIn(Dist.CLIENT)
     protected void openDeviceGUI(ItemStack stack, Player player, InteractionHand hand) {
         AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
         if (caster == null) {
             player.sendSystemMessage(Component.literal("§cError: Device has no spell data! Try crafting a new one."));
             return;
         }
-        Minecraft.getInstance().setScreen(new ArsZeroStaffGUI(stack, hand));
+        Minecraft.getInstance().setScreen(createDeviceScreen(stack, hand));
     }
 
     @Override

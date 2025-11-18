@@ -1,11 +1,11 @@
 package com.github.ars_zero.common.item;
 
 import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
+import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.SpellCaster;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -35,12 +35,9 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
     }
 
     @OnlyIn(Dist.CLIENT)
-    protected void openStaffGUI(ItemStack stack, Player player, InteractionHand hand) {
-        if (SpellCasterRegistry.from(stack) == null) {
-            player.sendSystemMessage(Component.literal("§cError: Staff has no spell data! Try crafting a new one."));
-            return;
-        }
-        Minecraft.getInstance().setScreen(new ArsZeroStaffGUI(stack, hand));
+    @Override
+    protected AbstractMultiPhaseCastDeviceScreen createDeviceScreen(ItemStack stack, InteractionHand hand) {
+        return new ArsZeroStaffGUI(stack, hand);
     }
 
     @Override
