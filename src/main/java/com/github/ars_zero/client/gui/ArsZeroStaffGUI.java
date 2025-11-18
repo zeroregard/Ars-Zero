@@ -2,18 +2,19 @@ package com.github.ars_zero.client.gui;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
+import com.github.ars_zero.client.gui.buttons.StaffArrowButton;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
-import com.hollingsworth.arsnouveau.api.documentation.DocAssets;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.*;
 import com.hollingsworth.arsnouveau.client.gui.book.SpellSlottedScreen;
 import com.hollingsworth.arsnouveau.client.gui.buttons.ClearButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.CreateSpellButton;
+import com.github.ars_zero.client.gui.buttons.StaffCraftingButton;
+import com.github.ars_zero.client.gui.buttons.StaffSpellSlot;
 import com.hollingsworth.arsnouveau.client.gui.buttons.CraftingButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.GlyphButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.GuiImageButton;
-import com.hollingsworth.arsnouveau.client.gui.buttons.GuiSpellSlot;
 import com.hollingsworth.arsnouveau.client.gui.SearchBar;
 import com.hollingsworth.arsnouveau.client.gui.book.EnterTextField;
 import com.github.ars_zero.common.network.Networking;
@@ -30,12 +31,13 @@ import com.hollingsworth.arsnouveau.common.spell.validation.GlyphMaxTierValidato
 import com.hollingsworth.arsnouveau.common.spell.validation.ActionAugmentationPolicyValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.StartingCastMethodSpellValidator;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.screens.inventory.PageButton;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -51,14 +53,13 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
 
     private StaffPhase currentPhase = StaffPhase.BEGIN;
     
-    // Phase selection buttons (16x16 buttons for each row)
-    private Button beginPhaseButton;
-    private Button tickPhaseButton;
-    private Button endPhaseButton;
+    private GuiImageButton beginPhaseButton;
+    private GuiImageButton tickPhaseButton;
+    private GuiImageButton endPhaseButton;
     
-    // Spell slots for the 10 shortcuts on the right (radial menu slots)
-    private GuiSpellSlot[] spellSlots = new GuiSpellSlot[10];
-    private GuiSpellSlot selectedSlotButton;
+     // Spell slots for the 10 shortcuts on the right (radial menu slots)
+    private StaffSpellSlot[] spellSlots = new StaffSpellSlot[10];
+    private StaffSpellSlot selectedSlotButton;
     private int selectedSpellSlot = -1;
     
     // Glyph selection
@@ -67,15 +68,15 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     private List<AbstractSpellPart> unlockedSpells;
     private List<AbstractSpellPart> displayedGlyphs;
     private int page = 0;
-    private int glyphsPerPage = 58;
+    private int glyphsPerPage = 70;
     
     // Category tracking for glyph organization
     public int formTextRow = 0;
     public int augmentTextRow = 0;
     public int effectTextRow = 0;
     
-    private PageButton nextButton;
-    private PageButton previousButton;
+    private StaffArrowButton nextButton;
+    private StaffArrowButton previousButton;
     
     // UI elements
     private SearchBar searchBar;
@@ -118,10 +119,25 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         this.currentPhase = StaffPhase.BEGIN;
     }
 
+    private static final int STAFF_GUI_WIDTH = 375;
+    private static final int STAFF_GUI_HEIGHT = 232;
+    private static final int PHASE_ROW_TEXTURE_WIDTH = 253;
+    private static final int PHASE_ROW_TEXTURE_HEIGHT = 20;
+    private static final int PHASE_ROW_TEXTURE_X_OFFSET = 33;
+    private static final int PHASE_SECTION_Y_OFFSET = 116;
+    private static final int PHASE_ROW_HEIGHT = 20;
+    private static final int CRAFTING_CELL_START_X_OFFSET = 36;
+    private static final int CRAFTING_CELL_SPACING = 24;
+    private static final int PHASE_SECTION_SHIFT_X = 65;
+    private static final int PHASE_SECTION_SHIFT_Y = 19;
+    
     @Override
     public void init() {
-        this.height = this.height + 32;
         super.init();
+        bookLeft = width / 2 - STAFF_GUI_WIDTH / 2;
+        bookTop = height / 2 - STAFF_GUI_HEIGHT / 2;
+        bookRight = width / 2 + STAFF_GUI_WIDTH / 2;
+        bookBottom = height / 2 + STAFF_GUI_HEIGHT / 2;
         
         if (selectedSpellSlot == -1) {
             selectedSpellSlot = caster.getCurrentSlot();
@@ -191,8 +207,6 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         
         selectPhase(StaffPhase.BEGIN);
         
-        resetCraftingCells();
-        
         validate();
         
         // Trigger GUI open animation
@@ -204,13 +218,15 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     private void initSpellSlots() {
-        // Create 10 spell slots for the staff (like the spellbook) - these are the radial menu slots
+        int slotStartX = bookLeft + 355;
+        int slotStartY = bookTop + 37;
+        int slotSpacing = 16;
+        
         for (int i = 0; i < 10; i++) {
-            // Get name from BEGIN phase of each logical slot
             int beginPhysicalSlot = i * 3 + StaffPhase.BEGIN.ordinal();
             String name = caster.getSpellName(beginPhysicalSlot);
-            GuiSpellSlot slot = new GuiSpellSlot(bookLeft + 281, bookTop - 1 + 15 * (i + 1), i, name, (b) -> {
-                if (!(b instanceof GuiSpellSlot button) || this.selectedSpellSlot == button.slotNum) {
+            StaffSpellSlot slot = new StaffSpellSlot(slotStartX, slotStartY + slotSpacing * i, i, name, (b) -> {
+                if (!(b instanceof StaffSpellSlot button) || this.selectedSpellSlot == button.slotNum) {
                     return;
                 }
                 this.selectedSlotButton.isSelected = false;
@@ -282,33 +298,28 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     private void addPhaseButtons() {
-        // Add 16x16 phase buttons for each row of crafting cells
-        int startY = bookTop + 116; // moved up by an additional 32 pixels
-        int rowHeight = 20;
+        int startY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y + 2;
+        int rowHeight = PHASE_ROW_HEIGHT + 2;
         int buttonSize = 16;
-        int buttonX = bookLeft + 20; // Left side of each row
+        int buttonX = bookLeft + PHASE_SECTION_SHIFT_X + 11;
         
-        for (int phase = 0; phase < 3; phase++) {
-            StaffPhase staffPhase = StaffPhase.values()[phase];
-            int y = startY + phase * rowHeight;
-            
-            Button phaseButton = Button.builder(Component.literal(""), (button) -> {
-                selectPhase(staffPhase);
-            }).bounds(buttonX, y, buttonSize, buttonSize).build();
-            
-            phaseButton.setTooltip(Tooltip.create(
-                Component.translatable("gui.ars_zero.phase." + staffPhase.name().toLowerCase())
-            ));
-            
-            addRenderableWidget(phaseButton);
-            
-            // Store reference to the button
-            switch (staffPhase) {
-                case BEGIN -> beginPhaseButton = phaseButton;
-                case TICK -> tickPhaseButton = phaseButton;
-                case END -> endPhaseButton = phaseButton;
-            }
-        }
+        GuiImageButton beginButton = new GuiImageButton(buttonX, startY, buttonSize, buttonSize, 
+            StaffGuiTextures.ICON_START, (button) -> selectPhase(StaffPhase.BEGIN));
+        beginButton.withTooltip(Component.translatable("gui.ars_zero.phase.begin"));
+        beginPhaseButton = beginButton;
+        addRenderableWidget(beginButton);
+        
+        GuiImageButton tickButton = new GuiImageButton(buttonX, startY + rowHeight, buttonSize, buttonSize, 
+            StaffGuiTextures.ICON_TICK, (button) -> selectPhase(StaffPhase.TICK));
+        tickButton.withTooltip(Component.translatable("gui.ars_zero.phase.tick"));
+        tickPhaseButton = tickButton;
+        addRenderableWidget(tickButton);
+        
+        GuiImageButton endButton = new GuiImageButton(buttonX, startY + rowHeight * 2, buttonSize, buttonSize, 
+            StaffGuiTextures.ICON_END, (button) -> selectPhase(StaffPhase.END));
+        endButton.withTooltip(Component.translatable("gui.ars_zero.phase.end"));
+        endPhaseButton = endButton;
+        addRenderableWidget(endButton);
     }
 
     private void addSearchBar() {
@@ -317,7 +328,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             previousSearch = searchBar.getValue();
         }
 
-        searchBar = new SearchBar(Minecraft.getInstance().font, bookRight - 130, bookTop - 3);
+        searchBar = new SearchBar(Minecraft.getInstance().font, bookRight - 140, bookTop + 14);
         searchBar.onClear = (val) -> {
             this.onSearchChanged("");
             return null;
@@ -330,23 +341,21 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     private void addSpellNameAndButtons() {
-        // Add spell name field
-        spellNameBox = new EnterTextField(minecraft.font, bookLeft + 16, bookBottom - 13);
+        spellNameBox = new EnterTextField(minecraft.font, bookLeft + 76, bookBottom - 29);
         
-        // Get spell name from BEGIN phase
         int beginPhysicalSlot = selectedSpellSlot * 3 + StaffPhase.BEGIN.ordinal();
         spellNameBox.setValue(caster.getSpellName(beginPhysicalSlot));
         addRenderableWidget(spellNameBox);
 
-        addRenderableWidget(new CreateSpellButton(bookRight - 74, bookBottom - 13, (b) -> {
+        addRenderableWidget(new CreateSpellButton(bookRight - 84, bookBottom - 29, (b) -> {
             ArsZero.LOGGER.info("Save button clicked!");
             this.saveSpell();
         }, this::getValidationErrors));
-        addRenderableWidget(new ClearButton(bookRight - 129, bookBottom - 13, Component.translatable("ars_nouveau.spell_book_gui.clear"), (button) -> clear()));
+        addRenderableWidget(new ClearButton(bookRight - 137, bookBottom - 29, Component.translatable("ars_nouveau.spell_book_gui.clear"), (button) -> clear()));
     }
 
     private void addLeftSideTabs() {
-        addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 22, DocAssets.SPELL_STYLE_TAB, (b) -> {
+        addRenderableWidget(new GuiImageButton(bookLeft + 53, bookTop + 32, 18, 18, StaffGuiTextures.STYLE_ICON, (b) -> {
             openParticleScreen();
         }).withTooltip(Component.translatable("ars_nouveau.gui.spell_style")));
     }
@@ -366,6 +375,10 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         tickPhaseButton.active = (phase != StaffPhase.TICK);
         endPhaseButton.active = (phase != StaffPhase.END);
         
+        beginPhaseButton.image = (phase == StaffPhase.BEGIN) ? StaffGuiTextures.ICON_START_SELECTED : StaffGuiTextures.ICON_START;
+        tickPhaseButton.image = (phase == StaffPhase.TICK) ? StaffGuiTextures.ICON_TICK_SELECTED : StaffGuiTextures.ICON_TICK;
+        endPhaseButton.image = (phase == StaffPhase.END) ? StaffGuiTextures.ICON_END_SELECTED : StaffGuiTextures.ICON_END;
+        
         updateCraftingCellVisibility();
         validate();
     }
@@ -378,8 +391,8 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
     }
 
     private void addPaginationButtons() {
-        this.nextButton = addRenderableWidget(new PageButton(bookRight - 20, bookBottom - 6, true, this::onPageIncrease, true));
-        this.previousButton = addRenderableWidget(new PageButton(bookLeft - 5, bookBottom - 6, false, this::onPageDec, true));
+        this.nextButton = addRenderableWidget(new StaffArrowButton(bookRight - 33, bookBottom - 155, true, this::onPageIncrease));
+        this.previousButton = addRenderableWidget(new StaffArrowButton(bookLeft + 75, bookBottom - 155, false, this::onPageDec));
         
         updateNextPageButtons();
         previousButton.active = false;
@@ -400,9 +413,8 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
             return;
         }
 
-        final int PER_ROW = 6;
+        final int PER_ROW = 14;
         final int MAX_ROWS = 5;
-        boolean nextPage = false;
         int adjustedRowsPlaced = 0;
         boolean foundForms = false;
         boolean foundAugments = false;
@@ -416,106 +428,69 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
 
         sorted = sorted.subList(glyphsPerPage * page, Math.min(sorted.size(), glyphsPerPage * (page + 1)));
         int adjustedXPlaced = 0;
-        int totalRowsPlaced = 0;
-        int rowOffset = 0;
 
-        int yStart = bookTop + 18;
+        int yStart = bookTop + 38;
+        int baseX = bookLeft + 87;
+        final int horizontalSpacing = 18;
 
         for (AbstractSpellPart part : sorted) {
             if (adjustedXPlaced >= PER_ROW) {
                 adjustedRowsPlaced++;
-                totalRowsPlaced++;
                 adjustedXPlaced = 0;
             }
 
             if (adjustedRowsPlaced >= MAX_ROWS) {
-                if (nextPage) {
-                    break;
-                }
-                nextPage = true;
-                adjustedXPlaced = 0;
-                adjustedRowsPlaced = 0; // reset to top for the right grid
+                break;
             }
 
             if (!foundForms && part instanceof AbstractCastMethod) {
-                if (adjustedXPlaced != 0) {
-                    adjustedRowsPlaced++;
-                    totalRowsPlaced++;
-                    adjustedXPlaced = 0;
-                }
                 if (adjustedRowsPlaced >= MAX_ROWS) {
-                    nextPage = true;
-                    adjustedXPlaced = 0;
-                    adjustedRowsPlaced = 0;
+                    break;
                 }
-                int baseX = nextPage ? (bookLeft + 154) : (bookLeft + 20);
-                int xOffsetPlaceholder = 20 * (adjustedXPlaced % PER_ROW);
+                int xOffsetPlaceholder = horizontalSpacing * (adjustedXPlaced % PER_ROW);
                 int yPlacePlaceholder = adjustedRowsPlaced * 18 + yStart;
-                Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(baseX + xOffsetPlaceholder, yPlacePlaceholder, 16, 16).build();
-                btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.form")));
+                GuiImageButton btn = createCategoryIcon(baseX + xOffsetPlaceholder, yPlacePlaceholder, StaffGuiTextures.GLYPH_CATEGORY_FORM, Component.translatable("ars_nouveau.spell_book_gui.form"));
                 addRenderableWidget(btn);
                 categoryButtons.add(btn);
                 adjustedXPlaced++;
                 if (adjustedXPlaced >= PER_ROW) {
                     adjustedRowsPlaced++;
-                    totalRowsPlaced++;
                     adjustedXPlaced = 0;
                 }
                 foundForms = true;
             } else if (!foundAugments && part instanceof AbstractAugment) {
-                if (adjustedXPlaced != 0) {
-                    adjustedRowsPlaced++;
-                    totalRowsPlaced++;
-                    adjustedXPlaced = 0;
-                }
                 if (adjustedRowsPlaced >= MAX_ROWS) {
-                    nextPage = true;
-                    adjustedXPlaced = 0;
-                    adjustedRowsPlaced = 0;
+                    break;
                 }
-                int baseX = nextPage ? (bookLeft + 154) : (bookLeft + 20);
-                int xOffsetPlaceholder = 20 * (adjustedXPlaced % PER_ROW);
+                int xOffsetPlaceholder = horizontalSpacing * (adjustedXPlaced % PER_ROW);
                 int yPlacePlaceholder = adjustedRowsPlaced * 18 + yStart;
-                Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(baseX + xOffsetPlaceholder, yPlacePlaceholder, 16, 16).build();
-                btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.augment")));
+                GuiImageButton btn = createCategoryIcon(baseX + xOffsetPlaceholder, yPlacePlaceholder, StaffGuiTextures.GLYPH_CATEGORY_AUGMENT, Component.translatable("ars_nouveau.spell_book_gui.augment"));
                 addRenderableWidget(btn);
                 categoryButtons.add(btn);
                 adjustedXPlaced++;
                 if (adjustedXPlaced >= PER_ROW) {
                     adjustedRowsPlaced++;
-                    totalRowsPlaced++;
                     adjustedXPlaced = 0;
                 }
                 foundAugments = true;
             } else if (!foundEffects && part instanceof AbstractEffect) {
-                if (adjustedXPlaced != 0) {
-                    adjustedRowsPlaced++;
-                    totalRowsPlaced++;
-                    adjustedXPlaced = 0;
-                }
                 if (adjustedRowsPlaced >= MAX_ROWS) {
-                    nextPage = true;
-                    adjustedXPlaced = 0;
-                    adjustedRowsPlaced = 0;
+                    break;
                 }
-                int baseX = nextPage ? (bookLeft + 154) : (bookLeft + 20);
-                int xOffsetPlaceholder = 20 * (adjustedXPlaced % PER_ROW);
+                int xOffsetPlaceholder = horizontalSpacing * (adjustedXPlaced % PER_ROW);
                 int yPlacePlaceholder = adjustedRowsPlaced * 18 + yStart;
-                Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(baseX + xOffsetPlaceholder, yPlacePlaceholder, 16, 16).build();
-                btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.effect")));
+                GuiImageButton btn = createCategoryIcon(baseX + xOffsetPlaceholder, yPlacePlaceholder, StaffGuiTextures.GLYPH_CATEGORY_EFFECT, Component.translatable("ars_nouveau.spell_book_gui.effect"));
                 addRenderableWidget(btn);
                 categoryButtons.add(btn);
                 adjustedXPlaced++;
                 if (adjustedXPlaced >= PER_ROW) {
                     adjustedRowsPlaced++;
-                    totalRowsPlaced++;
                     adjustedXPlaced = 0;
                 }
                 foundEffects = true;
             }
 
-            int baseX = nextPage ? (bookLeft + 154) : (bookLeft + 20);
-            int xOffset = 20 * (adjustedXPlaced % PER_ROW);
+            int xOffset = horizontalSpacing * (adjustedXPlaced % PER_ROW);
             int yPlace = adjustedRowsPlaced * 18 + yStart;
 
             GlyphButton cell = new GlyphButton(baseX + xOffset, yPlace, part, this::onGlyphClick);
@@ -622,17 +597,17 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         craftingCells = new ArrayList<>();
         
         // Create 3 rows of 10 crafting cells each
-        int startY = bookTop + 116; // moved up by an additional 32 pixels
-        int rowHeight = 20;
-        int cellSpacing = 24;
-        int startX = bookLeft + 40; // Start after the phase buttons
+        int startY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y;
+        int rowHeight = PHASE_ROW_HEIGHT + 2;
+        int cellSpacing = CRAFTING_CELL_SPACING;
+        int startX = bookLeft + CRAFTING_CELL_START_X_OFFSET + PHASE_SECTION_SHIFT_X - 8;
         
         for (int phase = 0; phase < 3; phase++) {
             for (int slot = 0; slot < 10; slot++) {
                 int x = startX + slot * cellSpacing;
                 int y = startY + phase * rowHeight;
                 
-                CraftingButton cell = new CraftingButton(x, y, this::onCraftingSlotClick, slot);
+                StaffCraftingButton cell = new StaffCraftingButton(x, y, this::onCraftingSlotClick, slot);
                 addRenderableWidget(cell);
                 craftingCells.add(cell);
                 
@@ -827,11 +802,31 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         }
         buttons.clear();
     }
+    
+    private GuiImageButton createCategoryIcon(int x, int y, ResourceLocation texture, Component tooltip) {
+        GuiImageButton button = new GuiImageButton(x, y, 18, 16, texture, (b) -> {});
+        button.soundDisabled = true;
+        button.withTooltip(tooltip);
+        return button;
+    }
 
 
     @Override
-    public void drawBackgroundElements(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        super.drawBackgroundElements(graphics, mouseX, mouseY, partialTicks);
+    public void drawBackgroundElements(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        DyeColor staffColor = DyeColor.PURPLE;
+        if (staffStack != null && !staffStack.isEmpty() && staffStack.has(net.minecraft.core.component.DataComponents.BASE_COLOR)) {
+            staffColor = staffStack.get(net.minecraft.core.component.DataComponents.BASE_COLOR);
+        }
+        ResourceLocation backgroundTexture = StaffGuiTextures.getBackgroundTexture(staffColor);
+        graphics.blit(backgroundTexture, 0, 0, 0, 0, STAFF_GUI_WIDTH, STAFF_GUI_HEIGHT, STAFF_GUI_WIDTH, STAFF_GUI_HEIGHT);
+        
+        int rowX = PHASE_ROW_TEXTURE_X_OFFSET + PHASE_SECTION_SHIFT_X - 4;
+        for (int i = 0; i < StaffPhase.values().length; i++) {
+            StaffPhase phase = StaffPhase.values()[i];
+            ResourceLocation rowTexture = phase == currentPhase ? StaffGuiTextures.SPELL_PHASE_ROW_SELECTED : StaffGuiTextures.SPELL_PHASE_ROW;
+            int rowY = PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y + i * (PHASE_ROW_HEIGHT + 2);
+            graphics.blit(rowTexture, rowX, rowY, 0, 0, PHASE_ROW_TEXTURE_WIDTH, PHASE_ROW_TEXTURE_HEIGHT, PHASE_ROW_TEXTURE_WIDTH, PHASE_ROW_TEXTURE_HEIGHT);
+        }
     }
 
     @Override
@@ -850,8 +845,7 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         if (formTextRow >= 1) {
             int x = (formTextRow > 6 ? 154 : 20);
             int y = 5 + 18 * (formTextRow + (formTextRow == 1 ? 0 : 1)) + yOffset;
-            Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(x, y, 16, 16).build();
-            btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.form")));
+            GuiImageButton btn = createCategoryIcon(x, y, StaffGuiTextures.GLYPH_CATEGORY_FORM, Component.translatable("ars_nouveau.spell_book_gui.form"));
             addRenderableWidget(btn);
             categoryButtons.add(btn);
             formOffset = 1;
@@ -859,16 +853,14 @@ public class ArsZeroStaffGUI extends SpellSlottedScreen {
         if (effectTextRow >= 1) {
             int x = (effectTextRow > 6 ? 154 : 20);
             int y = 5 + 18 * (effectTextRow % 7 + formOffset) + yOffset;
-            Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(x, y, 16, 16).build();
-            btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.effect")));
+            GuiImageButton btn = createCategoryIcon(x, y, StaffGuiTextures.GLYPH_CATEGORY_EFFECT, Component.translatable("ars_nouveau.spell_book_gui.effect"));
             addRenderableWidget(btn);
             categoryButtons.add(btn);
         }
         if (augmentTextRow >= 1) {
             int x = (augmentTextRow > 6 ? 154 : 20);
             int y = 5 + 18 * (augmentTextRow + formOffset) + yOffset;
-            Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(x, y, 16, 16).build();
-            btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.augment")));
+            GuiImageButton btn = createCategoryIcon(x, y, StaffGuiTextures.GLYPH_CATEGORY_AUGMENT, Component.translatable("ars_nouveau.spell_book_gui.augment"));
             addRenderableWidget(btn);
             categoryButtons.add(btn);
         }

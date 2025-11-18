@@ -1,0 +1,756 @@
+diff --git a/src/main/java/com/github/ars_zero/client/gui/ArsZeroStaffGUI.java b/src/main/java/com/github/ars_zero/client/gui/ArsZeroStaffGUI.java
+index 8d87f3e..c4313d1 100644
+--- a/src/main/java/com/github/ars_zero/client/gui/ArsZeroStaffGUI.java
++++ b/src/main/java/com/github/ars_zero/client/gui/ArsZeroStaffGUI.java
+@@ -2,18 +2,19 @@
+ 
+ import com.github.ars_zero.ArsZero;
+ import com.github.ars_zero.client.animation.StaffAnimationHandler;
++import com.github.ars_zero.client.gui.buttons.StaffArrowButton;
+ import com.github.ars_zero.common.item.AbstractSpellStaff;
+-import com.hollingsworth.arsnouveau.api.documentation.DocAssets;
+ import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
+ import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
+ import com.hollingsworth.arsnouveau.api.spell.*;
+ import com.hollingsworth.arsnouveau.client.gui.book.SpellSlottedScreen;
+ import com.hollingsworth.arsnouveau.client.gui.buttons.ClearButton;
+ import com.hollingsworth.arsnouveau.client.gui.buttons.CreateSpellButton;
++import com.github.ars_zero.client.gui.buttons.StaffCraftingButton;
++import com.github.ars_zero.client.gui.buttons.StaffSpellSlot;
+ import com.hollingsworth.arsnouveau.client.gui.buttons.CraftingButton;
+ import com.hollingsworth.arsnouveau.client.gui.buttons.GlyphButton;
+ import com.hollingsworth.arsnouveau.client.gui.buttons.GuiImageButton;
+-import com.hollingsworth.arsnouveau.client.gui.buttons.GuiSpellSlot;
+ import com.hollingsworth.arsnouveau.client.gui.SearchBar;
+ import com.hollingsworth.arsnouveau.client.gui.book.EnterTextField;
+ import com.github.ars_zero.common.network.Networking;
+@@ -30,12 +31,13 @@
+ import com.hollingsworth.arsnouveau.common.spell.validation.ActionAugmentationPolicyValidator;
+ import com.hollingsworth.arsnouveau.common.spell.validation.StartingCastMethodSpellValidator;
+ import net.minecraft.client.Minecraft;
++import net.minecraft.client.gui.GuiGraphics;
+ import net.minecraft.client.gui.components.Button;
+-import net.minecraft.client.gui.components.Tooltip;
+-import net.minecraft.client.gui.screens.inventory.PageButton;
+ import net.minecraft.client.player.AbstractClientPlayer;
+ import net.minecraft.network.chat.Component;
++import net.minecraft.resources.ResourceLocation;
+ import net.minecraft.world.InteractionHand;
++import net.minecraft.world.item.DyeColor;
+ import net.minecraft.world.item.ItemStack;
+ 
+ import java.util.ArrayList;
+@@ -51,14 +53,13 @@ public enum StaffPhase {
+ 
+     private StaffPhase currentPhase = StaffPhase.BEGIN;
+     
+-    // Phase selection buttons (16x16 buttons for each row)
+-    private Button beginPhaseButton;
+-    private Button tickPhaseButton;
+-    private Button endPhaseButton;
++    private GuiImageButton beginPhaseButton;
++    private GuiImageButton tickPhaseButton;
++    private GuiImageButton endPhaseButton;
+     
+-    // Spell slots for the 10 shortcuts on the right (radial menu slots)
+-    private GuiSpellSlot[] spellSlots = new GuiSpellSlot[10];
+-    private GuiSpellSlot selectedSlotButton;
++     // Spell slots for the 10 shortcuts on the right (radial menu slots)
++    private StaffSpellSlot[] spellSlots = new StaffSpellSlot[10];
++    private StaffSpellSlot selectedSlotButton;
+     private int selectedSpellSlot = -1;
+     
+     // Glyph selection
+@@ -67,15 +68,15 @@ public enum StaffPhase {
+     private List<AbstractSpellPart> unlockedSpells;
+     private List<AbstractSpellPart> displayedGlyphs;
+     private int page = 0;
+-    private int glyphsPerPage = 58;
++    private int glyphsPerPage = 70;
+     
+     // Category tracking for glyph organization
+     public int formTextRow = 0;
+     public int augmentTextRow = 0;
+     public int effectTextRow = 0;
+     
+-    private PageButton nextButton;
+-    private PageButton previousButton;
++    private StaffArrowButton nextButton;
++    private StaffArrowButton previousButton;
+     
+     // UI elements
+     private SearchBar searchBar;
+@@ -118,10 +119,25 @@ public ArsZeroStaffGUI(ItemStack stack, InteractionHand hand) {
+         this.currentPhase = StaffPhase.BEGIN;
+     }
+ 
++    private static final int STAFF_GUI_WIDTH = 375;
++    private static final int STAFF_GUI_HEIGHT = 232;
++    private static final int PHASE_ROW_TEXTURE_WIDTH = 253;
++    private static final int PHASE_ROW_TEXTURE_HEIGHT = 20;
++    private static final int PHASE_ROW_TEXTURE_X_OFFSET = 33;
++    private static final int PHASE_SECTION_Y_OFFSET = 116;
++    private static final int PHASE_ROW_HEIGHT = 20;
++    private static final int CRAFTING_CELL_START_X_OFFSET = 36;
++    private static final int CRAFTING_CELL_SPACING = 24;
++    private static final int PHASE_SECTION_SHIFT_X = 65;
++    private static final int PHASE_SECTION_SHIFT_Y = 19;
++    
+     @Override
+     public void init() {
+-        this.height = this.height + 32;
+         super.init();
++        bookLeft = width / 2 - STAFF_GUI_WIDTH / 2;
++        bookTop = height / 2 - STAFF_GUI_HEIGHT / 2;
++        bookRight = width / 2 + STAFF_GUI_WIDTH / 2;
++        bookBottom = height / 2 + STAFF_GUI_HEIGHT / 2;
+         
+         if (selectedSpellSlot == -1) {
+             selectedSpellSlot = caster.getCurrentSlot();
+@@ -191,8 +207,6 @@ public void init() {
+         
+         selectPhase(StaffPhase.BEGIN);
+         
+-        resetCraftingCells();
+-        
+         validate();
+         
+         // Trigger GUI open animation
+@@ -204,13 +218,15 @@ public void init() {
+     }
+ 
+     private void initSpellSlots() {
+-        // Create 10 spell slots for the staff (like the spellbook) - these are the radial menu slots
++        int slotStartX = bookLeft + 355;
++        int slotStartY = bookTop + 37;
++        int slotSpacing = 16;
++        
+         for (int i = 0; i < 10; i++) {
+-            // Get name from BEGIN phase of each logical slot
+             int beginPhysicalSlot = i * 3 + StaffPhase.BEGIN.ordinal();
+             String name = caster.getSpellName(beginPhysicalSlot);
+-            GuiSpellSlot slot = new GuiSpellSlot(bookLeft + 281, bookTop - 1 + 15 * (i + 1), i, name, (b) -> {
+-                if (!(b instanceof GuiSpellSlot button) || this.selectedSpellSlot == button.slotNum) {
++            StaffSpellSlot slot = new StaffSpellSlot(slotStartX, slotStartY + slotSpacing * i, i, name, (b) -> {
++                if (!(b instanceof StaffSpellSlot button) || this.selectedSpellSlot == button.slotNum) {
+                     return;
+                 }
+                 this.selectedSlotButton.isSelected = false;
+@@ -282,33 +298,28 @@ private void loadSpellFromSlot() {
+     }
+ 
+     private void addPhaseButtons() {
+-        // Add 16x16 phase buttons for each row of crafting cells
+-        int startY = bookTop + 116; // moved up by an additional 32 pixels
+-        int rowHeight = 20;
++        int startY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y + 2;
++        int rowHeight = PHASE_ROW_HEIGHT + 2;
+         int buttonSize = 16;
+-        int buttonX = bookLeft + 20; // Left side of each row
++        int buttonX = bookLeft + PHASE_SECTION_SHIFT_X + 11;
+         
+-        for (int phase = 0; phase < 3; phase++) {
+-            StaffPhase staffPhase = StaffPhase.values()[phase];
+-            int y = startY + phase * rowHeight;
+-            
+-            Button phaseButton = Button.builder(Component.literal(""), (button) -> {
+-                selectPhase(staffPhase);
+-            }).bounds(buttonX, y, buttonSize, buttonSize).build();
+-            
+-            phaseButton.setTooltip(Tooltip.create(
+-                Component.translatable("gui.ars_zero.phase." + staffPhase.name().toLowerCase())
+-            ));
+-            
+-            addRenderableWidget(phaseButton);
+-            
+-            // Store reference to the button
+-            switch (staffPhase) {
+-                case BEGIN -> beginPhaseButton = phaseButton;
+-                case TICK -> tickPhaseButton = phaseButton;
+-                case END -> endPhaseButton = phaseButton;
+-            }
+-        }
++        GuiImageButton beginButton = new GuiImageButton(buttonX, startY, buttonSize, buttonSize, 
++            StaffGuiTextures.ICON_START, (button) -> selectPhase(StaffPhase.BEGIN));
++        beginButton.withTooltip(Component.translatable("gui.ars_zero.phase.begin"));
++        beginPhaseButton = beginButton;
++        addRenderableWidget(beginButton);
++        
++        GuiImageButton tickButton = new GuiImageButton(buttonX, startY + rowHeight, buttonSize, buttonSize, 
++            StaffGuiTextures.ICON_TICK, (button) -> selectPhase(StaffPhase.TICK));
++        tickButton.withTooltip(Component.translatable("gui.ars_zero.phase.tick"));
++        tickPhaseButton = tickButton;
++        addRenderableWidget(tickButton);
++        
++        GuiImageButton endButton = new GuiImageButton(buttonX, startY + rowHeight * 2, buttonSize, buttonSize, 
++            StaffGuiTextures.ICON_END, (button) -> selectPhase(StaffPhase.END));
++        endButton.withTooltip(Component.translatable("gui.ars_zero.phase.end"));
++        endPhaseButton = endButton;
++        addRenderableWidget(endButton);
+     }
+ 
+     private void addSearchBar() {
+@@ -317,7 +328,7 @@ private void addSearchBar() {
+             previousSearch = searchBar.getValue();
+         }
+ 
+-        searchBar = new SearchBar(Minecraft.getInstance().font, bookRight - 130, bookTop - 3);
++        searchBar = new SearchBar(Minecraft.getInstance().font, bookRight - 140, bookTop + 14);
+         searchBar.onClear = (val) -> {
+             this.onSearchChanged("");
+             return null;
+@@ -330,23 +341,21 @@ private void addSearchBar() {
+     }
+ 
+     private void addSpellNameAndButtons() {
+-        // Add spell name field
+-        spellNameBox = new EnterTextField(minecraft.font, bookLeft + 16, bookBottom - 13);
++        spellNameBox = new EnterTextField(minecraft.font, bookLeft + 76, bookBottom - 29);
+         
+-        // Get spell name from BEGIN phase
+         int beginPhysicalSlot = selectedSpellSlot * 3 + StaffPhase.BEGIN.ordinal();
+         spellNameBox.setValue(caster.getSpellName(beginPhysicalSlot));
+         addRenderableWidget(spellNameBox);
+ 
+-        addRenderableWidget(new CreateSpellButton(bookRight - 74, bookBottom - 13, (b) -> {
++        addRenderableWidget(new CreateSpellButton(bookRight - 84, bookBottom - 29, (b) -> {
+             ArsZero.LOGGER.info("Save button clicked!");
+             this.saveSpell();
+         }, this::getValidationErrors));
+-        addRenderableWidget(new ClearButton(bookRight - 129, bookBottom - 13, Component.translatable("ars_nouveau.spell_book_gui.clear"), (button) -> clear()));
++        addRenderableWidget(new ClearButton(bookRight - 137, bookBottom - 29, Component.translatable("ars_nouveau.spell_book_gui.clear"), (button) -> clear()));
+     }
+ 
+     private void addLeftSideTabs() {
+-        addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 22, DocAssets.SPELL_STYLE_TAB, (b) -> {
++        addRenderableWidget(new GuiImageButton(bookLeft + 53, bookTop + 32, 18, 18, StaffGuiTextures.STYLE_ICON, (b) -> {
+             openParticleScreen();
+         }).withTooltip(Component.translatable("ars_nouveau.gui.spell_style")));
+     }
+@@ -366,6 +375,10 @@ private void selectPhase(StaffPhase phase) {
+         tickPhaseButton.active = (phase != StaffPhase.TICK);
+         endPhaseButton.active = (phase != StaffPhase.END);
+         
++        beginPhaseButton.image = (phase == StaffPhase.BEGIN) ? StaffGuiTextures.ICON_START_SELECTED : StaffGuiTextures.ICON_START;
++        tickPhaseButton.image = (phase == StaffPhase.TICK) ? StaffGuiTextures.ICON_TICK_SELECTED : StaffGuiTextures.ICON_TICK;
++        endPhaseButton.image = (phase == StaffPhase.END) ? StaffGuiTextures.ICON_END_SELECTED : StaffGuiTextures.ICON_END;
++        
+         updateCraftingCellVisibility();
+         validate();
+     }
+@@ -378,8 +391,8 @@ private void updateCraftingCellVisibility() {
+     }
+ 
+     private void addPaginationButtons() {
+-        this.nextButton = addRenderableWidget(new PageButton(bookRight - 20, bookBottom - 6, true, this::onPageIncrease, true));
+-        this.previousButton = addRenderableWidget(new PageButton(bookLeft - 5, bookBottom - 6, false, this::onPageDec, true));
++        this.nextButton = addRenderableWidget(new StaffArrowButton(bookRight - 33, bookBottom - 155, true, this::onPageIncrease));
++        this.previousButton = addRenderableWidget(new StaffArrowButton(bookLeft + 75, bookBottom - 155, false, this::onPageDec));
+         
+         updateNextPageButtons();
+         previousButton.active = false;
+@@ -400,9 +413,8 @@ private void layoutAllGlyphs(int page) {
+             return;
+         }
+ 
+-        final int PER_ROW = 6;
++        final int PER_ROW = 14;
+         final int MAX_ROWS = 5;
+-        boolean nextPage = false;
+         int adjustedRowsPlaced = 0;
+         boolean foundForms = false;
+         boolean foundAugments = false;
+@@ -416,106 +428,69 @@ private void layoutAllGlyphs(int page) {
+ 
+         sorted = sorted.subList(glyphsPerPage * page, Math.min(sorted.size(), glyphsPerPage * (page + 1)));
+         int adjustedXPlaced = 0;
+-        int totalRowsPlaced = 0;
+-        int rowOffset = 0;
+ 
+-        int yStart = bookTop + 18;
++        int yStart = bookTop + 38;
++        int baseX = bookLeft + 87;
++        final int horizontalSpacing = 18;
+ 
+         for (AbstractSpellPart part : sorted) {
+             if (adjustedXPlaced >= PER_ROW) {
+                 adjustedRowsPlaced++;
+-                totalRowsPlaced++;
+                 adjustedXPlaced = 0;
+             }
+ 
+             if (adjustedRowsPlaced >= MAX_ROWS) {
+-                if (nextPage) {
+-                    break;
+-                }
+-                nextPage = true;
+-                adjustedXPlaced = 0;
+-                adjustedRowsPlaced = 0; // reset to top for the right grid
++                break;
+             }
+ 
+             if (!foundForms && part instanceof AbstractCastMethod) {
+-                if (adjustedXPlaced != 0) {
+-                    adjustedRowsPlaced++;
+-                    totalRowsPlaced++;
+-                    adjustedXPlaced = 0;
+-                }
+                 if (adjustedRowsPlaced >= MAX_ROWS) {
+-                    nextPage = true;
+-                    adjustedXPlaced = 0;
+-                    adjustedRowsPlaced = 0;
++                    break;
+                 }
+-                int baseX = nextPage ? (bookLeft + 154) : (bookLeft + 20);
+-                int xOffsetPlaceholder = 20 * (adjustedXPlaced % PER_ROW);
++                int xOffsetPlaceholder = horizontalSpacing * (adjustedXPlaced % PER_ROW);
+                 int yPlacePlaceholder = adjustedRowsPlaced * 18 + yStart;
+-                Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(baseX + xOffsetPlaceholder, yPlacePlaceholder, 16, 16).build();
+-                btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.form")));
++                GuiImageButton btn = createCategoryIcon(baseX + xOffsetPlaceholder, yPlacePlaceholder, StaffGuiTextures.GLYPH_CATEGORY_FORM, Component.translatable("ars_nouveau.spell_book_gui.form"));
+                 addRenderableWidget(btn);
+                 categoryButtons.add(btn);
+                 adjustedXPlaced++;
+                 if (adjustedXPlaced >= PER_ROW) {
+                     adjustedRowsPlaced++;
+-                    totalRowsPlaced++;
+                     adjustedXPlaced = 0;
+                 }
+                 foundForms = true;
+             } else if (!foundAugments && part instanceof AbstractAugment) {
+-                if (adjustedXPlaced != 0) {
+-                    adjustedRowsPlaced++;
+-                    totalRowsPlaced++;
+-                    adjustedXPlaced = 0;
+-                }
+                 if (adjustedRowsPlaced >= MAX_ROWS) {
+-                    nextPage = true;
+-                    adjustedXPlaced = 0;
+-                    adjustedRowsPlaced = 0;
++                    break;
+                 }
+-                int baseX = nextPage ? (bookLeft + 154) : (bookLeft + 20);
+-                int xOffsetPlaceholder = 20 * (adjustedXPlaced % PER_ROW);
++                int xOffsetPlaceholder = horizontalSpacing * (adjustedXPlaced % PER_ROW);
+                 int yPlacePlaceholder = adjustedRowsPlaced * 18 + yStart;
+-                Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(baseX + xOffsetPlaceholder, yPlacePlaceholder, 16, 16).build();
+-                btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.augment")));
++                GuiImageButton btn = createCategoryIcon(baseX + xOffsetPlaceholder, yPlacePlaceholder, StaffGuiTextures.GLYPH_CATEGORY_AUGMENT, Component.translatable("ars_nouveau.spell_book_gui.augment"));
+                 addRenderableWidget(btn);
+                 categoryButtons.add(btn);
+                 adjustedXPlaced++;
+                 if (adjustedXPlaced >= PER_ROW) {
+                     adjustedRowsPlaced++;
+-                    totalRowsPlaced++;
+                     adjustedXPlaced = 0;
+                 }
+                 foundAugments = true;
+             } else if (!foundEffects && part instanceof AbstractEffect) {
+-                if (adjustedXPlaced != 0) {
+-                    adjustedRowsPlaced++;
+-                    totalRowsPlaced++;
+-                    adjustedXPlaced = 0;
+-                }
+                 if (adjustedRowsPlaced >= MAX_ROWS) {
+-                    nextPage = true;
+-                    adjustedXPlaced = 0;
+-                    adjustedRowsPlaced = 0;
++                    break;
+                 }
+-                int baseX = nextPage ? (bookLeft + 154) : (bookLeft + 20);
+-                int xOffsetPlaceholder = 20 * (adjustedXPlaced % PER_ROW);
++                int xOffsetPlaceholder = horizontalSpacing * (adjustedXPlaced % PER_ROW);
+                 int yPlacePlaceholder = adjustedRowsPlaced * 18 + yStart;
+-                Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(baseX + xOffsetPlaceholder, yPlacePlaceholder, 16, 16).build();
+-                btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.effect")));
++                GuiImageButton btn = createCategoryIcon(baseX + xOffsetPlaceholder, yPlacePlaceholder, StaffGuiTextures.GLYPH_CATEGORY_EFFECT, Component.translatable("ars_nouveau.spell_book_gui.effect"));
+                 addRenderableWidget(btn);
+                 categoryButtons.add(btn);
+                 adjustedXPlaced++;
+                 if (adjustedXPlaced >= PER_ROW) {
+                     adjustedRowsPlaced++;
+-                    totalRowsPlaced++;
+                     adjustedXPlaced = 0;
+                 }
+                 foundEffects = true;
+             }
+ 
+-            int baseX = nextPage ? (bookLeft + 154) : (bookLeft + 20);
+-            int xOffset = 20 * (adjustedXPlaced % PER_ROW);
++            int xOffset = horizontalSpacing * (adjustedXPlaced % PER_ROW);
+             int yPlace = adjustedRowsPlaced * 18 + yStart;
+ 
+             GlyphButton cell = new GlyphButton(baseX + xOffset, yPlace, part, this::onGlyphClick);
+@@ -622,17 +597,17 @@ public void resetCraftingCells() {
+         craftingCells = new ArrayList<>();
+         
+         // Create 3 rows of 10 crafting cells each
+-        int startY = bookTop + 116; // moved up by an additional 32 pixels
+-        int rowHeight = 20;
+-        int cellSpacing = 24;
+-        int startX = bookLeft + 40; // Start after the phase buttons
++        int startY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y;
++        int rowHeight = PHASE_ROW_HEIGHT + 2;
++        int cellSpacing = CRAFTING_CELL_SPACING;
++        int startX = bookLeft + CRAFTING_CELL_START_X_OFFSET + PHASE_SECTION_SHIFT_X - 8;
+         
+         for (int phase = 0; phase < 3; phase++) {
+             for (int slot = 0; slot < 10; slot++) {
+                 int x = startX + slot * cellSpacing;
+                 int y = startY + phase * rowHeight;
+                 
+-                CraftingButton cell = new CraftingButton(x, y, this::onCraftingSlotClick, slot);
++                StaffCraftingButton cell = new StaffCraftingButton(x, y, this::onCraftingSlotClick, slot);
+                 addRenderableWidget(cell);
+                 craftingCells.add(cell);
+                 
+@@ -827,11 +802,31 @@ private void clearGlyphButtons(List<GlyphButton> buttons) {
+         }
+         buttons.clear();
+     }
++    
++    private GuiImageButton createCategoryIcon(int x, int y, ResourceLocation texture, Component tooltip) {
++        GuiImageButton button = new GuiImageButton(x, y, 18, 16, texture, (b) -> {});
++        button.soundDisabled = true;
++        button.withTooltip(tooltip);
++        return button;
++    }
+ 
+ 
+     @Override
+-    public void drawBackgroundElements(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+-        super.drawBackgroundElements(graphics, mouseX, mouseY, partialTicks);
++    public void drawBackgroundElements(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
++        DyeColor staffColor = DyeColor.PURPLE;
++        if (staffStack != null && !staffStack.isEmpty() && staffStack.has(net.minecraft.core.component.DataComponents.BASE_COLOR)) {
++            staffColor = staffStack.get(net.minecraft.core.component.DataComponents.BASE_COLOR);
++        }
++        ResourceLocation backgroundTexture = StaffGuiTextures.getBackgroundTexture(staffColor);
++        graphics.blit(backgroundTexture, 0, 0, 0, 0, STAFF_GUI_WIDTH, STAFF_GUI_HEIGHT, STAFF_GUI_WIDTH, STAFF_GUI_HEIGHT);
++        
++        int rowX = PHASE_ROW_TEXTURE_X_OFFSET + PHASE_SECTION_SHIFT_X - 4;
++        for (int i = 0; i < StaffPhase.values().length; i++) {
++            StaffPhase phase = StaffPhase.values()[i];
++            ResourceLocation rowTexture = phase == currentPhase ? StaffGuiTextures.SPELL_PHASE_ROW_SELECTED : StaffGuiTextures.SPELL_PHASE_ROW;
++            int rowY = PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y + i * (PHASE_ROW_HEIGHT + 2);
++            graphics.blit(rowTexture, rowX, rowY, 0, 0, PHASE_ROW_TEXTURE_WIDTH, PHASE_ROW_TEXTURE_HEIGHT, PHASE_ROW_TEXTURE_WIDTH, PHASE_ROW_TEXTURE_HEIGHT);
++        }
+     }
+ 
+     @Override
+@@ -850,8 +845,7 @@ private void refreshCategoryButtons() {
+         if (formTextRow >= 1) {
+             int x = (formTextRow > 6 ? 154 : 20);
+             int y = 5 + 18 * (formTextRow + (formTextRow == 1 ? 0 : 1)) + yOffset;
+-            Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(x, y, 16, 16).build();
+-            btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.form")));
++            GuiImageButton btn = createCategoryIcon(x, y, StaffGuiTextures.GLYPH_CATEGORY_FORM, Component.translatable("ars_nouveau.spell_book_gui.form"));
+             addRenderableWidget(btn);
+             categoryButtons.add(btn);
+             formOffset = 1;
+@@ -859,16 +853,14 @@ private void refreshCategoryButtons() {
+         if (effectTextRow >= 1) {
+             int x = (effectTextRow > 6 ? 154 : 20);
+             int y = 5 + 18 * (effectTextRow % 7 + formOffset) + yOffset;
+-            Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(x, y, 16, 16).build();
+-            btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.effect")));
++            GuiImageButton btn = createCategoryIcon(x, y, StaffGuiTextures.GLYPH_CATEGORY_EFFECT, Component.translatable("ars_nouveau.spell_book_gui.effect"));
+             addRenderableWidget(btn);
+             categoryButtons.add(btn);
+         }
+         if (augmentTextRow >= 1) {
+             int x = (augmentTextRow > 6 ? 154 : 20);
+             int y = 5 + 18 * (augmentTextRow + formOffset) + yOffset;
+-            Button btn = Button.builder(Component.literal(""), (b) -> {}).bounds(x, y, 16, 16).build();
+-            btn.setTooltip(Tooltip.create(Component.translatable("ars_nouveau.spell_book_gui.augment")));
++            GuiImageButton btn = createCategoryIcon(x, y, StaffGuiTextures.GLYPH_CATEGORY_AUGMENT, Component.translatable("ars_nouveau.spell_book_gui.augment"));
+             addRenderableWidget(btn);
+             categoryButtons.add(btn);
+         }
+diff --git a/src/main/java/com/github/ars_zero/client/gui/StaffGuiTextures.java b/src/main/java/com/github/ars_zero/client/gui/StaffGuiTextures.java
+new file mode 100644
+index 0000000..718b5ad
+--- /dev/null
++++ b/src/main/java/com/github/ars_zero/client/gui/StaffGuiTextures.java
+@@ -0,0 +1,39 @@
++package com.github.ars_zero.client.gui;
++
++import com.github.ars_zero.ArsZero;
++import net.minecraft.resources.ResourceLocation;
++import net.minecraft.world.item.DyeColor;
++
++public class StaffGuiTextures {
++    
++    public static ResourceLocation getBackgroundTexture(DyeColor color) {
++        String colorName = color.getName();
++        return ArsZero.prefix("textures/gui/staffui_background_" + colorName + ".png");
++    }
++    
++    public static final ResourceLocation ICON_SLOT_SELECTED = ArsZero.prefix("textures/gui/staffui_icon_slot_selected.png");
++    
++    public static final ResourceLocation ICON_START = ArsZero.prefix("textures/gui/staffui_icon_start.png");
++    public static final ResourceLocation ICON_START_SELECTED = ArsZero.prefix("textures/gui/staffui_icon_start_selected.png");
++    
++    public static final ResourceLocation ICON_TICK = ArsZero.prefix("textures/gui/staffui_icon_tick.png");
++    public static final ResourceLocation ICON_TICK_SELECTED = ArsZero.prefix("textures/gui/staffui_icon_tick_selected.png");
++    
++    public static final ResourceLocation ICON_END = ArsZero.prefix("textures/gui/staffui_icon_end.png");
++    public static final ResourceLocation ICON_END_SELECTED = ArsZero.prefix("textures/gui/staffui_icon_end_selected.png");
++    
++    public static final ResourceLocation ARROW_LEFT = ArsZero.prefix("textures/gui/staffui_arrow_left.png");
++    public static final ResourceLocation ARROW_LEFT_HOVER = ArsZero.prefix("textures/gui/staffui_arrow_left_hover.png");
++    
++    public static final ResourceLocation ARROW_RIGHT = ArsZero.prefix("textures/gui/staffui_arrow_right.png");
++    public static final ResourceLocation ARROW_RIGHT_HOVER = ArsZero.prefix("textures/gui/staffui_arrow_right_hover.png");
++    
++    public static final ResourceLocation SPELL_PHASE_ROW = ArsZero.prefix("textures/gui/spell_phase_row.png");
++    public static final ResourceLocation SPELL_PHASE_ROW_SELECTED = ArsZero.prefix("textures/gui/spell_phase_row_selected.png");
++    
++    public static final ResourceLocation GLYPH_CATEGORY_FORM = ArsZero.prefix("textures/gui/icon_glyph_category_form.png");
++    public static final ResourceLocation GLYPH_CATEGORY_AUGMENT = ArsZero.prefix("textures/gui/icon_glyph_category_augment.png");
++    public static final ResourceLocation GLYPH_CATEGORY_EFFECT = ArsZero.prefix("textures/gui/icon_glyph_category_effect.png");
++    public static final ResourceLocation STYLE_ICON = ArsZero.prefix("textures/gui/icon_style.png");
++}
++
+diff --git a/src/main/java/com/github/ars_zero/client/gui/buttons/StaffArrowButton.java b/src/main/java/com/github/ars_zero/client/gui/buttons/StaffArrowButton.java
+new file mode 100644
+index 0000000..0f9d3d5
+--- /dev/null
++++ b/src/main/java/com/github/ars_zero/client/gui/buttons/StaffArrowButton.java
+@@ -0,0 +1,16 @@
++package com.github.ars_zero.client.gui.buttons;
++
++import com.github.ars_zero.client.gui.StaffGuiTextures;
++import com.hollingsworth.arsnouveau.client.gui.buttons.GuiImageButton;
++import net.minecraft.client.gui.components.Button;
++
++public class StaffArrowButton extends GuiImageButton {
++    
++    public StaffArrowButton(int x, int y, boolean isRight, Button.OnPress onPress) {
++        super(x, y, 8, 10, 
++            isRight ? StaffGuiTextures.ARROW_RIGHT : StaffGuiTextures.ARROW_LEFT, 
++            onPress);
++        this.hoverImage = isRight ? StaffGuiTextures.ARROW_RIGHT_HOVER : StaffGuiTextures.ARROW_LEFT_HOVER;
++    }
++}
++
+diff --git a/src/main/java/com/github/ars_zero/client/gui/buttons/StaffCraftingButton.java b/src/main/java/com/github/ars_zero/client/gui/buttons/StaffCraftingButton.java
+new file mode 100644
+index 0000000..a163958
+--- /dev/null
++++ b/src/main/java/com/github/ars_zero/client/gui/buttons/StaffCraftingButton.java
+@@ -0,0 +1,27 @@
++package com.github.ars_zero.client.gui.buttons;
++
++import com.hollingsworth.arsnouveau.client.gui.buttons.CraftingButton;
++import com.hollingsworth.arsnouveau.client.gui.utils.RenderUtils;
++import com.mojang.blaze3d.systems.RenderSystem;
++import net.minecraft.client.gui.GuiGraphics;
++import net.minecraft.client.gui.components.Button;
++
++public class StaffCraftingButton extends CraftingButton {
++    
++    public StaffCraftingButton(int x, int y, Button.OnPress onPress, int slotNum) {
++        super(x, y, onPress, slotNum);
++    }
++
++    @Override
++    protected void renderWidget(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
++        if (validationErrors.isEmpty()) {
++            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
++        } else {
++            RenderSystem.setShaderColor(1.0F, 0.7F, 0.7F, 1.0F);
++        }
++        if (this.abstractSpellPart != null) {
++            RenderUtils.drawSpellPart(this.abstractSpellPart, graphics, getX() + 3, getY() + 2, 16, !validationErrors.isEmpty(), 0);
++        }
++    }
++}
++
+diff --git a/src/main/java/com/github/ars_zero/client/gui/buttons/StaffSpellSlot.java b/src/main/java/com/github/ars_zero/client/gui/buttons/StaffSpellSlot.java
+new file mode 100644
+index 0000000..adbb9c5
+--- /dev/null
++++ b/src/main/java/com/github/ars_zero/client/gui/buttons/StaffSpellSlot.java
+@@ -0,0 +1,37 @@
++package com.github.ars_zero.client.gui.buttons;
++
++import com.github.ars_zero.client.gui.StaffGuiTextures;
++import com.hollingsworth.arsnouveau.client.gui.buttons.SelectableButton;
++import net.minecraft.client.Minecraft;
++import net.minecraft.client.gui.GuiGraphics;
++import net.minecraft.network.chat.Component;
++
++import java.util.List;
++
++public class StaffSpellSlot extends SelectableButton {
++    public int slotNum;
++    public String spellName;
++
++    public StaffSpellSlot(int x, int y, int slotNum, String spellName, OnPress onPress) {
++        super(x, y, 0, 0, 14, 14, 14, 14, StaffGuiTextures.ICON_SLOT_SELECTED, StaffGuiTextures.ICON_SLOT_SELECTED, onPress);
++        this.slotNum = slotNum;
++        this.spellName = spellName;
++    }
++
++    @Override
++    protected void renderWidget(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
++        if (isSelected) {
++            this.image = StaffGuiTextures.ICON_SLOT_SELECTED;
++            super.renderWidget(graphics, pMouseX, pMouseY, pPartialTick);
++        }
++        graphics.drawCenteredString(Minecraft.getInstance().font, String.valueOf(this.slotNum + 1), getX() + 7, getY() + 3, 16777215);
++    }
++
++    @Override
++    public void getTooltip(List<Component> tooltip) {
++        if (!spellName.isEmpty()) {
++            tooltip.add(Component.literal(spellName));
++        }
++    }
++}
++
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/icon_discord.png b/src/main/resources/assets/ars_zero/textures/gui/icon_discord.png
+new file mode 100644
+index 0000000..fc2c35b
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/icon_discord.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/icon_familiars.png b/src/main/resources/assets/ars_zero/textures/gui/icon_familiars.png
+new file mode 100644
+index 0000000..deab050
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/icon_familiars.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/icon_glyph_category_augment.png b/src/main/resources/assets/ars_zero/textures/gui/icon_glyph_category_augment.png
+new file mode 100644
+index 0000000..8b61e36
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/icon_glyph_category_augment.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/icon_glyph_category_effect.png b/src/main/resources/assets/ars_zero/textures/gui/icon_glyph_category_effect.png
+new file mode 100644
+index 0000000..6f35d22
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/icon_glyph_category_effect.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/icon_glyph_category_form.png b/src/main/resources/assets/ars_zero/textures/gui/icon_glyph_category_form.png
+new file mode 100644
+index 0000000..c919b4b
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/icon_glyph_category_form.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/icon_home.png b/src/main/resources/assets/ars_zero/textures/gui/icon_home.png
+new file mode 100644
+index 0000000..76af8d9
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/icon_home.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/icon_style.png b/src/main/resources/assets/ars_zero/textures/gui/icon_style.png
+new file mode 100644
+index 0000000..0c9cc1e
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/icon_style.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/spell_phase_row.png b/src/main/resources/assets/ars_zero/textures/gui/spell_phase_row.png
+new file mode 100644
+index 0000000..9233cea
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/spell_phase_row.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/spell_phase_row_selected.png b/src/main/resources/assets/ars_zero/textures/gui/spell_phase_row_selected.png
+new file mode 100644
+index 0000000..0db3592
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/spell_phase_row_selected.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_arrow_left.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_arrow_left.png
+new file mode 100644
+index 0000000..bbb3c11
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_arrow_left.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_arrow_left_hover.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_arrow_left_hover.png
+new file mode 100644
+index 0000000..4d746c6
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_arrow_left_hover.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_arrow_right.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_arrow_right.png
+new file mode 100644
+index 0000000..d124180
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_arrow_right.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_arrow_right_hover.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_arrow_right_hover.png
+new file mode 100644
+index 0000000..221375b
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_arrow_right_hover.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_black.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_black.png
+new file mode 100644
+index 0000000..9c7f72d
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_black.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_blue.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_blue.png
+new file mode 100644
+index 0000000..8cb7195
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_blue.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_brown.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_brown.png
+new file mode 100644
+index 0000000..6bf0fc6
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_brown.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_cyan.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_cyan.png
+new file mode 100644
+index 0000000..0c320e7
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_cyan.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_gray.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_gray.png
+new file mode 100644
+index 0000000..5494f57
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_gray.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_green.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_green.png
+new file mode 100644
+index 0000000..08939fa
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_green.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_light_blue.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_light_blue.png
+new file mode 100644
+index 0000000..7a3e570
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_light_blue.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_light_gray.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_light_gray.png
+new file mode 100644
+index 0000000..49d1e29
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_light_gray.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_lime.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_lime.png
+new file mode 100644
+index 0000000..c41ca39
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_lime.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_magenta.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_magenta.png
+new file mode 100644
+index 0000000..33ce7eb
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_magenta.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_orange.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_orange.png
+new file mode 100644
+index 0000000..4a5d22b
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_orange.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_pink.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_pink.png
+new file mode 100644
+index 0000000..8af7462
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_pink.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_purple.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_purple.png
+new file mode 100644
+index 0000000..a4f3220
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_purple.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_red.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_red.png
+new file mode 100644
+index 0000000..1cab984
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_red.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_white.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_white.png
+new file mode 100644
+index 0000000..5f8438f
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_white.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_background_yellow.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_yellow.png
+new file mode 100644
+index 0000000..f867e7f
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_background_yellow.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_end.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_end.png
+new file mode 100644
+index 0000000..f47f163
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_end.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_end_selected.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_end_selected.png
+new file mode 100644
+index 0000000..3808c25
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_end_selected.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_slot_selected.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_slot_selected.png
+new file mode 100644
+index 0000000..844ea58
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_slot_selected.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_start.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_start.png
+new file mode 100644
+index 0000000..652a491
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_start.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_start_selected.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_start_selected.png
+new file mode 100644
+index 0000000..9e6915c
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_start_selected.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_tick.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_tick.png
+new file mode 100644
+index 0000000..cff4caa
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_tick.png differ
+diff --git a/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_tick_selected.png b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_tick_selected.png
+new file mode 100644
+index 0000000..edc39e7
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/gui/staffui_icon_tick_selected.png differ
