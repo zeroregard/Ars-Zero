@@ -11,3 +11,4 @@ public class NoviceSpellStaffRenderer extends SpellStaffRenderer {
 }
 
 
+

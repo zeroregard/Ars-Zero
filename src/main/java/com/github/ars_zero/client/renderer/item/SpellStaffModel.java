@@ -34,3 +34,4 @@ public class SpellStaffModel extends GeoModel<AbstractSpellStaff> {
 }
 
 
+

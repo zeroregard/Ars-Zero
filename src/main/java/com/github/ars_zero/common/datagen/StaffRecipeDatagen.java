@@ -137,15 +137,15 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
         json.addProperty("category", "misc");
 
         JsonArray pattern = new JsonArray();
-        pattern.add(" G ");
-        pattern.add("DDD");
-        pattern.add("D D");
+        pattern.add(" D ");
+        pattern.add("III");
+        pattern.add("I I");
         json.add("pattern", pattern);
 
         JsonObject key = new JsonObject();
-        JsonObject g = new JsonObject();
-        g.addProperty("tag", "c:ingots/gold");
-        key.add("G", g);
+        JsonObject i = new JsonObject();
+        i.addProperty("tag", "c:ingots/iron");
+        key.add("I", i);
         JsonObject d = new JsonObject();
         d.addProperty("item", "ars_nouveau:source_gem");
         key.add("D", d);

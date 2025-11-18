@@ -11,6 +11,7 @@
   "item.ars_zero.creative_spell_staff": "Creative Spell Staff",
   "item.ars_zero.creative_spell_staff.desc": "A creative magical staff that can cast spells in three phases: Begin, Tick, and End. All glyphs are available.",
   "item.ars_zero.dull_circlet": "Dull Circlet",
+  "item.ars_zero.dull_circlet.desc": "A dull trinket, cannot be worn. Used for crafting.",
   "item.ars_zero.spellcasting_circlet": "Spellcasting Circlet",
   "item.ars_zero.spellcasting_circlet.desc": "A circlet that channels spells from your head slot with Begin, Tick, and End phases.",
 
