@@ -8,6 +8,7 @@ import com.github.ars_zero.common.entity.interaction.ArcaneCollisionInteraction;
 import com.github.ars_zero.common.entity.interaction.FireWaterInteraction;
 import com.github.ars_zero.common.entity.interaction.MergeInteraction;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
+import com.github.ars_zero.common.event.FirePowerCostReductionEvents;
 import com.github.ars_zero.common.event.GravitySuppressionEvents;
 import com.github.ars_zero.common.event.WaterPowerCostReductionEvents;
 import com.github.ars_zero.common.event.ZeroGravityMobEffectEvents;
@@ -61,6 +62,7 @@ public class ArsZero {
         });
         
         NeoForge.EVENT_BUS.register(WaterPowerCostReductionEvents.class);
+        NeoForge.EVENT_BUS.register(FirePowerCostReductionEvents.class);
         NeoForge.EVENT_BUS.register(ZeroGravityMobEffectEvents.class);
         NeoForge.EVENT_BUS.register(GravitySuppressionEvents.class);
         NeoForge.EVENT_BUS.register(CurioCastingHandler.class);

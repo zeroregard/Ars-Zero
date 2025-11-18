@@ -85,6 +85,7 @@ public final class GravitySuppression {
         } else {
             entity.setNoGravity(true);
         }
+        resetVerticalMotion(entity);
         entity.hasImpulse = true;
         entity.fallDistance = 0.0f;
     }

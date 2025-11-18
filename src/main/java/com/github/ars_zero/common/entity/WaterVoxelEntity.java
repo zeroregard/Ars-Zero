@@ -15,7 +15,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -148,10 +147,7 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
             }
         }
         BlockPos pos = targetPos.relative(blockHit.getDirection());
-        if (this.level().getBlockState(pos).isAir()) {
-            int waterLevel = calculateWaterLevel();
-            this.level().setBlock(pos, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, waterLevel), 3);
-        }
+        placeWaterWithUnits(pos);
     }
     
     @Override
@@ -168,9 +164,9 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
         }
         
         if (!this.level().isClientSide) {
-            if (hit instanceof LivingEntity living && living.isOnFire()) {
-                living.clearFire();
-                spawnEvaporationFeedback(BlockPos.containing(living.position()), false);
+            if (hit.isOnFire()) {
+                hit.clearFire();
+                spawnEvaporationFeedback(BlockPos.containing(hit.position()), false);
             }
             Vec3 hitLocation = result.getLocation();
             
@@ -180,10 +176,8 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
                 (int) Math.round(hitLocation.z)
             );
             
-            int waterLevel = calculateWaterLevel();
             for (BlockPos pos : BlockPos.betweenClosed(centerPos.offset(-1, -1, -1), centerPos.offset(1, 1, 1))) {
-                if (this.level().getBlockState(pos).isAir()) {
-                    this.level().setBlock(pos, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, waterLevel), 3);
+                if (placeWaterWithUnits(pos)) {
                     break;
                 }
             }
@@ -294,16 +288,59 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
         }
         serverLevel.removeBlock(firePos, false);
         spawnEvaporationFeedback(firePos, false);
-        int waterLevel = calculateWaterLevel();
-        serverLevel.setBlock(
-            firePos,
-            Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, waterLevel),
-            3
-        );
+        placeWaterWithUnits(firePos);
     }
  
     public void setCasterWaterPower(float waterPower) {
         this.casterWaterPower = Math.max(0.0f, waterPower);
+    }
+    
+    private int levelToUnits(int level) {
+        int clamped = Math.max(0, Math.min(7, level));
+        return 7 - clamped;
+    }
+    
+    private int unitsToLevel(int units) {
+        int clamped = Math.max(0, Math.min(7, units));
+        return 7 - clamped;
+    }
+    
+    private int additionalUnitsFromSize() {
+        float size = this.getSize();
+        float mediumThreshold = BaseVoxelEntity.DEFAULT_BASE_SIZE * 2.0f;
+        float fullThreshold = BaseVoxelEntity.DEFAULT_BASE_SIZE * 3.0f;
+        if (size >= fullThreshold) {
+            return 7;
+        }
+        if (size >= mediumThreshold) {
+            return 4;
+        }
+        return 1;
+    }
+    
+    private boolean placeWaterWithUnits(BlockPos pos) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        BlockState state = serverLevel.getBlockState(pos);
+        if (!state.isAir() && !state.is(Blocks.WATER)) {
+            return false;
+        }
+        int additionalUnits = additionalUnitsFromSize();
+        if (additionalUnits <= 0) {
+            return false;
+        }
+        int existingUnits = 0;
+        if (state.is(Blocks.WATER)) {
+            existingUnits = levelToUnits(state.getValue(LiquidBlock.LEVEL));
+        }
+        int combinedUnits = Math.min(7, existingUnits + additionalUnits);
+        if (combinedUnits == existingUnits) {
+            return false;
+        }
+        int newLevel = unitsToLevel(combinedUnits);
+        serverLevel.setBlock(pos, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, newLevel), 3);
+        return true;
     }
     
     public float getCasterWaterPower() {
@@ -373,7 +410,6 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
         double baseY = pos.getY() + 0.5;
         double baseZ = pos.getZ() + 0.5;
         int cloudCount = Math.max(4, (int) (this.getSize() * (intense ? 24 : 16)));
-        int smokeCount = Math.max(2, cloudCount / 3);
         
         for (int i = 0; i < cloudCount; i++) {
             double offsetX = (this.random.nextDouble() - 0.5) * 0.6;
@@ -386,21 +422,6 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
                 baseZ + offsetZ,
                 1,
                 0.0, 0.02, 0.0,
-                0.0
-            );
-        }
-        
-        for (int i = 0; i < smokeCount; i++) {
-            double offsetX = (this.random.nextDouble() - 0.5) * 0.4;
-            double offsetY = this.random.nextDouble() * 0.3;
-            double offsetZ = (this.random.nextDouble() - 0.5) * 0.4;
-            serverLevel.sendParticles(
-                ParticleTypes.SMOKE,
-                baseX + offsetX,
-                baseY + offsetY,
-                baseZ + offsetZ,
-                1,
-                0.0, 0.01, 0.0,
                 0.0
             );
         }
