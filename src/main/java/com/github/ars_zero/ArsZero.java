@@ -22,6 +22,7 @@ import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.registry.ModGlyphs;
 import com.github.ars_zero.registry.ModMobEffects;
+import com.github.ars_zero.registry.ModParticleTimelines;
 import com.github.ars_zero.registry.ModRecipes;
 import com.github.ars_zero.registry.ModSounds;
 import net.minecraft.resources.ResourceLocation;
@@ -50,6 +51,7 @@ public class ArsZero {
         ModAttachments.ATTACHMENT_TYPES.register(modEventBus);
         ModRecipes.RECIPE_SERIALIZERS.register(modEventBus);
         ModRecipes.RECIPE_TYPES.register(modEventBus);
+        ModParticleTimelines.init(modEventBus);
         
         modEventBus.addListener(Networking::register);
         modEventBus.addListener(this::gatherData); 
@@ -58,6 +60,7 @@ public class ArsZero {
             event.enqueueWork(() -> {
                 ModItems.registerSpellCasters();
                 registerVoxelInteractions();
+                ModParticleTimelines.configureTimelineOptions();
             });
         });
         

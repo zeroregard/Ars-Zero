@@ -3,9 +3,9 @@ package com.github.ars_zero.common.item;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.client.gui.SpellcastingCircletGUI;
 import com.github.ars_zero.client.renderer.item.ArchmageSpellStaffRenderer;
-import com.hollingsworth.arsnouveau.client.registry.ModKeyBindings;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
+import com.hollingsworth.arsnouveau.client.registry.ModKeyBindings;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.network.chat.Component;
@@ -36,7 +36,7 @@ public class SpellcastingCirclet extends AbstractMultiPhaseCastDevice implements
     protected AbstractMultiPhaseCastDeviceScreen createDeviceScreen(ItemStack stack, InteractionHand hand) {
         return new SpellcastingCircletGUI(stack, hand);
     }
-    
+
     public void beginCurioCast(Player player, ItemStack stack) {
         beginPhase(player, stack, MultiPhaseCastContext.CastSource.CURIO);
     }

@@ -16,21 +16,21 @@ import top.theillusivec4.curios.api.CuriosApi;
 
 import java.util.Optional;
 
-public record PacketSetStaffSlot(int logicalSlot, boolean isForCirclet) implements CustomPacketPayload {
+public record PacketSetMultiPhaseSpellCastingSlot(int logicalSlot, boolean isForCirclet) implements CustomPacketPayload {
     
-    public static final CustomPacketPayload.Type<PacketSetStaffSlot> TYPE = 
-        new CustomPacketPayload.Type<>(ArsZero.prefix("set_staff_slot"));
+    public static final CustomPacketPayload.Type<PacketSetMultiPhaseSpellCastingSlot> TYPE = 
+        new CustomPacketPayload.Type<>(ArsZero.prefix("set_multiphase_spell_casting_slot"));
     
-    public static final StreamCodec<RegistryFriendlyByteBuf, PacketSetStaffSlot> CODEC = StreamCodec.composite(
+    public static final StreamCodec<RegistryFriendlyByteBuf, PacketSetMultiPhaseSpellCastingSlot> CODEC = StreamCodec.composite(
         ByteBufCodecs.INT,
-        PacketSetStaffSlot::logicalSlot,
+        PacketSetMultiPhaseSpellCastingSlot::logicalSlot,
         ByteBufCodecs.BOOL,
-        PacketSetStaffSlot::isForCirclet,
-        PacketSetStaffSlot::new
+        PacketSetMultiPhaseSpellCastingSlot::isForCirclet,
+        PacketSetMultiPhaseSpellCastingSlot::new
     );
     
     @Deprecated
-    public PacketSetStaffSlot(int logicalSlot) {
+    public PacketSetMultiPhaseSpellCastingSlot(int logicalSlot) {
         this(logicalSlot, false);
     }
 
@@ -39,7 +39,7 @@ public record PacketSetStaffSlot(int logicalSlot, boolean isForCirclet) implemen
         return TYPE;
     }
     
-    public static void handle(PacketSetStaffSlot packet, IPayloadContext context) {
+    public static void handle(PacketSetMultiPhaseSpellCastingSlot packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
                 ItemStack stack = ItemStack.EMPTY;

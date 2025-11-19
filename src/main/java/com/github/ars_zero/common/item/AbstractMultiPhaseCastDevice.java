@@ -1,11 +1,12 @@
 package com.github.ars_zero.common.item;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.client.RadialMenuTracker;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
-import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.glyph.AnchorEffect;
+import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.network.Networking;
-import com.github.ars_zero.common.network.PacketSetStaffSlot;
+import com.github.ars_zero.common.network.PacketSetMultiPhaseSpellCastingSlot;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.spell.CastPhase;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
@@ -165,14 +166,16 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     @Override
     @OnlyIn(Dist.CLIENT)
     public void onRadialKeyPressed(ItemStack stack, Player player) {
+        RadialMenuTracker.activate(stack);
         if (Minecraft.getInstance().screen == null) {
             Minecraft.getInstance().setScreen(new GuiRadialMenu<>(getRadialMenuProviderForSpellpart(stack)));
         }
     }
 
     public RadialMenu<AbstractSpellPart> getRadialMenuProviderForSpellpart(ItemStack stack) {
+        boolean isCirclet = stack.getItem() instanceof SpellcastingCirclet;
         return new RadialMenu<>(
-            logicalSlot -> Networking.sendToServer(new PacketSetStaffSlot(logicalSlot)),
+            logicalSlot -> Networking.sendToServer(new PacketSetMultiPhaseSpellCastingSlot(logicalSlot, isCirclet)),
             getRadialMenuSlotsForSpellpart(stack),
             SecondaryIconPosition.NORTH,
             RenderUtils::drawSpellPart,
@@ -222,8 +225,6 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         context.source = source;
         context.castingStack = stack;
 
-        ArsZero.LOGGER.info("[{}] beginPhase: source={}, isCasting={}", player.getScoreboardName(), source, context.isCasting);
-
         executeSpell(player, stack, Phase.BEGIN);
 
         if (player instanceof ServerPlayer serverPlayer) {
@@ -268,8 +269,6 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             return;
         }
 
-        ArsZero.LOGGER.info("[{}] tick casting: tickCount={}, seqTick={}, cooldown={}, source={}",
-            player.getScoreboardName(), context.tickCount, context.sequenceTick, context.tickCooldown, context.source);
         executeSpell(player, castingStack, Phase.TICK);
 
         if (player instanceof ServerPlayer serverPlayer) {

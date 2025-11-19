@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.client.gui.buttons.StaffArrowButton;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
@@ -19,7 +20,7 @@ import com.hollingsworth.arsnouveau.client.gui.buttons.GuiImageButton;
 import com.hollingsworth.arsnouveau.client.gui.SearchBar;
 import com.hollingsworth.arsnouveau.client.gui.book.EnterTextField;
 import com.github.ars_zero.common.network.Networking;
-import com.github.ars_zero.common.network.PacketSetStaffSlot;
+import com.github.ars_zero.common.network.PacketSetMultiPhaseSpellCastingSlot;
 import com.hollingsworth.arsnouveau.api.ArsNouveauAPI;
 import com.hollingsworth.arsnouveau.api.spell.ISpellValidator;
 import com.hollingsworth.arsnouveau.api.spell.SpellValidationError;
@@ -149,9 +150,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         
         if (selectedSpellSlot == -1) {
             selectedSpellSlot = caster.getCurrentSlot();
-            ArsZero.LOGGER.info("GUI init: loaded selectedSpellSlot = {} from caster.getCurrentSlot()", selectedSpellSlot);
             if (selectedSpellSlot < 0 || selectedSpellSlot >= 10) {
-                ArsZero.LOGGER.info("GUI init: slot out of range, resetting to 0");
                 selectedSpellSlot = 0;
             }
         }
@@ -222,13 +221,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         selectPhase(DevicePhase.BEGIN);
         
         validate();
-        
-        // Trigger GUI open animation
-        var player = Minecraft.getInstance().player;
-        if (player instanceof AbstractClientPlayer clientPlayer) {
-            boolean isMainHand = guiHand == InteractionHand.MAIN_HAND;
-            StaffAnimationHandler.onGuiOpen(clientPlayer, isMainHand);
-        }
     }
 
     private void initSpellSlots() {
@@ -654,8 +646,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
 
     public void saveSpell() {
-        ArsZero.LOGGER.info("saveSpell() called for slot {}", selectedSpellSlot);
-        
         validate();
         if (!validationErrors.isEmpty()) {
             ArsZero.LOGGER.warn("Cannot save spell - validation errors present");
@@ -663,7 +653,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         }
         
         String spellName = spellNameBox.getValue();
-        ArsZero.LOGGER.info("Spell name: {}", spellName);
         
         for (int phase = 0; phase < 3; phase++) {
             List<AbstractSpellPart> phaseSpell = phaseSpells.get(phase);
@@ -675,18 +664,13 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             
             int physicalSlot = selectedSpellSlot * 3 + phase;
             
-            ArsZero.LOGGER.info("Sending PacketUpdateCaster for phase {} to slot {} with {} glyphs", 
-                DevicePhase.values()[phase], physicalSlot, filteredPhase.size());
-            
             com.hollingsworth.arsnouveau.common.network.Networking.sendToServer(new PacketUpdateCaster(spell, physicalSlot, spellName, true));
-            
-            ArsZero.LOGGER.info("Sent PacketUpdateCaster for phase {}", DevicePhase.values()[phase]);
         }
         
         spellSlots[selectedSpellSlot].spellName = spellName;
         
-        Networking.sendToServer(new PacketSetStaffSlot(selectedSpellSlot));
-        ArsZero.LOGGER.info("Sent PacketSetStaffSlot with slot {}", selectedSpellSlot);
+        boolean isCirclet = bookStack.getItem() instanceof SpellcastingCirclet;
+        Networking.sendToServer(new PacketSetMultiPhaseSpellCastingSlot(selectedSpellSlot, isCirclet));
     }
 
     public void clear() {
@@ -888,15 +872,8 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
     @Override
     public void onClose() {
-        // Trigger GUI close animation
-        var player = Minecraft.getInstance().player;
-        if (player instanceof AbstractClientPlayer clientPlayer) {
-            boolean isMainHand = guiHand == InteractionHand.MAIN_HAND;
-            StaffAnimationHandler.onGuiClose(clientPlayer, isMainHand);
-        }
-        
-        Networking.sendToServer(new PacketSetStaffSlot(selectedSpellSlot));
-        ArsZero.LOGGER.info("onClose: sent PacketSetStaffSlot with slot {}", selectedSpellSlot);
+        boolean isCirclet = bookStack.getItem() instanceof SpellcastingCirclet;
+        Networking.sendToServer(new PacketSetMultiPhaseSpellCastingSlot(selectedSpellSlot, isCirclet));
         super.onClose();
     }
 }

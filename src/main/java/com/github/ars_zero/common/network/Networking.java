@@ -9,9 +9,9 @@ public class Networking {
         PayloadRegistrar registrar = event.registrar("1");
 
         registrar.playToServer(
-            PacketSetStaffSlot.TYPE,
-            PacketSetStaffSlot.CODEC,
-            PacketSetStaffSlot::handle
+            PacketSetMultiPhaseSpellCastingSlot.TYPE,
+            PacketSetMultiPhaseSpellCastingSlot.CODEC,
+            PacketSetMultiPhaseSpellCastingSlot::handle
         );
 
         registrar.playToServer(
@@ -39,7 +39,7 @@ public class Networking {
         );
     }
 
-    public static void sendToServer(PacketSetStaffSlot packet) {
+    public static void sendToServer(PacketSetMultiPhaseSpellCastingSlot packet) {
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
     }
 

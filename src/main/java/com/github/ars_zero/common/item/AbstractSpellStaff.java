@@ -20,6 +20,10 @@ import net.neoforged.api.distmarker.OnlyIn;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice implements GeoItem {
@@ -100,6 +104,12 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, "idle_controller", 20, this::idlePredicate));
+    }
+
+    private <P extends AbstractSpellStaff & GeoItem> PlayState idlePredicate(AnimationState<P> event) {
+        event.getController().setAnimation(RawAnimation.begin().thenLoop("idle"));
+        return PlayState.CONTINUE;
     }
 
     @Override
