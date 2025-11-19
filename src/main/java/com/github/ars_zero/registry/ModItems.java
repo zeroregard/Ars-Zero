@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
+import com.github.ars_zero.common.item.DullCirclet;
 import com.github.ars_zero.common.item.MageSpellStaff;
 import com.github.ars_zero.common.item.NoviceSpellStaff;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
@@ -30,7 +31,7 @@ public class ModItems {
     
     public static final ItemRegistryWrapper<SpellcastingCirclet> SPELLCASTING_CIRCLET = register("spellcasting_circlet", SpellcastingCirclet::new);
     
-    public static final ItemRegistryWrapper<Item> DULL_CIRCLET = register("dull_circlet", () -> new Item(defaultItemProperties()));
+    public static final ItemRegistryWrapper<DullCirclet> DULL_CIRCLET = register("dull_circlet", () -> new DullCirclet(defaultItemProperties()));
     
     public static final ItemRegistryWrapper<Item> ARCHWOOD_ROD = register("archwood_rod", () -> new Item(defaultItemProperties()));
     
