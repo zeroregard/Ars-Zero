@@ -2,7 +2,7 @@ This mod adds a new caster item to Ars Nouveau; the Spell Staff. Unlike the Spel
 
 *   Items:
     *   **Creative/Archmage/Mage/Novice Spell Staff:** Has 3 spell phases (begin, tick, end) each with 10 glyph slots. Dyable.
-    *   **Psion's Circlet:** A wearable circlet (Curios head slot) with 3 spell phases (begin, tick, end) each with 10 glyph slots. Tier 3 (Archmage). Cast spells by holding the channel key while wearing it. Dyable.
+    *   **Psion's Circlet:** A Tier 3 wearable circlet (Curios head slot) with 3 spell phases (begin, tick, end) each with 10 glyph slots. Cast spells by holding the channel key while wearing it.
 *   Glyphs: 
     *   **Temporal Context Form:** Resolve spell at previous spell phase output. Only usable in the spell staff's 'tick' or 'end' phases
     *   **Near Form**: Cast 1 block ahead of your look direction

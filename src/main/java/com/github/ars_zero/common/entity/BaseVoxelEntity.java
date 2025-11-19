@@ -9,8 +9,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -54,9 +52,6 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
         refreshDimensions();
     }
     
-    @Nullable
-    protected abstract SoundEvent getSpawnSound();
-    
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder pBuilder) {
         pBuilder.define(LIFETIME, DEFAULT_LIFETIME_TICKS);
@@ -72,14 +67,6 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     public void tick() {
         super.tick();
         this.age++;
-        
-        if (!this.level().isClientSide && this.age == 1) {
-            SoundEvent spawnSound = getSpawnSound();
-            if (spawnSound != null) {
-                this.level().playSound(null, this.blockPosition(), 
-                    spawnSound, SoundSource.NEUTRAL, 0.8f, 1.0f);
-            }
-        }
         
         if (!this.level().isClientSide && this.age >= this.getLifetime()) {
             resolveAndDiscard(null);
@@ -466,7 +453,7 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     }
     
     private PlayState predicate(AnimationState<BaseVoxelEntity> state) {
-        if (this.age <= 7) {
+        if (this.age <= 2) {
             return state.setAndContinue(RawAnimation.begin().thenPlay("spawn"));
         } else {
             return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));
