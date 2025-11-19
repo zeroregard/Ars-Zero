@@ -104,21 +104,33 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        Player player = ((ServerLevel) event.world).getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
+        ServerLevel serverLevel = null;
+        if (event.world instanceof ServerLevel level) {
+            serverLevel = level;
+        }
+        
+        Player player = serverLevel != null ? serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId()) : null;
         if (player == null) {
+            if (serverLevel != null) {
+                capturedBlockStates.remove(serverLevel);
+            }
             return;
         }
         
         ItemStack casterTool = event.resolver.spellContext.getCasterTool();
         MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context == null) {
+            if (serverLevel != null) {
+                capturedBlockStates.remove(serverLevel);
+            }
             return;
         }
         
         HitResult hitResult = event.rayTraceResult;
         SpellResult result = null;
+        boolean cleanedUp = false;
         
-        if (hitResult instanceof BlockHitResult blockHit && event.world instanceof ServerLevel serverLevel) {
+        if (hitResult instanceof BlockHitResult blockHit && serverLevel != null) {
             BlockPos pos = blockHit.getBlockPos();
             if (!event.world.isOutsideBuildHeight(pos) && BlockUtil.destroyRespectsClaim(player, event.world, pos)) {
                 BlockPos targetPos = pos;
@@ -148,6 +160,7 @@ public class ArsZeroResolverEvents {
                 
                 // Clear captured states for this level after use
                 capturedBlockStates.remove(serverLevel);
+                cleanedUp = true;
                 
                 if (!validBlocks.isEmpty()) {
                     Vec3 centerPos = calculateCenter(validBlocks);
@@ -164,7 +177,16 @@ public class ArsZeroResolverEvents {
                     
                     result = SpellResult.fromBlockGroup(blockGroup, validBlocks, player);
                 }
+            } else {
+                if (serverLevel != null) {
+                    capturedBlockStates.remove(serverLevel);
+                    cleanedUp = true;
+                }
             }
+        }
+        
+        if (!cleanedUp && serverLevel != null) {
+            capturedBlockStates.remove(serverLevel);
         }
         
         if (result == null) {
@@ -212,15 +234,30 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        Player player = ((ServerLevel) event.world).getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
+        ServerLevel serverLevel = null;
+        if (event.world instanceof ServerLevel level) {
+            serverLevel = level;
+        }
+        
+        Player player = serverLevel != null ? serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId()) : null;
         if (player == null) {
+            if (serverLevel != null) {
+                capturedBlockStates.remove(serverLevel);
+            }
             return;
         }
         
         ItemStack casterTool = event.resolver.spellContext.getCasterTool();
         MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context == null) {
+            if (serverLevel != null) {
+                capturedBlockStates.remove(serverLevel);
+            }
             return;
+        }
+        
+        if (serverLevel != null) {
+            capturedBlockStates.remove(serverLevel);
         }
         
         context.beginFinished = true;
