@@ -51,7 +51,7 @@ public class StaffParticleScreen extends BaseBook {
     public static int lastOpenedHash;
     public static StaffParticleScreen lastScreen;
 
-    ArsZeroStaffGUI previousScreen;
+    AbstractMultiPhaseCastDeviceScreen previousScreen;
     GuiImageButton upButton;
     GuiImageButton downButton;
     boolean allExpanded = false;
@@ -61,7 +61,7 @@ public class StaffParticleScreen extends BaseBook {
     ItemStack staffStack;
     InteractionHand hand;
 
-    public StaffParticleScreen(ArsZeroStaffGUI previousScreen, int hotkeySlot, ItemStack stack, InteractionHand stackHand) {
+    public StaffParticleScreen(AbstractMultiPhaseCastDeviceScreen previousScreen, int hotkeySlot, ItemStack stack, InteractionHand stackHand) {
         super();
         this.previousScreen = previousScreen;
         this.hotkeySlot = hotkeySlot;
@@ -226,7 +226,7 @@ public class StaffParticleScreen extends BaseBook {
         addTimelineSelectionWidgets();
     }
 
-    public static void openScreen(ArsZeroStaffGUI parentScreen, int hotkeySlot, ItemStack stack, InteractionHand stackHand) {
+    public static void openScreen(AbstractMultiPhaseCastDeviceScreen parentScreen, int hotkeySlot, ItemStack stack, InteractionHand stackHand) {
         var caster = com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry.from(stack);
         int beginPhysicalSlot = hotkeySlot * 3 + 0;
         int hash = caster.getParticles(beginPhysicalSlot).hashCode();

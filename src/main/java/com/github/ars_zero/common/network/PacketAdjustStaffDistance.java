@@ -2,13 +2,15 @@ package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
-import com.github.ars_zero.common.spell.StaffCastContext;
+import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPacketPayload {
@@ -34,19 +36,20 @@ public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPac
     public static void handle(PacketAdjustStaffDistance packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
-                StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
+                ItemStack heldItem = player.getMainHandItem();
+                MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, heldItem);
                 
-                if (staffContext == null || !staffContext.isHoldingStaff) {
+                if (castContext == null || !castContext.isCasting) {
                     return;
                 }
                 
-                if (staffContext.beginResults.isEmpty()) {
+                if (castContext.beginResults.isEmpty()) {
                     return;
                 }
                 
                 double scrollSensitivity = SCROLL_SENSITIVITY;
                 
-                var targetEntity = staffContext.beginResults.get(0).targetEntity;
+                var targetEntity = castContext.beginResults.get(0).targetEntity;
                 float entitySize = 1.0f;
                 
                 // TODO: Replace voxel instanceof check with general entity scale attachment for any scalable entity
@@ -56,14 +59,14 @@ public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPac
                 }
                 
                 double multiplierChange = packet.scrollDelta * scrollSensitivity;
-                double oldMultiplier = staffContext.distanceMultiplier;
-                staffContext.distanceMultiplier += multiplierChange;
+                double oldMultiplier = castContext.distanceMultiplier;
+                castContext.distanceMultiplier += multiplierChange;
                 
                 ArsZero.LOGGER.info("Scroll: voxelSize={}, scrollDelta={}, sensitivity={}, multiplierChange={}, distanceMultiplier: {} -> {}", 
-                    entitySize, packet.scrollDelta, scrollSensitivity, multiplierChange, oldMultiplier, staffContext.distanceMultiplier);
+                    entitySize, packet.scrollDelta, scrollSensitivity, multiplierChange, oldMultiplier, castContext.distanceMultiplier);
                 
-                staffContext.distanceMultiplier = Math.max(MIN_DISTANCE_MULTIPLIER, 
-                                                          Math.min(MAX_DISTANCE_MULTIPLIER, staffContext.distanceMultiplier));
+                castContext.distanceMultiplier = Math.max(MIN_DISTANCE_MULTIPLIER, 
+                                                          Math.min(MAX_DISTANCE_MULTIPLIER, castContext.distanceMultiplier));
             }
         });
     }

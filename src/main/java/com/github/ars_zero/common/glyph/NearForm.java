@@ -1,6 +1,10 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.registry.ModParticleTimelines;
+import com.hollingsworth.arsnouveau.api.particle.ParticleEmitter;
+import com.hollingsworth.arsnouveau.api.particle.configurations.properties.SoundProperty;
+import com.hollingsworth.arsnouveau.api.particle.timelines.TimelineEntryData;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCastMethod;
 import com.hollingsworth.arsnouveau.api.spell.CastResolveType;
@@ -40,27 +44,27 @@ public class NearForm extends AbstractCastMethod {
 
     @Override
     public CastResolveType onCast(ItemStack stack, LivingEntity caster, Level world, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        return performNearCast(caster, world, spellStats, resolver);
+        return performNearCast(caster, world, spellStats, spellContext, resolver);
     }
 
     @Override
     public CastResolveType onCastOnEntity(ItemStack stack, LivingEntity caster, Entity target, InteractionHand hand, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        return performNearCast(caster, caster.level(), spellStats, resolver);
+        return performNearCast(caster, caster.level(), spellStats, spellContext, resolver);
     }
 
     @Override
     public CastResolveType onCastOnBlock(UseOnContext context, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         LivingEntity caster = (LivingEntity) context.getPlayer();
         if (caster == null) return CastResolveType.FAILURE;
-        return performNearCast(caster, context.getLevel(), spellStats, resolver);
+        return performNearCast(caster, context.getLevel(), spellStats, spellContext, resolver);
     }
 
     @Override
     public CastResolveType onCastOnBlock(BlockHitResult blockHitResult, LivingEntity caster, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        return performNearCast(caster, caster.level(), spellStats, resolver);
+        return performNearCast(caster, caster.level(), spellStats, spellContext, resolver);
     }
     
-    private CastResolveType performNearCast(LivingEntity caster, Level world, SpellStats spellStats, SpellResolver resolver) {
+    private CastResolveType performNearCast(LivingEntity caster, Level world, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         double baseDistance = 1.0;
         double distance = baseDistance + spellStats.getAmpMultiplier() * 0.5;
         
@@ -72,8 +76,21 @@ public class NearForm extends AbstractCastMethod {
         BlockPos blockPos = BlockPos.containing(targetPos);
         BlockHitResult result = new BlockHitResult(targetPos, direction, blockPos, false);
         resolver.onResolveEffect(world, result);
+        triggerResolveEffects(spellContext, world, result.getLocation());
         
         return CastResolveType.SUCCESS;
+    }
+
+    private void triggerResolveEffects(SpellContext spellContext, Level world, Vec3 position) {
+        if (world == null) {
+            return;
+        }
+        var timeline = spellContext.getParticleTimeline(ModParticleTimelines.NEAR_TIMELINE.get());
+        TimelineEntryData entryData = timeline.onResolvingEffect();
+        ParticleEmitter particleEmitter = createStaticEmitter(entryData, position);
+        particleEmitter.tick(world);
+        SoundProperty resolveSound = timeline.resolveSound();
+        resolveSound.sound.playSound(world, position.x, position.y, position.z);
     }
 
     @Override

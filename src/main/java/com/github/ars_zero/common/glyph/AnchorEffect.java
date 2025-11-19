@@ -3,10 +3,11 @@ package com.github.ars_zero.common.glyph;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
-import com.github.ars_zero.common.spell.StaffCastContext;
+import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
@@ -22,6 +23,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -37,18 +39,18 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * TranslateEffect - Works with Temporal Context Form to maintain relative position of entities.
+ * AnchorEffect - Works with Temporal Context Form to maintain relative position of entities.
  * 
  * When used with Temporal Context Form in the TICK phase, this effect keeps the entity
  * locked to the same position on the player's screen, following their look direction.
  */
-public class TranslateEffect extends AbstractEffect {
+public class AnchorEffect extends AbstractEffect {
     
-    public static final String ID = "translate_effect";
-    public static final TranslateEffect INSTANCE = new TranslateEffect();
+    public static final String ID = "anchor_effect";
+    public static final AnchorEffect INSTANCE = new AnchorEffect();
 
-    public TranslateEffect() {
-        super(ArsZero.prefix(ID), "Translate");
+    public AnchorEffect() {
+        super(ArsZero.prefix(ID), "Anchor");
     }
 
     @Override
@@ -56,12 +58,14 @@ public class TranslateEffect extends AbstractEffect {
         if (world.isClientSide) return;
         if (!(shooter instanceof Player player)) return;
         
-        StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
-        if (staffContext == null || staffContext.beginResults.isEmpty()) {
+        ItemStack casterTool = spellContext.getCasterTool();
+        MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        
+        if (castContext == null || castContext.beginResults.isEmpty()) {
             return;
         }
         
-        for (SpellResult beginResult : staffContext.beginResults) {
+        for (SpellResult beginResult : castContext.beginResults) {
             Entity target = beginResult.targetEntity;
             
             if (target == null || !target.isAlive()) {
@@ -76,18 +80,16 @@ public class TranslateEffect extends AbstractEffect {
                 player.getYRot(), 
                 player.getXRot(), 
                 player.getEyePosition(1.0f),
-                staffContext.distanceMultiplier
+                castContext.distanceMultiplier
             );
             
-            if (newPosition != null) {
-                if (canMoveToPosition(newPosition, world)) {
-                    target.setPos(newPosition.x, newPosition.y, newPosition.z);
-                    target.setDeltaMovement(Vec3.ZERO);
-                    target.setNoGravity(true);
-                    
-                    if (target instanceof BaseVoxelEntity voxel) {
-                        voxel.freezePhysics();
-                    }
+            if (newPosition != null && canMoveToPosition(newPosition, world)) {
+                target.setPos(newPosition.x, newPosition.y, newPosition.z);
+                target.setDeltaMovement(Vec3.ZERO);
+                target.setNoGravity(true);
+                
+                if (target instanceof BaseVoxelEntity voxel) {
+                    voxel.freezePhysics();
                 }
             }
         }
@@ -99,7 +101,7 @@ public class TranslateEffect extends AbstractEffect {
         return !world.getBlockState(blockPos).blocksMotion();
     }
     
-    public static void restoreEntityPhysics(StaffCastContext context) {
+    public static void restoreEntityPhysics(MultiPhaseCastContext context) {
         if (context == null || context.beginResults.isEmpty()) {
             return;
         }
@@ -166,12 +168,14 @@ public class TranslateEffect extends AbstractEffect {
         if (world.isClientSide) return;
         if (!(shooter instanceof Player player)) return;
         
-        StaffCastContext staffContext = AbstractSpellStaff.getStaffContext(player);
-        if (staffContext == null || staffContext.beginResults.isEmpty()) {
+        ItemStack casterTool = spellContext.getCasterTool();
+        MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        
+        if (castContext == null || castContext.beginResults.isEmpty()) {
             return;
         }
         
-        for (SpellResult beginResult : staffContext.beginResults) {
+        for (SpellResult beginResult : castContext.beginResults) {
             if (beginResult.blockGroup != null && beginResult.relativeOffset != null) {
                 BlockGroupEntity blockGroup = beginResult.blockGroup;
                 
@@ -179,7 +183,7 @@ public class TranslateEffect extends AbstractEffect {
                     player.getYRot(), 
                     player.getXRot(), 
                     player.getEyePosition(1.0f),
-                    staffContext.distanceMultiplier
+                    castContext.distanceMultiplier
                 );
                 
                 if (newPosition != null && canMoveToPosition(newPosition, world)) {
@@ -211,7 +215,7 @@ public class TranslateEffect extends AbstractEffect {
 
     @Override
     public String getBookDescription() {
-        return "When used with Temporal Context Form in TICK phase, keeps the target entity or block group locked to the same position on your screen. The target will follow your look direction and movement. Use with Touch + [Target] in BEGIN, then Temporal Context Form + Translate in TICK. For blocks, use Select + [Target] in BEGIN. Amplify increases distance from player.";
+        return "When used with Temporal Context Form in TICK phase, keeps the target entity or block group locked to the same position on your screen. The target will follow your look direction and movement. Use with Touch + [Target] in BEGIN, then Temporal Context Form + Anchor in TICK. For blocks, use Select + [Target] in BEGIN. Amplify increases distance from player.";
     }
 
     @Override
@@ -225,3 +229,4 @@ public class TranslateEffect extends AbstractEffect {
         return Set.of(SpellSchools.MANIPULATION);
     }
 }
+

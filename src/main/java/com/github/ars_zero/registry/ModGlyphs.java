@@ -7,7 +7,7 @@ import com.github.ars_zero.common.glyph.NearForm;
 import com.github.ars_zero.common.glyph.PushEffect;
 import com.github.ars_zero.common.glyph.SelectEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
-import com.github.ars_zero.common.glyph.TranslateEffect;
+import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.ZeroGravityEffect;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 
@@ -17,7 +17,7 @@ public class ModGlyphs {
     public static final NearForm NEAR_FORM = new NearForm();
     public static final ConjureVoxelEffect CONJURE_VOXEL_EFFECT = new ConjureVoxelEffect();
     public static final SelectEffect SELECT_EFFECT = new SelectEffect();
-    public static final TranslateEffect TRANSLATE_EFFECT = new TranslateEffect();
+    public static final AnchorEffect ANCHOR_EFFECT = new AnchorEffect();
     public static final PushEffect PUSH_EFFECT = new PushEffect();
     public static final EnlargeEffect ENLARGE_EFFECT = new EnlargeEffect();
     public static final ZeroGravityEffect ZERO_GRAVITY_EFFECT = new ZeroGravityEffect();
@@ -41,9 +41,9 @@ public class ModGlyphs {
         GlyphRegistry.registerSpell(SELECT_EFFECT);
         ArsZero.LOGGER.info("Successfully registered SelectEffect glyph with ID: {}", SELECT_EFFECT.getRegistryName());
         
-        ArsZero.LOGGER.debug("Registering TranslateEffect glyph...");
-        GlyphRegistry.registerSpell(TRANSLATE_EFFECT);
-        ArsZero.LOGGER.info("Successfully registered TranslateEffect glyph with ID: {}", TRANSLATE_EFFECT.getRegistryName());
+        ArsZero.LOGGER.debug("Registering AnchorEffect glyph...");
+        GlyphRegistry.registerSpell(ANCHOR_EFFECT);
+        ArsZero.LOGGER.info("Successfully registered AnchorEffect glyph with ID: {}", ANCHOR_EFFECT.getRegistryName());
         
         ArsZero.LOGGER.debug("Registering PushEffect glyph...");
         GlyphRegistry.registerSpell(PUSH_EFFECT);

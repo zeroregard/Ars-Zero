@@ -36,6 +36,13 @@ config="ars_zero.mixins.json"
     side="BOTH"
 
 [[dependencies.ars_zero]]
+    modId="curios"
+    mandatory=true
+    versionRange="[9.0.14,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.ars_zero]]
     modId="player_animation_library"
     mandatory=true
     versionRange="[1.0.14,)"

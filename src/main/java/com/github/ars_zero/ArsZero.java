@@ -12,6 +12,7 @@ import com.github.ars_zero.common.event.FirePowerCostReductionEvents;
 import com.github.ars_zero.common.event.GravitySuppressionEvents;
 import com.github.ars_zero.common.event.WaterPowerCostReductionEvents;
 import com.github.ars_zero.common.event.ZeroGravityMobEffectEvents;
+import com.github.ars_zero.event.CurioCastingHandler;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.registry.ModAttachments;
 import com.github.ars_zero.registry.ModBlockEntities;
@@ -21,6 +22,7 @@ import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.registry.ModGlyphs;
 import com.github.ars_zero.registry.ModMobEffects;
+import com.github.ars_zero.registry.ModParticleTimelines;
 import com.github.ars_zero.registry.ModRecipes;
 import com.github.ars_zero.registry.ModSounds;
 import net.minecraft.resources.ResourceLocation;
@@ -49,6 +51,7 @@ public class ArsZero {
         ModAttachments.ATTACHMENT_TYPES.register(modEventBus);
         ModRecipes.RECIPE_SERIALIZERS.register(modEventBus);
         ModRecipes.RECIPE_TYPES.register(modEventBus);
+        ModParticleTimelines.init(modEventBus);
         
         modEventBus.addListener(Networking::register);
         modEventBus.addListener(this::gatherData); 
@@ -57,6 +60,7 @@ public class ArsZero {
             event.enqueueWork(() -> {
                 ModItems.registerSpellCasters();
                 registerVoxelInteractions();
+                ModParticleTimelines.configureTimelineOptions();
             });
         });
         
@@ -64,6 +68,7 @@ public class ArsZero {
         NeoForge.EVENT_BUS.register(FirePowerCostReductionEvents.class);
         NeoForge.EVENT_BUS.register(ZeroGravityMobEffectEvents.class);
         NeoForge.EVENT_BUS.register(GravitySuppressionEvents.class);
+        NeoForge.EVENT_BUS.register(CurioCastingHandler.class);
 
         if (FMLEnvironment.dist.isClient()) {
             ArsZeroClient.init(modEventBus);

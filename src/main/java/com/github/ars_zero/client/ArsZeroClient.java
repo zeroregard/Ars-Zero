@@ -3,7 +3,6 @@ package com.github.ars_zero.client;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.client.network.ClientNetworking;
-import com.github.ars_zero.client.registry.ModKeyBindings;
 import com.github.ars_zero.client.renderer.entity.ArcaneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.BlockGroupEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.FireVoxelEntityRenderer;
@@ -19,8 +18,6 @@ import net.neoforged.neoforge.common.NeoForge;
 public class ArsZeroClient {
     public static void init(IEventBus modEventBus) {
         ArsZero.LOGGER.debug("Initializing Ars Zero client-side components...");
-        
-        ModKeyBindings.registerKeyBindings(null);
         
         modEventBus.addListener(ArsZeroClient::onClientSetup);
         modEventBus.addListener(ArsZeroClient::registerGuiLayers);
@@ -44,6 +41,5 @@ public class ArsZeroClient {
     
     @SubscribeEvent
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
-        // event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("staff_hud"), GuiStaffHUD.OVERLAY);
     }
 }

@@ -10,6 +10,11 @@
 
   "item.ars_zero.creative_spell_staff": "Creative Spell Staff",
   "item.ars_zero.creative_spell_staff.desc": "A creative magical staff that can cast spells in three phases: Begin, Tick, and End. All glyphs are available.",
+  "item.ars_zero.dull_circlet": "Dull Circlet",
+  "item.ars_zero.dull_circlet.desc": "A dull trinket, cannot be worn. Used for crafting.",
+  "ars_zero.tooltip.dull": "A dull trinket, cannot be worn. Used for crafting.",
+  "item.ars_zero.spellcasting_circlet": "Psion's Circlet",
+  "item.ars_zero.spellcasting_circlet.desc": "A circlet that channels spells from your head slot with Begin, Tick, and End phases.",
 
   "item.ars_zero.archwood_rod": "Archwood Rod",
 
@@ -28,8 +33,13 @@
   "gui.ars_zero.current_phase": "Current Phase: %s",
 
   "key.category.ars_zero.general": "Ars Zero",
+  "key.ars_zero.curio_cast": "Channel Circlet",
+  "key.ars_zero.curio_radial": "Circlet Spell Radial",
 
   "itemGroup.ars_zero": "Ars Zero",
+
+  "ars_zero.tooltip.circlet.cast": "Press %s to channel circlet",
+  "ars_zero.tooltip.circlet.radial": "Press %s to open spell radial",
 
   "ars_zero.glyph_name.conjure_voxel_effect": "Conjure Voxel",
   "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity",
@@ -55,8 +65,8 @@
   "ars_nouveau.augment_desc.push_effect_glyph_amplify": "Increases the push strength",
   "ars_nouveau.augment_desc.push_effect_glyph_dampen": "Decreases the push strength",
 
-  "ars_nouveau.augment_desc.translate_effect_glyph_amplify": "Increases the distance from the player",
-  "ars_nouveau.augment_desc.translate_effect_glyph_dampen": "Decreases the distance from the player",
+  "ars_nouveau.augment_desc.anchor_effect_glyph_amplify": "Increases the distance from the player",
+  "ars_nouveau.augment_desc.anchor_effect_glyph_dampen": "Decreases the distance from the player",
 
   "ars_nouveau.augment_desc.zero_gravity_effect_glyph_extend_time": "Extends the gravity suppression duration",
   "ars_nouveau.augment_desc.zero_gravity_effect_glyph_duration_down": "Reduces the gravity suppression duration",
@@ -67,8 +77,12 @@
   "ars_zero.glyph_name.near_form": "Near",
   "ars_zero.glyph_desc.near_form": "Casts the spell at a short distance in front of your gaze",
 
-  "ars_zero.glyph_name.translate_effect": "Anchor",
-  "ars_zero.glyph_desc.translate_effect": "Maintains the relative position of the target(s) to the caster",
+  "item.ars_zero.anchor_effect": "Anchor",
+  "ars_zero.glyph_name.anchor_effect": "Anchor",
+  "ars_zero.glyph_desc.anchor_effect": "Maintains the relative position of the target(s) to the caster",
+  "ars_zero.glyph_name.glyph_anchor_effect": "Anchor",
+  "ars_zero.glyph_desc.glyph_anchor_effect": "Maintains the relative position of the target(s) to the caster",
+  "ars_nouveau.glyph_name.anchor_effect": "Anchor",
 
   "ars_zero.glyph_name.push_effect": "Push",
   "ars_zero.glyph_desc.push_effect": "Pushes the target in the direction you're looking.",
