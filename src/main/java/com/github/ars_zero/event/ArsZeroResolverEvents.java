@@ -154,11 +154,9 @@ public class ArsZeroResolverEvents {
                     
                     BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), serverLevel);
                     blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
+                    blockGroup.setCasterUUID(player.getUUID());
                     
-                    // Add blocks using captured states - this bypasses reading from world
                     blockGroup.addBlocksWithStates(validBlocks, capturedStates);
-                    
-                    // Blocks were already removed in PRE event, so we skip removal here
                     
                     serverLevel.addFreshEntity(blockGroup);
                     

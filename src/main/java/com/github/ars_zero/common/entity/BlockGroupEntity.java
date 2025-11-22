@@ -2,6 +2,8 @@ package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.registry.ModEntities;
+import com.hollingsworth.arsnouveau.api.ANFakePlayer;
+import com.hollingsworth.arsnouveau.api.util.BlockUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -16,7 +18,9 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
@@ -28,23 +32,39 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.BlockSnapshot;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class BlockGroupEntity extends Entity {
     private static final EntityDataAccessor<CompoundTag> BLOCK_DATA = SynchedEntityData.defineId(BlockGroupEntity.class, EntityDataSerializers.COMPOUND_TAG);
     
     private final List<BlockData> blocks = new ArrayList<>();
     private final Map<BlockPos, CompoundTag> blockEntityData = new HashMap<>();
+    @Nullable
+    private UUID casterUUID;
     
     public BlockGroupEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
         this.noCulling = true;
         this.setNoGravity(true);
+    }
+    
+    public void setCasterUUID(@Nullable UUID casterUUID) {
+        this.casterUUID = casterUUID;
+    }
+    
+    @Nullable
+    public UUID getCasterUUID() {
+        return casterUUID;
     }
     
     public static BlockGroupEntity create(Level level, List<BlockPos> positions) {
@@ -123,6 +143,10 @@ public class BlockGroupEntity extends Entity {
     }
     
     public void removeOriginalBlocks() {
+        if (!(level() instanceof ServerLevel serverLevel)) return;
+        
+        LivingEntity caster = getCaster(serverLevel);
+        
         for (BlockData blockData : blocks) {
             BlockPos originalPos = blockData.originalPosition;
             if (!level().isOutsideBuildHeight(originalPos)) {
@@ -131,10 +155,20 @@ public class BlockGroupEntity extends Entity {
                 // Only remove if the block is not already air
                 // This prevents removing blocks that were already removed by effects
                 if (!beforeState.isAir()) {
+                    if (caster != null && !BlockUtil.destroyRespectsClaim(caster, level(), originalPos)) {
+                        continue;
+                    }
+                    
                     level().setBlock(originalPos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                 }
             }
         }
+    }
+    
+    @Nullable
+    private LivingEntity getCaster(ServerLevel serverLevel) {
+        if (casterUUID == null) return null;
+        return serverLevel.getPlayerByUUID(casterUUID);
     }
     
     public List<BlockPos> placeBlocks() {
@@ -143,9 +177,10 @@ public class BlockGroupEntity extends Entity {
     
     public List<BlockPos> placeBlocks(float rotationYaw) {
         List<BlockPos> placedPositions = new ArrayList<>();
-        if (!(level() instanceof ServerLevel)) return placedPositions;
+        if (!(level() instanceof ServerLevel serverLevel)) return placedPositions;
         
         Rotation rotation = getRotationForYaw(rotationYaw);
+        Player fakePlayer = ANFakePlayer.getPlayer(serverLevel, casterUUID);
 
         for (BlockData blockData : blocks) {
             Vec3 rotatedPos = rotateVector(blockData.relativePosition, rotationYaw);
@@ -162,12 +197,17 @@ public class BlockGroupEntity extends Entity {
                 BlockState existingState = level().getBlockState(targetPos);
                 
                 if (existingState.canBeReplaced()) {
+                    var event = NeoForge.EVENT_BUS.post(new BlockEvent.EntityPlaceEvent(BlockSnapshot.create(level().dimension(), level(), targetPos), existingState, fakePlayer));
+                    if (event.isCanceled()) {
+                        dropBlockAsItem(originalState, blockData.originalPosition);
+                        continue;
+                    }
+                    
                     if (stateForPlacement.canSurvive(level(), targetPos)) {
                         if (level().setBlock(targetPos, stateForPlacement, Block.UPDATE_ALL)) {
                             placed = true;
                             placedPositions.add(targetPos);
                             
-                            // Restore BlockEntity data if needed
                             CompoundTag entityData = blockEntityData.get(blockData.originalPosition);
                             if (entityData != null && stateForPlacement.hasBlockEntity()) {
                                 BlockEntity blockEntity = level().getBlockEntity(targetPos);
@@ -370,6 +410,10 @@ public class BlockGroupEntity extends Entity {
             
             updateBoundingBox();
         }
+        
+        if (compound.contains("casterUUID")) {
+            casterUUID = compound.getUUID("casterUUID");
+        }
     }
     
     @Override
@@ -395,6 +439,10 @@ public class BlockGroupEntity extends Entity {
         }
         
         compound.put("blocks", blocksTag);
+        
+        if (casterUUID != null) {
+            compound.putUUID("casterUUID", casterUUID);
+        }
     }
     
     public List<BlockData> getBlocks() {
