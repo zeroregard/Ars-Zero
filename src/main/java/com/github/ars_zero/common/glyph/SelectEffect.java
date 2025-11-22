@@ -93,6 +93,7 @@ public class SelectEffect extends AbstractEffect {
         
         BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), level);
         blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
+        blockGroup.setCasterUUID(player.getUUID());
         
         blockGroup.addBlocks(blockPositions);
         blockGroup.removeOriginalBlocks();

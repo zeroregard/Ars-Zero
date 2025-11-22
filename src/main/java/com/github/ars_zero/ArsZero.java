@@ -8,6 +8,8 @@ import com.github.ars_zero.common.entity.interaction.ArcaneCollisionInteraction;
 import com.github.ars_zero.common.entity.interaction.FireWaterInteraction;
 import com.github.ars_zero.common.entity.interaction.MergeInteraction;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
+import com.github.ars_zero.common.config.ServerConfig;
+import com.github.ars_zero.common.event.AnchorEffectEvents;
 import com.github.ars_zero.common.event.FirePowerCostReductionEvents;
 import com.github.ars_zero.common.event.GravitySuppressionEvents;
 import com.github.ars_zero.common.event.WaterPowerCostReductionEvents;
@@ -53,6 +55,8 @@ public class ArsZero {
         ModRecipes.RECIPE_TYPES.register(modEventBus);
         ModParticleTimelines.init(modEventBus);
         
+        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
+        
         modEventBus.addListener(Networking::register);
         modEventBus.addListener(this::gatherData); 
         
@@ -69,6 +73,7 @@ public class ArsZero {
         NeoForge.EVENT_BUS.register(ZeroGravityMobEffectEvents.class);
         NeoForge.EVENT_BUS.register(GravitySuppressionEvents.class);
         NeoForge.EVENT_BUS.register(CurioCastingHandler.class);
+        NeoForge.EVENT_BUS.register(AnchorEffectEvents.class);
 
         if (FMLEnvironment.dist.isClient()) {
             ArsZeroClient.init(modEventBus);

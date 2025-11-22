@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
@@ -22,14 +23,17 @@ import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +61,7 @@ public class AnchorEffect extends AbstractEffect {
     public void onResolveEntity(EntityHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (world.isClientSide) return;
         if (!(shooter instanceof Player player)) return;
+        if (!(world instanceof ServerLevel serverLevel)) return;
         
         ItemStack casterTool = spellContext.getCasterTool();
         MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
@@ -76,6 +81,17 @@ public class AnchorEffect extends AbstractEffect {
                 continue;
             }
             
+            if (target instanceof Player targetPlayer) {
+                if (!canAnchorPlayer(player, targetPlayer, serverLevel)) {
+                    continue;
+                }
+                
+                if (!areInSameChunk(player, targetPlayer)) {
+                    restoreEntityPhysics(castContext);
+                    continue;
+                }
+            }
+            
             Vec3 newPosition = beginResult.transformLocalToWorld(
                 player.getYRot(), 
                 player.getXRot(), 
@@ -84,15 +100,82 @@ public class AnchorEffect extends AbstractEffect {
             );
             
             if (newPosition != null && canMoveToPosition(newPosition, world)) {
-                target.setPos(newPosition.x, newPosition.y, newPosition.z);
-                target.setDeltaMovement(Vec3.ZERO);
-                target.setNoGravity(true);
-                
-                if (target instanceof BaseVoxelEntity voxel) {
-                    voxel.freezePhysics();
+                if (target instanceof ServerPlayer targetPlayer) {
+                    targetPlayer.teleportTo(newPosition.x, newPosition.y, newPosition.z);
+                    targetPlayer.setDeltaMovement(Vec3.ZERO);
+                    targetPlayer.setNoGravity(true);
+                } else {
+                    target.setPos(newPosition.x, newPosition.y, newPosition.z);
+                    target.setDeltaMovement(Vec3.ZERO);
+                    target.setNoGravity(true);
+                    
+                    if (target instanceof BaseVoxelEntity voxel) {
+                        voxel.freezePhysics();
+                    }
                 }
             }
         }
+    }
+    
+    private static boolean canAnchorPlayer(Player caster, Player target, ServerLevel level) {
+        if (caster == target) {
+            return true;
+        }
+        
+        if (ServerConfig.ALLOW_NON_OP_ANCHOR_ON_PLAYERS.get()) {
+            return canInteractWithPlayer(caster, target, level);
+        }
+        
+        if (caster instanceof ServerPlayer serverCaster) {
+            return serverCaster.hasPermissions(2);
+        }
+        
+        return false;
+    }
+    
+    private static boolean canInteractWithPlayer(Player caster, Player target, ServerLevel level) {
+        if (!(caster instanceof ServerPlayer serverCaster) || !(target instanceof ServerPlayer serverTarget)) {
+            return true;
+        }
+        
+        try {
+            Class<?> ftbChunksClass = Class.forName("dev.ftb.mods.ftbchunks.api.FTBChunksAPI");
+            Object api = ftbChunksClass.getMethod("api").invoke(null);
+            Object manager = api.getClass().getMethod("getManager").invoke(api);
+            Object claimedChunk = manager.getClass().getMethod("getChunk", ServerLevel.class, int.class, int.class)
+                    .invoke(manager, level, target.chunkPosition().x, target.chunkPosition().z);
+            
+            if (claimedChunk != null) {
+                Object team = claimedChunk.getClass().getMethod("getTeam").invoke(claimedChunk);
+                if (team != null) {
+                    Object teamId = team.getClass().getMethod("getId").invoke(team);
+                    net.minecraft.world.scores.Team casterTeam = serverCaster.getTeam();
+                    if (casterTeam != null) {
+                        String casterTeamId = casterTeam.getName();
+                        return teamId.equals(casterTeamId);
+                    }
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+        }
+        
+        return true;
+    }
+    
+    private static boolean areInSameChunk(Player caster, Player target) {
+        if (!(caster.level() instanceof ServerLevel) || !(target.level() instanceof ServerLevel)) {
+            return true;
+        }
+        
+        if (caster.level() != target.level()) {
+            return false;
+        }
+        
+        ChunkPos casterChunk = caster.chunkPosition();
+        ChunkPos targetChunk = target.chunkPosition();
+        
+        return casterChunk.equals(targetChunk);
     }
     
     private static boolean canMoveToPosition(Vec3 targetPos, Level world) {

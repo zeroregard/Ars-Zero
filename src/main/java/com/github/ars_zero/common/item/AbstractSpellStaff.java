@@ -6,6 +6,7 @@ import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.SpellCaster;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -17,6 +18,7 @@ import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.fml.loading.FMLEnvironment;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -109,6 +111,21 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
 
     private <P extends AbstractSpellStaff & GeoItem> PlayState idlePredicate(AnimationState<P> event) {
         event.getController().setAnimation(RawAnimation.begin().thenLoop("idle"));
+        
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc != null && mc.player != null) {
+                boolean isUsing = mc.player.isUsingItem() && 
+                    mc.player.getUseItem().getItem() instanceof AbstractSpellStaff;
+                
+                if (isUsing) {
+                    event.getController().setAnimationSpeed(4.0);
+                } else {
+                    event.getController().setAnimationSpeed(1.0);
+                }
+            }
+        }
+        
         return PlayState.CONTINUE;
     }
 
