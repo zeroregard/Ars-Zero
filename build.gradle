@@ -68,8 +68,6 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             gameDirectory = file('run-bot')
-            programArgument '--username'
-            programArgument 'TestBot'
         }
     }
 
@@ -89,10 +87,6 @@ sourceSets {
         resources {
             srcDirs = ['src/test/resources', 'src/main/resources']
         }
-        compileClasspath += sourceSets.main.output + configurations.compileClasspath
-        runtimeClasspath += sourceSets.main.output + configurations.runtimeClasspath
-    }
-    dev {
         compileClasspath += sourceSets.main.output + configurations.compileClasspath
         runtimeClasspath += sourceSets.main.output + configurations.runtimeClasspath
     }
@@ -183,10 +177,6 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
-jar {
-    from sourceSets.main.output
-    exclude("**/dev/**")
-}
 
 
 tasks.named("runGameTestServer").configure {
