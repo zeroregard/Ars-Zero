@@ -104,21 +104,27 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        Player player = ((ServerLevel) event.world).getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
+        if (!(event.world instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        
+        Player player = serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
         if (player == null) {
+            capturedBlockStates.remove(serverLevel);
             return;
         }
         
         ItemStack casterTool = event.resolver.spellContext.getCasterTool();
         MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context == null) {
+            capturedBlockStates.remove(serverLevel);
             return;
         }
         
         HitResult hitResult = event.rayTraceResult;
         SpellResult result = null;
         
-        if (hitResult instanceof BlockHitResult blockHit && event.world instanceof ServerLevel serverLevel) {
+        if (hitResult instanceof BlockHitResult blockHit) {
             BlockPos pos = blockHit.getBlockPos();
             if (!event.world.isOutsideBuildHeight(pos) && BlockUtil.destroyRespectsClaim(player, event.world, pos)) {
                 BlockPos targetPos = pos;
@@ -127,26 +133,22 @@ public class ArsZeroResolverEvents {
                 List<BlockPos> posList = SpellUtil.calcAOEBlocks(player, targetPos, blockHit, aoeBuff, pierceBuff);
                 
                 List<BlockPos> validBlocks = new ArrayList<>();
-                // Use captured states from PRE event
                 Map<BlockPos, BlockState> capturedStates = capturedBlockStates.getOrDefault(serverLevel, new HashMap<>());
                 
                 for (BlockPos blockPos : posList) {
                     if (!event.world.isOutsideBuildHeight(blockPos) && BlockUtil.destroyRespectsClaim(player, event.world, blockPos)) {
-                        // Use captured state if available, otherwise try to read from world
                         var state = capturedStates.get(blockPos);
                         if (state == null) {
                             state = event.world.getBlockState(blockPos);
                         }
                         
-                        // Only add if not air
                         if (state != null && !state.isAir()) {
                             validBlocks.add(blockPos);
-                            capturedStates.put(blockPos, state); // Ensure it's in the map
+                            capturedStates.put(blockPos, state);
                         }
                     }
                 }
                 
-                // Clear captured states for this level after use
                 capturedBlockStates.remove(serverLevel);
                 
                 if (!validBlocks.isEmpty()) {
@@ -155,16 +157,17 @@ public class ArsZeroResolverEvents {
                     BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), serverLevel);
                     blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
                     
-                    // Add blocks using captured states - this bypasses reading from world
                     blockGroup.addBlocksWithStates(validBlocks, capturedStates);
-                    
-                    // Blocks were already removed in PRE event, so we skip removal here
                     
                     serverLevel.addFreshEntity(blockGroup);
                     
                     result = SpellResult.fromBlockGroup(blockGroup, validBlocks, player);
                 }
+            } else {
+                capturedBlockStates.remove(serverLevel);
             }
+        } else {
+            capturedBlockStates.remove(serverLevel);
         }
         
         if (result == null) {
@@ -212,7 +215,13 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        Player player = ((ServerLevel) event.world).getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
+        if (!(event.world instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        
+        capturedBlockStates.remove(serverLevel);
+        
+        Player player = serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
         if (player == null) {
             return;
         }

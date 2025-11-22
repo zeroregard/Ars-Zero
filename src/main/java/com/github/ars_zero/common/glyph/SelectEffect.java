@@ -1,6 +1,8 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
@@ -39,6 +41,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class SelectEffect extends AbstractEffect {
+    
+    private static final Logger LOGGER = LogManager.getLogger();
     
     public static final String ID = "select_effect";
     public static final SelectEffect INSTANCE = new SelectEffect();
@@ -98,6 +102,7 @@ public class SelectEffect extends AbstractEffect {
         blockGroup.removeOriginalBlocks();
         
         level.addFreshEntity(blockGroup);
+        LOGGER.info("[Select] Created BlockGroupEntity {} for player {} with {} blocks", blockGroup.getUUID(), player.getName().getString(), blockPositions.size());
         
         ItemStack casterTool = spellContext.getCasterTool();
         MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
@@ -105,6 +110,9 @@ public class SelectEffect extends AbstractEffect {
             SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, blockPositions, player);
             context.beginResults.clear();
             context.beginResults.add(blockResult);
+            LOGGER.info("[Select] Stored BlockGroupEntity {} in beginResults", blockGroup.getUUID());
+        } else {
+            LOGGER.warn("[Select] No cast context found, could not store BlockGroupEntity in beginResults");
         }
     }
     

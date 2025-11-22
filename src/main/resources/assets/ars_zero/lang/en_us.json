@@ -25,6 +25,7 @@
   "entity.ars_zero.arcane_voxel_entity": "Arcane Voxel",
   "entity.ars_zero.water_voxel_entity": "Water Voxel",
   "entity.ars_zero.fire_voxel_entity": "Fire Voxel",
+  "entity.ars_zero.grapple_tether": "Grapple Tether",
 
   "gui.ars_zero.staff_title": "Creative Spell Staff",
   "gui.ars_zero.phase.begin": "Begin",
@@ -97,5 +98,10 @@
   "ars_zero.glyph_name.glyph_zero_gravity_effect": "Remove Gravity",
   "ars_zero.glyph_desc.glyph_zero_gravity_effect": "Temporarily removes gravity from the target, bringing it back when the spell expires.",
   "effect.ars_zero.zero_gravity": "Gravity-ridden",
-  "effect.ars_zero.zero_gravity.description": "Temporarily removes gravity from the entity"
+  "effect.ars_zero.zero_gravity.description": "Temporarily removes gravity from the entity",
+
+  "ars_zero.glyph_name.tether_effect": "Tether",
+  "ars_zero.glyph_desc.tether_effect": "Creates a physics tether to the target block or entity. The tether pulls you toward the anchor point if extended beyond its maximum length.",
+  "ars_nouveau.augment_desc.tether_effect_glyph_amplify": "Increases the maximum tether length",
+  "ars_nouveau.augment_desc.tether_effect_glyph_dampen": "Decreases the maximum tether length"
 }

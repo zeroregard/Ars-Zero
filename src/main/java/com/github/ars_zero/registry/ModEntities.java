@@ -5,6 +5,7 @@ import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
+import com.github.ars_zero.common.entity.GrappleTetherEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
@@ -54,5 +55,15 @@ public class ModEntities {
                     .updateInterval(1)
                     .setShouldReceiveVelocityUpdates(true)
                     .build(ArsZero.MOD_ID + ":block_group")
+    );
+    
+    public static final DeferredHolder<EntityType<?>, EntityType<GrappleTetherEntity>> GRAPPLE_TETHER = ENTITIES.register(
+            "grapple_tether",
+            () -> EntityType.Builder.<GrappleTetherEntity>of(GrappleTetherEntity::new, MobCategory.MISC)
+                    .sized(0.1f, 0.1f)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(ArsZero.MOD_ID + ":grapple_tether")
     );
 }

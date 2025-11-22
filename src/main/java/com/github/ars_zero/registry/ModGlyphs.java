@@ -8,6 +8,7 @@ import com.github.ars_zero.common.glyph.PushEffect;
 import com.github.ars_zero.common.glyph.SelectEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.glyph.AnchorEffect;
+import com.github.ars_zero.common.glyph.TetherGlyphEffect;
 import com.github.ars_zero.common.glyph.ZeroGravityEffect;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 
@@ -21,6 +22,7 @@ public class ModGlyphs {
     public static final PushEffect PUSH_EFFECT = new PushEffect();
     public static final EnlargeEffect ENLARGE_EFFECT = new EnlargeEffect();
     public static final ZeroGravityEffect ZERO_GRAVITY_EFFECT = new ZeroGravityEffect();
+    public static final TetherGlyphEffect TETHER_GLYPH_EFFECT = new TetherGlyphEffect();
 
     public static void registerGlyphs() {
         ArsZero.LOGGER.debug("Starting glyph registration...");
@@ -52,6 +54,10 @@ public class ModGlyphs {
         ArsZero.LOGGER.debug("Registering RemoveGravity glyph...");
         GlyphRegistry.registerSpell(ZERO_GRAVITY_EFFECT);
         ArsZero.LOGGER.info("Successfully registered RemoveGravity glyph with ID: {}", ZERO_GRAVITY_EFFECT.getRegistryName());
+        
+        ArsZero.LOGGER.debug("Registering TetherGlyphEffect glyph...");
+        GlyphRegistry.registerSpell(TETHER_GLYPH_EFFECT);
+        ArsZero.LOGGER.info("Successfully registered TetherGlyphEffect glyph with ID: {}", TETHER_GLYPH_EFFECT.getRegistryName());
         
         ArsZero.LOGGER.debug("Glyph registration completed");
     }

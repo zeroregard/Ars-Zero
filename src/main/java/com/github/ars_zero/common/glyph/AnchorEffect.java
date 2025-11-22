@@ -3,6 +3,9 @@ package com.github.ars_zero.common.glyph;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
+import com.github.ars_zero.common.entity.GrappleTetherEntity;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
@@ -21,6 +24,7 @@ import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
@@ -34,6 +38,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
@@ -45,6 +50,8 @@ import java.util.Set;
  * locked to the same position on the player's screen, following their look direction.
  */
 public class AnchorEffect extends AbstractEffect {
+    
+    private static final Logger LOGGER = LogManager.getLogger();
     
     public static final String ID = "anchor_effect";
     public static final AnchorEffect INSTANCE = new AnchorEffect();
@@ -58,21 +65,73 @@ public class AnchorEffect extends AbstractEffect {
         if (world.isClientSide) return;
         if (!(shooter instanceof Player player)) return;
         
+        LOGGER.info("[Anchor] onResolveEntity called for player {}", player.getName().getString());
+        
         ItemStack casterTool = spellContext.getCasterTool();
         MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         
+        if (castContext != null && !castContext.beginResults.isEmpty()) {
+            LOGGER.info("[Anchor] Found cast context with {} beginResults", castContext.beginResults.size());
+            for (int i = 0; i < castContext.beginResults.size(); i++) {
+                SpellResult beginResult = castContext.beginResults.get(i);
+                LOGGER.info("[Anchor] beginResults[{}]: targetEntity={}, entityType={}, blockGroup={}, targetPos={}, hitResultType={}", 
+                    i, 
+                    beginResult.targetEntity != null ? beginResult.targetEntity.getUUID() : "null",
+                    beginResult.targetEntity != null ? beginResult.targetEntity.getClass().getSimpleName() : "null",
+                    beginResult.blockGroup != null ? beginResult.blockGroup.getUUID() : "null",
+                    beginResult.targetPosition != null ? beginResult.targetPosition.toString() : "null",
+                    beginResult.hitResult != null ? beginResult.hitResult.getType().toString() : "null");
+                
+                if (beginResult.targetEntity instanceof GrappleTetherEntity tether) {
+                    int tickDelay = calculateTickDelay(spellContext);
+                    LOGGER.info("[Anchor] Found GrappleTetherEntity {} in beginResults, extending lifetime by {} ticks", tether.getUUID(), tickDelay);
+                    tether.extendLifetime(tickDelay);
+                    return;
+                }
+            }
+            LOGGER.warn("[Anchor] No GrappleTetherEntity found in beginResults, continuing with normal anchor logic");
+        } else {
+            LOGGER.warn("[Anchor] No cast context or empty beginResults. castContext={}, beginResults empty={}", 
+                castContext != null, castContext != null && castContext.beginResults.isEmpty());
+        }
+        
+        if (world instanceof ServerLevel serverLevel) {
+            GrappleTetherEntity existingTether = findExistingTether(serverLevel, player);
+            if (existingTether != null) {
+                int tickDelay = calculateTickDelay(spellContext);
+                LOGGER.info("[Anchor] Found existing tether {} via entity search, extending lifetime by {} ticks", existingTether.getUUID(), tickDelay);
+                existingTether.extendLifetime(tickDelay);
+                return;
+            }
+        }
+        
         if (castContext == null || castContext.beginResults.isEmpty()) {
+            LOGGER.warn("[Anchor] No cast context or empty beginResults, returning early");
             return;
         }
         
+        LOGGER.info("[Anchor] Processing {} beginResults for normal anchor behavior", castContext.beginResults.size());
         for (SpellResult beginResult : castContext.beginResults) {
             Entity target = beginResult.targetEntity;
             
+            LOGGER.info("[Anchor] Processing beginResult: target={}, type={}, alive={}, hasOffset={}", 
+                target != null ? target.getUUID() : "null",
+                target != null ? target.getClass().getSimpleName() : "null",
+                target != null && target.isAlive(),
+                beginResult.relativeOffset != null);
+            
             if (target == null || !target.isAlive()) {
+                LOGGER.info("[Anchor] Skipping: target is null or not alive");
                 continue;
             }
             
             if (beginResult.relativeOffset == null) {
+                LOGGER.info("[Anchor] Skipping: no relative offset");
+                continue;
+            }
+            
+            if (target instanceof GrappleTetherEntity) {
+                LOGGER.warn("[Anchor] Found GrappleTetherEntity in normal anchor loop - this should have been caught earlier!");
                 continue;
             }
             
@@ -168,16 +227,55 @@ public class AnchorEffect extends AbstractEffect {
         if (world.isClientSide) return;
         if (!(shooter instanceof Player player)) return;
         
+        LOGGER.info("[Anchor] onResolveBlock called for player {} at block {}", player.getName().getString(), rayTraceResult.getBlockPos());
+        
         ItemStack casterTool = spellContext.getCasterTool();
         MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        
+        if (castContext != null && !castContext.beginResults.isEmpty()) {
+            LOGGER.info("[Anchor] Found cast context with {} beginResults (block)", castContext.beginResults.size());
+            for (int i = 0; i < castContext.beginResults.size(); i++) {
+                SpellResult beginResult = castContext.beginResults.get(i);
+                LOGGER.info("[Anchor] beginResults[{}] (block): targetEntity={}, entityType={}, blockGroup={}", 
+                    i, 
+                    beginResult.targetEntity != null ? beginResult.targetEntity.getUUID() : "null",
+                    beginResult.targetEntity != null ? beginResult.targetEntity.getClass().getSimpleName() : "null",
+                    beginResult.blockGroup != null ? beginResult.blockGroup.getUUID() : "null");
+                
+                if (beginResult.targetEntity instanceof GrappleTetherEntity tether) {
+                    int tickDelay = calculateTickDelay(spellContext);
+                    LOGGER.info("[Anchor] Found GrappleTetherEntity {} in beginResults (block), extending lifetime by {} ticks", tether.getUUID(), tickDelay);
+                    tether.extendLifetime(tickDelay);
+                    return;
+                }
+            }
+            LOGGER.warn("[Anchor] No GrappleTetherEntity found in beginResults (block), continuing with normal anchor logic");
+        } else {
+            LOGGER.warn("[Anchor] No cast context or empty beginResults (block). castContext={}, beginResults empty={}", 
+                castContext != null, castContext != null && castContext.beginResults.isEmpty());
+        }
+        
+        if (world instanceof ServerLevel serverLevel) {
+            GrappleTetherEntity existingTether = findExistingTether(serverLevel, player);
+            if (existingTether != null) {
+                int tickDelay = calculateTickDelay(spellContext);
+                existingTether.extendLifetime(tickDelay);
+                return;
+            }
+        }
         
         if (castContext == null || castContext.beginResults.isEmpty()) {
             return;
         }
         
         for (SpellResult beginResult : castContext.beginResults) {
+            LOGGER.info("[Anchor] Processing beginResult (block): blockGroup={}, hasOffset={}", 
+                beginResult.blockGroup != null ? beginResult.blockGroup.getUUID() : "null",
+                beginResult.relativeOffset != null);
+            
             if (beginResult.blockGroup != null && beginResult.relativeOffset != null) {
                 BlockGroupEntity blockGroup = beginResult.blockGroup;
+                LOGGER.warn("[Anchor] Found BlockGroupEntity {} in beginResults - this should not happen with tether! Moving block group.", blockGroup.getUUID());
                 
                 Vec3 newPosition = beginResult.transformLocalToWorld(
                     player.getYRot(), 
@@ -227,6 +325,39 @@ public class AnchorEffect extends AbstractEffect {
     @Override
     public Set<SpellSchool> getSchools() {
         return Set.of(SpellSchools.MANIPULATION);
+    }
+    
+    @Nullable
+    private GrappleTetherEntity findExistingTether(ServerLevel level, Player player) {
+        for (net.minecraft.world.entity.Entity entity : level.getAllEntities()) {
+            if (entity instanceof GrappleTetherEntity tether) {
+                if (tether.getPlayerUUID() != null && tether.getPlayerUUID().equals(player.getUUID())) {
+                    return tether;
+                }
+            }
+        }
+        return null;
+    }
+    
+    private int calculateTickDelay(SpellContext spellContext) {
+        try {
+            com.hollingsworth.arsnouveau.api.spell.Spell spell = spellContext.getSpell();
+            if (spell == null || spell.isEmpty()) {
+                return 1;
+            }
+            
+            int count = 0;
+            Iterable<com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart> recipe = spell.recipe();
+            for (com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart part : recipe) {
+                ResourceLocation partId = part.getRegistryName();
+                if (partId != null && partId.equals(ResourceLocation.fromNamespaceAndPath("ars_nouveau", "glyph_delay"))) {
+                    count++;
+                }
+            }
+            return Math.max(1, count);
+        } catch (Exception e) {
+            return 1;
+        }
     }
 }
 

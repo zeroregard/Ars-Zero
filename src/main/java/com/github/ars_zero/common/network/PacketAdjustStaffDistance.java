@@ -2,6 +2,7 @@ package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
+import com.github.ars_zero.common.entity.GrappleTetherEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
@@ -36,6 +37,22 @@ public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPac
     public static void handle(PacketAdjustStaffDistance packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
+                if (player.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                    GrappleTetherEntity existingTether = findExistingTether(serverLevel, player);
+                    if (existingTether != null) {
+                        double scrollSensitivity = 0.5;
+                        float lengthChange = (float)(packet.scrollDelta * scrollSensitivity);
+                        float oldLength = existingTether.getMaxLength();
+                        float newLength = oldLength + lengthChange;
+                        
+                        float minLength = 2.0f;
+                        float maxLength = 50.0f;
+                        newLength = Math.max(minLength, Math.min(maxLength, newLength));
+                        existingTether.setMaxLength(newLength);
+                        return;
+                    }
+                }
+                
                 ItemStack heldItem = player.getMainHandItem();
                 MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, heldItem);
                 
@@ -52,7 +69,6 @@ public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPac
                 var targetEntity = castContext.beginResults.get(0).targetEntity;
                 float entitySize = 1.0f;
                 
-                // TODO: Replace voxel instanceof check with general entity scale attachment for any scalable entity
                 if (targetEntity instanceof BaseVoxelEntity voxel) {
                     entitySize = voxel.getSize();
                     scrollSensitivity *= entitySize;
@@ -69,5 +85,16 @@ public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPac
                                                           Math.min(MAX_DISTANCE_MULTIPLIER, castContext.distanceMultiplier));
             }
         });
+    }
+    
+    private static GrappleTetherEntity findExistingTether(net.minecraft.server.level.ServerLevel level, net.minecraft.world.entity.player.Player player) {
+        for (net.minecraft.world.entity.Entity entity : level.getAllEntities()) {
+            if (entity instanceof GrappleTetherEntity tether) {
+                if (tether.getPlayerUUID() != null && tether.getPlayerUUID().equals(player.getUUID())) {
+                    return tether;
+                }
+            }
+        }
+        return null;
     }
 }

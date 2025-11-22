@@ -32,6 +32,7 @@ import com.hollingsworth.arsnouveau.common.spell.validation.GlyphKnownValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.GlyphMaxTierValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.ActionAugmentationPolicyValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.StartingCastMethodSpellValidator;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -41,6 +42,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -364,6 +367,14 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         addRenderableWidget(new GuiImageButton(bookLeft + 53, bookTop + 32, 18, 18, StaffGuiTextures.STYLE_ICON, (b) -> {
             openParticleScreen();
         }).withTooltip(Component.translatable("ars_nouveau.gui.spell_style")));
+        
+        addRenderableWidget(new GuiImageButton(bookLeft + 53, bookTop + 96, 18, 18, StaffGuiTextures.DISCORD_ICON, (b) -> {
+            try {
+                Util.getPlatform().openUri(new URI("https://discord.com/invite/y7TMXZu"));
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }).withTooltip(Component.translatable("ars_nouveau.gui.discord")));
     }
     
     private void openParticleScreen() {
