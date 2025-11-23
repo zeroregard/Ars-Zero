@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.network;
 
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -37,6 +38,20 @@ public class Networking {
             PacketCurioCastInput.CODEC,
             PacketCurioCastInput::handle
         );
+        
+        if (FMLEnvironment.dist.isDedicatedServer()) {
+            registrar.playToClient(
+                PacketStaffSpellFired.TYPE,
+                PacketStaffSpellFired.STREAM_CODEC,
+                (packet, context) -> {}
+            );
+            
+            registrar.playToClient(
+                PacketUpdateStaffGUI.TYPE,
+                PacketUpdateStaffGUI.CODEC,
+                (packet, context) -> {}
+            );
+        }
     }
 
     public static void sendToServer(PacketSetMultiPhaseSpellCastingSlot packet) {

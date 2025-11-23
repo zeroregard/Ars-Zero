@@ -2,7 +2,6 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
-import com.github.ars_zero.common.glyph.EnlargeEffect;
 import com.github.ars_zero.common.glyph.NearForm;
 import com.github.ars_zero.common.glyph.PushEffect;
 import com.github.ars_zero.common.glyph.SelectEffect;
@@ -19,7 +18,6 @@ public class ModGlyphs {
     public static final SelectEffect SELECT_EFFECT = new SelectEffect();
     public static final AnchorEffect ANCHOR_EFFECT = new AnchorEffect();
     public static final PushEffect PUSH_EFFECT = new PushEffect();
-    public static final EnlargeEffect ENLARGE_EFFECT = new EnlargeEffect();
     public static final ZeroGravityEffect ZERO_GRAVITY_EFFECT = new ZeroGravityEffect();
 
     public static void registerGlyphs() {

@@ -62,6 +62,13 @@ neoForge {
             data()
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
+
+        botClient {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            gameDirectory = file('run-bot')
+        }
     }
 
     mods {
@@ -146,6 +153,7 @@ dependencies {
     })
 
     testImplementation("net.neoforged:neoforge:${neo_version}")
+    
 }
 
 tasks.withType(Copy).configureEach {
@@ -168,6 +176,8 @@ publishing {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
+
+
 
 tasks.named("runGameTestServer").configure {
     def filterProperty = System.getProperty("ars_zero.testFilter")
