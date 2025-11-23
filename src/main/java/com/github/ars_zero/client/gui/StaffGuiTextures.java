@@ -35,5 +35,8 @@ public class StaffGuiTextures {
     public static final ResourceLocation GLYPH_CATEGORY_AUGMENT = ArsZero.prefix("textures/gui/abstract/icon_glyph_category_augment.png");
     public static final ResourceLocation GLYPH_CATEGORY_EFFECT = ArsZero.prefix("textures/gui/abstract/icon_glyph_category_effect.png");
     public static final ResourceLocation STYLE_ICON = ArsZero.prefix("textures/gui/abstract/icon_style.png");
+    public static final ResourceLocation ICON_DISCORD = ArsZero.prefix("textures/gui/abstract/icon_discord.png");
+    public static final ResourceLocation ICON_FAMILIARS = ArsZero.prefix("textures/gui/abstract/icon_familiars.png");
+    public static final ResourceLocation ICON_DOCS = ArsZero.prefix("textures/gui/abstract/icon_docs.png");
 }
 

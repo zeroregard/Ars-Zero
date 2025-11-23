@@ -32,6 +32,11 @@ import com.hollingsworth.arsnouveau.common.spell.validation.GlyphKnownValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.GlyphMaxTierValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.ActionAugmentationPolicyValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.StartingCastMethodSpellValidator;
+import com.hollingsworth.arsnouveau.ArsNouveau;
+import com.hollingsworth.arsnouveau.api.registry.FamiliarRegistry;
+import com.hollingsworth.arsnouveau.client.gui.GuiUtils;
+import com.hollingsworth.arsnouveau.client.gui.book.GuiFamiliarScreen;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -41,10 +46,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScreen {
 
@@ -361,9 +370,31 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
 
     private void addLeftSideTabs() {
-        addRenderableWidget(new GuiImageButton(bookLeft + 53, bookTop + 32, 18, 18, StaffGuiTextures.STYLE_ICON, (b) -> {
+        addRenderableWidget(new GuiImageButton(bookLeft + 54, bookTop + 32, 16, 16, StaffGuiTextures.STYLE_ICON, (b) -> {
             openParticleScreen();
         }).withTooltip(Component.translatable("ars_nouveau.gui.spell_style")));
+        
+        addRenderableWidget(new GuiImageButton(bookLeft + 54, bookTop + 53, 16, 16, StaffGuiTextures.ICON_DISCORD, (b) -> {
+            try {
+                Util.getPlatform().openUri(new URI("https://discord.com/channels/743298050222587978/1432008462929236071"));
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }).withTooltip(Component.translatable("ars_nouveau.gui.discord")));
+        
+        addRenderableWidget(new GuiImageButton(bookLeft + 54, bookTop + 73, 16, 16, StaffGuiTextures.ICON_FAMILIARS, (b) -> {
+            Collection<ResourceLocation> familiarHolders = new ArrayList<>();
+            IPlayerCap cap = CapabilityRegistry.getPlayerDataCap(player);
+            if (cap != null) {
+                familiarHolders = cap.getUnlockedFamiliars().stream().map(s -> s.familiarHolder.getRegistryName()).collect(Collectors.toList());
+            }
+            Collection<ResourceLocation> finalFamiliarHolders = familiarHolders;
+            Minecraft.getInstance().setScreen(new GuiFamiliarScreen(FamiliarRegistry.getFamiliarHolderMap().values().stream().filter(f -> finalFamiliarHolders.contains(f.getRegistryName())).collect(Collectors.toList()), this));
+        }).withTooltip(Component.translatable("ars_nouveau.gui.familiar")));
+        
+        addRenderableWidget(new GuiImageButton(bookLeft + 54, bookTop + 93, 16, 16, StaffGuiTextures.ICON_DOCS, (b) -> {
+            GuiUtils.openWiki(player);
+        }).withTooltip(Component.translatable("ars_nouveau.gui.notebook")));
     }
     
     private void openParticleScreen() {
