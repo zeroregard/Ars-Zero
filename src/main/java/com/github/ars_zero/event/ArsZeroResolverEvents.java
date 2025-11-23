@@ -17,6 +17,7 @@ import com.hollingsworth.arsnouveau.api.event.SpellResolveEvent;
 import com.hollingsworth.arsnouveau.api.util.BlockUtil;
 import com.hollingsworth.arsnouveau.api.util.SpellUtil;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -38,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ArsZeroResolverEvents {
     
     // Store block states captured before effects run
-    private static final Map<ServerLevel, Map<BlockPos, BlockState>> capturedBlockStates = new ConcurrentHashMap<>();
+    private static final Map<ResourceKey<Level>, Map<BlockPos, BlockState>> capturedBlockStates = new ConcurrentHashMap<>();
     
     @SubscribeEvent
     public static void onEffectResolving(com.hollingsworth.arsnouveau.api.event.EffectResolveEvent.Pre event) {
@@ -56,12 +57,13 @@ public class ArsZeroResolverEvents {
         
         // Capture block states BEFORE any effects resolve
         if (event.rayTraceResult instanceof BlockHitResult blockHit && event.world instanceof ServerLevel serverLevel) {
+            ResourceKey<Level> dimensionKey = serverLevel.dimension();
             BlockPos pos = blockHit.getBlockPos();
             if (!event.world.isOutsideBuildHeight(pos)) {
                 var state = event.world.getBlockState(pos);
                 
-                // Store in map keyed by level and position
-                capturedBlockStates.computeIfAbsent(serverLevel, k -> new HashMap<>()).put(pos, state);
+                // Store in map keyed by dimension and position
+                capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>()).put(pos, state);
                 
                 // Also capture AOE blocks and remove them immediately
                 double aoeBuff = event.spellStats.getAoeMultiplier();
@@ -73,7 +75,7 @@ public class ArsZeroResolverEvents {
                         if (!event.world.isOutsideBuildHeight(aoePos)) {
                             var aoeState = event.world.getBlockState(aoePos);
                             if (!aoeState.isAir()) {
-                                capturedBlockStates.get(serverLevel).put(aoePos, aoeState);
+                                capturedBlockStates.get(dimensionKey).put(aoePos, aoeState);
                                 
                                 // Remove block immediately in PRE event, before effects run
                                 event.world.setBlock(aoePos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
@@ -104,21 +106,35 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        Player player = ((ServerLevel) event.world).getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
+        ServerLevel serverLevel = null;
+        ResourceKey<Level> dimensionKey = null;
+        if (event.world instanceof ServerLevel level) {
+            serverLevel = level;
+            dimensionKey = level.dimension();
+        }
+        
+        Player player = serverLevel != null ? serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId()) : null;
         if (player == null) {
+            if (dimensionKey != null) {
+                capturedBlockStates.remove(dimensionKey);
+            }
             return;
         }
         
         ItemStack casterTool = event.resolver.spellContext.getCasterTool();
         MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context == null) {
+            if (dimensionKey != null) {
+                capturedBlockStates.remove(dimensionKey);
+            }
             return;
         }
         
         HitResult hitResult = event.rayTraceResult;
         SpellResult result = null;
+        boolean cleanedUp = false;
         
-        if (hitResult instanceof BlockHitResult blockHit && event.world instanceof ServerLevel serverLevel) {
+        if (hitResult instanceof BlockHitResult blockHit && serverLevel != null && dimensionKey != null) {
             BlockPos pos = blockHit.getBlockPos();
             if (!event.world.isOutsideBuildHeight(pos) && BlockUtil.destroyRespectsClaim(player, event.world, pos)) {
                 BlockPos targetPos = pos;
@@ -128,7 +144,7 @@ public class ArsZeroResolverEvents {
                 
                 List<BlockPos> validBlocks = new ArrayList<>();
                 // Use captured states from PRE event
-                Map<BlockPos, BlockState> capturedStates = capturedBlockStates.getOrDefault(serverLevel, new HashMap<>());
+                Map<BlockPos, BlockState> capturedStates = capturedBlockStates.getOrDefault(dimensionKey, new HashMap<>());
                 
                 for (BlockPos blockPos : posList) {
                     if (!event.world.isOutsideBuildHeight(blockPos) && BlockUtil.destroyRespectsClaim(player, event.world, blockPos)) {
@@ -146,8 +162,9 @@ public class ArsZeroResolverEvents {
                     }
                 }
                 
-                // Clear captured states for this level after use
-                capturedBlockStates.remove(serverLevel);
+                // Clear captured states for this dimension after use
+                capturedBlockStates.remove(dimensionKey);
+                cleanedUp = true;
                 
                 if (!validBlocks.isEmpty()) {
                     Vec3 centerPos = calculateCenter(validBlocks);
@@ -162,7 +179,16 @@ public class ArsZeroResolverEvents {
                     
                     result = SpellResult.fromBlockGroup(blockGroup, validBlocks, player);
                 }
+            } else {
+                if (dimensionKey != null) {
+                    capturedBlockStates.remove(dimensionKey);
+                    cleanedUp = true;
+                }
             }
+        }
+        
+        if (!cleanedUp && dimensionKey != null) {
+            capturedBlockStates.remove(dimensionKey);
         }
         
         if (result == null) {
@@ -210,15 +236,32 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        Player player = ((ServerLevel) event.world).getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
+        ServerLevel serverLevel = null;
+        ResourceKey<Level> dimensionKey = null;
+        if (event.world instanceof ServerLevel level) {
+            serverLevel = level;
+            dimensionKey = level.dimension();
+        }
+        
+        Player player = serverLevel != null ? serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId()) : null;
         if (player == null) {
+            if (dimensionKey != null) {
+                capturedBlockStates.remove(dimensionKey);
+            }
             return;
         }
         
         ItemStack casterTool = event.resolver.spellContext.getCasterTool();
         MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context == null) {
+            if (dimensionKey != null) {
+                capturedBlockStates.remove(dimensionKey);
+            }
             return;
+        }
+        
+        if (dimensionKey != null) {
+            capturedBlockStates.remove(dimensionKey);
         }
         
         context.beginFinished = true;
