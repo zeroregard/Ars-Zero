@@ -2,6 +2,7 @@ package com.github.ars_zero.client.gui;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
+import com.github.ars_zero.client.gui.buttons.ManaIndicator;
 import com.github.ars_zero.client.gui.buttons.StaffArrowButton;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
@@ -36,15 +37,18 @@ import com.hollingsworth.arsnouveau.ArsNouveau;
 import com.hollingsworth.arsnouveau.api.registry.FamiliarRegistry;
 import com.hollingsworth.arsnouveau.client.gui.GuiUtils;
 import com.hollingsworth.arsnouveau.client.gui.book.GuiFamiliarScreen;
+import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.fml.ModList;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -395,6 +399,49 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         addRenderableWidget(new GuiImageButton(bookLeft + 54, bookTop + 93, 16, 16, StaffGuiTextures.ICON_DOCS, (b) -> {
             GuiUtils.openWiki(player);
         }).withTooltip(Component.translatable("ars_nouveau.gui.notebook")));
+        
+        addAffinityButton();
+    }
+    
+    private void addAffinityButton() {
+        boolean affinityLoaded = ModList.get().isLoaded("ars_affinity");
+        
+        GuiImageButton affinityButton = new GuiImageButton(bookLeft + 54, bookTop + 113, 16, 16, StaffGuiTextures.ICON_AFFINITY, (b) -> {
+            if (!affinityLoaded) {
+                try {
+                    Util.getPlatform().openUri(new URI("https://www.curseforge.com/minecraft/mc-mods/ars-affinity"));
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
+                return;
+            }
+            
+            Minecraft minecraft = Minecraft.getInstance();
+            if (minecraft.player != null) {
+                try {
+                    Class<?> affinityScreenClass = Class.forName("com.github.ars_affinity.client.screen.AffinityScreen");
+                    Object affinityScreen = affinityScreenClass.getConstructor(
+                        net.minecraft.world.entity.player.Player.class,
+                        boolean.class,
+                        net.minecraft.client.gui.screens.Screen.class
+                    ).newInstance(minecraft.player, true, this);
+                    minecraft.setScreen((net.minecraft.client.gui.screens.Screen) affinityScreen);
+                } catch (Exception e) {
+                    ArsZero.LOGGER.error("Failed to open Ars Affinity screen", e);
+                }
+            }
+        });
+        
+        Component tooltip;
+        if (affinityLoaded) {
+            tooltip = Component.translatable("ars_affinity.gui.affinities");
+        } else {
+            tooltip = Component.translatable("ars_affinity.gui.affinities").append(
+                Component.literal(" - install Ars Affinities.").withStyle(Style.EMPTY.withColor(ChatFormatting.BLUE).withUnderlined(true))
+            );
+        }
+        affinityButton.withTooltip(tooltip);
+        addRenderableWidget(affinityButton);
     }
     
     private void openParticleScreen() {
@@ -863,6 +910,50 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     @Override
     public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         super.render(graphics, mouseX, mouseY, partialTicks);
+        renderManaIndicators(graphics, mouseX, mouseY);
+    }
+    
+    private void renderManaIndicators(GuiGraphics graphics, int mouseX, int mouseY) {
+        ArsZero.LOGGER.info("=== MANA INDICATOR RENDER START ===");
+        ArsZero.LOGGER.info("bookLeft: {}, bookTop: {}", bookLeft, bookTop);
+        ArsZero.LOGGER.info("PHASE_SECTION_SHIFT_X: {}, PHASE_ROW_TEXTURE_X_OFFSET: {}", PHASE_SECTION_SHIFT_X, PHASE_ROW_TEXTURE_X_OFFSET);
+        ArsZero.LOGGER.info("PHASE_ROW_TEXTURE_WIDTH: {}", PHASE_ROW_TEXTURE_WIDTH);
+        
+        int phaseRowStartX = bookLeft + PHASE_ROW_TEXTURE_X_OFFSET + PHASE_SECTION_SHIFT_X - 4;
+        int phaseRowEndX = phaseRowStartX + PHASE_ROW_TEXTURE_WIDTH;
+        int indicatorX = phaseRowEndX + 4 - 8 - 4 + 1;
+        int baseY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y;
+        int rowHeight = PHASE_ROW_HEIGHT + 2;
+        int indicatorHeight = 14;
+        
+        ArsZero.LOGGER.info("Phase row start X: {}, end X: {}", phaseRowStartX, phaseRowEndX);
+        ArsZero.LOGGER.info("Indicator X: {}, baseY: {}", indicatorX, baseY);
+        ArsZero.LOGGER.info("Player: {}", player != null ? player.getName().getString() : "NULL");
+        
+        ManaIndicator hoveredIndicator = null;
+        
+        for (int phaseIndex = 0; phaseIndex < 3; phaseIndex++) {
+            List<AbstractSpellPart> phaseSpell = phaseSpells.get(phaseIndex);
+            int indicatorY = baseY + phaseIndex * rowHeight + (PHASE_ROW_HEIGHT - indicatorHeight) / 2 - 1 + 1;
+            
+            ArsZero.LOGGER.info("Phase {}: indicatorY={}, spell parts count={}", phaseIndex, indicatorY, phaseSpell.size());
+            
+            ManaIndicator indicator = new ManaIndicator(indicatorX, indicatorY, phaseSpell);
+            indicator.render(graphics, player);
+            
+            ArsZero.LOGGER.info("Phase {}: After render call", phaseIndex);
+            
+            if (indicator.isHovered(mouseX, mouseY)) {
+                hoveredIndicator = indicator;
+                ArsZero.LOGGER.info("Phase {}: HOVERED! mouseX={}, mouseY={}", phaseIndex, mouseX, mouseY);
+            }
+        }
+        
+        if (hoveredIndicator != null) {
+            hoveredIndicator.renderTooltip(graphics, mouseX, mouseY);
+        }
+        
+        ArsZero.LOGGER.info("=== MANA INDICATOR RENDER END ===");
     }
     
     private void refreshCategoryButtons() {

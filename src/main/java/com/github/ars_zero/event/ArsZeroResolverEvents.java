@@ -2,6 +2,8 @@ package com.github.ars_zero.event;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
+import com.github.ars_zero.common.glyph.AnchorEffect;
+import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.CastPhase;
@@ -14,6 +16,12 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import com.hollingsworth.arsnouveau.api.event.EffectResolveEvent;
 import com.hollingsworth.arsnouveau.api.event.SpellResolveEvent;
+import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
+import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
+import com.hollingsworth.arsnouveau.api.spell.AbstractCastMethod;
+import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
+import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
+import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.api.util.BlockUtil;
 import com.hollingsworth.arsnouveau.api.util.SpellUtil;
 import net.minecraft.core.BlockPos;
@@ -62,14 +70,21 @@ public class ArsZeroResolverEvents {
             if (!event.world.isOutsideBuildHeight(pos)) {
                 var state = event.world.getBlockState(pos);
                 
-                // Store in map keyed by dimension and position
-                capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>()).put(pos, state);
-                
-                // Also capture AOE blocks and remove them immediately
-                double aoeBuff = event.spellStats.getAoeMultiplier();
-                int pierceBuff = event.spellStats.getBuffCount(com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce.INSTANCE);
                 Player player = serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
-                if (player != null) {
+                if (player == null) {
+                    return;
+                }
+                
+                ItemStack casterTool = event.resolver.spellContext.getCasterTool();
+                boolean willCreateEntityGroup = requiresEntityGroupForTemporalAnchor(casterTool, player);
+                
+                if (willCreateEntityGroup) {
+                    // Store in map keyed by dimension and position
+                    capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>()).put(pos, state);
+                    
+                    // Also capture AOE blocks and remove them immediately
+                    double aoeBuff = event.spellStats.getAoeMultiplier();
+                    int pierceBuff = event.spellStats.getBuffCount(com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce.INSTANCE);
                     List<BlockPos> posList = SpellUtil.calcAOEBlocks(player, pos, blockHit, aoeBuff, pierceBuff);
                     for (BlockPos aoePos : posList) {
                         if (!event.world.isOutsideBuildHeight(aoePos)) {
@@ -166,7 +181,7 @@ public class ArsZeroResolverEvents {
                 capturedBlockStates.remove(dimensionKey);
                 cleanedUp = true;
                 
-                if (!validBlocks.isEmpty()) {
+                if (!validBlocks.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player)) {
                     Vec3 centerPos = calculateCenter(validBlocks);
                     
                     BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), serverLevel);
@@ -220,6 +235,60 @@ public class ArsZeroResolverEvents {
         
         int count = positions.size();
         return new Vec3(x / count, y / count, z / count);
+    }
+    
+    private static boolean requiresEntityGroupForTemporalAnchor(ItemStack casterTool, Player player) {
+        if (casterTool.isEmpty()) {
+            return false;
+        }
+        
+        AbstractCaster<?> caster = SpellCasterRegistry.from(casterTool);
+        if (caster == null) {
+            return false;
+        }
+        
+        int currentLogicalSlot = caster.getCurrentSlot();
+        if (currentLogicalSlot < 0 || currentLogicalSlot >= 10) {
+            return false;
+        }
+        
+        boolean hasTemporalContextFormInTick = false;
+        boolean hasTemporalContextFormInEnd = false;
+        boolean hasAnchorInTick = false;
+        boolean hasAnchorInEnd = false;
+        
+        int tickPhysicalSlot = currentLogicalSlot * 3 + 1;
+        int endPhysicalSlot = currentLogicalSlot * 3 + 2;
+        
+        Spell tickSpell = caster.getSpell(tickPhysicalSlot);
+        Spell endSpell = caster.getSpell(endPhysicalSlot);
+        
+        if (!tickSpell.isEmpty()) {
+            for (AbstractSpellPart part : tickSpell.recipe()) {
+                if (part instanceof TemporalContextForm) {
+                    hasTemporalContextFormInTick = true;
+                }
+                if (part instanceof AnchorEffect) {
+                    hasAnchorInTick = true;
+                }
+            }
+        }
+        
+        if (!endSpell.isEmpty()) {
+            for (AbstractSpellPart part : endSpell.recipe()) {
+                if (part instanceof TemporalContextForm) {
+                    hasTemporalContextFormInEnd = true;
+                }
+                if (part instanceof AnchorEffect) {
+                    hasAnchorInEnd = true;
+                }
+            }
+        }
+        
+        boolean hasTemporalContextForm = hasTemporalContextFormInTick || hasTemporalContextFormInEnd;
+        boolean hasAnchor = hasAnchorInTick || hasAnchorInEnd;
+        
+        return hasTemporalContextForm && hasAnchor;
     }
     
     @SubscribeEvent

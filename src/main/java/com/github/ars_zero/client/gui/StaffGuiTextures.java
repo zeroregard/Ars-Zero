@@ -38,5 +38,6 @@ public class StaffGuiTextures {
     public static final ResourceLocation ICON_DISCORD = ArsZero.prefix("textures/gui/abstract/icon_discord.png");
     public static final ResourceLocation ICON_FAMILIARS = ArsZero.prefix("textures/gui/abstract/icon_familiars.png");
     public static final ResourceLocation ICON_DOCS = ArsZero.prefix("textures/gui/abstract/icon_docs.png");
+    public static final ResourceLocation ICON_AFFINITY = ArsZero.prefix("textures/gui/abstract/icon_affinity.png");
 }
 

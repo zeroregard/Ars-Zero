@@ -32,6 +32,8 @@
   "gui.ars_zero.phase.end": "End",
   "gui.ars_zero.current_phase": "Current Phase: %s",
 
+  "ars_affinity.gui.affinities": "Affinities",
+
   "key.category.ars_zero.general": "Ars Zero",
   "key.ars_zero.curio_cast": "Channel Circlet",
   "key.ars_zero.curio_radial": "Circlet Spell Radial",
