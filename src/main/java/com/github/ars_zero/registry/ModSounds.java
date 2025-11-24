@@ -18,4 +18,9 @@ public class ModSounds {
         "effect_anchor", 
         () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("effect_anchor"))
     );
+    
+    public static final DeferredHolder<SoundEvent, SoundEvent> FUSION_RECORD = SOUNDS.register(
+        "fusion_record",
+        () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("fusion_record"))
+    );
 }

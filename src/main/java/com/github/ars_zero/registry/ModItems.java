@@ -11,8 +11,11 @@ import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.setup.registry.ItemRegistryWrapper;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.JukeboxSong;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -49,10 +52,24 @@ public class ModItems {
         "water_voxel_spawner",
         () -> new BlockItem(ModBlocks.WATER_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
+    
+    public static final ItemRegistryWrapper<Item> CONDITIONAL_RECORD = areConditionalModsLoaded() 
+        ? register("fusion_record", () -> {
+            ResourceKey<JukeboxSong> songKey = ResourceKey.create(
+                Registries.JUKEBOX_SONG, 
+                ArsZero.prefix("fusion_record")
+            );
+            return new Item(defaultItemProperties().jukeboxPlayable(songKey).stacksTo(1));
+        })
+        : null;
 
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);
         return new ItemRegistryWrapper<>(ITEMS.register(name, item));
+    }
+    
+    public static boolean areConditionalModsLoaded() {
+        return ModList.get().isLoaded("ars_technica") && ModList.get().isLoaded("ars_affinity");
     }
 
     public static Item.Properties defaultItemProperties() {
