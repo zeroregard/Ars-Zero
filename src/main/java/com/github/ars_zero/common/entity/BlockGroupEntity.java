@@ -51,6 +51,7 @@ public class BlockGroupEntity extends Entity {
     private final Map<BlockPos, CompoundTag> blockEntityData = new HashMap<>();
     @Nullable
     private UUID casterUUID;
+    private float originalYRot = 0.0f;
     
     public BlockGroupEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -65,6 +66,14 @@ public class BlockGroupEntity extends Entity {
     @Nullable
     public UUID getCasterUUID() {
         return casterUUID;
+    }
+    
+    public void setOriginalYRot(float yRot) {
+        this.originalYRot = yRot;
+    }
+    
+    public float getOriginalYRot() {
+        return originalYRot;
     }
     
     public static BlockGroupEntity create(Level level, List<BlockPos> positions) {
@@ -179,18 +188,14 @@ public class BlockGroupEntity extends Entity {
         List<BlockPos> placedPositions = new ArrayList<>();
         if (!(level() instanceof ServerLevel serverLevel)) return placedPositions;
         
-        Rotation rotation = getRotationForYaw(rotationYaw);
         Player fakePlayer = ANFakePlayer.getPlayer(serverLevel, casterUUID);
 
         for (BlockData blockData : blocks) {
-            Vec3 rotatedPos = rotateVector(blockData.relativePosition, rotationYaw);
-            BlockPos targetPos = BlockPos.containing(this.position().add(rotatedPos));
+            Vec3 relativePos = blockData.relativePosition;
+            BlockPos targetPos = BlockPos.containing(this.position().add(relativePos));
             
             BlockState originalState = blockData.blockState;
             BlockState stateForPlacement = originalState;
-            if (rotation != Rotation.NONE) {
-                stateForPlacement = stateForPlacement.rotate(level(), targetPos, rotation);
-            }
             boolean placed = false;
             
             if (!level().isOutsideBuildHeight(targetPos)) {
@@ -376,12 +381,7 @@ public class BlockGroupEntity extends Entity {
     @Override
     public void remove(@NotNull RemovalReason reason) {
         if (!level().isClientSide && reason == RemovalReason.DISCARDED && !blocks.isEmpty()) {
-            float rotation = 0.0f;
-            if (level() instanceof ServerLevel && getYRot() != 0.0f) {
-                rotation = getNearest90DegreeRotation(getYRot());
-            }
-            
-            placeBlocks(rotation);
+            placeBlocks(0.0f);
             clearBlocks();
         }
         
@@ -414,6 +414,10 @@ public class BlockGroupEntity extends Entity {
         if (compound.contains("casterUUID")) {
             casterUUID = compound.getUUID("casterUUID");
         }
+        
+        if (compound.contains("originalYRot", Tag.TAG_FLOAT)) {
+            originalYRot = compound.getFloat("originalYRot");
+        }
     }
     
     @Override
@@ -443,6 +447,8 @@ public class BlockGroupEntity extends Entity {
         if (casterUUID != null) {
             compound.putUUID("casterUUID", casterUUID);
         }
+        
+        compound.putFloat("originalYRot", originalYRot);
     }
     
     public List<BlockData> getBlocks() {

@@ -25,6 +25,7 @@
   "entity.ars_zero.arcane_voxel_entity": "Arcane Voxel",
   "entity.ars_zero.water_voxel_entity": "Water Voxel",
   "entity.ars_zero.fire_voxel_entity": "Fire Voxel",
+  "entity.ars_zero.block_group": "Block Group",
 
   "gui.ars_zero.staff_title": "Creative Spell Staff",
   "gui.ars_zero.phase.begin": "Begin",
