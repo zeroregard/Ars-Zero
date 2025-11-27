@@ -52,6 +52,8 @@ public class BlockGroupEntity extends Entity {
     @Nullable
     private UUID casterUUID;
     private float originalYRot = 0.0f;
+    private int lifespan = 5;
+    private int maxLifeSpan = 5;
     
     public BlockGroupEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -80,6 +82,13 @@ public class BlockGroupEntity extends Entity {
         BlockGroupEntity entity = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), level);
         entity.addBlocks(positions);
         return entity;
+    }
+
+     public void addLifespan(int extraTicks) {
+        this.lifespan += extraTicks;
+        if(this.lifespan > maxLifeSpan) {
+            this.lifespan = maxLifeSpan;
+        }
     }
     
     public void addBlocks(List<BlockPos> positions) {
@@ -337,10 +346,29 @@ public class BlockGroupEntity extends Entity {
         super.tick();
         
         if (!level().isClientSide) {
+            age();
             Vec3 deltaMovement = this.getDeltaMovement();
             this.move(MoverType.SELF, deltaMovement);
             this.setDeltaMovement(deltaMovement.scale(0.98));
         }
+    }
+
+    private void age() {
+        if (lifespan > 0) {
+            lifespan--;
+        }
+
+        if (lifespan <= 0 && !blocks.isEmpty()) {
+            placeAndDiscard();
+        }
+    }
+
+    public void placeAndDiscard() {
+        float rotation = 0.0f; // fallback rotation
+        float nearestRotation = getNearest90DegreeRotation(rotation);
+        placeBlocks(nearestRotation);
+        clearBlocks();
+        remove(RemovalReason.DISCARDED);
     }
     
     @Override

@@ -72,6 +72,10 @@ public class AnchorEffect extends AbstractEffect {
         
         for (SpellResult beginResult : castContext.beginResults) {
             Entity target = beginResult.targetEntity;
+
+            if (target instanceof BlockGroupEntity blockGroup) {
+                blockGroup.addLifespan(1); 
+            }
             
             if (target == null || !target.isAlive()) {
                 continue;
