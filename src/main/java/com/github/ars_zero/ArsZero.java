@@ -3,6 +3,7 @@ package com.github.ars_zero;
 import com.github.ars_zero.client.ArsZeroClient;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
+import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.interaction.ArcaneCollisionInteraction;
 import com.github.ars_zero.common.entity.interaction.FireWaterInteraction;
@@ -103,6 +104,12 @@ public class ArsZero {
         );
         
         VoxelInteractionRegistry.register(
+            StoneVoxelEntity.class,
+            StoneVoxelEntity.class,
+            mergeInteraction
+        );
+        
+        VoxelInteractionRegistry.register(
             ArcaneVoxelEntity.class,
             ArcaneVoxelEntity.class,
             arcaneInteraction
@@ -117,6 +124,12 @@ public class ArsZero {
         VoxelInteractionRegistry.register(
             ArcaneVoxelEntity.class,
             WaterVoxelEntity.class,
+            arcaneInteraction
+        );
+        
+        VoxelInteractionRegistry.register(
+            ArcaneVoxelEntity.class,
+            StoneVoxelEntity.class,
             arcaneInteraction
         );
     }

@@ -6,6 +6,7 @@ import com.github.ars_zero.client.network.ClientNetworking;
 import com.github.ars_zero.client.renderer.entity.ArcaneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.BlockGroupEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.FireVoxelEntityRenderer;
+import com.github.ars_zero.client.renderer.entity.StoneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
 import com.github.ars_zero.registry.ModEntities;
 import net.minecraft.client.renderer.entity.EntityRenderers;
@@ -35,6 +36,7 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.ARCANE_VOXEL_ENTITY.get(), ArcaneVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.WATER_VOXEL_ENTITY.get(), WaterVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.FIRE_VOXEL_ENTITY.get(), FireVoxelEntityRenderer::new);
+            EntityRenderers.register(ModEntities.STONE_VOXEL_ENTITY.get(), StoneVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.BLOCK_GROUP.get(), BlockGroupEntityRenderer::new);
         });
     }

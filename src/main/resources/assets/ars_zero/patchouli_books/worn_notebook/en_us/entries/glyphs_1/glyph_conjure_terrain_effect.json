@@ -1,0 +1,16 @@
+{
+  "category": "ars_nouveau:glyphs_1",
+  "icon": "ars_zero:glyph_conjure_terrain_effect",
+  "name": "ars_zero.glyph_name.glyph_conjure_terrain_effect",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "ars_zero.glyph_desc.glyph_conjure_terrain_effect"
+    },
+    {
+      "type": "ars_nouveau:glyph_recipe",
+      "recipe": "ars_zero:glyph_conjure_terrain_effect"
+    }
+  ],
+  "sortnum": 2
+}

@@ -1,0 +1,141 @@
+package com.github.ars_zero.common.entity;
+
+import com.github.ars_zero.registry.ModEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
+
+public class StoneVoxelEntity extends BaseVoxelEntity {
+    
+    private static final int COLOR = 0x8A7F74;
+    private static final double DAMAGE_SPEED_THRESHOLD = 0.35;
+    private static final float BASE_DAMAGE = 3.0f;
+    private static final float DAMAGE_SCALE = 6.0f;
+    private static final float MAX_DAMAGE = 18.0f;
+    
+    public StoneVoxelEntity(EntityType<? extends StoneVoxelEntity> entityType, Level level) {
+        super(entityType, level);
+    }
+    
+    public StoneVoxelEntity(Level level, double x, double y, double z, int lifetime) {
+        this(ModEntities.STONE_VOXEL_ENTITY.get(), level);
+        this.setPos(x, y, z);
+        this.setLifetime(lifetime);
+    }
+    
+    @Override
+    public int getColor() {
+        return COLOR;
+    }
+    
+    @Override
+    public boolean isEmissive() {
+        return false;
+    }
+    
+    @Override
+    protected void onBlockCollision(BlockHitResult blockHit) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        BlockPos impactPos = blockHit.getBlockPos();
+        if (!reinforceBlock(serverLevel, impactPos)) {
+            BlockPos offset = impactPos.relative(blockHit.getDirection());
+            reinforceBlock(serverLevel, offset);
+        }
+    }
+    
+    @Override
+    protected void onHitEntity(EntityHitResult result) {
+        Entity hit = result.getEntity();
+        if (hit instanceof BaseVoxelEntity) {
+            super.onHitEntity(result);
+            return;
+        }
+        if (!this.level().isClientSide) {
+            if (hit instanceof LivingEntity living) {
+                applyImpactDamage(living);
+            }
+            buildImpactBrace(result.getLocation());
+        }
+        this.discard();
+    }
+    
+    private void applyImpactDamage(LivingEntity target) {
+        double speed = this.getDeltaMovement().length();
+        if (speed < DAMAGE_SPEED_THRESHOLD) {
+            return;
+        }
+        float sizeScale = Math.max(1.0f, this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE);
+        float damage = BASE_DAMAGE + (float) ((speed - DAMAGE_SPEED_THRESHOLD) * DAMAGE_SCALE);
+        damage *= sizeScale;
+        damage = Math.min(damage, MAX_DAMAGE);
+        Entity owner = this.getOwner();
+        target.hurt(this.level().damageSources().thrown(this, owner instanceof LivingEntity ? owner : null), damage);
+        Vec3 impulse = this.getDeltaMovement().scale(0.35);
+        target.push(impulse.x, Math.max(0.1, impulse.y + 0.15), impulse.z);
+        target.hurtMarked = true;
+    }
+    
+    private boolean reinforceBlock(ServerLevel level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (state.isAir() || state.canBeReplaced()) {
+            level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
+            return true;
+        }
+        float hardness = state.getDestroySpeed(level, pos);
+        if (hardness >= 0.0f && hardness <= 1.5f) {
+            level.setBlock(pos, Blocks.COBBLESTONE.defaultBlockState(), 3);
+            return true;
+        }
+        return false;
+    }
+    
+    private void buildImpactBrace(Vec3 location) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        BlockPos center = BlockPos.containing(location);
+        int radius = Math.max(1, Math.round(this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE));
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                if (Math.abs(dx) + Math.abs(dz) > radius + 1) {
+                    continue;
+                }
+                BlockPos target = center.offset(dx, -1, dz);
+                reinforceBlock(serverLevel, target);
+            }
+        }
+    }
+    
+    @Override
+    protected ParticleOptions getAmbientParticle() {
+        return new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState());
+    }
+    
+    @Override
+    protected void spawnHitParticles(Vec3 location) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        ParticleOptions option = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState());
+        int particleCount = Math.max(8, (int) (this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE) * 6);
+        for (int i = 0; i < particleCount; i++) {
+            double offsetX = (this.random.nextDouble() - 0.5) * 0.4;
+            double offsetY = (this.random.nextDouble() - 0.5) * 0.3;
+            double offsetZ = (this.random.nextDouble() - 0.5) * 0.4;
+            serverLevel.sendParticles(option, location.x + offsetX, location.y + offsetY, location.z + offsetZ, 1, 0.0, 0.0, 0.0, 0.0);
+        }
+    }
+}

@@ -22,6 +22,7 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         addSelectRecipe();
         addZeroGravityRecipe();
         addConjureVoxelRecipe();
+        addConjureTerrainRecipe();
         addAnchorRecipe();
         addTemporalContextRecipe();
         addNearRecipe();
@@ -91,6 +92,27 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         json.add("output", outputObj);
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_conjure_voxel_effect.json"), json));
+    }
+    
+    private void addConjureTerrainRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 65);
+        
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("minecraft:stone"));
+        inputsArray.add(item("minecraft:cobblestone"));
+        inputsArray.add(item("minecraft:stone_bricks"));
+        inputsArray.add(item("ars_nouveau:earth_essence"));
+        inputsArray.add(item("ars_nouveau:source_gem"));
+        json.add("inputs", inputsArray);
+        
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:conjure_terrain_effect");
+        json.add("output", outputObj);
+        
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_conjure_terrain_effect.json"), json));
     }
 
     private void addAnchorRecipe() {

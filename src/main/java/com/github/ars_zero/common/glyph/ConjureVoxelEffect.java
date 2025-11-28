@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
+import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
@@ -209,6 +210,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
             SpellContext peekContext = context.clone();
             boolean hasWater = false;
             boolean hasFire = false;
+            boolean hasTerrain = false;
             
             while (peekContext.hasNextPart()) {
                 AbstractSpellPart next = peekContext.nextPart();
@@ -216,8 +218,14 @@ public class ConjureVoxelEffect extends AbstractEffect {
                     if (next == EffectConjureWater.INSTANCE) {
                         hasWater = true;
                         hasFire = false;
+                        hasTerrain = false;
                     } else if (next == EffectIgnite.INSTANCE) {
                         hasFire = true;
+                        hasWater = false;
+                        hasTerrain = false;
+                    } else if (next == ConjureTerrainEffect.INSTANCE) {
+                        hasTerrain = true;
+                        hasFire = false;
                         hasWater = false;
                     }
                     break;
@@ -228,7 +236,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
             Vec3 lookDirection = shooter.getLookAngle();
             java.util.List<Vec3> positions = MathHelper.getCirclePositions(center, lookDirection, circleRadius, entityCount);
             
-            isArcane = !hasWater && !hasFire;
+            isArcane = !hasWater && !hasFire && !hasTerrain;
             SpellContext newContext = null;
             
             if (isArcane) {
@@ -242,6 +250,8 @@ public class ConjureVoxelEffect extends AbstractEffect {
                     voxel = new WaterVoxelEntity(level, pos.x, pos.y, pos.z, duration);
                 } else if (hasFire) {
                     voxel = new FireVoxelEntity(level, pos.x, pos.y, pos.z, duration);
+                } else if (hasTerrain) {
+                    voxel = new StoneVoxelEntity(level, pos.x, pos.y, pos.z, duration);
                 } else {
                     voxel = new ArcaneVoxelEntity(level, pos.x, pos.y, pos.z, duration);
                 }
@@ -282,6 +292,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
     private BaseVoxelEntity createVoxel(ServerLevel level, double x, double y, double z, int duration, SpellContext context) {
         boolean hasWater = false;
         boolean hasFire = false;
+        boolean hasTerrain = false;
         
         SpellContext peekContext = context.clone();
         while (peekContext.hasNextPart()) {
@@ -303,6 +314,14 @@ public class ConjureVoxelEffect extends AbstractEffect {
                             break;
                         }
                     }
+                } else if (next == ConjureTerrainEffect.INSTANCE) {
+                    hasTerrain = true;
+                    while (context.hasNextPart()) {
+                        AbstractSpellPart consumed = context.nextPart();
+                        if (consumed == ConjureTerrainEffect.INSTANCE) {
+                            break;
+                        }
+                    }
                 }
                 break;
             }
@@ -313,6 +332,8 @@ public class ConjureVoxelEffect extends AbstractEffect {
             result = new WaterVoxelEntity(level, x, y, z, duration);
         } else if (hasFire) {
             result = new FireVoxelEntity(level, x, y, z, duration);
+        } else if (hasTerrain) {
+            result = new StoneVoxelEntity(level, x, y, z, duration);
         } else {
             result = new ArcaneVoxelEntity(level, x, y, z, duration);
         }

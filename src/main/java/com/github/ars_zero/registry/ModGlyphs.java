@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.glyph.ConjureTerrainEffect;
 import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
 import com.github.ars_zero.common.glyph.NearForm;
 import com.github.ars_zero.common.glyph.PushEffect;
@@ -15,6 +16,7 @@ public class ModGlyphs {
     public static final TemporalContextForm TEMPORAL_CONTEXT_FORM = new TemporalContextForm();
     public static final NearForm NEAR_FORM = new NearForm();
     public static final ConjureVoxelEffect CONJURE_VOXEL_EFFECT = new ConjureVoxelEffect();
+    public static final ConjureTerrainEffect CONJURE_TERRAIN_EFFECT = new ConjureTerrainEffect();
     public static final SelectEffect SELECT_EFFECT = new SelectEffect();
     public static final AnchorEffect ANCHOR_EFFECT = new AnchorEffect();
     public static final PushEffect PUSH_EFFECT = new PushEffect();
@@ -34,6 +36,10 @@ public class ModGlyphs {
         ArsZero.LOGGER.debug("Registering ConjureVoxelEffect glyph...");
         GlyphRegistry.registerSpell(CONJURE_VOXEL_EFFECT);
         ArsZero.LOGGER.info("Successfully registered ConjureVoxelEffect glyph with ID: {}", CONJURE_VOXEL_EFFECT.getRegistryName());
+        
+        ArsZero.LOGGER.debug("Registering ConjureTerrainEffect glyph...");
+        GlyphRegistry.registerSpell(CONJURE_TERRAIN_EFFECT);
+        ArsZero.LOGGER.info("Successfully registered ConjureTerrainEffect glyph with ID: {}", CONJURE_TERRAIN_EFFECT.getRegistryName());
         
         ArsZero.LOGGER.debug("Registering SelectEffect glyph...");
         GlyphRegistry.registerSpell(SELECT_EFFECT);

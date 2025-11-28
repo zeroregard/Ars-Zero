@@ -25,6 +25,7 @@
   "entity.ars_zero.arcane_voxel_entity": "Arcane Voxel",
   "entity.ars_zero.water_voxel_entity": "Water Voxel",
   "entity.ars_zero.fire_voxel_entity": "Fire Voxel",
+  "entity.ars_zero.stone_voxel_entity": "Stone Voxel",
   "entity.ars_zero.block_group": "Block Group",
 
   "gui.ars_zero.staff_title": "Creative Spell Staff",
@@ -46,6 +47,8 @@
 
   "ars_zero.glyph_name.conjure_voxel_effect": "Conjure Voxel",
   "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity",
+  "ars_zero.glyph_name.conjure_terrain_effect": "Conjure Terrain",
+  "ars_zero.glyph_desc.conjure_terrain_effect": "Compacts nearby terrain into stone or cobblestone, letting you sculpt cover mid-fight.",
 
   "ars_zero.glyph_name.select_effect": "Select",
   "ars_zero.glyph_desc.select_effect": "Selects a target entity or block without performing any action.",
@@ -80,6 +83,10 @@
 
   "ars_zero.glyph_name.near_form": "Near",
   "ars_zero.glyph_desc.near_form": "Casts the spell at a short distance in front of your gaze",
+  "ars_zero.glyph_name.glyph_conjure_voxel_effect": "Conjure Voxel",
+  "ars_zero.glyph_desc.glyph_conjure_voxel_effect": "Conjures a small block-like entity that can inherit elemental properties.",
+  "ars_zero.glyph_name.glyph_conjure_terrain_effect": "Conjure Terrain",
+  "ars_zero.glyph_desc.glyph_conjure_terrain_effect": "Compacts soft terrain into stone, pairing well with Conjure Voxel to birth Stone Voxels.",
 
   "item.ars_zero.anchor_effect": "Anchor",
   "ars_zero.glyph_name.anchor_effect": "Anchor",
