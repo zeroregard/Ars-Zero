@@ -39,6 +39,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,6 +51,12 @@ public class ConjureVoxelEffect extends AbstractEffect {
     private static final int MAX_AMPLIFY_LEVEL = 2;
     private static final float BASE_VOXEL_SIZE = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final float AMPLIFY_SIZE_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
+    private static final Map<AbstractEffect, VoxelVariant> VARIANT_CACHE = new IdentityHashMap<>();
+    
+    static {
+        VARIANT_CACHE.put(EffectConjureWater.INSTANCE, VoxelVariant.WATER);
+        VARIANT_CACHE.put(EffectIgnite.INSTANCE, VoxelVariant.FIRE);
+    }
 
     public ConjureVoxelEffect() {
         super(ArsZero.prefix(ID), "Conjure Voxel");
@@ -208,36 +215,13 @@ public class ConjureVoxelEffect extends AbstractEffect {
             level.addFreshEntity(voxel);
             createdVoxels.add(voxel);
         } else {
-            SpellContext peekContext = context.clone();
-            boolean hasWater = false;
-            boolean hasFire = false;
-            boolean hasTerrain = false;
-            
-            while (peekContext.hasNextPart()) {
-                AbstractSpellPart next = peekContext.nextPart();
-                if (next instanceof AbstractEffect) {
-                    if (next == EffectConjureWater.INSTANCE) {
-                        hasWater = true;
-                        hasFire = false;
-                        hasTerrain = false;
-                    } else if (next == EffectIgnite.INSTANCE) {
-                        hasFire = true;
-                        hasWater = false;
-                        hasTerrain = false;
-                    } else if (isConjureTerrainEffect(next)) {
-                        hasTerrain = true;
-                        hasFire = false;
-                        hasWater = false;
-                    }
-                    break;
-                }
-            }
+            VoxelVariant variant = resolveVariantFromContext(context, false);
             
             Vec3 center = new Vec3(x, y, z);
             Vec3 lookDirection = shooter.getLookAngle();
             java.util.List<Vec3> positions = MathHelper.getCirclePositions(center, lookDirection, circleRadius, entityCount);
             
-            isArcane = !hasWater && !hasFire && !hasTerrain;
+            isArcane = variant == VoxelVariant.ARCANE;
             SpellContext newContext = null;
             
             if (isArcane) {
@@ -246,16 +230,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
             }
             
             for (Vec3 pos : positions) {
-                BaseVoxelEntity voxel;
-                if (hasWater) {
-                    voxel = new WaterVoxelEntity(level, pos.x, pos.y, pos.z, duration);
-                } else if (hasFire) {
-                    voxel = new FireVoxelEntity(level, pos.x, pos.y, pos.z, duration);
-                } else if (hasTerrain) {
-                    voxel = new StoneVoxelEntity(level, pos.x, pos.y, pos.z, duration);
-                } else {
-                    voxel = new ArcaneVoxelEntity(level, pos.x, pos.y, pos.z, duration);
-                }
+                BaseVoxelEntity voxel = instantiateVariant(level, pos.x, pos.y, pos.z, duration, variant);
                 
                 applyVoxelSize(voxel, voxelSize);
                 
@@ -291,55 +266,8 @@ public class ConjureVoxelEffect extends AbstractEffect {
     }
     
     private BaseVoxelEntity createVoxel(ServerLevel level, double x, double y, double z, int duration, SpellContext context) {
-        boolean hasWater = false;
-        boolean hasFire = false;
-        boolean hasTerrain = false;
-        
-        SpellContext peekContext = context.clone();
-        while (peekContext.hasNextPart()) {
-            AbstractSpellPart next = peekContext.nextPart();
-            if (next instanceof AbstractEffect) {
-                if (next == EffectConjureWater.INSTANCE) {
-                    hasWater = true;
-                    while (context.hasNextPart()) {
-                        AbstractSpellPart consumed = context.nextPart();
-                        if (consumed == EffectConjureWater.INSTANCE) {
-                            break;
-                        }
-                    }
-                } else if (next == EffectIgnite.INSTANCE) {
-                    hasFire = true;
-                    while (context.hasNextPart()) {
-                        AbstractSpellPart consumed = context.nextPart();
-                        if (consumed == EffectIgnite.INSTANCE) {
-                            break;
-                        }
-                    }
-                } else if (isConjureTerrainEffect(next)) {
-                    hasTerrain = true;
-                    while (context.hasNextPart()) {
-                        AbstractSpellPart consumed = context.nextPart();
-                        if (isConjureTerrainEffect(consumed)) {
-                            break;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-        
-        BaseVoxelEntity result;
-        if (hasWater) {
-            result = new WaterVoxelEntity(level, x, y, z, duration);
-        } else if (hasFire) {
-            result = new FireVoxelEntity(level, x, y, z, duration);
-        } else if (hasTerrain) {
-            result = new StoneVoxelEntity(level, x, y, z, duration);
-        } else {
-            result = new ArcaneVoxelEntity(level, x, y, z, duration);
-        }
-        
-        return result;
+        VoxelVariant variant = resolveVariantFromContext(context, true);
+        return instantiateVariant(level, x, y, z, duration, variant);
     }
     
     private int clampAmplifyLevel(SpellStats spellStats) {
@@ -357,12 +285,58 @@ public class ConjureVoxelEffect extends AbstractEffect {
         voxel.refreshDimensions();
     }
     
-    private boolean isConjureTerrainEffect(AbstractSpellPart part) {
-        if (!(part instanceof AbstractEffect)) {
-            return false;
+    private VoxelVariant resolveVariantFromContext(SpellContext context, boolean consume) {
+        SpellContext iterator = context.clone();
+        while (iterator.hasNextPart()) {
+            AbstractSpellPart next = iterator.nextPart();
+            if (next instanceof AbstractEffect effect) {
+                VoxelVariant variant = resolveVariant(effect);
+                if (variant != VoxelVariant.ARCANE && consume) {
+                    consumeEffect(context, effect);
+                }
+                return variant;
+            }
         }
-        ResourceLocation registryName = part.getRegistryName();
-        return registryName != null && registryName.equals(CONJURE_TERRAIN_ID);
+        return VoxelVariant.ARCANE;
+    }
+    
+    private VoxelVariant resolveVariant(AbstractEffect effect) {
+        VoxelVariant cached = VARIANT_CACHE.get(effect);
+        if (cached != null) {
+            return cached;
+        }
+        ResourceLocation registryName = effect.getRegistryName();
+        if (registryName != null && registryName.equals(CONJURE_TERRAIN_ID)) {
+            return VoxelVariant.STONE;
+        }
+        return VoxelVariant.ARCANE;
+    }
+    
+    private void consumeEffect(SpellContext context, AbstractEffect targetEffect) {
+        ResourceLocation targetId = targetEffect.getRegistryName();
+        while (context.hasNextPart()) {
+            AbstractSpellPart consumed = context.nextPart();
+            if (consumed instanceof AbstractEffect consumedEffect && effectsMatch(consumedEffect, targetEffect, targetId)) {
+                break;
+            }
+        }
+    }
+    
+    private boolean effectsMatch(AbstractEffect candidate, AbstractEffect reference, ResourceLocation id) {
+        if (candidate == reference) {
+            return true;
+        }
+        ResourceLocation candidateId = candidate.getRegistryName();
+        return id != null && id.equals(candidateId);
+    }
+    
+    private BaseVoxelEntity instantiateVariant(ServerLevel level, double x, double y, double z, int duration, VoxelVariant variant) {
+        return switch (variant) {
+            case WATER -> new WaterVoxelEntity(level, x, y, z, duration);
+            case FIRE -> new FireVoxelEntity(level, x, y, z, duration);
+            case STONE -> new StoneVoxelEntity(level, x, y, z, duration);
+            default -> new ArcaneVoxelEntity(level, x, y, z, duration);
+        };
     }
     
     private float getWaterPower(LivingEntity shooter) {
@@ -432,6 +406,13 @@ public class ConjureVoxelEffect extends AbstractEffect {
             );
             context.beginResults.add(voxelResult);
         }
+    }
+    
+    private enum VoxelVariant {
+        ARCANE,
+        WATER,
+        FIRE,
+        STONE
     }
     
     private int getDuration(SpellStats spellStats) {
