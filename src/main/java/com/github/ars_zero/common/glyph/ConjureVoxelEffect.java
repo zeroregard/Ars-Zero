@@ -46,6 +46,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
     
     public static final String ID = "conjure_voxel_effect";
     public static final ConjureVoxelEffect INSTANCE = new ConjureVoxelEffect();
+    private static final ResourceLocation CONJURE_TERRAIN_ID = ResourceLocation.fromNamespaceAndPath("ars_elemental", "conjure_terrain");
     private static final int MAX_AMPLIFY_LEVEL = 2;
     private static final float BASE_VOXEL_SIZE = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final float AMPLIFY_SIZE_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
@@ -223,7 +224,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
                         hasFire = true;
                         hasWater = false;
                         hasTerrain = false;
-                    } else if (next == ConjureTerrainEffect.INSTANCE) {
+                    } else if (isConjureTerrainEffect(next)) {
                         hasTerrain = true;
                         hasFire = false;
                         hasWater = false;
@@ -314,11 +315,11 @@ public class ConjureVoxelEffect extends AbstractEffect {
                             break;
                         }
                     }
-                } else if (next == ConjureTerrainEffect.INSTANCE) {
+                } else if (isConjureTerrainEffect(next)) {
                     hasTerrain = true;
                     while (context.hasNextPart()) {
                         AbstractSpellPart consumed = context.nextPart();
-                        if (consumed == ConjureTerrainEffect.INSTANCE) {
+                        if (isConjureTerrainEffect(consumed)) {
                             break;
                         }
                     }
@@ -354,6 +355,14 @@ public class ConjureVoxelEffect extends AbstractEffect {
     private void applyVoxelSize(BaseVoxelEntity voxel, float size) {
         voxel.setSize(size);
         voxel.refreshDimensions();
+    }
+    
+    private boolean isConjureTerrainEffect(AbstractSpellPart part) {
+        if (!(part instanceof AbstractEffect)) {
+            return false;
+        }
+        ResourceLocation registryName = part.getRegistryName();
+        return registryName != null && registryName.equals(CONJURE_TERRAIN_ID);
     }
     
     private float getWaterPower(LivingEntity shooter) {

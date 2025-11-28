@@ -6,7 +6,7 @@
 - Both variants rely on `Conjure Voxel` + imbued effects (`Ignite` or `Conjure Water`) and respect spell stats such as Amplify, Split, and Extend Time.
 
 ## Stone Voxel Behaviour (implemented)
-- Triggered by `Conjure Voxel` + the new `Conjure Terrain` effect.
+- Triggered by `Conjure Voxel` plus the existing Ars Elemental `Conjure Terrain` effect.
 - Heavier projectile that keeps gravity, reinforcing struck surfaces with stone/cobblestone and building a small buttress on entity impact.
 - Applies kinetic damage when colliding with living targets; damage scales with voxel size and travel speed, rewarding launch-focused builds.
 
