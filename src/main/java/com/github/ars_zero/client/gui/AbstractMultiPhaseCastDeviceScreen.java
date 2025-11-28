@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.client.gui.buttons.ManaIndicator;
 import com.github.ars_zero.client.gui.buttons.StaffArrowButton;
+import com.github.ars_zero.client.gui.spell.SpellPhaseSlots;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
@@ -32,6 +33,7 @@ import com.hollingsworth.arsnouveau.common.spell.validation.CombinedSpellValidat
 import com.hollingsworth.arsnouveau.common.spell.validation.GlyphKnownValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.GlyphMaxTierValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.ActionAugmentationPolicyValidator;
+import com.github.ars_zero.client.gui.validators.SpellPhaseValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.StartingCastMethodSpellValidator;
 import com.hollingsworth.arsnouveau.ArsNouveau;
 import com.hollingsworth.arsnouveau.api.registry.FamiliarRegistry;
@@ -98,10 +100,9 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     private String previousString = "";
     private List<Button> categoryButtons = new ArrayList<>();
     
-    // Phase-specific spell storage (3 phases, each with 10 crafting cells)
-    private List<List<AbstractSpellPart>> phaseSpells = new ArrayList<>();
+    private SpellPhaseSlots phaseSpells;
     
-    private ISpellValidator spellValidator;
+    private ISpellValidator baseSpellValidator;
     private List<SpellValidationError> validationErrors = new LinkedList<>();
     protected ItemStack deviceStack;
     private InteractionHand guiHand;
@@ -129,15 +130,8 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         this.unlockedSpells = new ArrayList<>();
         this.displayedGlyphs = new ArrayList<>();
         
-        // Initialize phase spells (3 phases, each with 10 crafting cells)
-        for (int i = 0; i < 3; i++) {
-            phaseSpells.add(new ArrayList<>());
-            for (int j = 0; j < 10; j++) {
-                phaseSpells.get(i).add(null);
-            }
-        }
+        this.phaseSpells = new SpellPhaseSlots(10);
         
-        // Set default phase to BEGIN
         this.currentPhase = DevicePhase.BEGIN;
     }
 
@@ -188,13 +182,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             }
         }
         
-        this.spellValidator = new CombinedSpellValidator(
-                ArsNouveauAPI.getInstance().getSpellCraftingSpellValidator(),
-                new ActionAugmentationPolicyValidator(),
-                new GlyphMaxTierValidator(tier),
-                new GlyphKnownValidator(player.isCreative() || isCreativeStaff ? null : playerCapData),
-                new StartingCastMethodSpellValidator()
-        );
+        this.baseSpellValidator = createBaseSpellValidator(tier, playerCapData, isCreativeStaff);
         
         this.unlockedSpells = parts;
         this.displayedGlyphs = new ArrayList<>(this.unlockedSpells);
@@ -279,26 +267,20 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
 
     private void loadSpellFromSlot() {
-        // Load all 3 phases from the extended slot system
-        // Each logical slot uses 3 physical slots: slot*3 + phase (0=BEGIN, 1=TICK, 2=END)
-        
-        // Clear all phases first
-        for (int phase = 0; phase < 3; phase++) {
-            List<AbstractSpellPart> phaseSpell = phaseSpells.get(phase);
+        for (DevicePhase phase : DevicePhase.values()) {
+            List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             phaseSpell.clear();
             for (int i = 0; i < 10; i++) {
                 phaseSpell.add(null);
             }
         }
         
-        // Load each phase from its physical slot
-        for (int phase = 0; phase < 3; phase++) {
-            int physicalSlot = selectedSpellSlot * 3 + phase;
+        for (DevicePhase phase : DevicePhase.values()) {
+            int physicalSlot = selectedSpellSlot * 3 + phase.ordinal();
             Spell spell = caster.getSpell(physicalSlot);
             
-            List<AbstractSpellPart> phaseSpell = phaseSpells.get(phase);
+            List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             
-            // Load the spell parts - convert recipe to list first
             List<AbstractSpellPart> recipeList = new ArrayList<>();
             for (AbstractSpellPart part : spell.recipe()) {
                 recipeList.add(part);
@@ -309,10 +291,9 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             }
             
             ArsZero.LOGGER.debug("Loaded {} phase from physical slot {} with {} glyphs", 
-                DevicePhase.values()[phase], physicalSlot, recipeList.size());
+                phase, physicalSlot, recipeList.size());
         }
         
-        // Update crafting cells to show the loaded spells
         resetCraftingCells();
     }
 
@@ -614,7 +595,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
 
     private List<AbstractSpellPart> getCurrentPhaseSpell() {
-        return phaseSpells.get(currentPhase.ordinal());
+        return phaseSpells.getPhaseList(currentPhase);
     }
     
     private List<SpellValidationError> getValidationErrors() {
@@ -634,7 +615,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         for (CraftingButton b : craftingCells) {
             b.validationErrors.clear();
         }
-        List<SpellValidationError> errors = spellValidator.validate(currentSpell);
+        List<SpellValidationError> errors = getSpellValidatorForCurrentPhase().validate(currentSpell);
         for (SpellValidationError ve : errors) {
             int cellIndex = currentPhase.ordinal() * 10 + ve.getPosition();
             if (cellIndex >= 0 && cellIndex < craftingCells.size()) {
@@ -661,13 +642,14 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
                 slicedSpell.add(phaseList.get(i));
             }
         }
+        ISpellValidator validator = getSpellValidatorForCurrentPhase();
         for (GlyphButton glyphButton : glyphButtons) {
             glyphButton.validationErrors.clear();
             glyphButton.augmentingParent = lastEffect;
             AbstractSpellPart toAdd = GlyphRegistry.getSpellpartMap().get(glyphButton.abstractSpellPart.getRegistryName());
             slicedSpell.add(toAdd);
             glyphButton.validationErrors.addAll(
-                spellValidator.validate(slicedSpell).stream()
+                validator.validate(slicedSpell).stream()
                     .filter(ve -> ve.getPosition() >= slicedSpell.size() - 1).toList()
             );
             slicedSpell.remove(slicedSpell.size() - 1);
@@ -686,23 +668,23 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         int cellSpacing = CRAFTING_CELL_SPACING;
         int startX = bookLeft + CRAFTING_CELL_START_X_OFFSET + PHASE_SECTION_SHIFT_X - 8;
         
-        for (int phase = 0; phase < 3; phase++) {
+        int phaseIndex = 0;
+        for (DevicePhase phase : DevicePhase.values()) {
+            List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             for (int slot = 0; slot < 10; slot++) {
                 int x = startX + slot * cellSpacing;
-                int y = startY + phase * rowHeight;
+                int y = startY + phaseIndex * rowHeight;
                 
                 StaffCraftingButton cell = new StaffCraftingButton(x, y, this::onCraftingSlotClick, slot);
                 addRenderableWidget(cell);
                 craftingCells.add(cell);
                 
-                // Set the spell part if it exists for this phase
-                List<AbstractSpellPart> phaseSpell = phaseSpells.get(phase);
                 AbstractSpellPart spellPart = slot < phaseSpell.size() ? phaseSpell.get(slot) : null;
                 cell.setAbstractSpellPart(spellPart);
                 
-                // Show all cells by default
                 cell.visible = true;
             }
+            phaseIndex++;
         }
     }
 
@@ -710,10 +692,11 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         CraftingButton cell = (CraftingButton) button;
         if (cell.getAbstractSpellPart() != null) {
             int cellIndex = craftingCells.indexOf(cell);
-            int phase = cellIndex / 10;
+            int phaseIndex = cellIndex / 10;
             int slot = cellIndex % 10;
             
-            List<AbstractSpellPart> phaseSpell = phaseSpells.get(phase);
+            DevicePhase phase = DevicePhase.values()[phaseIndex];
+            List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             if (slot < phaseSpell.size()) {
                 phaseSpell.set(slot, null);
             }
@@ -732,15 +715,15 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         
         String spellName = spellNameBox.getValue();
         
-        for (int phase = 0; phase < 3; phase++) {
-            List<AbstractSpellPart> phaseSpell = phaseSpells.get(phase);
+        for (DevicePhase phase : DevicePhase.values()) {
+            List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             List<AbstractSpellPart> filteredPhase = phaseSpell.stream()
                 .filter(part -> part != null)
                 .toList();
             
             Spell spell = new Spell(filteredPhase);
             
-            int physicalSlot = selectedSpellSlot * 3 + phase;
+            int physicalSlot = selectedSpellSlot * 3 + phase.ordinal();
             
             com.hollingsworth.arsnouveau.common.network.Networking.sendToServer(new PacketUpdateCaster(spell, physicalSlot, spellName, true));
         }
@@ -752,14 +735,14 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
 
     public void clear() {
-        for (int phase = 0; phase < 3; phase++) {
-            List<AbstractSpellPart> phaseSpell = phaseSpells.get(phase);
+        for (DevicePhase phase : DevicePhase.values()) {
+            List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             phaseSpell.clear();
             for (int i = 0; i < 10; i++) {
                 phaseSpell.add(null);
             }
             
-            int physicalSlot = selectedSpellSlot * 3 + phase;
+            int physicalSlot = selectedSpellSlot * 3 + phase.ordinal();
             Spell emptySpell = new Spell();
             com.hollingsworth.arsnouveau.common.network.Networking.sendToServer(new PacketUpdateCaster(emptySpell, physicalSlot, "", false));
         }
@@ -932,21 +915,23 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         
         ManaIndicator hoveredIndicator = null;
         
-        for (int phaseIndex = 0; phaseIndex < 3; phaseIndex++) {
-            List<AbstractSpellPart> phaseSpell = phaseSpells.get(phaseIndex);
+        int phaseIndex = 0;
+        for (DevicePhase phase : DevicePhase.values()) {
+            List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             int indicatorY = baseY + phaseIndex * rowHeight + (PHASE_ROW_HEIGHT - indicatorHeight) / 2 - 1 + 1;
             
-            ArsZero.LOGGER.info("Phase {}: indicatorY={}, spell parts count={}", phaseIndex, indicatorY, phaseSpell.size());
+            ArsZero.LOGGER.info("Phase {}: indicatorY={}, spell parts count={}", phase, indicatorY, phaseSpell.size());
             
             ManaIndicator indicator = new ManaIndicator(indicatorX, indicatorY, phaseSpell);
             indicator.render(graphics, player);
             
-            ArsZero.LOGGER.info("Phase {}: After render call", phaseIndex);
+            ArsZero.LOGGER.info("Phase {}: After render call", phase);
             
             if (indicator.isHovered(mouseX, mouseY)) {
                 hoveredIndicator = indicator;
-                ArsZero.LOGGER.info("Phase {}: HOVERED! mouseX={}, mouseY={}", phaseIndex, mouseX, mouseY);
+                ArsZero.LOGGER.info("Phase {}: HOVERED! mouseX={}, mouseY={}", phase, mouseX, mouseY);
             }
+            phaseIndex++;
         }
         
         if (hoveredIndicator != null) {
@@ -986,6 +971,23 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             addRenderableWidget(btn);
             categoryButtons.add(btn);
         }
+    }
+
+    private CombinedSpellValidator createBaseSpellValidator(int tier, IPlayerCap playerCapData, boolean isCreativeStaff) {
+        return new CombinedSpellValidator(
+                ArsNouveauAPI.getInstance().getSpellCraftingSpellValidator(),
+                new ActionAugmentationPolicyValidator(),
+                new GlyphMaxTierValidator(tier),
+                new GlyphKnownValidator(player.isCreative() || isCreativeStaff ? null : playerCapData),
+                new StartingCastMethodSpellValidator()
+        );
+    }
+    
+    private ISpellValidator getSpellValidatorForCurrentPhase() {
+        return new CombinedSpellValidator(
+                baseSpellValidator,
+                new SpellPhaseValidator(currentPhase)
+        );
     }
 
     public DevicePhase getCurrentPhase() {

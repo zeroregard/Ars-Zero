@@ -100,5 +100,8 @@
   "ars_zero.glyph_name.glyph_zero_gravity_effect": "Remove Gravity",
   "ars_zero.glyph_desc.glyph_zero_gravity_effect": "Temporarily removes gravity from the target, bringing it back when the spell expires.",
   "effect.ars_zero.zero_gravity": "Gravity-ridden",
-  "effect.ars_zero.zero_gravity.description": "Temporarily removes gravity from the entity"
+  "effect.ars_zero.zero_gravity.description": "Temporarily removes gravity from the entity",
+
+  "ars_nouveau.spell.validation.adding.phase_restriction": "%s is not usable in this phase.",
+  "ars_nouveau.spell.validation.exists.phase_restriction": "%s is not usable in this phase."
 }
