@@ -364,7 +364,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         checkManaAndCast(player, stack, spell, phase);
     }
 
-    private boolean checkManaAndCast(Player player, ItemStack stack, Spell spell, Phase phase) {
+    protected boolean checkManaAndCast(Player player, ItemStack stack, Spell spell, Phase phase) {
         ArsZeroSpellContext context = new ArsZeroSpellContext(player.level(), spell, player, phase, stack);
         SpellResolver resolver = new SpellResolver(context);
 
