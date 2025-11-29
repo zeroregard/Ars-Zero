@@ -197,9 +197,19 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
     }
     
     private static AttributeInstance getPowerAttributeForFinial(Player player, String finial) {
+        if (finial == null) {
+            return null;
+        }
+        
         return switch (finial) {
             case "fire" -> player.getAttribute(ModRegistry.FIRE_POWER);
             case "water" -> player.getAttribute(ModRegistry.WATER_POWER);
+            case "earth" -> null;
+            case "air" -> null;
+            case "conjuration" -> null;
+            case "abjuration" -> null;
+            case "manipulation" -> null;
+            case "necromancy" -> null;
             default -> null;
         };
     }
