@@ -13,8 +13,11 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -132,6 +135,30 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return this.cache;
+    }
+    
+    public static void setFinial(ItemStack stack, String finialType) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        CompoundTag tag = data != null ? data.copyTag() : new CompoundTag();
+        if (finialType != null && !finialType.isEmpty()) {
+            tag.putString("finial", finialType);
+        } else {
+            tag.remove("finial");
+        }
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+    }
+    
+    public static String getFinial(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) return null;
+        CompoundTag tag = data.copyTag();
+        if (!tag.contains("finial")) return null;
+        String finial = tag.getString("finial");
+        return finial.isEmpty() ? null : finial;
+    }
+    
+    public static boolean hasFinial(ItemStack stack) {
+        return getFinial(stack) != null;
     }
 }
 

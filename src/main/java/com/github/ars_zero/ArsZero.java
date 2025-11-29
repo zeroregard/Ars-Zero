@@ -132,6 +132,7 @@ public class ArsZero {
             generator.addProvider(true, new com.github.ars_zero.common.datagen.DyeRecipeDatagen(generator));
             generator.addProvider(true, new com.github.ars_zero.common.datagen.StaffRecipeDatagen(generator));
             generator.addProvider(true, new com.github.ars_zero.common.datagen.GlyphRecipeDatagen(generator));
+            generator.addProvider(true, new com.github.ars_zero.common.datagen.FinialRecipeDatagen(generator));
         }
     }
 }

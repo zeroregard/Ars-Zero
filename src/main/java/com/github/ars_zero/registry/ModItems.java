@@ -5,6 +5,14 @@ import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.DullCirclet;
+import com.github.ars_zero.common.item.FinialAbjurationItem;
+import com.github.ars_zero.common.item.FinialAirItem;
+import com.github.ars_zero.common.item.FinialConjurationItem;
+import com.github.ars_zero.common.item.FinialEarthItem;
+import com.github.ars_zero.common.item.FinialFireItem;
+import com.github.ars_zero.common.item.FinialManipulationItem;
+import com.github.ars_zero.common.item.FinialNecromancyItem;
+import com.github.ars_zero.common.item.FinialWaterItem;
 import com.github.ars_zero.common.item.MageSpellStaff;
 import com.github.ars_zero.common.item.NoviceSpellStaff;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
@@ -34,6 +42,22 @@ public class ModItems {
     public static final ItemRegistryWrapper<DullCirclet> DULL_CIRCLET = register("dull_circlet", () -> new DullCirclet(defaultItemProperties()));
     
     public static final ItemRegistryWrapper<Item> ARCHWOOD_ROD = register("archwood_rod", () -> new Item(defaultItemProperties()));
+    
+    public static final ItemRegistryWrapper<FinialEarthItem> FINIAL_EARTH = register("finial_earth", FinialEarthItem::new);
+    
+    public static final ItemRegistryWrapper<FinialAirItem> FINIAL_AIR = register("finial_air", FinialAirItem::new);
+    
+    public static final ItemRegistryWrapper<FinialFireItem> FINIAL_FIRE = register("finial_fire", FinialFireItem::new);
+    
+    public static final ItemRegistryWrapper<FinialWaterItem> FINIAL_WATER = register("finial_water", FinialWaterItem::new);
+    
+    public static final ItemRegistryWrapper<FinialConjurationItem> FINIAL_CONJURATION = register("finial_conjuration", FinialConjurationItem::new);
+    
+    public static final ItemRegistryWrapper<FinialAbjurationItem> FINIAL_ABJURATION = register("finial_abjuration", FinialAbjurationItem::new);
+    
+    public static final ItemRegistryWrapper<FinialManipulationItem> FINIAL_MANIPULATION = register("finial_manipulation", FinialManipulationItem::new);
+    
+    public static final ItemRegistryWrapper<FinialNecromancyItem> FINIAL_NECROMANCY = register("finial_necromancy", FinialNecromancyItem::new);
     
     public static final DeferredHolder<Item, BlockItem> ARCANE_VOXEL_SPAWNER = ITEMS.register(
         "arcane_voxel_spawner",
