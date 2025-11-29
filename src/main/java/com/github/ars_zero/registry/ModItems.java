@@ -5,6 +5,7 @@ import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.DullCirclet;
+import com.github.ars_zero.common.item.FinialItem;
 import com.github.ars_zero.common.item.MageSpellStaff;
 import com.github.ars_zero.common.item.NoviceSpellStaff;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
@@ -34,6 +35,22 @@ public class ModItems {
     public static final ItemRegistryWrapper<DullCirclet> DULL_CIRCLET = register("dull_circlet", () -> new DullCirclet(defaultItemProperties()));
     
     public static final ItemRegistryWrapper<Item> ARCHWOOD_ROD = register("archwood_rod", () -> new Item(defaultItemProperties()));
+    
+    public static final ItemRegistryWrapper<FinialItem> FINIAL_EARTH = register("finial_earth", () -> new FinialItem("earth"));
+    
+    public static final ItemRegistryWrapper<FinialItem> FINIAL_AIR = register("finial_air", () -> new FinialItem("air"));
+    
+    public static final ItemRegistryWrapper<FinialItem> FINIAL_FIRE = register("finial_fire", () -> new FinialItem("fire"));
+    
+    public static final ItemRegistryWrapper<FinialItem> FINIAL_WATER = register("finial_water", () -> new FinialItem("water"));
+    
+    public static final ItemRegistryWrapper<FinialItem> FINIAL_CONJURATION = register("finial_conjuration", () -> new FinialItem("conjuration"));
+    
+    public static final ItemRegistryWrapper<FinialItem> FINIAL_ABJURATION = register("finial_abjuration", () -> new FinialItem("abjuration"));
+    
+    public static final ItemRegistryWrapper<FinialItem> FINIAL_MANIPULATION = register("finial_manipulation", () -> new FinialItem("manipulation"));
+    
+    public static final ItemRegistryWrapper<FinialItem> FINIAL_NECROMANCY = register("finial_necromancy", () -> new FinialItem("necromancy"));
     
     public static final DeferredHolder<Item, BlockItem> ARCANE_VOXEL_SPAWNER = ITEMS.register(
         "arcane_voxel_spawner",
