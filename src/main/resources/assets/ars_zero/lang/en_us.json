@@ -74,6 +74,9 @@
 
   "ars_nouveau.augment_desc.zero_gravity_effect_glyph_extend_time": "Extends the gravity suppression duration",
   "ars_nouveau.augment_desc.zero_gravity_effect_glyph_duration_down": "Reduces the gravity suppression duration",
+  "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_conjure_water": "Chains Conjure Water after Voxels, flooding around each new entity.",
+  "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_ignite": "Chains Ignite after Voxels, priming them to burn nearby targets.",
+  "ars_zero.effect_augment_desc.missing": "This glyph can be added after select effects for extra behavior.",
 
   "ars_zero.glyph_name.temporal_context_form": "Temporal Context",
   "ars_zero.glyph_desc.temporal_context_form": "A cast method that provides access to the context of the previous spell phase (Staff only)",

@@ -7,6 +7,7 @@ import com.github.ars_zero.client.gui.buttons.StaffArrowButton;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.*;
@@ -53,10 +54,17 @@ import net.neoforged.fml.ModList;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScreen {
@@ -100,6 +108,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     
     // Phase-specific spell storage (3 phases, each with 10 crafting cells)
     private List<List<AbstractSpellPart>> phaseSpells = new ArrayList<>();
+    private final Map<GlyphButton, Component> subsequentGlyphHighlights = new HashMap<>();
     
     private ISpellValidator spellValidator;
     private List<SpellValidationError> validationErrors = new LinkedList<>();
@@ -489,6 +498,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         }
         categoryButtons.clear();
         clearGlyphButtons(glyphButtons);
+        subsequentGlyphHighlights.clear();
         formTextRow = 0;
         augmentTextRow = 0;
         effectTextRow = 0;
@@ -671,6 +681,35 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
                     .filter(ve -> ve.getPosition() >= slicedSpell.size() - 1).toList()
             );
             slicedSpell.remove(slicedSpell.size() - 1);
+        }
+        updateSubsequentGlyphHighlights(lastEffect);
+    }
+    
+    private void updateSubsequentGlyphHighlights(AbstractSpellPart lastEffect) {
+        subsequentGlyphHighlights.clear();
+        if (!(lastEffect instanceof ISubsequentEffectProvider provider)) {
+            return;
+        }
+        ResourceLocation[] glyphIds = provider.getSubsequentEffectGlyphs();
+        if (glyphIds == null || glyphIds.length == 0) {
+            return;
+        }
+        Set<ResourceLocation> allowedGlyphs = Arrays.stream(glyphIds)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(HashSet::new));
+        if (allowedGlyphs.isEmpty()) {
+            return;
+        }
+        for (GlyphButton glyphButton : glyphButtons) {
+            AbstractSpellPart part = glyphButton.abstractSpellPart;
+            if (part == null) {
+                continue;
+            }
+            ResourceLocation registryName = part.getRegistryName();
+            if (registryName != null && allowedGlyphs.contains(registryName)) {
+                Component tooltip = provider.createSubsequentGlyphTooltip(registryName);
+                subsequentGlyphHighlights.put(glyphButton, tooltip);
+            }
         }
     }
 
@@ -910,7 +949,48 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     @Override
     public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         super.render(graphics, mouseX, mouseY, partialTicks);
+        renderSubsequentHighlightFrames(graphics);
+        renderSubsequentHighlightTooltip(graphics, mouseX, mouseY);
         renderManaIndicators(graphics, mouseX, mouseY);
+    }
+    
+    private void renderSubsequentHighlightFrames(GuiGraphics graphics) {
+        if (subsequentGlyphHighlights.isEmpty()) {
+            return;
+        }
+        int borderColor = 0xFFF1C550;
+        for (GlyphButton glyphButton : subsequentGlyphHighlights.keySet()) {
+            if (!glyphButton.visible) {
+                continue;
+            }
+            int left = glyphButton.getX() - 1;
+            int top = glyphButton.getY() - 1;
+            int right = left + 18;
+            int bottom = top + 18;
+            graphics.fill(left, top, right, top + 1, borderColor);
+            graphics.fill(left, bottom - 1, right, bottom, borderColor);
+            graphics.fill(left, top, left + 1, bottom, borderColor);
+            graphics.fill(right - 1, top, right, bottom, borderColor);
+        }
+    }
+    
+    private void renderSubsequentHighlightTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (subsequentGlyphHighlights.isEmpty() || minecraft == null) {
+            return;
+        }
+        for (Map.Entry<GlyphButton, Component> entry : subsequentGlyphHighlights.entrySet()) {
+            GlyphButton glyphButton = entry.getKey();
+            if (!glyphButton.visible) {
+                continue;
+            }
+            if (glyphButton.isHoveredOrFocused()) {
+                Component tooltip = entry.getValue();
+                if (tooltip != null) {
+                    graphics.renderTooltip(minecraft.font, List.of(tooltip), Optional.empty(), mouseX, mouseY);
+                }
+                return;
+            }
+        }
     }
     
     private void renderManaIndicators(GuiGraphics graphics, int mouseX, int mouseY) {
