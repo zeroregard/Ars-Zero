@@ -12,16 +12,25 @@ public interface ISubsequentEffectProvider {
     ResourceLocation[] getSubsequentEffectGlyphs();
 
     default Component createSubsequentGlyphTooltip(ResourceLocation glyphId) {
-        return Component.translatable(getSubsequentGlyphTranslationKey(glyphId));
+        String key = getSubsequentGlyphTranslationKey(glyphId);
+        return key != null ? Component.translatable(key) : null;
     }
 
     default String getSubsequentGlyphTranslationKey(ResourceLocation glyphId) {
         ResourceLocation providerId = getProviderId();
         if (providerId == null || glyphId == null) {
-            return "ars_zero.effect_augment_desc.missing";
+            return null;
         }
         String effectPath = sanitize(providerId.getPath());
         String glyphPath = sanitize(glyphId.getPath());
+        
+        if (glyphPath.startsWith("glyph_")) {
+            glyphPath = glyphPath.substring(6);
+        }
+        if (glyphPath.endsWith("_glyph")) {
+            glyphPath = glyphPath.substring(0, glyphPath.length() - 6);
+        }
+        
         return "ars_zero.effect_augment_desc." + effectPath + "_glyph_" + glyphPath;
     }
 
