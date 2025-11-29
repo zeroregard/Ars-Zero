@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataGenerator;
+import net.minecraft.world.level.ItemLike;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -22,50 +23,36 @@ public class FinialRecipeDatagen extends SimpleDataProvider {
 
     @Override
     public void collectJsons(CachedOutput pOutput) {
-        addFinialRecipe(ModItems.NOVICE_SPELL_STAFF.get(), ModItems.FINIAL_EARTH.get(), "earth");
-        addFinialRecipe(ModItems.MAGE_SPELL_STAFF.get(), ModItems.FINIAL_EARTH.get(), "earth");
-        addFinialRecipe(ModItems.ARCHMAGE_SPELL_STAFF.get(), ModItems.FINIAL_EARTH.get(), "earth");
-        addFinialRecipe(ModItems.CREATIVE_SPELL_STAFF.get(), ModItems.FINIAL_EARTH.get(), "earth");
+        ItemLike[] staffs = new ItemLike[]{
+            ModItems.NOVICE_SPELL_STAFF.get(),
+            ModItems.MAGE_SPELL_STAFF.get(),
+            ModItems.ARCHMAGE_SPELL_STAFF.get(),
+            ModItems.CREATIVE_SPELL_STAFF.get()
+        };
         
-        addFinialRecipe(ModItems.NOVICE_SPELL_STAFF.get(), ModItems.FINIAL_AIR.get(), "air");
-        addFinialRecipe(ModItems.MAGE_SPELL_STAFF.get(), ModItems.FINIAL_AIR.get(), "air");
-        addFinialRecipe(ModItems.ARCHMAGE_SPELL_STAFF.get(), ModItems.FINIAL_AIR.get(), "air");
-        addFinialRecipe(ModItems.CREATIVE_SPELL_STAFF.get(), ModItems.FINIAL_AIR.get(), "air");
+        FinialData[] finials = new FinialData[]{
+            new FinialData(ModItems.FINIAL_EARTH.get(), "earth"),
+            new FinialData(ModItems.FINIAL_AIR.get(), "air"),
+            new FinialData(ModItems.FINIAL_FIRE.get(), "fire"),
+            new FinialData(ModItems.FINIAL_WATER.get(), "water"),
+            new FinialData(ModItems.FINIAL_CONJURATION.get(), "conjuration"),
+            new FinialData(ModItems.FINIAL_ABJURATION.get(), "abjuration"),
+            new FinialData(ModItems.FINIAL_MANIPULATION.get(), "manipulation"),
+            new FinialData(ModItems.FINIAL_NECROMANCY.get(), "necromancy")
+        };
         
-        addFinialRecipe(ModItems.NOVICE_SPELL_STAFF.get(), ModItems.FINIAL_FIRE.get(), "fire");
-        addFinialRecipe(ModItems.MAGE_SPELL_STAFF.get(), ModItems.FINIAL_FIRE.get(), "fire");
-        addFinialRecipe(ModItems.ARCHMAGE_SPELL_STAFF.get(), ModItems.FINIAL_FIRE.get(), "fire");
-        addFinialRecipe(ModItems.CREATIVE_SPELL_STAFF.get(), ModItems.FINIAL_FIRE.get(), "fire");
-        
-        addFinialRecipe(ModItems.NOVICE_SPELL_STAFF.get(), ModItems.FINIAL_WATER.get(), "water");
-        addFinialRecipe(ModItems.MAGE_SPELL_STAFF.get(), ModItems.FINIAL_WATER.get(), "water");
-        addFinialRecipe(ModItems.ARCHMAGE_SPELL_STAFF.get(), ModItems.FINIAL_WATER.get(), "water");
-        addFinialRecipe(ModItems.CREATIVE_SPELL_STAFF.get(), ModItems.FINIAL_WATER.get(), "water");
-        
-        addFinialRecipe(ModItems.NOVICE_SPELL_STAFF.get(), ModItems.FINIAL_CONJURATION.get(), "conjuration");
-        addFinialRecipe(ModItems.MAGE_SPELL_STAFF.get(), ModItems.FINIAL_CONJURATION.get(), "conjuration");
-        addFinialRecipe(ModItems.ARCHMAGE_SPELL_STAFF.get(), ModItems.FINIAL_CONJURATION.get(), "conjuration");
-        addFinialRecipe(ModItems.CREATIVE_SPELL_STAFF.get(), ModItems.FINIAL_CONJURATION.get(), "conjuration");
-        
-        addFinialRecipe(ModItems.NOVICE_SPELL_STAFF.get(), ModItems.FINIAL_ABJURATION.get(), "abjuration");
-        addFinialRecipe(ModItems.MAGE_SPELL_STAFF.get(), ModItems.FINIAL_ABJURATION.get(), "abjuration");
-        addFinialRecipe(ModItems.ARCHMAGE_SPELL_STAFF.get(), ModItems.FINIAL_ABJURATION.get(), "abjuration");
-        addFinialRecipe(ModItems.CREATIVE_SPELL_STAFF.get(), ModItems.FINIAL_ABJURATION.get(), "abjuration");
-        
-        addFinialRecipe(ModItems.NOVICE_SPELL_STAFF.get(), ModItems.FINIAL_MANIPULATION.get(), "manipulation");
-        addFinialRecipe(ModItems.MAGE_SPELL_STAFF.get(), ModItems.FINIAL_MANIPULATION.get(), "manipulation");
-        addFinialRecipe(ModItems.ARCHMAGE_SPELL_STAFF.get(), ModItems.FINIAL_MANIPULATION.get(), "manipulation");
-        addFinialRecipe(ModItems.CREATIVE_SPELL_STAFF.get(), ModItems.FINIAL_MANIPULATION.get(), "manipulation");
-        
-        addFinialRecipe(ModItems.NOVICE_SPELL_STAFF.get(), ModItems.FINIAL_NECROMANCY.get(), "necromancy");
-        addFinialRecipe(ModItems.MAGE_SPELL_STAFF.get(), ModItems.FINIAL_NECROMANCY.get(), "necromancy");
-        addFinialRecipe(ModItems.ARCHMAGE_SPELL_STAFF.get(), ModItems.FINIAL_NECROMANCY.get(), "necromancy");
-        addFinialRecipe(ModItems.CREATIVE_SPELL_STAFF.get(), ModItems.FINIAL_NECROMANCY.get(), "necromancy");
+        for (ItemLike staff : staffs) {
+            for (FinialData finialData : finials) {
+                addFinialRecipe(staff, finialData.finial, finialData.type);
+            }
+        }
 
         for (FileObj fileObj : files) {
             saveStable(pOutput, fileObj.element, fileObj.path);
         }
     }
+    
+    private record FinialData(ItemLike finial, String type) {}
 
     private void addFinialRecipe(net.minecraft.world.level.ItemLike staff, net.minecraft.world.level.ItemLike finial, String finialType) {
         JsonObject json = new JsonObject();
