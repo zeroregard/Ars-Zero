@@ -1,7 +1,8 @@
 package com.github.ars_zero.common.spell;
 
-public enum CastPhase {
+public enum SpellPhase {
     BEGIN,
     TICK,
     END
 }
+
