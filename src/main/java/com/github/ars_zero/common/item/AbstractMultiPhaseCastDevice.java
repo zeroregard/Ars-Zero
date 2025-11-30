@@ -37,6 +37,7 @@ import com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -55,11 +56,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.util.Mth;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class AbstractMultiPhaseCastDevice extends Item implements ICasterTool, IRadialProvider {
@@ -80,6 +83,10 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     }
 
     private final SpellTier tier;
+    private static final String SLOT_TICK_DELAY_KEY = "ars_zero_tick_delays";
+    private static final int SLOT_COUNT = 10;
+    private static final int DEFAULT_TICK_DELAY = 1;
+    private static final int MAX_TICK_DELAY = 20;
 
     protected AbstractMultiPhaseCastDevice(SpellTier tier, Properties properties) {
         super(properties
@@ -261,7 +268,8 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             Spell spell = caster.getSpell(physicalSlot);
 
             if (context.tickCount == 1) {
-                context.tickCooldown = calculateTickCooldown(spell);
+                int sliderDelay = getSlotTickDelayOffset(castingStack, currentLogicalSlot);
+                context.tickCooldown = calculateTickCooldown(spell) + sliderDelay;
             }
         }
 
@@ -497,6 +505,57 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
 
     public static ResourceLocation getTickLoopingSound(ItemStack stack) {
         return null;
+    }
+
+    public static int[] getSlotTickDelays(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return createDefaultDelayArray();
+        }
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        CompoundTag tag = data != null ? data.copyTag() : null;
+        return readDelayArray(tag);
+    }
+
+    public static int getSlotTickDelay(ItemStack stack, int logicalSlot) {
+        int index = Mth.clamp(logicalSlot, 0, SLOT_COUNT - 1);
+        return getSlotTickDelays(stack)[index];
+    }
+
+    public static int getSlotTickDelayOffset(ItemStack stack, int logicalSlot) {
+        return Math.max(0, getSlotTickDelay(stack, logicalSlot) - DEFAULT_TICK_DELAY);
+    }
+
+    public static void setSlotTickDelay(ItemStack stack, int logicalSlot, int delay) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        int index = Mth.clamp(logicalSlot, 0, SLOT_COUNT - 1);
+        int clampedDelay = Mth.clamp(delay, DEFAULT_TICK_DELAY, MAX_TICK_DELAY);
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        CompoundTag tag = data != null ? data.copyTag() : new CompoundTag();
+        int[] delays = readDelayArray(tag);
+        delays[index] = clampedDelay;
+        tag.putIntArray(SLOT_TICK_DELAY_KEY, delays);
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+    }
+
+    private static int[] readDelayArray(CompoundTag tag) {
+        int[] delays = createDefaultDelayArray();
+        if (tag == null || !tag.contains(SLOT_TICK_DELAY_KEY, Tag.TAG_INT_ARRAY)) {
+            return delays;
+        }
+        int[] stored = tag.getIntArray(SLOT_TICK_DELAY_KEY);
+        for (int i = 0; i < delays.length; i++) {
+            int value = i < stored.length ? stored[i] : DEFAULT_TICK_DELAY;
+            delays[i] = Mth.clamp(value, DEFAULT_TICK_DELAY, MAX_TICK_DELAY);
+        }
+        return delays;
+    }
+
+    private static int[] createDefaultDelayArray() {
+        int[] delays = new int[SLOT_COUNT];
+        Arrays.fill(delays, DEFAULT_TICK_DELAY);
+        return delays;
     }
 
     private boolean isTemporalContextFormSpell(Spell spell) {

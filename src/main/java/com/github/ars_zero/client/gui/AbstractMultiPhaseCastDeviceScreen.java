@@ -22,6 +22,7 @@ import com.hollingsworth.arsnouveau.client.gui.SearchBar;
 import com.hollingsworth.arsnouveau.client.gui.book.EnterTextField;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.common.network.PacketSetMultiPhaseSpellCastingSlot;
+import com.github.ars_zero.common.network.PacketUpdateTickDelay;
 import com.hollingsworth.arsnouveau.api.ArsNouveauAPI;
 import com.hollingsworth.arsnouveau.api.spell.ISpellValidator;
 import com.hollingsworth.arsnouveau.api.spell.SpellValidationError;
@@ -41,11 +42,13 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
@@ -53,10 +56,12 @@ import net.neoforged.fml.ModList;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
 public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScreen {
@@ -100,6 +105,10 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     
     // Phase-specific spell storage (3 phases, each with 10 crafting cells)
     private List<List<AbstractSpellPart>> phaseSpells = new ArrayList<>();
+    private Button delayMenuButton;
+    private TickDelaySlider delaySlider;
+    private boolean delayMenuOpen;
+    private final int[] slotDelays = new int[10];
     
     private ISpellValidator spellValidator;
     private List<SpellValidationError> validationErrors = new LinkedList<>();
@@ -112,6 +121,8 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     public void onBookstackUpdated(ItemStack stack) {
         super.onBookstackUpdated(stack);
         this.deviceStack = stack;
+        loadSlotDelayValues();
+        updateDelaySliderValue();
     }
 
     public AbstractMultiPhaseCastDeviceScreen(ItemStack stack, InteractionHand hand) {
@@ -139,6 +150,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         
         // Set default phase to BEGIN
         this.currentPhase = DevicePhase.BEGIN;
+        Arrays.fill(slotDelays, 1);
     }
 
     private static final int STAFF_GUI_WIDTH = 375;
@@ -206,6 +218,8 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         
         initSpellSlots();
         
+        loadSlotDelayValues();
+        
         // Add phase selection buttons (16x16 buttons for each row)
         addPhaseButtons();
         
@@ -230,6 +244,8 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         loadSpellFromSlot();
         
         updateCraftingCellVisibility();
+        
+        initDelaySelector();
         
         selectPhase(DevicePhase.BEGIN);
         
@@ -276,6 +292,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         }
         
         validate();
+        updateDelaySliderValue();
     }
 
     private void loadSpellFromSlot() {
@@ -452,6 +469,45 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         return selectedSpellSlot * 3 + currentPhase.ordinal();
     }
 
+    private static class TickDelaySlider extends AbstractSliderButton {
+        private final int min;
+        private final int max;
+        private final IntConsumer onChange;
+
+        private TickDelaySlider(int x, int y, int width, int height, int min, int max, int initial, IntConsumer onChange) {
+            super(x, y, width, height, Component.literal(""), 0);
+            this.min = min;
+            this.max = max;
+            this.onChange = onChange;
+            syncToDelay(initial);
+        }
+
+        @Override
+        protected void updateMessage() {
+            setMessage(Component.literal("Delay: " + getDelay()));
+        }
+
+        @Override
+        protected void applyValue() {
+            onChange.accept(getDelay());
+        }
+
+        public void syncToDelay(int delay) {
+            int clamped = Mth.clamp(delay, min, max);
+            int range = max - min;
+            this.value = range <= 0 ? 0 : (double) (clamped - min) / (double) range;
+            updateMessage();
+        }
+
+        private int getDelay() {
+            int range = max - min;
+            if (range <= 0) {
+                return min;
+            }
+            return (int) Math.round(value * range) + min;
+        }
+    }
+
     private void selectPhase(DevicePhase phase) {
         currentPhase = phase;
         
@@ -464,6 +520,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         endPhaseButton.image = (phase == DevicePhase.END) ? StaffGuiTextures.ICON_END_SELECTED : StaffGuiTextures.ICON_END;
         
         updateCraftingCellVisibility();
+        updateDelayMenuVisibility();
         validate();
     }
     
@@ -472,6 +529,98 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             CraftingButton cell = craftingCells.get(i);
             cell.visible = true;
         }
+    }
+
+    private void initDelaySelector() {
+        int rowX = bookLeft + PHASE_ROW_TEXTURE_X_OFFSET + PHASE_SECTION_SHIFT_X - 4;
+        int rowWidth = PHASE_ROW_TEXTURE_WIDTH;
+        int rowHeight = PHASE_ROW_HEIGHT + 2;
+        int tickRowY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y + DevicePhase.TICK.ordinal() * rowHeight;
+        int buttonWidth = 60;
+        int buttonX = rowX + rowWidth - buttonWidth - 6;
+        int buttonY = tickRowY + 2;
+        delayMenuButton = Button.builder(Component.literal(""), (b) -> toggleDelayMenu())
+            .bounds(buttonX, buttonY, buttonWidth, 16)
+            .build();
+        addRenderableWidget(delayMenuButton);
+        int sliderWidth = 140;
+        int sliderX = rowX + rowWidth - sliderWidth - 6;
+        int sliderY = buttonY + 18;
+        delaySlider = new TickDelaySlider(sliderX, sliderY, sliderWidth, 20, 1, 20, getStoredDelayValueForSelectedSlot(), this::onDelayValueChanged);
+        delaySlider.visible = false;
+        delaySlider.active = false;
+        addRenderableWidget(delaySlider);
+        updateDelaySliderValue();
+        updateDelayMenuVisibility();
+    }
+
+    private void toggleDelayMenu() {
+        delayMenuOpen = !delayMenuOpen;
+        updateDelayMenuVisibility();
+    }
+
+    private void updateDelayMenuVisibility() {
+        boolean isTickPhase = currentPhase == DevicePhase.TICK;
+        if (!isTickPhase) {
+            delayMenuOpen = false;
+        }
+        if (delayMenuButton != null) {
+            delayMenuButton.visible = isTickPhase;
+            delayMenuButton.active = isTickPhase;
+        }
+        if (delaySlider != null) {
+            boolean show = delayMenuOpen && isTickPhase;
+            delaySlider.visible = show;
+            delaySlider.active = show;
+        }
+    }
+
+    private void onDelayValueChanged(int value) {
+        if (selectedSpellSlot < 0 || selectedSpellSlot >= slotDelays.length) {
+            return;
+        }
+        int clamped = Mth.clamp(value, 1, 20);
+        slotDelays[selectedSpellSlot] = clamped;
+        updateDelayButtonLabel(clamped);
+        if (deviceStack != null && !deviceStack.isEmpty()) {
+            AbstractMultiPhaseCastDevice.setSlotTickDelay(deviceStack, selectedSpellSlot, clamped);
+        }
+        boolean mainHand = guiHand == null || guiHand == InteractionHand.MAIN_HAND;
+        Networking.sendToServer(new PacketUpdateTickDelay(selectedSpellSlot, clamped, mainHand, isCircletDevice()));
+    }
+
+    private int getStoredDelayValueForSelectedSlot() {
+        if (selectedSpellSlot < 0 || selectedSpellSlot >= slotDelays.length) {
+            return 1;
+        }
+        return slotDelays[selectedSpellSlot];
+    }
+
+    private void updateDelaySliderValue() {
+        int value = getStoredDelayValueForSelectedSlot();
+        if (delaySlider != null) {
+            delaySlider.syncToDelay(value);
+        }
+        updateDelayButtonLabel(value);
+    }
+
+    private void updateDelayButtonLabel(int value) {
+        if (delayMenuButton != null) {
+            delayMenuButton.setMessage(Component.literal("Delay " + value));
+        }
+    }
+
+    private void loadSlotDelayValues() {
+        Arrays.fill(slotDelays, 1);
+        if (deviceStack == null || deviceStack.isEmpty()) {
+            return;
+        }
+        int[] stored = AbstractMultiPhaseCastDevice.getSlotTickDelays(deviceStack);
+        System.arraycopy(stored, 0, slotDelays, 0, Math.min(slotDelays.length, stored.length));
+    }
+
+    private boolean isCircletDevice() {
+        return bookStack != null && bookStack.getItem() instanceof SpellcastingCirclet;
     }
 
     private void addPaginationButtons() {
