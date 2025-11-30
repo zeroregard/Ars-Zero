@@ -11,6 +11,7 @@ import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
+import com.github.ars_zero.common.util.BlockGroupHelper;
 import com.github.ars_zero.registry.ModEntities;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -33,7 +34,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 
@@ -68,8 +68,6 @@ public class ArsZeroResolverEvents {
             ResourceKey<Level> dimensionKey = serverLevel.dimension();
             BlockPos pos = blockHit.getBlockPos();
             if (!event.world.isOutsideBuildHeight(pos)) {
-                var state = event.world.getBlockState(pos);
-                
                 Player player = serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
                 if (player == null) {
                     return;
@@ -79,28 +77,13 @@ public class ArsZeroResolverEvents {
                 boolean willCreateEntityGroup = requiresEntityGroupForTemporalAnchor(casterTool, player);
                 
                 if (willCreateEntityGroup) {
-                    // Store in map keyed by dimension and position
-                    capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>()).put(pos, state);
-                    
-                    // Also capture AOE blocks and remove them immediately
+                    Map<BlockPos, BlockState> capturedStates = capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>());
+                    captureBlockState(event.world, capturedStates, pos);
                     double aoeBuff = event.spellStats.getAoeMultiplier();
                     int pierceBuff = event.spellStats.getBuffCount(com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce.INSTANCE);
                     List<BlockPos> posList = SpellUtil.calcAOEBlocks(player, pos, blockHit, aoeBuff, pierceBuff);
                     for (BlockPos aoePos : posList) {
-                        if (!event.world.isOutsideBuildHeight(aoePos)) {
-                            var aoeState = event.world.getBlockState(aoePos);
-                            if (!aoeState.isAir()) {
-                                capturedBlockStates.get(dimensionKey).put(aoePos, aoeState);
-                                
-                                // Remove block immediately in PRE event, before effects run
-                                event.world.setBlock(aoePos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-                            }
-                        }
-                    }
-                    
-                    // Also remove the main block
-                    if (!state.isAir()) {
-                        event.world.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                        captureBlockState(event.world, capturedStates, aoePos);
                     }
                 }
             }
@@ -158,7 +141,7 @@ public class ArsZeroResolverEvents {
                 List<BlockPos> posList = SpellUtil.calcAOEBlocks(player, targetPos, blockHit, aoeBuff, pierceBuff);
                 
                 List<BlockPos> validBlocks = new ArrayList<>();
-                // Use captured states from PRE event
+                Map<BlockPos, BlockState> statesForGroup = new HashMap<>();
                 Map<BlockPos, BlockState> capturedStates = capturedBlockStates.getOrDefault(dimensionKey, new HashMap<>());
                 
                 for (BlockPos blockPos : posList) {
@@ -169,10 +152,9 @@ public class ArsZeroResolverEvents {
                             state = event.world.getBlockState(blockPos);
                         }
                         
-                        // Only add if not air
-                        if (state != null && !state.isAir()) {
+                        if (state != null && !state.isAir() && BlockGroupHelper.isBlockBreakable(state, event.world, blockPos)) {
                             validBlocks.add(blockPos);
-                            capturedStates.put(blockPos, state); // Ensure it's in the map
+                            statesForGroup.put(blockPos, state);
                         }
                     }
                 }
@@ -182,16 +164,8 @@ public class ArsZeroResolverEvents {
                 cleanedUp = true;
                 
                 if (!validBlocks.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player)) {
-                    Vec3 centerPos = calculateCenter(validBlocks);
-                    
-                    BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), serverLevel);
-                    blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
-                    blockGroup.setCasterUUID(player.getUUID());
-                    
-                    blockGroup.addBlocksWithStates(validBlocks, capturedStates);
-                    
-                    serverLevel.addFreshEntity(blockGroup);
-                    
+                    boolean ghostMode = event.spellStats.isSensitive();
+                    BlockGroupEntity blockGroup = BlockGroupHelper.spawnBlockGroup(serverLevel, player, validBlocks, ghostMode, false, statesForGroup);
                     result = SpellResult.fromBlockGroup(blockGroup, validBlocks, player);
                 }
             } else {
@@ -223,18 +197,22 @@ public class ArsZeroResolverEvents {
         }
     }
     
-    private static Vec3 calculateCenter(List<BlockPos> positions) {
-        if (positions.isEmpty()) return Vec3.ZERO;
-        
-        double x = 0, y = 0, z = 0;
-        for (BlockPos pos : positions) {
-            x += pos.getX() + 0.5;
-            y += pos.getY() + 0.5;
-            z += pos.getZ() + 0.5;
+    private static void captureBlockState(Level level, Map<BlockPos, BlockState> capturedStates, BlockPos pos) {
+        if (level.isOutsideBuildHeight(pos)) {
+            return;
         }
-        
-        int count = positions.size();
-        return new Vec3(x / count, y / count, z / count);
+
+        BlockState state = level.getBlockState(pos);
+        if (state.isAir()) {
+            return;
+        }
+
+        if (!BlockGroupHelper.isBlockBreakable(state, level, pos)) {
+            return;
+        }
+
+        capturedStates.put(pos, state);
+        level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
     }
     
     private static boolean requiresEntityGroupForTemporalAnchor(ItemStack casterTool, Player player) {

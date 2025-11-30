@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.util.BlockGroupHelper;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.ANFakePlayer;
 import com.hollingsworth.arsnouveau.api.util.BlockUtil;
@@ -52,6 +53,7 @@ public class BlockGroupEntity extends Entity {
     @Nullable
     private UUID casterUUID;
     private float originalYRot = 0.0f;
+    private boolean ghostMode = true;
     private int lifespan = 5;
     private int maxLifeSpan = 5;
     
@@ -59,6 +61,12 @@ public class BlockGroupEntity extends Entity {
         super(entityType, level);
         this.noCulling = true;
         this.setNoGravity(true);
+    }
+
+    @Override
+    public void setPos(double x, double y, double z) {
+        super.setPos(x, y, z);
+        updateBoundingBox();
     }
     
     public void setCasterUUID(@Nullable UUID casterUUID) {
@@ -76,6 +84,14 @@ public class BlockGroupEntity extends Entity {
     
     public float getOriginalYRot() {
         return originalYRot;
+    }
+
+    public void setGhostMode(boolean ghostMode) {
+        this.ghostMode = ghostMode;
+    }
+
+    public boolean isGhostMode() {
+        return ghostMode;
     }
     
     public static BlockGroupEntity create(Level level, List<BlockPos> positions) {
@@ -168,6 +184,9 @@ public class BlockGroupEntity extends Entity {
         for (BlockData blockData : blocks) {
             BlockPos originalPos = blockData.originalPosition;
             if (!level().isOutsideBuildHeight(originalPos)) {
+                if (!BlockGroupHelper.isBlockBreakable(level(), originalPos)) {
+                    continue;
+                }
                 BlockState beforeState = level().getBlockState(originalPos);
                 
                 // Only remove if the block is not already air
@@ -290,21 +309,23 @@ public class BlockGroupEntity extends Entity {
     
     private void updateBoundingBox() {
         if (blocks.isEmpty()) {
-            setBoundingBox(new AABB(0, 0, 0, 1, 1, 1));
+            Vec3 pos = this.position();
+            setBoundingBox(new AABB(pos.x, pos.y, pos.z, pos.x, pos.y, pos.z));
             return;
         }
         
+        Vec3 entityPos = this.position();
         double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
-        double maxX = Double.MIN_VALUE, maxY = Double.MIN_VALUE, maxZ = Double.MIN_VALUE;
+        double maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
         
         for (BlockData blockData : blocks) {
-            Vec3 pos = blockData.relativePosition;
-            minX = Math.min(minX, pos.x - 0.5);
-            minY = Math.min(minY, pos.y - 0.5);
-            minZ = Math.min(minZ, pos.z - 0.5);
-            maxX = Math.max(maxX, pos.x + 0.5);
-            maxY = Math.max(maxY, pos.y + 0.5);
-            maxZ = Math.max(maxZ, pos.z + 0.5);
+            Vec3 worldPos = entityPos.add(blockData.relativePosition);
+            minX = Math.min(minX, worldPos.x - 0.5);
+            minY = Math.min(minY, worldPos.y - 0.5);
+            minZ = Math.min(minZ, worldPos.z - 0.5);
+            maxX = Math.max(maxX, worldPos.x + 0.5);
+            maxY = Math.max(maxY, worldPos.y + 0.5);
+            maxZ = Math.max(maxZ, worldPos.z + 0.5);
         }
         
         setBoundingBox(new AABB(minX, minY, minZ, maxX, maxY, maxZ));
@@ -345,11 +366,31 @@ public class BlockGroupEntity extends Entity {
     public void tick() {
         super.tick();
         
-        if (!level().isClientSide) {
-            age();
-            Vec3 deltaMovement = this.getDeltaMovement();
-            this.move(MoverType.SELF, deltaMovement);
-            this.setDeltaMovement(deltaMovement.scale(0.98));
+        if (level().isClientSide) {
+            return;
+        }
+
+        if (blocks.isEmpty()) {
+            if (!isRemoved()) {
+                discard();
+            }
+            return;
+        }
+
+        age();
+        if (isRemoved()) {
+            return;
+        }
+
+        Vec3 deltaMovement = this.getDeltaMovement();
+        Vec3 beforeMove = this.position();
+        this.move(MoverType.SELF, deltaMovement);
+        Vec3 motion = this.position().subtract(beforeMove);
+        this.setDeltaMovement(deltaMovement.scale(0.98));
+        updateBoundingBox();
+
+        if (!ghostMode) {
+            handleEntityInteractions(motion);
         }
     }
 
@@ -360,6 +401,35 @@ public class BlockGroupEntity extends Entity {
 
         if (lifespan <= 0 && !blocks.isEmpty()) {
             placeAndDiscard();
+        }
+    }
+
+    private void handleEntityInteractions(Vec3 motion) {
+        if (motion.lengthSqr() < 1.0E-4) {
+            return;
+        }
+
+        AABB bounds = getBoundingBox();
+        AABB detection = bounds.inflate(0.25);
+        List<Entity> entities = level().getEntities(this, detection, entity -> entity.isAlive() && !entity.isSpectator());
+
+        for (Entity entity : entities) {
+            if (entity == this) {
+                continue;
+            }
+
+            boolean above = entity.getBoundingBox().minY >= bounds.maxY - 0.25;
+            if (above) {
+                double relativeSpeed = entity.getDeltaMovement().subtract(motion).lengthSqr();
+                if (relativeSpeed <= 0.25) {
+                    entity.setPos(entity.getX() + motion.x, entity.getY() + motion.y, entity.getZ() + motion.z);
+                    entity.fallDistance = 0.0f;
+                } else {
+                    entity.push(motion.x, motion.y, motion.z);
+                }
+            } else {
+                entity.push(motion.x * 0.5, Math.max(0.0, motion.y * 0.5), motion.z * 0.5);
+            }
         }
     }
 
@@ -397,13 +467,14 @@ public class BlockGroupEntity extends Entity {
     
     @Override
     public boolean isPushable() {
-        return false;
+        return !ghostMode;
     }
     
     public void clearBlocks() {
         blocks.clear();
         blockEntityData.clear();
         syncBlockData();
+        updateBoundingBox();
     }
     
     @Override
@@ -446,6 +517,10 @@ public class BlockGroupEntity extends Entity {
         if (compound.contains("originalYRot", Tag.TAG_FLOAT)) {
             originalYRot = compound.getFloat("originalYRot");
         }
+
+        if (compound.contains("ghostMode", Tag.TAG_BYTE)) {
+            ghostMode = compound.getBoolean("ghostMode");
+        }
     }
     
     @Override
@@ -477,6 +552,7 @@ public class BlockGroupEntity extends Entity {
         }
         
         compound.putFloat("originalYRot", originalYRot);
+        compound.putBoolean("ghostMode", ghostMode);
     }
     
     public List<BlockData> getBlocks() {
