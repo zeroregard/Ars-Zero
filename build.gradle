@@ -192,28 +192,28 @@ tasks.named("runGameTestServer").configure {
                 into(file("run/gameteststructures"))
             }
         }
-        def mainResourceStructuresDir = file("src/main/resources/data/ars_zero/structures")
+        def mainResourceStructuresDir = file("src/main/resources/data/ars_zero/structure")
         if (mainResourceStructuresDir.exists()) {
             copy {
                 from(mainResourceStructuresDir)
                 into(file("run/gameteststructures/ars_zero"))
             }
         }
-        def testResourceStructuresDir = file("src/test/resources/data/ars_zero/structures")
+        def testResourceStructuresDir = file("src/test/resources/data/ars_zero/structure")
         if (testResourceStructuresDir.exists()) {
             copy {
                 from(testResourceStructuresDir)
                 into(file("run/gameteststructures/ars_zero"))
             }
         }
-        def buildMainResourceStructuresDir = file("build/resources/main/data/ars_zero/structures")
+        def buildMainResourceStructuresDir = file("build/resources/main/data/ars_zero/structure")
         if (buildMainResourceStructuresDir.exists()) {
             copy {
                 from(buildMainResourceStructuresDir)
                 into(file("run/gameteststructures/ars_zero"))
             }
         }
-        def buildTestResourceStructuresDir = file("build/resources/test/data/ars_zero/structures")
+        def buildTestResourceStructuresDir = file("build/resources/test/data/ars_zero/structure")
         if (buildTestResourceStructuresDir.exists()) {
             copy {
                 from(buildTestResourceStructuresDir)
