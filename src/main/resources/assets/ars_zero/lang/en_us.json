@@ -21,6 +21,7 @@
   "block.ars_zero.arcane_voxel_spawner": "Arcane Voxel Spawner",
   "block.ars_zero.fire_voxel_spawner": "Fire Voxel Spawner",
   "block.ars_zero.water_voxel_spawner": "Water Voxel Spawner",
+  "block.ars_zero.phased_spell_turret": "Phased Spell Turret",
 
   "entity.ars_zero.arcane_voxel_entity": "Arcane Voxel",
   "entity.ars_zero.water_voxel_entity": "Water Voxel",
@@ -43,6 +44,10 @@
 
   "ars_zero.tooltip.circlet.cast": "Press %s to channel circlet",
   "ars_zero.tooltip.circlet.radial": "Press %s to open spell radial",
+  "ars_zero.alert.phased_turret.multi_phase_required": "Phased turrets require a multi-phase spell staff.",
+  "ars_zero.alert.phased_turret.no_spell_data": "Could not read spell data from that staff.",
+  "ars_zero.alert.phased_turret.empty_slot": "Select a staff slot containing at least one phase spell.",
+  "ars_zero.alert.phased_turret.spell_set": "Phased turret spells updated.",
 
   "ars_zero.glyph_name.conjure_voxel_effect": "Conjure Voxel",
   "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity",
