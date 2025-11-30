@@ -50,6 +50,11 @@ public class ModItems {
         () -> new BlockItem(ModBlocks.WATER_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
 
+    public static final DeferredHolder<Item, BlockItem> PHASED_SPELL_TURRET = ITEMS.register(
+        "phased_spell_turret",
+        () -> new BlockItem(ModBlocks.PHASED_SPELL_TURRET.get(), defaultItemProperties())
+    );
+
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);
         return new ItemRegistryWrapper<>(ITEMS.register(name, item));

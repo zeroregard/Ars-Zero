@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.block.PhasedSpellTurretTile;
 import com.github.ars_zero.common.block.VoxelSpawnerBlockEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -18,6 +19,14 @@ public class ModBlockEntities {
             ModBlocks.ARCANE_VOXEL_SPAWNER.get(),
             ModBlocks.FIRE_VOXEL_SPAWNER.get(),
             ModBlocks.WATER_VOXEL_SPAWNER.get()
+        ).build(null)
+    );
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PhasedSpellTurretTile>> PHASED_SPELL_TURRET = BLOCK_ENTITIES.register(
+        "phased_spell_turret",
+        () -> BlockEntityType.Builder.of(
+            PhasedSpellTurretTile::new,
+            ModBlocks.PHASED_SPELL_TURRET.get()
         ).build(null)
     );
 }
