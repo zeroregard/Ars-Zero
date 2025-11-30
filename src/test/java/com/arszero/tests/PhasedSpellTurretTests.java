@@ -1,6 +1,7 @@
 package com.arszero.tests;
 
 import com.github.ars_zero.ArsZero;
+import com.arszero.tests.ArsZeroTestsMod;
 import com.github.ars_zero.common.block.PhasedSpellTurretTile;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.registry.ModBlocks;
@@ -35,7 +36,8 @@ public class PhasedSpellTurretTests {
         }
     }
 
-    @GameTest(batch = "PhasedSpellTurretTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    // Use a test-local template because the production ars_zero:common/empty_7x7 structure is not bundled with the ars_zero_tests mod at runtime.
+    @GameTest(batch = "PhasedSpellTurretTests", templateNamespace = ArsZeroTestsMod.MOD_ID, template = "phased_turret_pad")
     public static void phasedTurretCastsBeginTickEnd(GameTestHelper helper) {
         BlockPos turretPos = new BlockPos(3, 1, 3);
         BlockPos turretBase = turretPos.below();
