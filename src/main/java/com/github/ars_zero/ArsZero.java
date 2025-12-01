@@ -127,12 +127,6 @@ public class ArsZero {
     
     public void gatherData(net.neoforged.neoforge.data.event.GatherDataEvent event) {
         var generator = event.getGenerator();
-        var lookupProvider = event.getLookupProvider();
-        var existingFileHelper = event.getExistingFileHelper();
-        
-        if (event.includeClient()) {
-            generator.addProvider(true, new com.github.ars_zero.common.datagen.AtlasProvider(generator.getPackOutput(), lookupProvider, existingFileHelper));
-        }
         
         if (event.includeServer()) {
             generator.addProvider(true, new com.github.ars_zero.common.datagen.DyeRecipeDatagen(generator));
