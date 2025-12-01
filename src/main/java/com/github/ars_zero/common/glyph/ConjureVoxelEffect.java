@@ -6,8 +6,10 @@ import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
+import com.github.ars_zero.common.entity.WindVoxelEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
@@ -26,6 +28,8 @@ import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSplit;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
+import com.hollingsworth.arsnouveau.common.spell.effect.EffectWindshear;
+import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
 import com.alexthw.sauce.registry.ModRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -43,23 +47,35 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class ConjureVoxelEffect extends AbstractEffect {
+public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEffectProvider {
     
     public static final String ID = "conjure_voxel_effect";
     public static final ConjureVoxelEffect INSTANCE = new ConjureVoxelEffect();
-    private static final ResourceLocation CONJURE_TERRAIN_ID = ResourceLocation.fromNamespaceAndPath("ars_elemental", "conjure_terrain");
     private static final int MAX_AMPLIFY_LEVEL = 2;
     private static final float BASE_VOXEL_SIZE = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final float AMPLIFY_SIZE_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final Map<AbstractEffect, VoxelVariant> VARIANT_CACHE = new IdentityHashMap<>();
+    private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[]{
+        EffectConjureWater.INSTANCE.getRegistryName(),
+        EffectIgnite.INSTANCE.getRegistryName(),
+        EffectWindshear.INSTANCE.getRegistryName(),
+        EffectConjureTerrain.INSTANCE.getRegistryName()
+    };
     
     static {
         VARIANT_CACHE.put(EffectConjureWater.INSTANCE, VoxelVariant.WATER);
         VARIANT_CACHE.put(EffectIgnite.INSTANCE, VoxelVariant.FIRE);
+        VARIANT_CACHE.put(EffectWindshear.INSTANCE, VoxelVariant.WIND);
+        VARIANT_CACHE.put(EffectConjureTerrain.INSTANCE, VoxelVariant.STONE);
     }
 
     public ConjureVoxelEffect() {
         super(ArsZero.prefix(ID), "Conjure Voxel");
+    }
+
+    @Override
+    public ResourceLocation[] getSubsequentEffectGlyphs() {
+        return SUBSEQUENT_GLYPHS;
     }
 
     @Override
@@ -101,7 +117,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
                     waterVoxel.setCasterWaterPower(waterPower);
                 }
                 
-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
                 
@@ -149,7 +165,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
                     waterVoxel.setCasterWaterPower(waterPower);
                 }
                 
-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
                 
@@ -208,7 +224,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
                 waterVoxel.setCasterWaterPower(waterPower);
             }
             
-            if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
+            if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
                 voxel.setNoGravityCustom(true);
             }
             
@@ -245,7 +261,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
                     voxel.setResolver(null);
                 }
                 
-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
                 
@@ -305,10 +321,6 @@ public class ConjureVoxelEffect extends AbstractEffect {
         if (cached != null) {
             return cached;
         }
-        ResourceLocation registryName = effect.getRegistryName();
-        if (registryName != null && registryName.equals(CONJURE_TERRAIN_ID)) {
-            return VoxelVariant.STONE;
-        }
         return VoxelVariant.ARCANE;
     }
     
@@ -335,6 +347,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
             case WATER -> new WaterVoxelEntity(level, x, y, z, duration);
             case FIRE -> new FireVoxelEntity(level, x, y, z, duration);
             case STONE -> new StoneVoxelEntity(level, x, y, z, duration);
+            case WIND -> new WindVoxelEntity(level, x, y, z, duration);
             default -> new ArcaneVoxelEntity(level, x, y, z, duration);
         };
     }
@@ -412,7 +425,8 @@ public class ConjureVoxelEffect extends AbstractEffect {
         ARCANE,
         WATER,
         FIRE,
-        STONE
+        STONE,
+        WIND
     }
     
     private int getDuration(SpellStats spellStats) {
@@ -449,7 +463,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
 
     @Override
     public String getBookDescription() {
-        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water' & 'Ignite'";
+        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water', 'Ignite', 'Wind Shear', & 'Conjure Terrain'";
     }
 
     @Override

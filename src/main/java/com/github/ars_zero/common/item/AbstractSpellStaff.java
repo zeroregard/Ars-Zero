@@ -30,12 +30,6 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice implements GeoItem {
 
-    public enum StaffPhase {
-        BEGIN,
-        TICK,
-        END
-    }
-
     public AbstractSpellStaff(SpellTier tier) {
         super(tier, new Properties());
     }

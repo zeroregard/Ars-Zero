@@ -1,7 +1,6 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.registry.ModEntities;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -11,7 +10,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -46,14 +44,8 @@ public class StoneVoxelEntity extends BaseVoxelEntity {
     
     @Override
     protected void onBlockCollision(BlockHitResult blockHit) {
-        if (!(this.level() instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        BlockPos impactPos = blockHit.getBlockPos();
-        if (!reinforceBlock(serverLevel, impactPos)) {
-            BlockPos offset = impactPos.relative(blockHit.getDirection());
-            reinforceBlock(serverLevel, offset);
-        }
+        spawnHitParticles(blockHit.getLocation());
+        this.discard();
     }
     
     @Override
@@ -67,7 +59,7 @@ public class StoneVoxelEntity extends BaseVoxelEntity {
             if (hit instanceof LivingEntity living) {
                 applyImpactDamage(living);
             }
-            buildImpactBrace(result.getLocation());
+            spawnHitParticles(result.getLocation());
         }
         this.discard();
     }
@@ -86,37 +78,6 @@ public class StoneVoxelEntity extends BaseVoxelEntity {
         Vec3 impulse = this.getDeltaMovement().scale(0.35);
         target.push(impulse.x, Math.max(0.1, impulse.y + 0.15), impulse.z);
         target.hurtMarked = true;
-    }
-    
-    private boolean reinforceBlock(ServerLevel level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos);
-        if (state.isAir() || state.canBeReplaced()) {
-            level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
-            return true;
-        }
-        float hardness = state.getDestroySpeed(level, pos);
-        if (hardness >= 0.0f && hardness <= 1.5f) {
-            level.setBlock(pos, Blocks.COBBLESTONE.defaultBlockState(), 3);
-            return true;
-        }
-        return false;
-    }
-    
-    private void buildImpactBrace(Vec3 location) {
-        if (!(this.level() instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        BlockPos center = BlockPos.containing(location);
-        int radius = Math.max(1, Math.round(this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE));
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dz = -radius; dz <= radius; dz++) {
-                if (Math.abs(dx) + Math.abs(dz) > radius + 1) {
-                    continue;
-                }
-                BlockPos target = center.offset(dx, -1, dz);
-                reinforceBlock(serverLevel, target);
-            }
-        }
     }
     
     @Override

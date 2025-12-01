@@ -2,6 +2,7 @@ package com.github.ars_zero.common.util;
 
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
+import net.minecraft.resources.ResourceLocation;
 
 public class SpellDiscountUtil {
 

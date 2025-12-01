@@ -3,6 +3,7 @@ package com.github.ars_zero.client.renderer;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.spell.SpellPhase;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Player;
@@ -127,7 +128,7 @@ public class StaffDebugHUD {
         }
     }
     
-    public static void onSpellFired(AbstractMultiPhaseCastDevice.Phase phase) {
+    public static void onSpellFired(SpellPhase phase) {
         long currentTime = System.currentTimeMillis();
         lastSpellFired = phase.name();
         lastPhaseChangeTime = currentTime;

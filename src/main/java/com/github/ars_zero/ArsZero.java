@@ -11,8 +11,10 @@ import com.github.ars_zero.common.entity.interaction.MergeInteraction;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.event.AnchorEffectEvents;
-import com.github.ars_zero.common.event.FirePowerCostReductionEvents;
 import com.github.ars_zero.common.event.GravitySuppressionEvents;
+import com.github.ars_zero.common.event.AirPowerCostReductionEvents;
+import com.github.ars_zero.common.event.EarthPowerCostReductionEvents;
+import com.github.ars_zero.common.event.FirePowerCostReductionEvents;
 import com.github.ars_zero.common.event.WaterPowerCostReductionEvents;
 import com.github.ars_zero.common.event.ZeroGravityMobEffectEvents;
 import com.github.ars_zero.event.CurioCastingHandler;
@@ -71,6 +73,8 @@ public class ArsZero {
         
         NeoForge.EVENT_BUS.register(WaterPowerCostReductionEvents.class);
         NeoForge.EVENT_BUS.register(FirePowerCostReductionEvents.class);
+        NeoForge.EVENT_BUS.register(AirPowerCostReductionEvents.class);
+        NeoForge.EVENT_BUS.register(EarthPowerCostReductionEvents.class);
         NeoForge.EVENT_BUS.register(ZeroGravityMobEffectEvents.class);
         NeoForge.EVENT_BUS.register(GravitySuppressionEvents.class);
         NeoForge.EVENT_BUS.register(CurioCastingHandler.class);
@@ -89,6 +93,16 @@ public class ArsZero {
             FireVoxelEntity.class,
             WaterVoxelEntity.class,
             new FireWaterInteraction()
+        );
+        VoxelInteractionRegistry.register(
+            com.github.ars_zero.common.entity.WindVoxelEntity.class,
+            FireVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.WindFireInteraction()
+        );
+        VoxelInteractionRegistry.register(
+            com.github.ars_zero.common.entity.WindVoxelEntity.class,
+            WaterVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.WindWaterInteraction()
         );
         
         VoxelInteractionRegistry.register(
@@ -144,7 +158,6 @@ public class ArsZero {
         if (event.includeServer()) {
             generator.addProvider(true, new com.github.ars_zero.common.datagen.DyeRecipeDatagen(generator));
             generator.addProvider(true, new com.github.ars_zero.common.datagen.StaffRecipeDatagen(generator));
-            generator.addProvider(true, new com.github.ars_zero.common.datagen.GlyphRecipeDatagen(generator));
         }
     }
 }

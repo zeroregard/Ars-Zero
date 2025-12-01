@@ -7,6 +7,7 @@ import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
+import com.github.ars_zero.common.entity.WindVoxelEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -55,6 +56,16 @@ public class ModEntities {
                     .updateInterval(1)
                     .setShouldReceiveVelocityUpdates(true)
                     .build(ArsZero.MOD_ID + ":stone_voxel_entity")
+    );
+    
+    public static final DeferredHolder<EntityType<?>, EntityType<WindVoxelEntity>> WIND_VOXEL_ENTITY = ENTITIES.register(
+            "wind_voxel_entity",
+            () -> EntityType.Builder.<WindVoxelEntity>of(WindVoxelEntity::new, MobCategory.MISC)
+                    .sized(BaseVoxelEntity.DEFAULT_BASE_SIZE, BaseVoxelEntity.DEFAULT_BASE_SIZE)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(ArsZero.MOD_ID + ":wind_voxel_entity")
     );
     
     public static final DeferredHolder<EntityType<?>, EntityType<BlockGroupEntity>> BLOCK_GROUP = ENTITIES.register(
