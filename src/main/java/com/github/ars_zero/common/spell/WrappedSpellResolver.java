@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.spell;
 
+import com.github.ars_zero.common.spell.SpellPhase;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import net.minecraft.world.level.Level;
@@ -8,10 +9,10 @@ import java.util.UUID;
 
 public class WrappedSpellResolver extends SpellResolver {
     private final UUID playerId;
-    private final CastPhase phase;
+    private final SpellPhase phase;
     private final boolean isRootResolver;
     
-    public WrappedSpellResolver(SpellResolver original, UUID playerId, CastPhase phase, boolean isRootResolver) {
+    public WrappedSpellResolver(SpellResolver original, UUID playerId, SpellPhase phase, boolean isRootResolver) {
         super(original.spellContext);
         this.playerId = playerId;
         this.phase = phase;
@@ -28,7 +29,7 @@ public class WrappedSpellResolver extends SpellResolver {
         return playerId;
     }
     
-    public CastPhase getPhase() {
+    public SpellPhase getPhase() {
         return phase;
     }
     

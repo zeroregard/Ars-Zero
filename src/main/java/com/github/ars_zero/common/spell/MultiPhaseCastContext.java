@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.spell;
 
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.spell.SpellPhase;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ public class MultiPhaseCastContext {
     
     public final UUID castId;
     public final UUID playerId;
-    public AbstractMultiPhaseCastDevice.Phase currentPhase = AbstractMultiPhaseCastDevice.Phase.BEGIN;
+    public SpellPhase currentPhase = SpellPhase.BEGIN;
     public boolean isCasting = false;
     public int tickCount = 0;
     public int sequenceTick = 0;

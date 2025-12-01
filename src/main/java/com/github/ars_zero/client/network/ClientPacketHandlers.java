@@ -7,6 +7,7 @@ import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.client.sound.StaffSoundManager;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
+import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.network.PacketUpdateStaffGUI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -19,7 +20,7 @@ final class ClientPacketHandlers {
 
     static void handleStaffSpellFired(PacketStaffSpellFired packet, IPayloadContext context) {
         context.enqueueWork(() -> {
-            AbstractMultiPhaseCastDevice.Phase phase = AbstractMultiPhaseCastDevice.Phase.values()[packet.phaseOrdinal()];
+            SpellPhase phase = SpellPhase.values()[packet.phaseOrdinal()];
             StaffDebugHUD.onSpellFired(phase);
 
             var player = Minecraft.getInstance().player;
@@ -29,9 +30,9 @@ final class ClientPacketHandlers {
                     StaffAnimationHandler.onStaffPhase(clientPlayer, packet.isMainHand(), phaseName, packet.tickCount());
                 }
 
-                if (phase == AbstractMultiPhaseCastDevice.Phase.BEGIN) {
+                if (phase == SpellPhase.BEGIN) {
                     StaffSoundManager.startLoopingSound(player);
-                } else if (phase == AbstractMultiPhaseCastDevice.Phase.END) {
+                } else if (phase == SpellPhase.END) {
                     StaffSoundManager.stopLoopingSound();
                 }
             }

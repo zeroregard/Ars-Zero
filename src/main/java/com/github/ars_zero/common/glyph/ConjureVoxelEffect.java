@@ -7,6 +7,7 @@ import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
@@ -41,16 +42,25 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Set;
 
-public class ConjureVoxelEffect extends AbstractEffect {
+public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEffectProvider {
     
     public static final String ID = "conjure_voxel_effect";
     public static final ConjureVoxelEffect INSTANCE = new ConjureVoxelEffect();
     private static final int MAX_AMPLIFY_LEVEL = 2;
     private static final float BASE_VOXEL_SIZE = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final float AMPLIFY_SIZE_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
+    private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[]{
+        EffectConjureWater.INSTANCE.getRegistryName(),
+        EffectIgnite.INSTANCE.getRegistryName()
+    };
 
     public ConjureVoxelEffect() {
         super(ArsZero.prefix(ID), "Conjure Voxel");
+    }
+
+    @Override
+    public ResourceLocation[] getSubsequentEffectGlyphs() {
+        return SUBSEQUENT_GLYPHS;
     }
 
     @Override
