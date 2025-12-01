@@ -1,6 +1,6 @@
 package com.github.ars_zero.client.gui.spell;
 
-import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
+import com.github.ars_zero.common.spell.SpellPhase;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ public class SpellPhaseSlots {
         }
     }
 
-    public List<AbstractSpellPart> getPhaseList(AbstractMultiPhaseCastDeviceScreen.DevicePhase phase) {
+    public List<AbstractSpellPart> getPhaseList(SpellPhase phase) {
         return switch (phase) {
             case BEGIN -> begin;
             case TICK -> tick;

@@ -6,8 +6,10 @@ import com.github.ars_zero.client.gui.buttons.ManaIndicator;
 import com.github.ars_zero.client.gui.buttons.StaffArrowButton;
 import com.github.ars_zero.client.gui.spell.SpellPhaseSlots;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.*;
@@ -55,19 +57,22 @@ import net.neoforged.fml.ModList;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScreen {
 
-    public enum DevicePhase {
-        BEGIN, TICK, END
-    }
-
-    private DevicePhase currentPhase = DevicePhase.BEGIN;
+    private SpellPhase currentPhase = SpellPhase.BEGIN;
     
     private GuiImageButton beginPhaseButton;
     private GuiImageButton tickPhaseButton;
@@ -132,7 +137,9 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         
         this.phaseSpells = new SpellPhaseSlots(10);
         
-        this.currentPhase = DevicePhase.BEGIN;
+
+        // Set default phase to BEGIN
+        this.currentPhase = SpellPhase.BEGIN;
     }
 
     private static final int STAFF_GUI_WIDTH = 375;
@@ -219,7 +226,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         
         updateCraftingCellVisibility();
         
-        selectPhase(DevicePhase.BEGIN);
+        selectPhase(SpellPhase.BEGIN);
         
         validate();
     }
@@ -230,7 +237,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         int slotSpacing = 16;
         
         for (int i = 0; i < 10; i++) {
-            int beginPhysicalSlot = i * 3 + DevicePhase.BEGIN.ordinal();
+            int beginPhysicalSlot = i * 3 + SpellPhase.BEGIN.ordinal();
             String name = caster.getSpellName(beginPhysicalSlot);
             StaffSpellSlot slot = new StaffSpellSlot(slotStartX, slotStartY + slotSpacing * i, i, name, (b) -> {
                 if (!(b instanceof StaffSpellSlot button) || this.selectedSpellSlot == button.slotNum) {
@@ -259,7 +266,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         resetCraftingCells();
         
         if (spellNameBox != null) {
-            int beginPhysicalSlot = selectedSpellSlot * 3 + DevicePhase.BEGIN.ordinal();
+            int beginPhysicalSlot = selectedSpellSlot * 3 + SpellPhase.BEGIN.ordinal();
             spellNameBox.setValue(caster.getSpellName(beginPhysicalSlot));
         }
         
@@ -267,7 +274,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
 
     private void loadSpellFromSlot() {
-        for (DevicePhase phase : DevicePhase.values()) {
+        for (SpellPhase phase : SpellPhase.values()) {
             List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             phaseSpell.clear();
             for (int i = 0; i < 10; i++) {
@@ -275,7 +282,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             }
         }
         
-        for (DevicePhase phase : DevicePhase.values()) {
+        for (SpellPhase phase : SpellPhase.values()) {
             int physicalSlot = selectedSpellSlot * 3 + phase.ordinal();
             Spell spell = caster.getSpell(physicalSlot);
             
@@ -304,19 +311,19 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         int buttonX = bookLeft + PHASE_SECTION_SHIFT_X + 11;
         
         GuiImageButton beginButton = new GuiImageButton(buttonX, startY, buttonSize, buttonSize, 
-            StaffGuiTextures.ICON_START, (button) -> selectPhase(DevicePhase.BEGIN));
+            StaffGuiTextures.ICON_START, (button) -> selectPhase(SpellPhase.BEGIN));
         beginButton.withTooltip(Component.translatable("gui.ars_zero.phase.begin"));
         beginPhaseButton = beginButton;
         addRenderableWidget(beginButton);
         
         GuiImageButton tickButton = new GuiImageButton(buttonX, startY + rowHeight, buttonSize, buttonSize, 
-            StaffGuiTextures.ICON_TICK, (button) -> selectPhase(DevicePhase.TICK));
+            StaffGuiTextures.ICON_TICK, (button) -> selectPhase(SpellPhase.TICK));
         tickButton.withTooltip(Component.translatable("gui.ars_zero.phase.tick"));
         tickPhaseButton = tickButton;
         addRenderableWidget(tickButton);
         
         GuiImageButton endButton = new GuiImageButton(buttonX, startY + rowHeight * 2, buttonSize, buttonSize, 
-            StaffGuiTextures.ICON_END, (button) -> selectPhase(DevicePhase.END));
+            StaffGuiTextures.ICON_END, (button) -> selectPhase(SpellPhase.END));
         endButton.withTooltip(Component.translatable("gui.ars_zero.phase.end"));
         endPhaseButton = endButton;
         addRenderableWidget(endButton);
@@ -343,7 +350,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     private void addSpellNameAndButtons() {
         spellNameBox = new EnterTextField(minecraft.font, bookLeft + 76, bookBottom - 29);
         
-        int beginPhysicalSlot = selectedSpellSlot * 3 + DevicePhase.BEGIN.ordinal();
+        int beginPhysicalSlot = selectedSpellSlot * 3 + SpellPhase.BEGIN.ordinal();
         spellNameBox.setValue(caster.getSpellName(beginPhysicalSlot));
         addRenderableWidget(spellNameBox);
 
@@ -433,16 +440,16 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         return selectedSpellSlot * 3 + currentPhase.ordinal();
     }
 
-    private void selectPhase(DevicePhase phase) {
+    private void selectPhase(SpellPhase phase) {
         currentPhase = phase;
         
-        beginPhaseButton.active = (phase != DevicePhase.BEGIN);
-        tickPhaseButton.active = (phase != DevicePhase.TICK);
-        endPhaseButton.active = (phase != DevicePhase.END);
+        beginPhaseButton.active = (phase != SpellPhase.BEGIN);
+        tickPhaseButton.active = (phase != SpellPhase.TICK);
+        endPhaseButton.active = (phase != SpellPhase.END);
         
-        beginPhaseButton.image = (phase == DevicePhase.BEGIN) ? StaffGuiTextures.ICON_START_SELECTED : StaffGuiTextures.ICON_START;
-        tickPhaseButton.image = (phase == DevicePhase.TICK) ? StaffGuiTextures.ICON_TICK_SELECTED : StaffGuiTextures.ICON_TICK;
-        endPhaseButton.image = (phase == DevicePhase.END) ? StaffGuiTextures.ICON_END_SELECTED : StaffGuiTextures.ICON_END;
+        beginPhaseButton.image = (phase == SpellPhase.BEGIN) ? StaffGuiTextures.ICON_START_SELECTED : StaffGuiTextures.ICON_START;
+        tickPhaseButton.image = (phase == SpellPhase.TICK) ? StaffGuiTextures.ICON_TICK_SELECTED : StaffGuiTextures.ICON_TICK;
+        endPhaseButton.image = (phase == SpellPhase.END) ? StaffGuiTextures.ICON_END_SELECTED : StaffGuiTextures.ICON_END;
         
         updateCraftingCellVisibility();
         validate();
@@ -612,6 +619,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             }
             currentSpell.add(part);
         }
+        SpellCompositeContext.getInstance().setCurrentSpell(currentSpell);
         for (CraftingButton b : craftingCells) {
             b.validationErrors.clear();
         }
@@ -669,7 +677,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         int startX = bookLeft + CRAFTING_CELL_START_X_OFFSET + PHASE_SECTION_SHIFT_X - 8;
         
         int phaseIndex = 0;
-        for (DevicePhase phase : DevicePhase.values()) {
+        for (SpellPhase phase : SpellPhase.values()) {
             List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             for (int slot = 0; slot < 10; slot++) {
                 int x = startX + slot * cellSpacing;
@@ -695,7 +703,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             int phaseIndex = cellIndex / 10;
             int slot = cellIndex % 10;
             
-            DevicePhase phase = DevicePhase.values()[phaseIndex];
+            SpellPhase phase = SpellPhase.values()[phaseIndex];
             List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             if (slot < phaseSpell.size()) {
                 phaseSpell.set(slot, null);
@@ -715,7 +723,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         
         String spellName = spellNameBox.getValue();
         
-        for (DevicePhase phase : DevicePhase.values()) {
+        for (SpellPhase phase : SpellPhase.values()) {
             List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             List<AbstractSpellPart> filteredPhase = phaseSpell.stream()
                 .filter(part -> part != null)
@@ -735,7 +743,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
 
     public void clear() {
-        for (DevicePhase phase : DevicePhase.values()) {
+        for (SpellPhase phase : SpellPhase.values()) {
             List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             phaseSpell.clear();
             for (int i = 0; i < 10; i++) {
@@ -882,8 +890,8 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         }
         
         int rowX = PHASE_ROW_TEXTURE_X_OFFSET + PHASE_SECTION_SHIFT_X - 4;
-        for (int i = 0; i < DevicePhase.values().length; i++) {
-            DevicePhase phase = DevicePhase.values()[i];
+        for (int i = 0; i < SpellPhase.values().length; i++) {
+            SpellPhase phase = SpellPhase.values()[i];
             ResourceLocation rowTexture = phase == currentPhase ? StaffGuiTextures.SPELL_PHASE_ROW_SELECTED : StaffGuiTextures.SPELL_PHASE_ROW;
             int rowY = PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y + i * (PHASE_ROW_HEIGHT + 2);
             graphics.blit(rowTexture, rowX, rowY, 0, 0, PHASE_ROW_TEXTURE_WIDTH, PHASE_ROW_TEXTURE_HEIGHT, PHASE_ROW_TEXTURE_WIDTH, PHASE_ROW_TEXTURE_HEIGHT);
@@ -916,7 +924,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         ManaIndicator hoveredIndicator = null;
         
         int phaseIndex = 0;
-        for (DevicePhase phase : DevicePhase.values()) {
+        for (SpellPhase phase : SpellPhase.values()) {
             List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             int indicatorY = baseY + phaseIndex * rowHeight + (PHASE_ROW_HEIGHT - indicatorHeight) / 2 - 1 + 1;
             
@@ -990,7 +998,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         );
     }
 
-    public DevicePhase getCurrentPhase() {
+    public SpellPhase getCurrentPhase() {
         return currentPhase;
     }
 

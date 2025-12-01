@@ -1,8 +1,14 @@
 package com.github.ars_zero.client.gui.validators;
 
+<<<<<<< HEAD
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
+=======
+import com.github.ars_zero.common.glyph.AnchorEffect;
+import com.github.ars_zero.common.glyph.TemporalContextForm;
+import com.github.ars_zero.common.spell.SpellPhase;
+>>>>>>> 4e707db5d1116aed23d09488f1991c81eaf936ba
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.SpellValidationError;
 import com.hollingsworth.arsnouveau.common.spell.validation.BaseSpellValidationError;
@@ -13,39 +19,51 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SpellPhaseValidator extends ScanningSpellValidator<AbstractMultiPhaseCastDeviceScreen.DevicePhase> {
+
+public class SpellPhaseValidator extends ScanningSpellValidator<SpellPhase> {
     
-    private static final Map<Class<? extends AbstractSpellPart>, EnumSet<AbstractMultiPhaseCastDeviceScreen.DevicePhase>> ALLOWED_PHASES = new HashMap<>();
+    private static final Map<Class<? extends AbstractSpellPart>, EnumSet<SpellPhase>> ALLOWED_PHASES = new HashMap<>();
     
     static {
         ALLOWED_PHASES.put(TemporalContextForm.class, EnumSet.of(
-            AbstractMultiPhaseCastDeviceScreen.DevicePhase.TICK,
-            AbstractMultiPhaseCastDeviceScreen.DevicePhase.END
+            SpellPhase.TICK,
+            SpellPhase.END
         ));
         ALLOWED_PHASES.put(AnchorEffect.class, EnumSet.of(
-            AbstractMultiPhaseCastDeviceScreen.DevicePhase.TICK
+            SpellPhase.TICK
         ));
     }
     
-    private final AbstractMultiPhaseCastDeviceScreen.DevicePhase phase;
+    private final SpellPhase phase;
     
-    public SpellPhaseValidator(AbstractMultiPhaseCastDeviceScreen.DevicePhase phase) {
+    public SpellPhaseValidator(SpellPhase phase) {
+>>>>>>> 4e707db5d1116aed23d09488f1991c81eaf936ba
         this.phase = phase;
     }
     
     @Override
-    protected AbstractMultiPhaseCastDeviceScreen.DevicePhase initContext() {
+
+    protected SpellPhase initContext() {
+>>>>>>> 4e707db5d1116aed23d09488f1991c81eaf936ba
         return phase;
     }
     
     @Override
     protected void digestSpellPart(
+<<<<<<< HEAD
             AbstractMultiPhaseCastDeviceScreen.DevicePhase ctx,
+=======
+            SpellPhase ctx,
+>>>>>>> 4e707db5d1116aed23d09488f1991c81eaf936ba
             int position,
             AbstractSpellPart part,
             List<SpellValidationError> errors
     ) {
+<<<<<<< HEAD
         EnumSet<AbstractMultiPhaseCastDeviceScreen.DevicePhase> allowed = ALLOWED_PHASES.get(part.getClass());
+=======
+        EnumSet<SpellPhase> allowed = ALLOWED_PHASES.get(part.getClass());
+>>>>>>> 4e707db5d1116aed23d09488f1991c81eaf936ba
         
         if (allowed != null && !allowed.contains(ctx)) {
             errors.add(new PhaseRestrictionValidationError(position, part, "phase_restriction"));
