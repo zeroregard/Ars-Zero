@@ -1,0 +1,41 @@
+package com.github.ars_zero.registry;
+
+import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.particle.timeline.NearTimeline;
+import com.github.ars_zero.common.particle.timeline.TemporalContextTimeline;
+import com.hollingsworth.arsnouveau.api.particle.configurations.IParticleMotionType;
+import com.hollingsworth.arsnouveau.api.particle.timelines.IParticleTimelineType;
+import com.hollingsworth.arsnouveau.api.particle.timelines.SimpleParticleTimelineType;
+import com.hollingsworth.arsnouveau.api.registry.ParticleMotionRegistry;
+import com.hollingsworth.arsnouveau.api.registry.ParticleTimelineRegistry;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+public class ModParticleTimelines {
+    public static final DeferredRegister<IParticleTimelineType<?>> TIMELINES = DeferredRegister.create(ParticleTimelineRegistry.PARTICLE_TIMELINE_REGISTRY, ArsZero.MOD_ID);
+
+    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<NearTimeline>> NEAR_TIMELINE = TIMELINES.register(
+        "near",
+        () -> new SimpleParticleTimelineType<>(ModGlyphs.NEAR_FORM, NearTimeline.CODEC, NearTimeline.STREAM_CODEC, NearTimeline::new)
+    );
+
+    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<TemporalContextTimeline>> TEMPORAL_CONTEXT_TIMELINE = TIMELINES.register(
+        "temporal_context",
+        () -> new SimpleParticleTimelineType<>(ModGlyphs.TEMPORAL_CONTEXT_FORM, TemporalContextTimeline.CODEC, TemporalContextTimeline.STREAM_CODEC, TemporalContextTimeline::new)
+    );
+
+    public static void init(IEventBus eventBus) {
+        TIMELINES.register(eventBus);
+    }
+
+    public static void configureTimelineOptions() {
+        IParticleMotionType<?> burst = ParticleMotionRegistry.BURST_TYPE.get();
+        IParticleMotionType<?> none = ParticleMotionRegistry.NONE_TYPE.get();
+        NearTimeline.RESOLVING_OPTIONS.add(none);
+        NearTimeline.RESOLVING_OPTIONS.add(burst);
+        TemporalContextTimeline.RESOLVING_OPTIONS.add(none);
+        TemporalContextTimeline.RESOLVING_OPTIONS.add(burst);
+    }
+}
+

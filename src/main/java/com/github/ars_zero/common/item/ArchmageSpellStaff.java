@@ -14,7 +14,6 @@ public class ArchmageSpellStaff extends AbstractSpellStaff {
         super(SpellTier.THREE);
     }
     
-    @Override
     @OnlyIn(Dist.CLIENT)
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
         consumer.accept(new GeoRenderProvider() {

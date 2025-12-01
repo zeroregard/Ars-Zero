@@ -62,6 +62,13 @@ neoForge {
             data()
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
+
+        botClient {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            gameDirectory = file('run-bot')
+        }
     }
 
     mods {
@@ -146,6 +153,7 @@ dependencies {
     })
 
     testImplementation("net.neoforged:neoforge:${neo_version}")
+    
 }
 
 tasks.withType(Copy).configureEach {
@@ -169,6 +177,8 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
+
+
 tasks.named("runGameTestServer").configure {
     def filterProperty = System.getProperty("ars_zero.testFilter")
     if (filterProperty != null && !filterProperty.isBlank()) {
@@ -182,28 +192,28 @@ tasks.named("runGameTestServer").configure {
                 into(file("run/gameteststructures"))
             }
         }
-        def mainResourceStructuresDir = file("src/main/resources/data/ars_zero/structures")
+        def mainResourceStructuresDir = file("src/main/resources/data/ars_zero/structure")
         if (mainResourceStructuresDir.exists()) {
             copy {
                 from(mainResourceStructuresDir)
                 into(file("run/gameteststructures/ars_zero"))
             }
         }
-        def testResourceStructuresDir = file("src/test/resources/data/ars_zero/structures")
+        def testResourceStructuresDir = file("src/test/resources/data/ars_zero/structure")
         if (testResourceStructuresDir.exists()) {
             copy {
                 from(testResourceStructuresDir)
                 into(file("run/gameteststructures/ars_zero"))
             }
         }
-        def buildMainResourceStructuresDir = file("build/resources/main/data/ars_zero/structures")
+        def buildMainResourceStructuresDir = file("build/resources/main/data/ars_zero/structure")
         if (buildMainResourceStructuresDir.exists()) {
             copy {
                 from(buildMainResourceStructuresDir)
                 into(file("run/gameteststructures/ars_zero"))
             }
         }
-        def buildTestResourceStructuresDir = file("build/resources/test/data/ars_zero/structures")
+        def buildTestResourceStructuresDir = file("build/resources/test/data/ars_zero/structure")
         if (buildTestResourceStructuresDir.exists()) {
             copy {
                 from(buildTestResourceStructuresDir)

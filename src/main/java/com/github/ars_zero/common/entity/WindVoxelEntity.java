@@ -38,7 +38,6 @@ public class WindVoxelEntity extends BaseVoxelEntity {
         return false;
     }
     
-    @Override
     protected net.minecraft.sounds.SoundEvent getSpawnSound() {
         return null;
     }

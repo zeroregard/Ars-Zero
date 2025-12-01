@@ -6,10 +6,12 @@ import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
-import com.github.ars_zero.common.spell.StaffCastContext;
+import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.util.MathHelper;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
@@ -32,6 +34,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -41,16 +44,25 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Set;
 
-public class ConjureVoxelEffect extends AbstractEffect {
+public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEffectProvider {
     
     public static final String ID = "conjure_voxel_effect";
     public static final ConjureVoxelEffect INSTANCE = new ConjureVoxelEffect();
     private static final int MAX_AMPLIFY_LEVEL = 2;
     private static final float BASE_VOXEL_SIZE = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final float AMPLIFY_SIZE_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
+    private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[]{
+        EffectConjureWater.INSTANCE.getRegistryName(),
+        EffectIgnite.INSTANCE.getRegistryName()
+    };
 
     public ConjureVoxelEffect() {
         super(ArsZero.prefix(ID), "Conjure Voxel");
+    }
+
+    @Override
+    public ResourceLocation[] getSubsequentEffectGlyphs() {
+        return SUBSEQUENT_GLYPHS;
     }
 
     @Override
@@ -129,7 +141,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
                     spellContext.setCanceled(true);
                     
                     serverLevel.addFreshEntity(voxel);
-                    updateTemporalContext(shooter, voxel);
+                    updateTemporalContext(shooter, voxel, spellContext);
                     
                     resolver.getNewResolver(remainingContext).onResolveEffect(serverLevel, new EntityHitResult(voxel));
                     return;
@@ -145,7 +157,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
                 }
                 
                 serverLevel.addFreshEntity(voxel);
-                updateTemporalContext(shooter, voxel);
+                updateTemporalContext(shooter, voxel, spellContext);
             }
         }
     }
@@ -277,7 +289,7 @@ public class ConjureVoxelEffect extends AbstractEffect {
             }
         }
         
-        updateTemporalContextMultiple(shooter, createdVoxels);
+        updateTemporalContextMultiple(shooter, createdVoxels, context);
         
         if (!isArcane && context.hasNextPart()) {
             SpellContext remainingContext = context.makeChildContext();
@@ -365,12 +377,13 @@ public class ConjureVoxelEffect extends AbstractEffect {
         return 0.0f;
     }
     
-    private void updateTemporalContext(LivingEntity shooter, BaseVoxelEntity voxel) {
+    private void updateTemporalContext(LivingEntity shooter, BaseVoxelEntity voxel, SpellContext spellContext) {
         if (!(shooter instanceof net.minecraft.world.entity.player.Player player)) {
             return;
         }
         
-        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
+        ItemStack casterTool = spellContext.getCasterTool();
+        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context == null) {
             return;
         }
@@ -392,12 +405,13 @@ public class ConjureVoxelEffect extends AbstractEffect {
         context.beginResults.add(voxelResult);
     }
     
-    private void updateTemporalContextMultiple(LivingEntity shooter, java.util.List<BaseVoxelEntity> voxels) {
+    private void updateTemporalContextMultiple(LivingEntity shooter, java.util.List<BaseVoxelEntity> voxels, SpellContext spellContext) {
         if (!(shooter instanceof net.minecraft.world.entity.player.Player player)) {
             return;
         }
         
-        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
+        ItemStack casterTool = spellContext.getCasterTool();
+        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context == null) {
             return;
         }

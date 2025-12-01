@@ -5,6 +5,6 @@
   "compatibilityLevel": "JAVA_21",
   "refmap": "ars_zero.refmap.json",
   "mixins": [],
-  "client": [],
+  "client": ["GlyphButtonMixin", "GuiSpellBookMixin"],
   "server": []
 }

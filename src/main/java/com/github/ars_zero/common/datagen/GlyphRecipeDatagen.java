@@ -23,7 +23,6 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         addZeroGravityRecipe();
         addConjureVoxelRecipe();
         addAnchorRecipe();
-        addEnlargeRecipe();
         addTemporalContextRecipe();
         addNearRecipe();
         addPushRecipe();
@@ -108,29 +107,10 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
 
         JsonObject outputObj = new JsonObject();
         outputObj.addProperty("count", 1);
-        outputObj.addProperty("id", "ars_zero:translate_effect");
+        outputObj.addProperty("id", "ars_zero:anchor_effect");
         json.add("output", outputObj);
 
-        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_translate_effect.json"), json));
-    }
-
-    private void addEnlargeRecipe() {
-        JsonObject json = new JsonObject();
-        json.addProperty("type", "ars_nouveau:glyph");
-        json.addProperty("exp", 27);
-
-        JsonArray inputsArray = new JsonArray();
-        inputsArray.add(item("minecraft:glow_ink_sac"));
-        inputsArray.add(item("minecraft:golden_apple"));
-        inputsArray.add(item("ars_nouveau:source_gem"));
-        json.add("inputs", inputsArray);
-
-        JsonObject outputObj = new JsonObject();
-        outputObj.addProperty("count", 1);
-        outputObj.addProperty("id", "ars_zero:enlarge_effect");
-        json.add("output", outputObj);
-
-        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_enlarge_effect.json"), json));
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_anchor_effect.json"), json));
     }
 
     private void addTemporalContextRecipe() {

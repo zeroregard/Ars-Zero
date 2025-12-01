@@ -431,11 +431,6 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
         serverLevel.playSound(null, baseX, baseY, baseZ, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, volume, pitch);
     }
     
-    @Nullable
-    protected SoundEvent getSpawnSound() {
-        return SoundRegistry.TEMPESTRY_FAMILY.get();
-    }
-    
     @Override
     protected net.minecraft.core.particles.ParticleOptions getAmbientParticle() {
         return ParticleTypes.FALLING_WATER;

@@ -405,10 +405,6 @@ public class FireVoxelEntity extends BaseVoxelEntity {
         return this.random.nextBoolean() ? ParticleTypes.FLAME : ParticleTypes.SMOKE;
     }
     
-    protected SoundEvent getSpawnSound() {
-        return SoundRegistry.FIRE_FAMILY.get();
-    }
-    
     @Override
     public void tick() {
         if (!this.level().isClientSide && this.isAlive()) {

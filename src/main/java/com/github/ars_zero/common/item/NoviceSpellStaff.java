@@ -14,7 +14,6 @@ public class NoviceSpellStaff extends AbstractSpellStaff {
         super(SpellTier.ONE);
     }
     
-    @Override
     @OnlyIn(Dist.CLIENT)
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
         consumer.accept(new GeoRenderProvider() {

@@ -1,7 +1,9 @@
 package com.github.ars_zero.client.renderer;
 
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
-import com.github.ars_zero.common.spell.StaffCastContext;
+import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.spell.SpellPhase;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Player;
@@ -64,18 +66,18 @@ public class StaffDebugHUD {
         debugInfo.add(String.format("Session Time: %.1fs", sessionStartTime > 0 ? (currentTime - sessionStartTime) / 1000.0 : 0));
         debugInfo.add("");
         
-        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
+        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, mainHandItem);
         
         debugInfo.add("Current State:");
         debugInfo.add(String.format("  Phase: %s", context != null ? context.currentPhase : "NONE"));
-        debugInfo.add(String.format("  Is Held (Item): %s", context != null ? context.isHoldingStaff : false));
+        debugInfo.add(String.format("  Is Casting: %s", context != null ? context.isCasting : false));
         debugInfo.add(String.format("  Tick Count: %d", context != null ? context.tickCount : 0));
         debugInfo.add(String.format("  Using Item (MC): %s", isUsing));
         debugInfo.add(String.format("  Time Since Phase Change: %dms", lastPhaseChangeTime > 0 ? currentTime - lastPhaseChangeTime : 0));
         debugInfo.add("");
         
         debugInfo.add("Internal Flags:");
-        debugInfo.add(String.format("  Player Holding Staff: %s", context != null ? context.isHoldingStaff : false));
+        debugInfo.add(String.format("  Is Casting: %s", context != null ? context.isCasting : false));
         debugInfo.add(String.format("  Out of Mana: %s", context != null ? context.outOfMana : false));
         debugInfo.add(String.format("  Sequence Tick: %d", context != null ? context.sequenceTick : 0));
         debugInfo.add("");
@@ -126,7 +128,7 @@ public class StaffDebugHUD {
         }
     }
     
-    public static void onSpellFired(AbstractSpellStaff.StaffPhase phase) {
+    public static void onSpellFired(SpellPhase phase) {
         long currentTime = System.currentTimeMillis();
         lastSpellFired = phase.name();
         lastPhaseChangeTime = currentTime;

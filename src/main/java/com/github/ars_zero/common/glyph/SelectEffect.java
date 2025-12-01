@@ -2,10 +2,11 @@ package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
-import com.github.ars_zero.common.spell.StaffCastContext;
+import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
@@ -25,6 +26,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -78,11 +80,11 @@ public class SelectEffect extends AbstractEffect {
         }
         
         if (!validBlocks.isEmpty()) {
-            createBlockGroup(serverLevel, validBlocks, player);
+            createBlockGroup(serverLevel, validBlocks, player, spellContext);
         }
     }
     
-    private void createBlockGroup(ServerLevel level, List<BlockPos> blockPositions, Player player) {
+    private void createBlockGroup(ServerLevel level, List<BlockPos> blockPositions, Player player, SpellContext spellContext) {
         if (blockPositions.isEmpty()) {
             return;
         }
@@ -91,13 +93,15 @@ public class SelectEffect extends AbstractEffect {
         
         BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), level);
         blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
+        blockGroup.setCasterUUID(player.getUUID());
         
         blockGroup.addBlocks(blockPositions);
         blockGroup.removeOriginalBlocks();
         
         level.addFreshEntity(blockGroup);
         
-        StaffCastContext context = AbstractSpellStaff.getStaffContext(player);
+        ItemStack casterTool = spellContext.getCasterTool();
+        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context != null) {
             SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, blockPositions, player);
             context.beginResults.clear();
