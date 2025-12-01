@@ -9,7 +9,10 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -144,6 +147,42 @@ public class WindVoxelWorldInteractionBehaviour {
             Vec3 posAfter = zombie.position();
             if (posAfter.x <= start.x + 0.3D) {
                 helper.fail("Zombie should be pushed forward by wind voxel impact.");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+    
+    @GameTest(batch = "WindVoxelWorldInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    public static void windPushesItemEntityAlongVelocity(GameTestHelper helper) {
+        BlockPos spawn = CENTER_RELATIVE;
+        ServerLevel level = helper.getLevel();
+        helper.setBlock(spawn.below(), Blocks.STONE.defaultBlockState());
+        
+        Vec3 start = new Vec3(helper.absolutePos(spawn).getX() + 0.5D, helper.absolutePos(spawn).getY(), helper.absolutePos(spawn).getZ() + 0.5D);
+        ItemEntity itemEntity = new ItemEntity(level, start.x, start.y, start.z, new ItemStack(Items.DIAMOND));
+        itemEntity.setDeltaMovement(Vec3.ZERO);
+        level.addFreshEntity(itemEntity);
+        
+        WindVoxelEntity wind = createWind(helper, DEFAULT_SIZE);
+        if (wind == null) {
+            return;
+        }
+        VoxelTestUtils.spawnVoxel(helper, wind, helper.absolutePos(spawn.offset(-1, 0, 0)), DEFAULT_VEL, DEFAULT_LIFETIME);
+        
+        helper.runAfterDelay(10, () -> {
+            if (!itemEntity.isAlive()) {
+                helper.fail("Item entity should still be alive after wind voxel impact.");
+                return;
+            }
+            Vec3 posAfter = itemEntity.position();
+            Vec3 velocityAfter = itemEntity.getDeltaMovement();
+            if (posAfter.x <= start.x + 0.3D && velocityAfter.lengthSqr() < 0.01D) {
+                helper.fail("Item entity should be pushed forward by wind voxel impact.");
+                return;
+            }
+            if (!itemEntity.hasPickUpDelay()) {
+                helper.fail("Item entity should have pickup delay set after wind voxel impact.");
                 return;
             }
             helper.succeed();

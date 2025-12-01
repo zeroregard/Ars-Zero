@@ -53,7 +53,8 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
     private static final float AMPLIFY_SIZE_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[]{
         EffectConjureWater.INSTANCE.getRegistryName(),
-        EffectIgnite.INSTANCE.getRegistryName()
+        EffectIgnite.INSTANCE.getRegistryName(),
+        EffectWindshear.INSTANCE.getRegistryName()
     };
 
     public ConjureVoxelEffect() {

@@ -9,6 +9,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -55,6 +56,11 @@ public class WindVoxelEntity extends BaseVoxelEntity {
                 Vec3 current = living.getDeltaMovement();
                 living.setDeltaMovement(current.add(push));
                 living.hurtMarked = true;
+            } else if (result.getEntity() instanceof ItemEntity itemEntity) {
+                Vec3 current = itemEntity.getDeltaMovement();
+                itemEntity.setDeltaMovement(current.add(push));
+                itemEntity.hasImpulse = true;
+                itemEntity.setPickUpDelay(10);
             } else {
                 Vec3 current = result.getEntity().getDeltaMovement();
                 result.getEntity().setDeltaMovement(current.add(push));
