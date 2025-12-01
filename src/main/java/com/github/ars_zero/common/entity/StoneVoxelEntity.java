@@ -18,9 +18,9 @@ public class StoneVoxelEntity extends BaseVoxelEntity {
     
     private static final int COLOR = 0x8A7F74;
     private static final double DAMAGE_SPEED_THRESHOLD = 0.35;
-    private static final float BASE_DAMAGE = 3.0f;
-    private static final float DAMAGE_SCALE = 6.0f;
-    private static final float MAX_DAMAGE = 18.0f;
+    private static final float BASE_DAMAGE = 1.5f;
+    private static final float DAMAGE_SCALE = 2.0f;
+    private static final float MAX_DAMAGE = 6.0f;
     
     public StoneVoxelEntity(EntityType<? extends StoneVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -74,7 +74,8 @@ public class StoneVoxelEntity extends BaseVoxelEntity {
         damage *= sizeScale;
         damage = Math.min(damage, MAX_DAMAGE);
         Entity owner = this.getOwner();
-        target.hurt(this.level().damageSources().thrown(this, owner instanceof LivingEntity ? owner : null), damage);
+        LivingEntity sender = owner instanceof LivingEntity ? (LivingEntity) owner : null;
+        target.hurt(this.level().damageSources().thrown(this, sender), damage);
         Vec3 impulse = this.getDeltaMovement().scale(0.35);
         target.push(impulse.x, Math.max(0.1, impulse.y + 0.15), impulse.z);
         target.hurtMarked = true;

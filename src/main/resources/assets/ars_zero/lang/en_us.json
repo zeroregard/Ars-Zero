@@ -83,6 +83,7 @@
   "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_conjure_water": "Composite Effect: Conjure Water Voxel",
   "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_ignite": "Composite Effect: Conjure Fire Voxel",
   "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_windshear": "Composite Effect: Conjure Wind Voxel",
+  "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_conjure_terrain": "Composite Effect: Conjure Stone Voxel",
 
   "ars_zero.glyph_name.temporal_context_form": "Temporal Context",
   "ars_zero.glyph_desc.temporal_context_form": "A cast method that provides access to the context of the previous spell phase (Staff only)",

@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "": {
+      "model": "ars_zero:block/wind_voxel_spawner"
+    }
+  }
+}
+

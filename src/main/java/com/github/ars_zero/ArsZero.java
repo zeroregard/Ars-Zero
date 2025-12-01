@@ -104,6 +104,11 @@ public class ArsZero {
             WaterVoxelEntity.class,
             new com.github.ars_zero.common.entity.interaction.WindWaterInteraction()
         );
+        VoxelInteractionRegistry.register(
+            com.github.ars_zero.common.entity.WindVoxelEntity.class,
+            StoneVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.WindStoneInteraction()
+        );
         
         VoxelInteractionRegistry.register(
             FireVoxelEntity.class,
@@ -118,9 +123,27 @@ public class ArsZero {
         );
         
         VoxelInteractionRegistry.register(
-            StoneVoxelEntity.class,
-            StoneVoxelEntity.class,
+            com.github.ars_zero.common.entity.WindVoxelEntity.class,
+            com.github.ars_zero.common.entity.WindVoxelEntity.class,
             mergeInteraction
+        );
+        
+        VoxelInteractionRegistry.register(
+            StoneVoxelEntity.class,
+            StoneVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.StoneStoneInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            StoneVoxelEntity.class,
+            FireVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.StoneFireInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            StoneVoxelEntity.class,
+            WaterVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.StoneWaterInteraction()
         );
         
         VoxelInteractionRegistry.register(
