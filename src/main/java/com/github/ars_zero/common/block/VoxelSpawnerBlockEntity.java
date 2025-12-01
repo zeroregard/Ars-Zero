@@ -4,6 +4,7 @@ import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
+import com.github.ars_zero.common.entity.WindVoxelEntity;
 import com.github.ars_zero.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -91,6 +92,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
         BaseVoxelEntity voxel = switch (voxelType) {
             case FIRE -> new FireVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
             case WATER -> new WaterVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
+            case WIND -> new WindVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
             default -> new ArcaneVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
         };
         
@@ -131,6 +133,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
                 boolean typeMatches = switch (expectedType) {
                     case FIRE -> voxel instanceof FireVoxelEntity;
                     case WATER -> voxel instanceof WaterVoxelEntity;
+                    case WIND -> voxel instanceof WindVoxelEntity;
                     case ARCANE -> voxel instanceof ArcaneVoxelEntity;
                 };
                 

@@ -5,6 +5,7 @@ import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
+import com.github.ars_zero.common.entity.WindVoxelEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
@@ -26,6 +27,7 @@ import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSplit;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
+import com.hollingsworth.arsnouveau.common.spell.effect.EffectWindshear;
 import com.alexthw.sauce.registry.ModRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -51,7 +53,8 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
     private static final float AMPLIFY_SIZE_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[]{
         EffectConjureWater.INSTANCE.getRegistryName(),
-        EffectIgnite.INSTANCE.getRegistryName()
+        EffectIgnite.INSTANCE.getRegistryName(),
+        EffectWindshear.INSTANCE.getRegistryName()
     };
 
     public ConjureVoxelEffect() {
@@ -102,7 +105,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                     waterVoxel.setCasterWaterPower(waterPower);
                 }
                 
-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
                 
@@ -219,6 +222,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
             SpellContext peekContext = context.clone();
             boolean hasWater = false;
             boolean hasFire = false;
+            boolean hasWind = false;
             
             while (peekContext.hasNextPart()) {
                 AbstractSpellPart next = peekContext.nextPart();
@@ -226,9 +230,15 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                     if (next == EffectConjureWater.INSTANCE) {
                         hasWater = true;
                         hasFire = false;
+                        hasWind = false;
                     } else if (next == EffectIgnite.INSTANCE) {
                         hasFire = true;
                         hasWater = false;
+                        hasWind = false;
+                    } else if (next == EffectWindshear.INSTANCE) {
+                        hasWind = true;
+                        hasWater = false;
+                        hasFire = false;
                     }
                     break;
                 }
@@ -238,7 +248,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
             Vec3 lookDirection = shooter.getLookAngle();
             java.util.List<Vec3> positions = MathHelper.getCirclePositions(center, lookDirection, circleRadius, entityCount);
             
-            isArcane = !hasWater && !hasFire;
+            isArcane = !hasWater && !hasFire && !hasWind;
             SpellContext newContext = null;
             
             if (isArcane) {
@@ -252,6 +262,8 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                     voxel = new WaterVoxelEntity(level, pos.x, pos.y, pos.z, duration);
                 } else if (hasFire) {
                     voxel = new FireVoxelEntity(level, pos.x, pos.y, pos.z, duration);
+                } else if (hasWind) {
+                    voxel = new WindVoxelEntity(level, pos.x, pos.y, pos.z, duration);
                 } else {
                     voxel = new ArcaneVoxelEntity(level, pos.x, pos.y, pos.z, duration);
                 }
@@ -269,7 +281,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                     voxel.setResolver(null);
                 }
                 
-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
                 
@@ -292,11 +304,12 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
     private BaseVoxelEntity createVoxel(ServerLevel level, double x, double y, double z, int duration, SpellContext context) {
         boolean hasWater = false;
         boolean hasFire = false;
+        boolean hasWind = false;
         
         SpellContext peekContext = context.clone();
         while (peekContext.hasNextPart()) {
             AbstractSpellPart next = peekContext.nextPart();
-            if (next instanceof AbstractEffect) {
+                if (next instanceof AbstractEffect) {
                 if (next == EffectConjureWater.INSTANCE) {
                     hasWater = true;
                     while (context.hasNextPart()) {
@@ -313,6 +326,14 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                             break;
                         }
                     }
+                } else if (next == EffectWindshear.INSTANCE) {
+                    hasWind = true;
+                    while (context.hasNextPart()) {
+                        AbstractSpellPart consumed = context.nextPart();
+                        if (consumed == EffectWindshear.INSTANCE) {
+                            break;
+                        }
+                    }
                 }
                 break;
             }
@@ -323,6 +344,8 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
             result = new WaterVoxelEntity(level, x, y, z, duration);
         } else if (hasFire) {
             result = new FireVoxelEntity(level, x, y, z, duration);
+        } else if (hasWind) {
+            result = new WindVoxelEntity(level, x, y, z, duration);
         } else {
             result = new ArcaneVoxelEntity(level, x, y, z, duration);
         }
@@ -448,7 +471,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
 
     @Override
     public String getBookDescription() {
-        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water' & 'Ignite'";
+        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water', 'Ignite', & 'Wind Shear'";
     }
 
     @Override
