@@ -12,6 +12,8 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.util.FakePlayer;
 
+import java.util.List;
+
 public class FirePowerCostReductionEvents {
 
     @SubscribeEvent
@@ -34,7 +36,7 @@ public class FirePowerCostReductionEvents {
         if (player instanceof FakePlayer) {
             return;
         }
-        int adjacentPairCost = SpellDiscountUtil.computeAdjacentPairCost(event.context.getSpell().recipe(), EffectIgnite.class);
+        int adjacentPairCost = SpellDiscountUtil.computeAdjacentPairCost(event.context.getSpell().recipe(), List.of(EffectIgnite.class));
         if (adjacentPairCost <= 0) {
             return;
         }

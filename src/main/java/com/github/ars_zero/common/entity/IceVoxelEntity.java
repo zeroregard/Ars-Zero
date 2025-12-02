@@ -121,6 +121,26 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         BlockState state = this.level().getBlockState(pos);
         Block block = state.getBlock();
         
+        if (block == Blocks.WATER) {
+            if (!this.level().isClientSide) {
+                this.level().setBlock(pos, Blocks.ICE.defaultBlockState(), 3);
+                spawnHitParticles(blockHit.getLocation());
+            }
+            this.discard();
+            return;
+        }
+        
+        BlockPos adjacentPos = pos.relative(blockHit.getDirection());
+        BlockState adjacentState = this.level().getBlockState(adjacentPos);
+        if (adjacentState.getBlock() == Blocks.WATER) {
+            if (!this.level().isClientSide) {
+                this.level().setBlock(adjacentPos, Blocks.ICE.defaultBlockState(), 3);
+                spawnHitParticles(blockHit.getLocation());
+            }
+            this.discard();
+            return;
+        }
+        
         if (BREAKABLE_BLOCKS.contains(block)) {
             breakBlock(pos, state);
         } else {
@@ -180,7 +200,13 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         damage = Math.min(damage, MAX_DAMAGE);
         Entity owner = this.getOwner();
         LivingEntity sender = owner instanceof LivingEntity ? (LivingEntity) owner : null;
-        target.hurt(this.level().damageSources().thrown(this, sender), damage);
+        net.minecraft.world.damagesource.DamageSource damageSource;
+        if (sender != null) {
+            damageSource = this.level().damageSources().thrown(this, sender);
+        } else {
+            damageSource = this.level().damageSources().generic();
+        }
+        target.hurt(damageSource, damage);
         Vec3 impulse = this.getDeltaMovement().scale(0.35);
         target.push(impulse.x, Math.max(0.1, impulse.y + 0.15), impulse.z);
         target.hurtMarked = true;
