@@ -31,6 +31,7 @@ public class ModCreativeTabs {
                     output.accept(ModItems.WATER_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.WIND_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.STONE_VOXEL_SPAWNER.get().getDefaultInstance());
+                    output.accept(ModItems.ICE_VOXEL_SPAWNER.get().getDefaultInstance());
                 })
                 .build();
     });
