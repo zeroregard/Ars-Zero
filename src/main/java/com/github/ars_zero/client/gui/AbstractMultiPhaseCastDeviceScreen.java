@@ -46,7 +46,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
@@ -71,7 +70,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
 public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScreen {
@@ -110,9 +108,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     private List<Button> categoryButtons = new ArrayList<>();
     
     private SpellPhaseSlots phaseSpells;
-    private Button delayMenuButton;
-    private TickDelaySlider delaySlider;
-    private boolean delayMenuOpen;
     private final int[] slotDelays = new int[10];
     
     private ISpellValidator baseSpellValidator;
@@ -127,7 +122,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         super.onBookstackUpdated(stack);
         this.deviceStack = stack;
         loadSlotDelayValues();
-        updateDelaySliderValue();
     }
 
     public AbstractMultiPhaseCastDeviceScreen(ItemStack stack, InteractionHand hand) {
@@ -238,8 +232,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         
         updateCraftingCellVisibility();
         
-        initDelaySelector();
-        
         selectPhase(SpellPhase.BEGIN);
         
         validate();
@@ -285,7 +277,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         }
         
         validate();
-        updateDelaySliderValue();
     }
 
     private void loadSpellFromSlot() {
@@ -327,19 +318,18 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         
         GuiImageButton beginButton = new GuiImageButton(buttonX, startY, buttonSize, buttonSize, 
             StaffGuiTextures.ICON_START, (button) -> selectPhase(SpellPhase.BEGIN));
-        beginButton.withTooltip(Component.translatable("gui.ars_zero.phase.begin"));
+        beginButton.withTooltip(Component.literal("Begin Phase"));
         beginPhaseButton = beginButton;
         addRenderableWidget(beginButton);
         
         GuiImageButton tickButton = new GuiImageButton(buttonX, startY + rowHeight, buttonSize, buttonSize, 
             StaffGuiTextures.ICON_TICK, (button) -> selectPhase(SpellPhase.TICK));
-        tickButton.withTooltip(Component.translatable("gui.ars_zero.phase.tick"));
         tickPhaseButton = tickButton;
         addRenderableWidget(tickButton);
         
         GuiImageButton endButton = new GuiImageButton(buttonX, startY + rowHeight * 2, buttonSize, buttonSize, 
             StaffGuiTextures.ICON_END, (button) -> selectPhase(SpellPhase.END));
-        endButton.withTooltip(Component.translatable("gui.ars_zero.phase.end"));
+        endButton.withTooltip(Component.literal("End Phase"));
         endPhaseButton = endButton;
         addRenderableWidget(endButton);
     }
@@ -455,45 +445,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         return selectedSpellSlot * 3 + currentPhase.ordinal();
     }
 
-    private static class TickDelaySlider extends AbstractSliderButton {
-        private final int min;
-        private final int max;
-        private final IntConsumer onChange;
-
-        private TickDelaySlider(int x, int y, int width, int height, int min, int max, int initial, IntConsumer onChange) {
-            super(x, y, width, height, Component.literal(""), 0);
-            this.min = min;
-            this.max = max;
-            this.onChange = onChange;
-            syncToDelay(initial);
-        }
-
-        @Override
-        protected void updateMessage() {
-            setMessage(Component.literal("Delay: " + getDelay()));
-        }
-
-        @Override
-        protected void applyValue() {
-            onChange.accept(getDelay());
-        }
-
-        public void syncToDelay(int delay) {
-            int clamped = Mth.clamp(delay, min, max);
-            int range = max - min;
-            this.value = range <= 0 ? 0 : (double) (clamped - min) / (double) range;
-            updateMessage();
-        }
-
-        private int getDelay() {
-            int range = max - min;
-            if (range <= 0) {
-                return min;
-            }
-            return (int) Math.round(value * range) + min;
-        }
-    }
-
     private void selectPhase(SpellPhase phase) {
         currentPhase = phase;
         
@@ -506,7 +457,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         endPhaseButton.image = (phase == SpellPhase.END) ? StaffGuiTextures.ICON_END_SELECTED : StaffGuiTextures.ICON_END;
         
         updateCraftingCellVisibility();
-        updateDelayMenuVisibility();
         validate();
     }
     
@@ -517,49 +467,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         }
     }
 
-    private void initDelaySelector() {
-        int rowX = bookLeft + PHASE_ROW_TEXTURE_X_OFFSET + PHASE_SECTION_SHIFT_X - 4;
-        int rowWidth = PHASE_ROW_TEXTURE_WIDTH;
-        int rowHeight = PHASE_ROW_HEIGHT + 2;
-        int tickRowY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y + SpellPhase.TICK.ordinal() * rowHeight;
-        int buttonWidth = 60;
-        int buttonX = rowX + rowWidth - buttonWidth - 6;
-        int buttonY = tickRowY + 2;
-        delayMenuButton = Button.builder(Component.literal(""), (b) -> toggleDelayMenu())
-            .bounds(buttonX, buttonY, buttonWidth, 16)
-            .build();
-        addRenderableWidget(delayMenuButton);
-        int sliderWidth = 140;
-        int sliderX = rowX + rowWidth - sliderWidth - 6;
-        int sliderY = buttonY + 18;
-        delaySlider = new TickDelaySlider(sliderX, sliderY, sliderWidth, 20, 1, 20, getStoredDelayValueForSelectedSlot(), this::onDelayValueChanged);
-        delaySlider.visible = false;
-        delaySlider.active = false;
-        addRenderableWidget(delaySlider);
-        updateDelaySliderValue();
-        updateDelayMenuVisibility();
-    }
-
-    private void toggleDelayMenu() {
-        delayMenuOpen = !delayMenuOpen;
-        updateDelayMenuVisibility();
-    }
-
-    private void updateDelayMenuVisibility() {
-        boolean isTickPhase = currentPhase == SpellPhase.TICK;
-        if (!isTickPhase) {
-            delayMenuOpen = false;
-        }
-        if (delayMenuButton != null) {
-            delayMenuButton.visible = isTickPhase;
-            delayMenuButton.active = isTickPhase;
-        }
-        if (delaySlider != null) {
-            boolean show = delayMenuOpen && isTickPhase;
-            delaySlider.visible = show;
-            delaySlider.active = show;
-        }
-    }
 
     private void onDelayValueChanged(int value) {
         if (selectedSpellSlot < 0 || selectedSpellSlot >= slotDelays.length) {
@@ -567,7 +474,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         }
         int clamped = Mth.clamp(value, 1, 20);
         slotDelays[selectedSpellSlot] = clamped;
-        updateDelayButtonLabel(clamped);
         if (deviceStack != null && !deviceStack.isEmpty()) {
             AbstractMultiPhaseCastDevice.setSlotTickDelay(deviceStack, selectedSpellSlot, clamped);
         }
@@ -580,20 +486,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             return 1;
         }
         return slotDelays[selectedSpellSlot];
-    }
-
-    private void updateDelaySliderValue() {
-        int value = getStoredDelayValueForSelectedSlot();
-        if (delaySlider != null) {
-            delaySlider.syncToDelay(value);
-        }
-        updateDelayButtonLabel(value);
-    }
-
-    private void updateDelayButtonLabel(int value) {
-        if (delayMenuButton != null) {
-            delayMenuButton.setMessage(Component.literal("Delay " + value));
-        }
     }
 
     private void loadSlotDelayValues() {
@@ -1049,6 +941,27 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         super.render(graphics, mouseX, mouseY, partialTicks);
         renderManaIndicators(graphics, mouseX, mouseY);
+        renderTickPhaseTooltip(graphics, mouseX, mouseY);
+    }
+    
+    private void renderTickPhaseTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (tickPhaseButton != null) {
+            int buttonX = tickPhaseButton.getX();
+            int buttonY = tickPhaseButton.getY();
+            int buttonWidth = tickPhaseButton.getWidth();
+            int buttonHeight = tickPhaseButton.getHeight();
+            
+            if (mouseX >= buttonX && mouseX < buttonX + buttonWidth && 
+                mouseY >= buttonY && mouseY < buttonY + buttonHeight) {
+                int delay = getStoredDelayValueForSelectedSlot();
+                List<Component> tooltipLines = new ArrayList<>();
+                tooltipLines.add(Component.literal("Tick Phase"));
+                tooltipLines.add(Component.literal("Delay: " + delay + " tick ").append(
+                    Component.literal("(Scroll to change)").withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY))
+                ));
+                graphics.renderComponentTooltip(Minecraft.getInstance().font, tooltipLines, mouseX, mouseY);
+            }
+        }
     }
     
     private void renderManaIndicators(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -1147,6 +1060,32 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
     public SpellPhase getCurrentPhase() {
         return currentPhase;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (tickPhaseButton != null) {
+            int buttonX = tickPhaseButton.getX();
+            int buttonY = tickPhaseButton.getY();
+            int buttonWidth = tickPhaseButton.getWidth();
+            int buttonHeight = tickPhaseButton.getHeight();
+            
+            if (mouseX >= buttonX && mouseX < buttonX + buttonWidth && 
+                mouseY >= buttonY && mouseY < buttonY + buttonHeight) {
+                int currentDelay = getStoredDelayValueForSelectedSlot();
+                int newDelay = currentDelay;
+                if (scrollY > 0) {
+                    newDelay = Math.min(20, currentDelay + 1);
+                } else if (scrollY < 0) {
+                    newDelay = Math.max(1, currentDelay - 1);
+                }
+                if (newDelay != currentDelay) {
+                    onDelayValueChanged(newDelay);
+                    return true;
+                }
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     @Override
