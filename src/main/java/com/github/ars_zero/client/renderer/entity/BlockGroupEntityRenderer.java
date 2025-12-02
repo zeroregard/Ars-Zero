@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
     private static final float OUTLINE_RED = 0.2f;
@@ -41,7 +42,9 @@ public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
         }
         
         poseStack.pushPose();
-        VertexConsumer outlineConsumer = buffer.getBuffer(RenderType.lines());
+        
+        double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
+        double maxX = Double.MIN_VALUE, maxY = Double.MIN_VALUE, maxZ = Double.MIN_VALUE;
         
         for (var blockData : blocks) {
             BlockState blockState = blockData.blockState;
@@ -49,6 +52,14 @@ public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
             if (blockState.getRenderShape() == RenderShape.INVISIBLE) {
                 continue;
             }
+            
+            Vec3 pos = blockData.relativePosition;
+            minX = Math.min(minX, pos.x - 0.5);
+            minY = Math.min(minY, pos.y - 0.5);
+            minZ = Math.min(minZ, pos.z - 0.5);
+            maxX = Math.max(maxX, pos.x + 0.5);
+            maxY = Math.max(maxY, pos.y + 0.5);
+            maxZ = Math.max(maxZ, pos.z + 0.5);
             
             poseStack.pushPose();
             poseStack.translate(blockData.relativePosition.x - 0.5, blockData.relativePosition.y - 0.5, blockData.relativePosition.z - 0.5);
@@ -65,9 +76,12 @@ public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
                 ArsZero.LOGGER.warn("Failed to render block {} for BlockGroupEntity", blockState, e);
             }
             
-            renderOutline(poseStack, outlineConsumer);
-            
             poseStack.popPose();
+        }
+        
+        if (minX != Double.MAX_VALUE) {
+            VertexConsumer outlineConsumer = buffer.getBuffer(RenderType.lines());
+            renderGroupOutline(poseStack, outlineConsumer, minX, minY, minZ, maxX, maxY, maxZ);
         }
         
         poseStack.popPose();
@@ -78,16 +92,16 @@ public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
         return null;
     }
     
-    private void renderOutline(PoseStack poseStack, VertexConsumer outlineConsumer) {
+    private void renderGroupOutline(PoseStack poseStack, VertexConsumer outlineConsumer, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
         LevelRenderer.renderLineBox(
             poseStack,
             outlineConsumer,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            1.0,
-            1.0,
+            minX,
+            minY,
+            minZ,
+            maxX,
+            maxY,
+            maxZ,
             OUTLINE_RED,
             OUTLINE_GREEN,
             OUTLINE_BLUE,
