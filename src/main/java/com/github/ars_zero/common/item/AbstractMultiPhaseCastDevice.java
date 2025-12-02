@@ -8,9 +8,9 @@ import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.common.network.PacketSetMultiPhaseSpellCastingSlot;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
-import com.github.ars_zero.common.spell.CastPhase;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.MultiPhaseCastContextMap;
+import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
 import com.github.ars_zero.registry.ModAttachments;
 import com.hollingsworth.arsnouveau.api.item.ICasterTool;
@@ -67,16 +67,10 @@ import java.util.List;
 
 public abstract class AbstractMultiPhaseCastDevice extends Item implements ICasterTool, IRadialProvider {
 
-    public enum Phase {
-        BEGIN,
-        TICK,
-        END
-    }
-
     public static class ArsZeroSpellContext extends SpellContext {
-        public final Phase phase;
+        public final SpellPhase phase;
 
-        public ArsZeroSpellContext(Level world, Spell spell, LivingEntity caster, Phase phase, ItemStack casterTool) {
+        public ArsZeroSpellContext(Level world, Spell spell, LivingEntity caster, SpellPhase phase, ItemStack casterTool) {
             super(world, spell, caster, LivingCaster.from(caster), casterTool);
             this.phase = phase;
         }
@@ -195,7 +189,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         List<RadialMenuSlot<AbstractSpellPart>> radialMenuSlots = new ArrayList<>();
 
         for (int logicalSlot = 0; logicalSlot < 10; logicalSlot++) {
-            int tickPhysicalSlot = logicalSlot * 3 + Phase.TICK.ordinal();
+            int tickPhysicalSlot = logicalSlot * 3 + SpellPhase.TICK.ordinal();
             Spell spell = spellCaster.getSpell(tickPhysicalSlot);
 
             if (!spell.isEmpty()) {
@@ -220,7 +214,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     protected void beginPhase(Player player, ItemStack stack, MultiPhaseCastContext.CastSource source) {
         MultiPhaseCastContext context = getOrCreateContext(player, source);
 
-        context.currentPhase = Phase.BEGIN;
+        context.currentPhase = SpellPhase.BEGIN;
         context.isCasting = true;
         context.tickCount = 0;
         context.sequenceTick = 0;
@@ -232,10 +226,10 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         context.source = source;
         context.castingStack = stack;
 
-        executeSpell(player, stack, Phase.BEGIN);
+        executeSpell(player, stack, SpellPhase.BEGIN);
 
         if (player instanceof ServerPlayer serverPlayer) {
-            sendSpellFiredPacket(serverPlayer, Phase.BEGIN, source);
+            sendSpellFiredPacket(serverPlayer, SpellPhase.BEGIN, source);
         }
     }
 
@@ -254,7 +248,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             return;
         }
 
-        context.currentPhase = Phase.TICK;
+        context.currentPhase = SpellPhase.TICK;
         context.tickCount++;
         context.sequenceTick++;
 
@@ -264,7 +258,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         }
         int currentLogicalSlot = caster.getCurrentSlot();
         if (currentLogicalSlot >= 0 && currentLogicalSlot < 10) {
-            int physicalSlot = currentLogicalSlot * 3 + Phase.TICK.ordinal();
+            int physicalSlot = currentLogicalSlot * 3 + SpellPhase.TICK.ordinal();
             Spell spell = caster.getSpell(physicalSlot);
 
             if (context.tickCount == 1) {
@@ -277,10 +271,10 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             return;
         }
 
-        executeSpell(player, castingStack, Phase.TICK);
+        executeSpell(player, castingStack, SpellPhase.TICK);
 
         if (player instanceof ServerPlayer serverPlayer) {
-            sendSpellFiredPacket(serverPlayer, Phase.TICK, context.source);
+            sendSpellFiredPacket(serverPlayer, SpellPhase.TICK, context.source);
         }
     }
 
@@ -297,14 +291,14 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             return;
         }
 
-        context.currentPhase = Phase.END;
+        context.currentPhase = SpellPhase.END;
 
         AnchorEffect.restoreEntityPhysics(context);
 
-        executeSpell(player, castingStack, Phase.END);
+        executeSpell(player, castingStack, SpellPhase.END);
 
         if (player instanceof ServerPlayer serverPlayer) {
-            sendSpellFiredPacket(serverPlayer, Phase.END, context.source);
+            sendSpellFiredPacket(serverPlayer, SpellPhase.END, context.source);
         }
 
         clearContext(player, context.source);
@@ -325,7 +319,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         return ItemStack.EMPTY;
     }
 
-    private void executeSpell(Player player, ItemStack stack, Phase phase) {
+    private void executeSpell(Player player, ItemStack stack, SpellPhase phase) {
         AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
         if (caster == null) {
             return;
@@ -372,14 +366,14 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         checkManaAndCast(player, stack, spell, phase);
     }
 
-    private boolean checkManaAndCast(Player player, ItemStack stack, Spell spell, Phase phase) {
+    private boolean checkManaAndCast(Player player, ItemStack stack, Spell spell, SpellPhase phase) {
         ArsZeroSpellContext context = new ArsZeroSpellContext(player.level(), spell, player, phase, stack);
         SpellResolver resolver = new SpellResolver(context);
 
-        if (phase == Phase.BEGIN) {
+        if (phase == SpellPhase.BEGIN) {
             MultiPhaseCastContext castContext = findContextByStack(player, stack);
             if (castContext != null) {
-                resolver = new WrappedSpellResolver(resolver, player.getUUID(), CastPhase.BEGIN, true);
+                resolver = new WrappedSpellResolver(resolver, player.getUUID(), SpellPhase.BEGIN, true);
             }
         }
 
@@ -617,7 +611,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         return totalCooldown;
     }
 
-    protected void sendSpellFiredPacket(ServerPlayer player, Phase phase, MultiPhaseCastContext.CastSource source) {
+    protected void sendSpellFiredPacket(ServerPlayer player, SpellPhase phase, MultiPhaseCastContext.CastSource source) {
         boolean isMainHand = player.getUsedItemHand() == InteractionHand.MAIN_HAND;
 
         int tickCount = 0;

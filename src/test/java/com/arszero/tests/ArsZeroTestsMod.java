@@ -29,6 +29,9 @@ public final class ArsZeroTestsMod {
         if (TestRegistrationFilter.shouldRegister(AnchorEffectTests.class)) {
             modEventBus.addListener(AnchorEffectTests::registerGameTests);
         }
+        if (TestRegistrationFilter.shouldRegister(VoxelDamageAttributionTests.class)) {
+            modEventBus.addListener(VoxelDamageAttributionTests::registerGameTests);
+        }
         modEventBus.addListener(ArsZeroTestsMod::onCommonSetup);
     }
 

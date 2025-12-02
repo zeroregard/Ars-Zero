@@ -9,7 +9,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -125,6 +127,24 @@ public class FireVoxelEntity extends BaseVoxelEntity {
         }
         
         if (!this.level().isClientSide) {
+            Entity hitEntity = result.getEntity();
+            
+            if (hitEntity instanceof LivingEntity living) {
+                Entity owner = this.getOwner();
+                LivingEntity sender = owner instanceof LivingEntity ? (LivingEntity) owner : null;
+                net.minecraft.world.damagesource.DamageSource fireSource = this.level().damageSources().onFire();
+                if (sender != null) {
+                    fireSource = this.level().damageSources().indirectMagic(this, sender);
+                    living.setLastHurtByMob(sender);
+                    if (sender instanceof net.minecraft.world.entity.player.Player) {
+                        living.setLastHurtByPlayer((net.minecraft.world.entity.player.Player) sender);
+                    }
+                }
+                living.hurt(fireSource, 0.1f);
+                int fireDuration = Math.max(20, (int) ((this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE) * 20));
+                living.setRemainingFireTicks(living.getRemainingFireTicks() + fireDuration);
+            }
+            
             Vec3 hitLocation = result.getLocation();
             
             BlockPos centerPos = new BlockPos(

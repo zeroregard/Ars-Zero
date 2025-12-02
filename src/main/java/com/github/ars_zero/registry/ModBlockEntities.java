@@ -17,7 +17,9 @@ public class ModBlockEntities {
             VoxelSpawnerBlockEntity::new,
             ModBlocks.ARCANE_VOXEL_SPAWNER.get(),
             ModBlocks.FIRE_VOXEL_SPAWNER.get(),
-            ModBlocks.WATER_VOXEL_SPAWNER.get()
+            ModBlocks.WATER_VOXEL_SPAWNER.get(),
+            ModBlocks.WIND_VOXEL_SPAWNER.get(),
+            ModBlocks.STONE_VOXEL_SPAWNER.get()
         ).build(null)
     );
 }

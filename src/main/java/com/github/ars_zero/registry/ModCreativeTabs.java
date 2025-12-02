@@ -29,6 +29,8 @@ public class ModCreativeTabs {
                     output.accept(ModItems.ARCANE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.FIRE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.WATER_VOXEL_SPAWNER.get().getDefaultInstance());
+                    output.accept(ModItems.WIND_VOXEL_SPAWNER.get().getDefaultInstance());
+                    output.accept(ModItems.STONE_VOXEL_SPAWNER.get().getDefaultInstance());
                 })
                 .build();
     });

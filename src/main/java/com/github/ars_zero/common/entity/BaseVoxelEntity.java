@@ -3,6 +3,7 @@ package com.github.ars_zero.common.entity;
 import com.github.ars_zero.common.entity.interaction.VoxelInteraction;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionResult;
+import com.github.ars_zero.common.util.VoxelBlockInteractionHelper;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -173,6 +174,10 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     }
     
     protected void onBlockCollision(BlockHitResult blockHit) {
+    }
+    
+    protected boolean handlePhysicalCollision(BlockHitResult blockHit) {
+        return VoxelBlockInteractionHelper.handlePhysicalCollision(this.level(), this, blockHit);
     }
     
     protected abstract void spawnHitParticles(Vec3 location);
