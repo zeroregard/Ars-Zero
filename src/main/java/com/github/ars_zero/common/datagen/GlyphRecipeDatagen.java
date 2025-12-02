@@ -92,7 +92,7 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_conjure_voxel_effect.json"), json));
     }
-
+    
     private void addAnchorRecipe() {
         JsonObject json = new JsonObject();
         json.addProperty("type", "ars_nouveau:glyph");

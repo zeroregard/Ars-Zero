@@ -39,6 +39,13 @@ public class ModBlocks {
             .strength(2.0f)
             .noOcclusion(), VoxelSpawnerBlock.VoxelType.WIND)
     );
+    
+    public static final DeferredHolder<Block, VoxelSpawnerBlock> STONE_VOXEL_SPAWNER = BLOCKS.register(
+        "stone_voxel_spawner",
+        () -> new VoxelSpawnerBlock(BlockBehaviour.Properties.of()
+            .strength(2.0f)
+            .noOcclusion(), VoxelSpawnerBlock.VoxelType.STONE)
+    );
 }
 
 

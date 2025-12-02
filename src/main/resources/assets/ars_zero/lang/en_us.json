@@ -22,10 +22,12 @@
   "block.ars_zero.fire_voxel_spawner": "Fire Voxel Spawner",
   "block.ars_zero.water_voxel_spawner": "Water Voxel Spawner",
   "block.ars_zero.wind_voxel_spawner": "Wind Voxel Spawner",
+  "block.ars_zero.stone_voxel_spawner": "Stone Voxel Spawner",
 
   "entity.ars_zero.arcane_voxel_entity": "Arcane Voxel",
   "entity.ars_zero.water_voxel_entity": "Water Voxel",
   "entity.ars_zero.fire_voxel_entity": "Fire Voxel",
+  "entity.ars_zero.stone_voxel_entity": "Stone Voxel",
   "entity.ars_zero.wind_voxel_entity": "Wind Voxel",
   "entity.ars_zero.block_group": "Block Group",
 
@@ -81,12 +83,15 @@
   "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_conjure_water": "Composite Effect: Conjure Water Voxel",
   "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_ignite": "Composite Effect: Conjure Fire Voxel",
   "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_windshear": "Composite Effect: Conjure Wind Voxel",
+  "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_conjure_terrain": "Composite Effect: Conjure Stone Voxel",
 
   "ars_zero.glyph_name.temporal_context_form": "Temporal Context",
   "ars_zero.glyph_desc.temporal_context_form": "A cast method that provides access to the context of the previous spell phase (Staff only)",
 
   "ars_zero.glyph_name.near_form": "Near",
   "ars_zero.glyph_desc.near_form": "Casts the spell at a short distance in front of your gaze",
+  "ars_zero.glyph_name.glyph_conjure_voxel_effect": "Conjure Voxel",
+  "ars_zero.glyph_desc.glyph_conjure_voxel_effect": "Conjures a small block-like entity that can inherit elemental properties.",
 
   "item.ars_zero.anchor_effect": "Anchor",
   "ars_zero.glyph_name.anchor_effect": "Anchor",

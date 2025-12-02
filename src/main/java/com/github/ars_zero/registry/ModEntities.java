@@ -5,6 +5,7 @@ import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
+import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -45,6 +46,16 @@ public class ModEntities {
                     .updateInterval(1)
                     .setShouldReceiveVelocityUpdates(true)
                     .build(ArsZero.MOD_ID + ":fire_voxel_entity")
+    );
+    
+    public static final DeferredHolder<EntityType<?>, EntityType<StoneVoxelEntity>> STONE_VOXEL_ENTITY = ENTITIES.register(
+            "stone_voxel_entity",
+            () -> EntityType.Builder.<StoneVoxelEntity>of(StoneVoxelEntity::new, MobCategory.MISC)
+                    .sized(BaseVoxelEntity.DEFAULT_BASE_SIZE, BaseVoxelEntity.DEFAULT_BASE_SIZE)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(ArsZero.MOD_ID + ":stone_voxel_entity")
     );
     
     public static final DeferredHolder<EntityType<?>, EntityType<WindVoxelEntity>> WIND_VOXEL_ENTITY = ENTITIES.register(

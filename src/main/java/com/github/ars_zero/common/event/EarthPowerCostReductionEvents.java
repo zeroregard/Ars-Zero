@@ -1,16 +1,16 @@
 package com.github.ars_zero.common.event;
 
+import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
 import com.alexthw.sauce.registry.ModRegistry;
 import com.github.ars_zero.common.util.SpellDiscountUtil;
 import com.hollingsworth.arsnouveau.api.event.SpellCostCalcEvent;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
-import com.hollingsworth.arsnouveau.common.spell.effect.EffectWindshear;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.util.FakePlayer;
 
-public class WindPowerCostReductionEvents {
+public class EarthPowerCostReductionEvents {
     
     @SubscribeEvent
     public static void onSpellCostCalcPre(SpellCostCalcEvent.Pre event) {
@@ -32,15 +32,15 @@ public class WindPowerCostReductionEvents {
         if (player instanceof FakePlayer) {
             return;
         }
-        int adjacentPairCost = SpellDiscountUtil.computeAdjacentPairCost(event.context.getSpell().recipe(), EffectWindshear.class);
+        int adjacentPairCost = SpellDiscountUtil.computeAdjacentPairCost(event.context.getSpell().recipe(), EffectConjureTerrain.class);
         if (adjacentPairCost <= 0) {
             return;
         }
-        AttributeInstance airPower = player.getAttribute(ModRegistry.AIR_POWER);
-        if (airPower == null) {
+        AttributeInstance earthPower = player.getAttribute(ModRegistry.EARTH_POWER);
+        if (earthPower == null) {
             return;
         }
-        double power = airPower.getValue();
+        double power = earthPower.getValue();
         if (power <= 0) {
             return;
         }
@@ -50,5 +50,4 @@ public class WindPowerCostReductionEvents {
         event.currentCost = Math.max(0, event.currentCost - totalReduction);
     }
 }
-
 
