@@ -3,6 +3,7 @@ package com.github.ars_zero.common.block;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
+import com.github.ars_zero.common.entity.IceVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
@@ -95,6 +96,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
             case WATER -> new WaterVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
             case WIND -> new WindVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
             case STONE -> new StoneVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
+            case ICE -> new IceVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
             default -> new ArcaneVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
         };
         
@@ -102,7 +104,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
         voxel.setDeltaMovement(0, 0, 0);
         voxel.setPickable(false);
         voxel.setSpawnerOwned(true);
-        if (!(voxel instanceof StoneVoxelEntity)) {
+        if (!(voxel instanceof StoneVoxelEntity) && !(voxel instanceof IceVoxelEntity)) {
             voxel.setNoGravityCustom(true);
         }
         
@@ -139,6 +141,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
                     case WATER -> voxel instanceof WaterVoxelEntity;
                     case WIND -> voxel instanceof WindVoxelEntity;
                     case STONE -> voxel instanceof StoneVoxelEntity;
+                    case ICE -> voxel instanceof IceVoxelEntity;
                     case ARCANE -> voxel instanceof ArcaneVoxelEntity;
                 };
                 

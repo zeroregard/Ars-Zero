@@ -3,6 +3,7 @@ package com.github.ars_zero;
 import com.github.ars_zero.client.ArsZeroClient;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
+import com.github.ars_zero.common.entity.IceVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.interaction.ArcaneCollisionInteraction;
@@ -168,6 +169,42 @@ public class ArsZero {
             ArcaneVoxelEntity.class,
             StoneVoxelEntity.class,
             arcaneInteraction
+        );
+        
+        VoxelInteractionRegistry.register(
+            ArcaneVoxelEntity.class,
+            IceVoxelEntity.class,
+            arcaneInteraction
+        );
+        
+        VoxelInteractionRegistry.register(
+            IceVoxelEntity.class,
+            IceVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.IceIceInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            IceVoxelEntity.class,
+            FireVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.IceFireInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            IceVoxelEntity.class,
+            WaterVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.IceWaterInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            IceVoxelEntity.class,
+            StoneVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.IceStoneInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            com.github.ars_zero.common.entity.WindVoxelEntity.class,
+            IceVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.IceWindInteraction()
         );
     }
     

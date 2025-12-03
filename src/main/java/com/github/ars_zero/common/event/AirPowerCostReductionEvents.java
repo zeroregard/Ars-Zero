@@ -10,6 +10,8 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.util.FakePlayer;
 
+import java.util.List;
+
 public class AirPowerCostReductionEvents {
     
     @SubscribeEvent
@@ -32,7 +34,7 @@ public class AirPowerCostReductionEvents {
         if (player instanceof FakePlayer) {
             return;
         }
-        int adjacentPairCost = SpellDiscountUtil.computeAdjacentPairCost(event.context.getSpell().recipe(), EffectWindshear.class);
+        int adjacentPairCost = SpellDiscountUtil.computeAdjacentPairCost(event.context.getSpell().recipe(), List.of(EffectWindshear.class));
         if (adjacentPairCost <= 0) {
             return;
         }

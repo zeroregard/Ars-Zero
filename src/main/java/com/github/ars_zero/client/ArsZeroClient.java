@@ -6,6 +6,7 @@ import com.github.ars_zero.client.network.ClientNetworking;
 import com.github.ars_zero.client.renderer.entity.ArcaneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.BlockGroupEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.FireVoxelEntityRenderer;
+import com.github.ars_zero.client.renderer.entity.IceVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.StoneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WindVoxelEntityRenderer;
@@ -39,6 +40,7 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.FIRE_VOXEL_ENTITY.get(), FireVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.STONE_VOXEL_ENTITY.get(), StoneVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.WIND_VOXEL_ENTITY.get(), WindVoxelEntityRenderer::new);
+            EntityRenderers.register(ModEntities.ICE_VOXEL_ENTITY.get(), IceVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.BLOCK_GROUP.get(), BlockGroupEntityRenderer::new);
         });
     }
