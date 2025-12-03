@@ -6,18 +6,12 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 
-public class LightningVoxelEntityRenderer extends VoxelBaseRenderer<LightningVoxelEntity> {
+public class LightningVoxelEntityRenderer extends VoxelAnimatedRenderer<LightningVoxelEntity> {
     
     public LightningVoxelEntityRenderer(EntityRendererProvider.Context context) {
         super(context);
-    }
-    
-    @Override
-    public RenderType getRenderType(LightningVoxelEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-        return RenderType.entityCutoutNoCull(texture);
     }
     
     @Override
