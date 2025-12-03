@@ -29,7 +29,7 @@ public class SpellDiscountUtilTests {
 		AbstractSpellPart conjure = ConjureVoxelEffect.INSTANCE;
 		AbstractSpellPart water = EffectConjureWater.INSTANCE;
 		int expected = conjure.getCastingCost() + water.getCastingCost();
-		int total = SpellDiscountUtil.computeAdjacentPairCost(List.of(conjure, water), EffectConjureWater.class);
+		int total = SpellDiscountUtil.computeAdjacentPairCost(List.of(conjure, water), List.of(EffectConjureWater.class));
 		if (total != expected) {
 			helper.fail("Expected adjacent pair cost " + expected + " but was " + total);
 			return;
@@ -42,7 +42,7 @@ public class SpellDiscountUtilTests {
 		AbstractSpellPart conjure = ConjureVoxelEffect.INSTANCE;
 		AbstractSpellPart ignite = EffectIgnite.INSTANCE;
 		int pair = conjure.getCastingCost() + ignite.getCastingCost();
-		int total = SpellDiscountUtil.computeAdjacentPairCost(List.of(conjure, ignite, conjure, ignite), EffectIgnite.class);
+		int total = SpellDiscountUtil.computeAdjacentPairCost(List.of(conjure, ignite, conjure, ignite), List.of(EffectIgnite.class));
 		if (total != pair * 2) {
 			helper.fail("Expected cost " + (pair * 2) + " but was " + total);
 			return;
@@ -52,7 +52,7 @@ public class SpellDiscountUtilTests {
 
 	@GameTest(batch = "SpellDiscountUtilTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
 	public static void nonAdjacentDoesNotCount(GameTestHelper helper) {
-		int total = SpellDiscountUtil.computeAdjacentPairCost(List.of(EffectConjureWater.INSTANCE, ConjureVoxelEffect.INSTANCE), EffectConjureWater.class);
+		int total = SpellDiscountUtil.computeAdjacentPairCost(List.of(EffectConjureWater.INSTANCE, ConjureVoxelEffect.INSTANCE), List.of(EffectConjureWater.class));
 		if (total != 0) {
 			helper.fail("Expected cost 0 for non-adjacent order but was " + total);
 			return;
