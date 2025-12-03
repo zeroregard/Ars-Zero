@@ -32,6 +32,12 @@ public class Networking {
             PacketUpdateStaffParticleTimeline.CODEC,
             PacketUpdateStaffParticleTimeline::handle
         );
+
+        registrar.playToServer(
+            PacketUpdateTickDelay.TYPE,
+            PacketUpdateTickDelay.CODEC,
+            PacketUpdateTickDelay::handle
+        );
         
         registrar.playToServer(
             PacketCurioCastInput.TYPE,
@@ -67,6 +73,10 @@ public class Networking {
     }
 
     public static void sendToServer(PacketUpdateStaffParticleTimeline packet) {
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
+    }
+
+    public static void sendToServer(PacketUpdateTickDelay packet) {
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
     }
     

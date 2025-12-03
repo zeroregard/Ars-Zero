@@ -25,6 +25,7 @@ import com.hollingsworth.arsnouveau.client.gui.SearchBar;
 import com.hollingsworth.arsnouveau.client.gui.book.EnterTextField;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.common.network.PacketSetMultiPhaseSpellCastingSlot;
+import com.github.ars_zero.common.network.PacketUpdateTickDelay;
 import com.hollingsworth.arsnouveau.api.ArsNouveauAPI;
 import com.hollingsworth.arsnouveau.api.spell.ISpellValidator;
 import com.hollingsworth.arsnouveau.api.spell.SpellValidationError;
@@ -50,6 +51,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
@@ -106,6 +108,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     private List<Button> categoryButtons = new ArrayList<>();
     
     private SpellPhaseSlots phaseSpells;
+    private final int[] slotDelays = new int[10];
     
     private ISpellValidator baseSpellValidator;
     private List<SpellValidationError> validationErrors = new LinkedList<>();
@@ -118,6 +121,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     public void onBookstackUpdated(ItemStack stack) {
         super.onBookstackUpdated(stack);
         this.deviceStack = stack;
+        loadSlotDelayValues();
     }
 
     public AbstractMultiPhaseCastDeviceScreen(ItemStack stack, InteractionHand hand) {
@@ -138,8 +142,8 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         this.phaseSpells = new SpellPhaseSlots(10);
         
 
-        // Set default phase to BEGIN
         this.currentPhase = SpellPhase.BEGIN;
+        Arrays.fill(slotDelays, 1);
     }
 
     private static final int STAFF_GUI_WIDTH = 375;
@@ -200,6 +204,8 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             .toList();
         
         initSpellSlots();
+        
+        loadSlotDelayValues();
         
         // Add phase selection buttons (16x16 buttons for each row)
         addPhaseButtons();
@@ -312,19 +318,18 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         
         GuiImageButton beginButton = new GuiImageButton(buttonX, startY, buttonSize, buttonSize, 
             StaffGuiTextures.ICON_START, (button) -> selectPhase(SpellPhase.BEGIN));
-        beginButton.withTooltip(Component.translatable("gui.ars_zero.phase.begin"));
+        beginButton.withTooltip(Component.literal("Begin Phase"));
         beginPhaseButton = beginButton;
         addRenderableWidget(beginButton);
         
         GuiImageButton tickButton = new GuiImageButton(buttonX, startY + rowHeight, buttonSize, buttonSize, 
             StaffGuiTextures.ICON_TICK, (button) -> selectPhase(SpellPhase.TICK));
-        tickButton.withTooltip(Component.translatable("gui.ars_zero.phase.tick"));
         tickPhaseButton = tickButton;
         addRenderableWidget(tickButton);
         
         GuiImageButton endButton = new GuiImageButton(buttonX, startY + rowHeight * 2, buttonSize, buttonSize, 
             StaffGuiTextures.ICON_END, (button) -> selectPhase(SpellPhase.END));
-        endButton.withTooltip(Component.translatable("gui.ars_zero.phase.end"));
+        endButton.withTooltip(Component.literal("End Phase"));
         endPhaseButton = endButton;
         addRenderableWidget(endButton);
     }
@@ -460,6 +465,40 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             CraftingButton cell = craftingCells.get(i);
             cell.visible = true;
         }
+    }
+
+
+    private void onDelayValueChanged(int value) {
+        if (selectedSpellSlot < 0 || selectedSpellSlot >= slotDelays.length) {
+            return;
+        }
+        int clamped = Mth.clamp(value, 1, 20);
+        slotDelays[selectedSpellSlot] = clamped;
+        if (deviceStack != null && !deviceStack.isEmpty()) {
+            AbstractMultiPhaseCastDevice.setSlotTickDelay(deviceStack, selectedSpellSlot, clamped);
+        }
+        boolean mainHand = guiHand == null || guiHand == InteractionHand.MAIN_HAND;
+        Networking.sendToServer(new PacketUpdateTickDelay(selectedSpellSlot, clamped, mainHand, isCircletDevice()));
+    }
+
+    private int getStoredDelayValueForSelectedSlot() {
+        if (selectedSpellSlot < 0 || selectedSpellSlot >= slotDelays.length) {
+            return 1;
+        }
+        return slotDelays[selectedSpellSlot];
+    }
+
+    private void loadSlotDelayValues() {
+        Arrays.fill(slotDelays, 1);
+        if (deviceStack == null || deviceStack.isEmpty()) {
+            return;
+        }
+        int[] stored = AbstractMultiPhaseCastDevice.getSlotTickDelays(deviceStack);
+        System.arraycopy(stored, 0, slotDelays, 0, Math.min(slotDelays.length, stored.length));
+    }
+
+    private boolean isCircletDevice() {
+        return bookStack != null && bookStack.getItem() instanceof SpellcastingCirclet;
     }
 
     private void addPaginationButtons() {
@@ -902,6 +941,27 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         super.render(graphics, mouseX, mouseY, partialTicks);
         renderManaIndicators(graphics, mouseX, mouseY);
+        renderTickPhaseTooltip(graphics, mouseX, mouseY);
+    }
+    
+    private void renderTickPhaseTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (tickPhaseButton != null) {
+            int buttonX = tickPhaseButton.getX();
+            int buttonY = tickPhaseButton.getY();
+            int buttonWidth = tickPhaseButton.getWidth();
+            int buttonHeight = tickPhaseButton.getHeight();
+            
+            if (mouseX >= buttonX && mouseX < buttonX + buttonWidth && 
+                mouseY >= buttonY && mouseY < buttonY + buttonHeight) {
+                int delay = getStoredDelayValueForSelectedSlot();
+                List<Component> tooltipLines = new ArrayList<>();
+                tooltipLines.add(Component.literal("Tick Phase"));
+                tooltipLines.add(Component.literal("Delay: " + delay + " tick ").append(
+                    Component.literal("(Scroll to change)").withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY))
+                ));
+                graphics.renderComponentTooltip(Minecraft.getInstance().font, tooltipLines, mouseX, mouseY);
+            }
+        }
     }
     
     private void renderManaIndicators(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -1000,6 +1060,32 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
     public SpellPhase getCurrentPhase() {
         return currentPhase;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (tickPhaseButton != null) {
+            int buttonX = tickPhaseButton.getX();
+            int buttonY = tickPhaseButton.getY();
+            int buttonWidth = tickPhaseButton.getWidth();
+            int buttonHeight = tickPhaseButton.getHeight();
+            
+            if (mouseX >= buttonX && mouseX < buttonX + buttonWidth && 
+                mouseY >= buttonY && mouseY < buttonY + buttonHeight) {
+                int currentDelay = getStoredDelayValueForSelectedSlot();
+                int newDelay = currentDelay;
+                if (scrollY > 0) {
+                    newDelay = Math.min(20, currentDelay + 1);
+                } else if (scrollY < 0) {
+                    newDelay = Math.max(1, currentDelay - 1);
+                }
+                if (newDelay != currentDelay) {
+                    onDelayValueChanged(newDelay);
+                    return true;
+                }
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     @Override
