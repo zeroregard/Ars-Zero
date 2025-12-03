@@ -1,8 +1,12 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.registry.ModEntities;
+import com.hollingsworth.arsnouveau.api.spell.Spell;
+import com.hollingsworth.arsnouveau.api.spell.SpellContext;
+import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
+import com.hollingsworth.arsnouveau.common.spell.effect.EffectDischarge;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -22,9 +26,9 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Set;
 
-public class IceVoxelEntity extends BaseVoxelEntity {
+public class LightningVoxelEntity extends BaseVoxelEntity {
     
-    private static final int COLOR = 0xFFFFFF;
+    private static final int COLOR = 0xFFFF00;
     private static final double DAMAGE_SPEED_THRESHOLD = 0.35;
     private static final float BASE_DAMAGE = 1.5f;
     private static final float DAMAGE_SCALE = 2.0f;
@@ -91,12 +95,12 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         Blocks.BAMBOO
     );
     
-    public IceVoxelEntity(EntityType<? extends IceVoxelEntity> entityType, Level level) {
+    public LightningVoxelEntity(EntityType<? extends LightningVoxelEntity> entityType, Level level) {
         super(entityType, level);
     }
     
-    public IceVoxelEntity(Level level, double x, double y, double z, int lifetime) {
-        this(ModEntities.ICE_VOXEL_ENTITY.get(), level);
+    public LightningVoxelEntity(Level level, double x, double y, double z, int lifetime) {
+        this(ModEntities.LIGHTNING_VOXEL_ENTITY.get(), level);
         this.setPos(x, y, z);
         this.setLifetime(lifetime);
     }
@@ -108,7 +112,7 @@ public class IceVoxelEntity extends BaseVoxelEntity {
     
     @Override
     public boolean isEmissive() {
-        return false;
+        return true;
     }
     
     @Override
@@ -120,26 +124,6 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         BlockPos pos = blockHit.getBlockPos();
         BlockState state = this.level().getBlockState(pos);
         Block block = state.getBlock();
-        
-        if (block == Blocks.WATER) {
-            if (!this.level().isClientSide) {
-                this.level().setBlock(pos, Blocks.ICE.defaultBlockState(), 3);
-                spawnHitParticles(blockHit.getLocation());
-            }
-            this.discard();
-            return;
-        }
-        
-        BlockPos adjacentPos = pos.relative(blockHit.getDirection());
-        BlockState adjacentState = this.level().getBlockState(adjacentPos);
-        if (adjacentState.getBlock() == Blocks.WATER) {
-            if (!this.level().isClientSide) {
-                this.level().setBlock(adjacentPos, Blocks.ICE.defaultBlockState(), 3);
-                spawnHitParticles(blockHit.getLocation());
-            }
-            this.discard();
-            return;
-        }
         
         if (BREAKABLE_BLOCKS.contains(block)) {
             breakBlock(pos, state);
@@ -183,6 +167,7 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         if (!this.level().isClientSide) {
             if (hit instanceof LivingEntity living) {
                 applyImpactDamage(living);
+                castDischargeEffect(living);
             }
             spawnHitParticles(result.getLocation());
         }
@@ -212,9 +197,27 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         target.hurtMarked = true;
     }
     
+    private void castDischargeEffect(LivingEntity target) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        Entity owner = this.getOwner();
+        if (!(owner instanceof LivingEntity caster)) {
+            return;
+        }
+        
+        Spell dischargeSpell = new Spell(EffectDischarge.INSTANCE);
+        SpellContext context = new SpellContext(serverLevel, dischargeSpell, caster, LivingCaster.from(caster));
+        context.setCasterTool(ItemStack.EMPTY);
+        
+        SpellResolver resolver = new SpellResolver(context).withSilent(true);
+        EntityHitResult hitResult = new EntityHitResult(target);
+        resolver.onResolveEffect(serverLevel, hitResult);
+    }
+    
     @Override
     protected ParticleOptions getAmbientParticle() {
-        return new BlockParticleOption(ParticleTypes.BLOCK, Blocks.ICE.defaultBlockState());
+        return ParticleTypes.ELECTRIC_SPARK;
     }
     
     @Override
@@ -222,7 +225,7 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
         }
-        ParticleOptions option = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.ICE.defaultBlockState());
+        ParticleOptions option = ParticleTypes.ELECTRIC_SPARK;
         int particleCount = Math.max(8, (int) (this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE) * 6);
         for (int i = 0; i < particleCount; i++) {
             double offsetX = (this.random.nextDouble() - 0.5) * 0.4;

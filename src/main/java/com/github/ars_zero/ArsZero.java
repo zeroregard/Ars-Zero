@@ -4,6 +4,7 @@ import com.github.ars_zero.client.ArsZeroClient;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
+import com.github.ars_zero.common.entity.LightningVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.interaction.ArcaneCollisionInteraction;
@@ -205,6 +206,48 @@ public class ArsZero {
             com.github.ars_zero.common.entity.WindVoxelEntity.class,
             IceVoxelEntity.class,
             new com.github.ars_zero.common.entity.interaction.IceWindInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            LightningVoxelEntity.class,
+            LightningVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.LightningLightningInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            LightningVoxelEntity.class,
+            FireVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.LightningFireInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            LightningVoxelEntity.class,
+            WaterVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.LightningWaterInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            LightningVoxelEntity.class,
+            StoneVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.LightningStoneInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            LightningVoxelEntity.class,
+            IceVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.LightningIceInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            LightningVoxelEntity.class,
+            com.github.ars_zero.common.entity.WindVoxelEntity.class,
+            new com.github.ars_zero.common.entity.interaction.LightningWindInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            ArcaneVoxelEntity.class,
+            LightningVoxelEntity.class,
+            arcaneInteraction
         );
     }
     

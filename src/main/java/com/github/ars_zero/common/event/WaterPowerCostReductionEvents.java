@@ -31,15 +31,32 @@ public class WaterPowerCostReductionEvents {
     private static void applyCostReduction(SpellCostCalcEvent event) {
         if (event.context.getCaster() instanceof LivingCaster caster) {
             if (caster.livingEntity instanceof Player player && !(player instanceof FakePlayer)) {
-                int adjacentPairCost = SpellDiscountUtil.computeAdjacentPairCost(event.context.getSpell().recipe(), List.of(EffectConjureWater.class, EffectColdSnap.class));
-                if (adjacentPairCost > 0) {
+                java.util.List<AbstractSpellPart> recipe = event.context.getSpell().recipe();
+                AbstractSpellPart prev = null;
+                int augmentEffectCost = 0;
+                boolean foundPair = false;
+                
+                for (AbstractSpellPart part : recipe) {
+                    if (prev instanceof ConjureVoxelEffect) {
+                        if (part instanceof EffectConjureWater || part instanceof EffectColdSnap) {
+                            augmentEffectCost = part.getCastingCost();
+                            foundPair = true;
+                            break;
+                        }
+                    }
+                    prev = part;
+                }
+                
+                if (foundPair && augmentEffectCost > 0) {
+                    event.currentCost = Math.max(0, event.currentCost - augmentEffectCost);
+                    
                     AttributeInstance waterPower = player.getAttribute(ModRegistry.WATER_POWER);
                     if (waterPower != null) {
                         double power = waterPower.getValue();
                         if (power > 0) {
                             double reductionPercent = SpellDiscountUtil.computeReductionPercent(power);
-                            
-                            int reducibleBase = Math.min(adjacentPairCost, event.currentCost);
+                            int baseVoxelCost = ConjureVoxelEffect.INSTANCE.getDefaultManaCost();
+                            int reducibleBase = Math.min(baseVoxelCost, event.currentCost);
                             int totalReduction = (int) Math.ceil(reducibleBase * reductionPercent / 100.0);
                             event.currentCost = Math.max(0, event.currentCost - totalReduction);
                         }

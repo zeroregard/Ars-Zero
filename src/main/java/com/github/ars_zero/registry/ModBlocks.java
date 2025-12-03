@@ -53,6 +53,13 @@ public class ModBlocks {
             .strength(2.0f)
             .noOcclusion(), VoxelSpawnerBlock.VoxelType.ICE)
     );
+    
+    public static final DeferredHolder<Block, VoxelSpawnerBlock> LIGHTNING_VOXEL_SPAWNER = BLOCKS.register(
+        "lightning_voxel_spawner",
+        () -> new VoxelSpawnerBlock(BlockBehaviour.Properties.of()
+            .strength(2.0f)
+            .noOcclusion(), VoxelSpawnerBlock.VoxelType.LIGHTNING)
+    );
 }
 
 

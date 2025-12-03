@@ -36,26 +36,42 @@ public class FirePowerCostReductionEvents {
         if (player instanceof FakePlayer) {
             return;
         }
-        int adjacentPairCost = SpellDiscountUtil.computeAdjacentPairCost(event.context.getSpell().recipe(), List.of(EffectIgnite.class));
-        if (adjacentPairCost <= 0) {
-            return;
+        
+        java.util.List<AbstractSpellPart> recipe = event.context.getSpell().recipe();
+        AbstractSpellPart prev = null;
+        int augmentEffectCost = 0;
+        boolean foundPair = false;
+        
+        for (AbstractSpellPart part : recipe) {
+            if (prev instanceof ConjureVoxelEffect) {
+                if (part instanceof EffectIgnite) {
+                    augmentEffectCost = part.getCastingCost();
+                    foundPair = true;
+                    break;
+                }
+            }
+            prev = part;
         }
+        
+        if (foundPair && augmentEffectCost > 0) {
+            event.currentCost = Math.max(0, event.currentCost - augmentEffectCost);
+            
+            AttributeInstance firePower = player.getAttribute(ModRegistry.FIRE_POWER);
+            if (firePower == null) {
+                return;
+            }
 
-        AttributeInstance firePower = player.getAttribute(ModRegistry.FIRE_POWER);
-        if (firePower == null) {
-            return;
+            double power = firePower.getValue();
+            if (power <= 0) {
+                return;
+            }
+
+            double reductionPercent = SpellDiscountUtil.computeReductionPercent(power);
+            int baseVoxelCost = ConjureVoxelEffect.INSTANCE.getDefaultManaCost();
+            int reducibleBase = Math.min(baseVoxelCost, event.currentCost);
+            int totalReduction = (int) Math.ceil(reducibleBase * reductionPercent / 100.0);
+            event.currentCost = Math.max(0, event.currentCost - totalReduction);
         }
-
-        double power = firePower.getValue();
-        if (power <= 0) {
-            return;
-        }
-
-        double reductionPercent = SpellDiscountUtil.computeReductionPercent(power);
-
-        int reducibleBase = Math.min(adjacentPairCost, event.currentCost);
-        int totalReduction = (int) Math.ceil(reducibleBase * reductionPercent / 100.0);
-        event.currentCost = Math.max(0, event.currentCost - totalReduction);
     }
 
 }

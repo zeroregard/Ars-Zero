@@ -5,6 +5,7 @@ import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
+import com.github.ars_zero.common.entity.LightningVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
@@ -31,6 +32,7 @@ import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectWindshear;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectColdSnap;
+import com.hollingsworth.arsnouveau.common.spell.effect.EffectDischarge;
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
 import com.alexthw.sauce.registry.ModRegistry;
 import net.minecraft.resources.ResourceLocation;
@@ -62,7 +64,8 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         EffectIgnite.INSTANCE.getRegistryName(),
         EffectWindshear.INSTANCE.getRegistryName(),
         EffectConjureTerrain.INSTANCE.getRegistryName(),
-        EffectColdSnap.INSTANCE.getRegistryName()
+        EffectColdSnap.INSTANCE.getRegistryName(),
+        EffectDischarge.INSTANCE.getRegistryName()
     };
     
     static {
@@ -71,6 +74,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         VARIANT_CACHE.put(EffectWindshear.INSTANCE, VoxelVariant.WIND);
         VARIANT_CACHE.put(EffectConjureTerrain.INSTANCE, VoxelVariant.STONE);
         VARIANT_CACHE.put(EffectColdSnap.INSTANCE, VoxelVariant.ICE);
+        VARIANT_CACHE.put(EffectDischarge.INSTANCE, VoxelVariant.LIGHTNING);
     }
 
     public ConjureVoxelEffect() {
@@ -124,7 +128,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                 if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
-                if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity) {
+                if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity || voxel instanceof LightningVoxelEntity) {
                     voxel.setNoGravityCustom(false);
                 }
                 
@@ -175,7 +179,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                 if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
-                if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity) {
+                if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity || voxel instanceof LightningVoxelEntity) {
                     voxel.setNoGravityCustom(false);
                 }
                 
@@ -274,7 +278,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                 if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
-                if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity) {
+                if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity || voxel instanceof LightningVoxelEntity) {
                     voxel.setNoGravityCustom(false);
                 }
                 
@@ -362,6 +366,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
             case STONE -> new StoneVoxelEntity(level, x, y, z, duration);
             case WIND -> new WindVoxelEntity(level, x, y, z, duration);
             case ICE -> new IceVoxelEntity(level, x, y, z, duration);
+            case LIGHTNING -> new LightningVoxelEntity(level, x, y, z, duration);
             default -> new ArcaneVoxelEntity(level, x, y, z, duration);
         };
     }
@@ -441,7 +446,8 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         FIRE,
         STONE,
         WIND,
-        ICE
+        ICE,
+        LIGHTNING
     }
     
     private int getDuration(SpellStats spellStats) {
