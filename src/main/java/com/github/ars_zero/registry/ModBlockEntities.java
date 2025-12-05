@@ -21,7 +21,8 @@ public class ModBlockEntities {
             ModBlocks.WIND_VOXEL_SPAWNER.get(),
             ModBlocks.STONE_VOXEL_SPAWNER.get(),
             ModBlocks.ICE_VOXEL_SPAWNER.get(),
-            ModBlocks.LIGHTNING_VOXEL_SPAWNER.get()
+            ModBlocks.LIGHTNING_VOXEL_SPAWNER.get(),
+            ModBlocks.POISON_VOXEL_SPAWNER.get()
         ).build(null)
     );
 }

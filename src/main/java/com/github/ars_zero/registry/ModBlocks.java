@@ -60,6 +60,13 @@ public class ModBlocks {
             .strength(2.0f)
             .noOcclusion(), VoxelSpawnerBlock.VoxelType.LIGHTNING)
     );
+
+    public static final DeferredHolder<Block, VoxelSpawnerBlock> POISON_VOXEL_SPAWNER = BLOCKS.register(
+        "poison_voxel_spawner",
+        () -> new VoxelSpawnerBlock(BlockBehaviour.Properties.of()
+            .strength(2.0f)
+            .noOcclusion(), VoxelSpawnerBlock.VoxelType.POISON)
+    );
 }
 
 

@@ -5,6 +5,7 @@ import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
 import com.github.ars_zero.common.entity.LightningVoxelEntity;
+import com.github.ars_zero.common.entity.PoisonVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
@@ -99,6 +100,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
             case STONE -> new StoneVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
             case ICE -> new IceVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
             case LIGHTNING -> new LightningVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
+            case POISON -> new PoisonVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
             default -> new ArcaneVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
         };
         
@@ -146,6 +148,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
                     case ICE -> voxel instanceof IceVoxelEntity;
                     case LIGHTNING -> voxel instanceof LightningVoxelEntity;
                     case ARCANE -> voxel instanceof ArcaneVoxelEntity;
+                    case POISON -> voxel instanceof PoisonVoxelEntity;
                 };
                 
                 if (typeMatches) {

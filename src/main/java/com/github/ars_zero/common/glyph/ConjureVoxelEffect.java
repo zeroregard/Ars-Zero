@@ -6,6 +6,7 @@ import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
 import com.github.ars_zero.common.entity.LightningVoxelEntity;
+import com.github.ars_zero.common.entity.PoisonVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
@@ -59,13 +60,15 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
     private static final float BASE_VOXEL_SIZE = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final float AMPLIFY_SIZE_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final Map<AbstractEffect, VoxelVariant> VARIANT_CACHE = new IdentityHashMap<>();
+    private static final ResourceLocation ENVENOM_GLYPH_ID = ResourceLocation.fromNamespaceAndPath("ars_nouveau", "effect_envenom");
     private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[]{
         EffectConjureWater.INSTANCE.getRegistryName(),
         EffectIgnite.INSTANCE.getRegistryName(),
         EffectWindshear.INSTANCE.getRegistryName(),
         EffectConjureTerrain.INSTANCE.getRegistryName(),
         EffectColdSnap.INSTANCE.getRegistryName(),
-        EffectDischarge.INSTANCE.getRegistryName()
+        EffectDischarge.INSTANCE.getRegistryName(),
+        ENVENOM_GLYPH_ID
     };
     
     static {
@@ -125,7 +128,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                     waterVoxel.setCasterWaterPower(waterPower);
                 }
                 
-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity || voxel instanceof PoisonVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
                 if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity || voxel instanceof LightningVoxelEntity) {
@@ -176,7 +179,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                     waterVoxel.setCasterWaterPower(waterPower);
                 }
                 
-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity || voxel instanceof PoisonVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
                 if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity || voxel instanceof LightningVoxelEntity) {
@@ -275,7 +278,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                     voxel.setResolver(null);
                 }
                 
-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity || voxel instanceof PoisonVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
                 if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity || voxel instanceof LightningVoxelEntity) {
@@ -338,6 +341,11 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         if (cached != null) {
             return cached;
         }
+        ResourceLocation id = effect.getRegistryName();
+        if (id != null && id.equals(ENVENOM_GLYPH_ID)) {
+            VARIANT_CACHE.put(effect, VoxelVariant.POISON);
+            return VoxelVariant.POISON;
+        }
         return VoxelVariant.ARCANE;
     }
     
@@ -367,6 +375,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
             case WIND -> new WindVoxelEntity(level, x, y, z, duration);
             case ICE -> new IceVoxelEntity(level, x, y, z, duration);
             case LIGHTNING -> new LightningVoxelEntity(level, x, y, z, duration);
+            case POISON -> new PoisonVoxelEntity(level, x, y, z, duration);
             default -> new ArcaneVoxelEntity(level, x, y, z, duration);
         };
     }
@@ -447,7 +456,8 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         STONE,
         WIND,
         ICE,
-        LIGHTNING
+        LIGHTNING,
+        POISON
     }
     
     private int getDuration(SpellStats spellStats) {
@@ -484,7 +494,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
 
     @Override
     public String getBookDescription() {
-        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water', 'Ignite', 'Wind Shear', 'Conjure Terrain', & 'Cold Snap'";
+        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water', 'Ignite', 'Wind Shear', 'Conjure Terrain', 'Cold Snap', 'Discharge', or 'Envenom'.";
     }
 
     @Override
