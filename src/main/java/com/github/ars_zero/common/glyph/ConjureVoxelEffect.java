@@ -32,7 +32,7 @@ import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectWindshear;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectColdSnap;
-import com.hollingsworth.arsnouveau.common.spell.effect.EffectDischarge;
+import alexthw.ars_elemental.common.glyphs.EffectDischarge;
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
 import com.alexthw.sauce.registry.ModRegistry;
 import net.minecraft.resources.ResourceLocation;

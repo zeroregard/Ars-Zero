@@ -14,9 +14,9 @@ public class LightningStoneInteraction implements VoxelInteraction {
     @Override
     public VoxelInteractionResult interact(com.github.ars_zero.common.entity.BaseVoxelEntity primary, com.github.ars_zero.common.entity.BaseVoxelEntity secondary) {
         boolean lightningIsPrimary = primary instanceof LightningVoxelEntity;
-        return VoxelInteractionResult.builder()
-            .primaryAction(lightningIsPrimary ? VoxelInteractionResult.ActionType.CONTINUE : VoxelInteractionResult.ActionType.DISCARD)
-            .secondaryAction(lightningIsPrimary ? VoxelInteractionResult.ActionType.DISCARD : VoxelInteractionResult.ActionType.CONTINUE)
+        return VoxelInteractionResult.builder(primary.position())
+            .primaryAction(lightningIsPrimary ? VoxelInteractionResult.ActionType.DISCARD : VoxelInteractionResult.ActionType.CONTINUE)
+            .secondaryAction(lightningIsPrimary ? VoxelInteractionResult.ActionType.CONTINUE : VoxelInteractionResult.ActionType.DISCARD)
             .build();
     }
 }

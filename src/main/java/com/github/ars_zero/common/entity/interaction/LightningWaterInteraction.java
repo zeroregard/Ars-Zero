@@ -14,7 +14,7 @@ public class LightningWaterInteraction implements VoxelInteraction {
     @Override
     public VoxelInteractionResult interact(com.github.ars_zero.common.entity.BaseVoxelEntity primary, com.github.ars_zero.common.entity.BaseVoxelEntity secondary) {
         boolean lightningIsPrimary = primary instanceof LightningVoxelEntity;
-        return VoxelInteractionResult.builder()
+        return VoxelInteractionResult.builder(primary.position())
             .primaryAction(lightningIsPrimary ? VoxelInteractionResult.ActionType.DISCARD : VoxelInteractionResult.ActionType.CONTINUE)
             .secondaryAction(lightningIsPrimary ? VoxelInteractionResult.ActionType.CONTINUE : VoxelInteractionResult.ActionType.DISCARD)
             .build();

@@ -6,7 +6,7 @@ import com.github.ars_zero.common.util.SpellDiscountUtil;
 import com.hollingsworth.arsnouveau.api.event.SpellCostCalcEvent;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
-import com.hollingsworth.arsnouveau.common.spell.effect.EffectDischarge;
+import alexthw.ars_elemental.common.glyphs.EffectDischarge;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectWindshear;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
@@ -38,7 +38,7 @@ public class AirPowerCostReductionEvents {
             return;
         }
         
-        java.util.List<AbstractSpellPart> recipe = event.context.getSpell().recipe();
+        java.util.List<AbstractSpellPart> recipe = java.util.stream.StreamSupport.stream(event.context.getSpell().recipe().spliterator(), false).toList();
         AbstractSpellPart prev = null;
         int augmentEffectCost = 0;
         boolean foundPair = false;

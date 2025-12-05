@@ -32,5 +32,25 @@ public class ArsZeroRenderTypes extends RenderType {
                 .createCompositeState(true)
         );
     }
+    
+    public static RenderType animatedVoxelOpaque(ResourceLocation texture) {
+        return create(
+            "animated_voxel_opaque",
+            DefaultVertexFormat.NEW_ENTITY,
+            VertexFormat.Mode.QUADS,
+            1536,
+            true,
+            true,
+            CompositeState.builder()
+                .setShaderState(new RenderStateShard.ShaderStateShard(() -> ArsZeroShaders.ANIMATED_VOXEL))
+                .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                .setTransparencyState(NO_TRANSPARENCY)
+                .setLightmapState(LIGHTMAP)
+                .setOverlayState(OVERLAY)
+                .setCullState(NO_CULL)
+                .setWriteMaskState(COLOR_DEPTH_WRITE)
+                .createCompositeState(true)
+        );
+    }
 }
 

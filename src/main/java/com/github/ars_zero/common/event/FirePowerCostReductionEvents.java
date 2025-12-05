@@ -37,7 +37,7 @@ public class FirePowerCostReductionEvents {
             return;
         }
         
-        java.util.List<AbstractSpellPart> recipe = event.context.getSpell().recipe();
+        java.util.List<AbstractSpellPart> recipe = java.util.stream.StreamSupport.stream(event.context.getSpell().recipe().spliterator(), false).toList();
         AbstractSpellPart prev = null;
         int augmentEffectCost = 0;
         boolean foundPair = false;

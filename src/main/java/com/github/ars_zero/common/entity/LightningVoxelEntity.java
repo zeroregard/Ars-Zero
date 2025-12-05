@@ -5,8 +5,7 @@ import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
-import com.hollingsworth.arsnouveau.common.spell.effect.EffectDischarge;
-import net.minecraft.core.BlockPos;
+import alexthw.ars_elemental.common.glyphs.EffectDischarge;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -15,85 +14,18 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.loot.LootParams;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Set;
-
 public class LightningVoxelEntity extends BaseVoxelEntity {
     
-    private static final int COLOR = 0xFFFF00;
+    private static final int COLOR = 0xFFFFFF;
     private static final double DAMAGE_SPEED_THRESHOLD = 0.35;
     private static final float BASE_DAMAGE = 1.5f;
     private static final float DAMAGE_SCALE = 2.0f;
     private static final float MAX_DAMAGE = 6.0f;
     
-    private static final Set<Block> BREAKABLE_BLOCKS = Set.of(
-        Blocks.GLASS,
-        Blocks.GLASS_PANE,
-        Blocks.WHITE_STAINED_GLASS,
-        Blocks.ORANGE_STAINED_GLASS,
-        Blocks.MAGENTA_STAINED_GLASS,
-        Blocks.LIGHT_BLUE_STAINED_GLASS,
-        Blocks.YELLOW_STAINED_GLASS,
-        Blocks.LIME_STAINED_GLASS,
-        Blocks.PINK_STAINED_GLASS,
-        Blocks.GRAY_STAINED_GLASS,
-        Blocks.LIGHT_GRAY_STAINED_GLASS,
-        Blocks.CYAN_STAINED_GLASS,
-        Blocks.PURPLE_STAINED_GLASS,
-        Blocks.BLUE_STAINED_GLASS,
-        Blocks.BROWN_STAINED_GLASS,
-        Blocks.GREEN_STAINED_GLASS,
-        Blocks.RED_STAINED_GLASS,
-        Blocks.BLACK_STAINED_GLASS,
-        Blocks.WHITE_STAINED_GLASS_PANE,
-        Blocks.ORANGE_STAINED_GLASS_PANE,
-        Blocks.MAGENTA_STAINED_GLASS_PANE,
-        Blocks.LIGHT_BLUE_STAINED_GLASS_PANE,
-        Blocks.YELLOW_STAINED_GLASS_PANE,
-        Blocks.LIME_STAINED_GLASS_PANE,
-        Blocks.PINK_STAINED_GLASS_PANE,
-        Blocks.GRAY_STAINED_GLASS_PANE,
-        Blocks.LIGHT_GRAY_STAINED_GLASS_PANE,
-        Blocks.CYAN_STAINED_GLASS_PANE,
-        Blocks.PURPLE_STAINED_GLASS_PANE,
-        Blocks.BLUE_STAINED_GLASS_PANE,
-        Blocks.BROWN_STAINED_GLASS_PANE,
-        Blocks.GREEN_STAINED_GLASS_PANE,
-        Blocks.RED_STAINED_GLASS_PANE,
-        Blocks.BLACK_STAINED_GLASS_PANE,
-        Blocks.DANDELION,
-        Blocks.POPPY,
-        Blocks.BLUE_ORCHID,
-        Blocks.ALLIUM,
-        Blocks.AZURE_BLUET,
-        Blocks.RED_TULIP,
-        Blocks.ORANGE_TULIP,
-        Blocks.WHITE_TULIP,
-        Blocks.PINK_TULIP,
-        Blocks.OXEYE_DAISY,
-        Blocks.CORNFLOWER,
-        Blocks.LILY_OF_THE_VALLEY,
-        Blocks.WITHER_ROSE,
-        Blocks.SUNFLOWER,
-        Blocks.LILAC,
-        Blocks.ROSE_BUSH,
-        Blocks.PEONY,
-        Blocks.TALL_GRASS,
-        Blocks.DEAD_BUSH,
-        Blocks.FERN,
-        Blocks.LARGE_FERN,
-        Blocks.SUGAR_CANE,
-        Blocks.CACTUS,
-        Blocks.BAMBOO
-    );
     
     public LightningVoxelEntity(EntityType<? extends LightningVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -121,40 +53,8 @@ public class LightningVoxelEntity extends BaseVoxelEntity {
             return;
         }
         
-        BlockPos pos = blockHit.getBlockPos();
-        BlockState state = this.level().getBlockState(pos);
-        Block block = state.getBlock();
-        
-        if (BREAKABLE_BLOCKS.contains(block)) {
-            breakBlock(pos, state);
-        } else {
-            spawnHitParticles(blockHit.getLocation());
-        }
-        
+        spawnHitParticles(blockHit.getLocation());
         this.discard();
-    }
-    
-    private void breakBlock(BlockPos pos, BlockState state) {
-        if (this.level().isClientSide) {
-            return;
-        }
-        
-        ServerLevel serverLevel = (ServerLevel) this.level();
-        Block block = state.getBlock();
-        
-        LootParams.Builder lootParams = new LootParams.Builder(serverLevel)
-            .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
-            .withParameter(LootContextParams.TOOL, ItemStack.EMPTY)
-            .withParameter(LootContextParams.THIS_ENTITY, this);
-        
-        serverLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-        
-        for (ItemStack drop : state.getDrops(lootParams)) {
-            Block.popResource(serverLevel, pos, drop);
-        }
-        
-        serverLevel.levelEvent(2001, pos, Block.getId(state));
-        spawnHitParticles(Vec3.atCenterOf(pos));
     }
     
     @Override
@@ -192,9 +92,6 @@ public class LightningVoxelEntity extends BaseVoxelEntity {
             damageSource = this.level().damageSources().magic();
         }
         target.hurt(damageSource, damage);
-        Vec3 impulse = this.getDeltaMovement().scale(0.35);
-        target.push(impulse.x, Math.max(0.1, impulse.y + 0.15), impulse.z);
-        target.hurtMarked = true;
     }
     
     private void castDischargeEffect(LivingEntity target) {
@@ -221,17 +118,85 @@ public class LightningVoxelEntity extends BaseVoxelEntity {
     }
     
     @Override
+    public void tick() {
+        super.tick();
+        
+        if (this.level().isClientSide && this.age % 15 == 0 && this.random.nextInt(3) == 0) {
+            spawnStaticEffect();
+        }
+    }
+    
+    private void spawnStaticEffect() {
+        if (!(this.level() instanceof net.minecraft.client.multiplayer.ClientLevel clientLevel)) {
+            return;
+        }
+        
+        float size = this.getSize();
+        int sparkCount = 3 + this.random.nextInt(4);
+        
+        for (int i = 0; i < sparkCount; i++) {
+            double angle = this.random.nextDouble() * 2 * Math.PI;
+            double distance = size * (0.5 + this.random.nextDouble() * 0.5);
+            double height = (this.random.nextDouble() - 0.5) * size;
+            
+            double x = this.getX() + Math.cos(angle) * distance;
+            double y = this.getY() + height;
+            double z = this.getZ() + Math.sin(angle) * distance;
+            
+            double velX = (this.random.nextDouble() - 0.5) * 0.1;
+            double velY = (this.random.nextDouble() - 0.5) * 0.1;
+            double velZ = (this.random.nextDouble() - 0.5) * 0.1;
+            
+            clientLevel.addParticle(
+                ParticleTypes.ELECTRIC_SPARK,
+                x, y, z,
+                velX, velY, velZ
+            );
+        }
+    }
+    
+    @Override
     protected void spawnHitParticles(Vec3 location) {
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
         }
         ParticleOptions option = ParticleTypes.ELECTRIC_SPARK;
-        int particleCount = Math.max(8, (int) (this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE) * 6);
+        int particleCount = Math.max(12, (int) (this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE) * 8);
+        
         for (int i = 0; i < particleCount; i++) {
-            double offsetX = (this.random.nextDouble() - 0.5) * 0.4;
-            double offsetY = (this.random.nextDouble() - 0.5) * 0.3;
-            double offsetZ = (this.random.nextDouble() - 0.5) * 0.4;
-            serverLevel.sendParticles(option, location.x + offsetX, location.y + offsetY, location.z + offsetZ, 1, 0.0, 0.0, 0.0, 0.0);
+            double offsetX = (this.random.nextDouble() - 0.5) * 0.6;
+            double offsetY = (this.random.nextDouble() - 0.5) * 0.4;
+            double offsetZ = (this.random.nextDouble() - 0.5) * 0.6;
+            
+            double velX = (this.random.nextDouble() - 0.5) * 0.2;
+            double velY = (this.random.nextDouble() - 0.5) * 0.2;
+            double velZ = (this.random.nextDouble() - 0.5) * 0.2;
+            
+            serverLevel.sendParticles(
+                option,
+                location.x + offsetX,
+                location.y + offsetY,
+                location.z + offsetZ,
+                1,
+                velX, velY, velZ,
+                0.05
+            );
+        }
+        
+        for (int i = 0; i < particleCount / 3; i++) {
+            double offsetX = (this.random.nextDouble() - 0.5) * 0.8;
+            double offsetY = (this.random.nextDouble() - 0.5) * 0.6;
+            double offsetZ = (this.random.nextDouble() - 0.5) * 0.8;
+            
+            serverLevel.sendParticles(
+                ParticleTypes.ENCHANT,
+                location.x + offsetX,
+                location.y + offsetY,
+                location.z + offsetZ,
+                0,
+                0.0, 0.0, 0.0,
+                0.0
+            );
         }
     }
 }

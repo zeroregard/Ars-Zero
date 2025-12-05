@@ -31,7 +31,7 @@ public class WaterPowerCostReductionEvents {
     private static void applyCostReduction(SpellCostCalcEvent event) {
         if (event.context.getCaster() instanceof LivingCaster caster) {
             if (caster.livingEntity instanceof Player player && !(player instanceof FakePlayer)) {
-                java.util.List<AbstractSpellPart> recipe = event.context.getSpell().recipe();
+                java.util.List<AbstractSpellPart> recipe = java.util.stream.StreamSupport.stream(event.context.getSpell().recipe().spliterator(), false).toList();
                 AbstractSpellPart prev = null;
                 int augmentEffectCost = 0;
                 boolean foundPair = false;
