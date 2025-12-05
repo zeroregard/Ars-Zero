@@ -7,7 +7,7 @@ import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
-import com.github.ars_zero.registry.ModEntities;
+import com.github.ars_zero.common.util.BlockGroupHelper;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -30,7 +30,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -59,13 +58,11 @@ public class SelectEffect extends AbstractEffect {
         if (!(shooter instanceof Player player)) return;
         if (!(world instanceof ServerLevel serverLevel)) return;
         
-        if (spellStats.isSensitive()) {
-            return;
-        }
-        
         if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, rayTraceResult.getBlockPos())) {
             return;
         }
+
+        boolean ghostMode = spellStats.isSensitive();
         
         BlockPos pos = rayTraceResult.getBlockPos();
         double aoeBuff = spellStats.getAoeMultiplier();
@@ -74,31 +71,24 @@ public class SelectEffect extends AbstractEffect {
         
         List<BlockPos> validBlocks = new ArrayList<>();
         for (BlockPos blockPos : posList) {
-            if (!world.isOutsideBuildHeight(blockPos) && BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)) {
+            if (!world.isOutsideBuildHeight(blockPos)
+                && BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)
+                && BlockGroupHelper.isBlockBreakable(world, blockPos)) {
                 validBlocks.add(blockPos);
             }
         }
         
         if (!validBlocks.isEmpty()) {
-            createBlockGroup(serverLevel, validBlocks, player, spellContext);
+            createBlockGroup(serverLevel, validBlocks, player, spellContext, ghostMode);
         }
     }
     
-    private void createBlockGroup(ServerLevel level, List<BlockPos> blockPositions, Player player, SpellContext spellContext) {
+    private void createBlockGroup(ServerLevel level, List<BlockPos> blockPositions, Player player, SpellContext spellContext, boolean ghostMode) {
         if (blockPositions.isEmpty()) {
             return;
         }
         
-        Vec3 centerPos = calculateCenter(blockPositions);
-        
-        BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), level);
-        blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
-        blockGroup.setCasterUUID(player.getUUID());
-        
-        blockGroup.addBlocks(blockPositions);
-        blockGroup.removeOriginalBlocks();
-        
-        level.addFreshEntity(blockGroup);
+        BlockGroupEntity blockGroup = BlockGroupHelper.spawnBlockGroup(level, player, blockPositions, ghostMode, true, null);
         
         ItemStack casterTool = spellContext.getCasterTool();
         MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
@@ -109,20 +99,6 @@ public class SelectEffect extends AbstractEffect {
         }
     }
     
-    private Vec3 calculateCenter(List<BlockPos> positions) {
-        if (positions.isEmpty()) return Vec3.ZERO;
-        
-        double x = 0, y = 0, z = 0;
-        for (BlockPos pos : positions) {
-            x += pos.getX() + 0.5;
-            y += pos.getY() + 0.5;
-            z += pos.getZ() + 0.5;
-        }
-        
-        int count = positions.size();
-        return new Vec3(x / count, y / count, z / count);
-    }
-
     @Override
     public int getDefaultManaCost() {
         return 0;
@@ -143,12 +119,12 @@ public class SelectEffect extends AbstractEffect {
         super.addAugmentDescriptions(map);
         map.put(AugmentAOE.INSTANCE, "Increases the area of blocks that can be selected");
         map.put(AugmentPierce.INSTANCE, "Increases the depth of blocks that can be selected");
-        map.put(AugmentSensitive.INSTANCE, "Only selects entities, ignoring blocks.");
+        map.put(AugmentSensitive.INSTANCE, "Keeps the selected block group intangible.");
     }
 
     @Override
     public String getBookDescription() {
-        return "Selects a target entity or block without performing any action. Use this to choose targets for future operations. AOE and Pierce allow selecting multiple blocks. For block translation, selected blocks are converted to a block group entity. Sensitive restricts selection to entities only.";
+        return "Selects a target entity or block without performing any action. Use this to choose targets for future operations. AOE and Pierce allow selecting multiple blocks. For block translation, selected blocks are converted to a block group entity. Sensitive keeps the block group intangible so it can pass through other objects.";
     }
 
     @Override
