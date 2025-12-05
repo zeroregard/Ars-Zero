@@ -4,6 +4,7 @@ import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
+import com.github.ars_zero.common.entity.LightningVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
@@ -97,6 +98,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
             case WIND -> new WindVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
             case STONE -> new StoneVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
             case ICE -> new IceVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
+            case LIGHTNING -> new LightningVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
             default -> new ArcaneVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
         };
         
@@ -104,7 +106,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
         voxel.setDeltaMovement(0, 0, 0);
         voxel.setPickable(false);
         voxel.setSpawnerOwned(true);
-        if (!(voxel instanceof StoneVoxelEntity) && !(voxel instanceof IceVoxelEntity)) {
+        if (!(voxel instanceof StoneVoxelEntity) && !(voxel instanceof IceVoxelEntity) && !(voxel instanceof LightningVoxelEntity)) {
             voxel.setNoGravityCustom(true);
         }
         
@@ -142,6 +144,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
                     case WIND -> voxel instanceof WindVoxelEntity;
                     case STONE -> voxel instanceof StoneVoxelEntity;
                     case ICE -> voxel instanceof IceVoxelEntity;
+                    case LIGHTNING -> voxel instanceof LightningVoxelEntity;
                     case ARCANE -> voxel instanceof ArcaneVoxelEntity;
                 };
                 

@@ -202,9 +202,9 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         LivingEntity sender = owner instanceof LivingEntity ? (LivingEntity) owner : null;
         net.minecraft.world.damagesource.DamageSource damageSource;
         if (sender != null) {
-            damageSource = this.level().damageSources().thrown(this, sender);
+            damageSource = this.level().damageSources().indirectMagic(this, sender);
         } else {
-            damageSource = this.level().damageSources().generic();
+            damageSource = this.level().damageSources().magic();
         }
         target.hurt(damageSource, damage);
         Vec3 impulse = this.getDeltaMovement().scale(0.35);

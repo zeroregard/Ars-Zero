@@ -2,8 +2,10 @@ package com.github.ars_zero.common.event;
 
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
 import com.alexthw.sauce.registry.ModRegistry;
+import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
 import com.github.ars_zero.common.util.SpellDiscountUtil;
 import com.hollingsworth.arsnouveau.api.event.SpellCostCalcEvent;
+import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
@@ -34,22 +36,40 @@ public class EarthPowerCostReductionEvents {
         if (player instanceof FakePlayer) {
             return;
         }
-        int adjacentPairCost = SpellDiscountUtil.computeAdjacentPairCost(event.context.getSpell().recipe(), List.of(EffectConjureTerrain.class));
-        if (adjacentPairCost <= 0) {
-            return;
+        
+        java.util.List<AbstractSpellPart> recipe = java.util.stream.StreamSupport.stream(event.context.getSpell().recipe().spliterator(), false).toList();
+        AbstractSpellPart prev = null;
+        int augmentEffectCost = 0;
+        boolean foundPair = false;
+        
+        for (AbstractSpellPart part : recipe) {
+            if (prev instanceof ConjureVoxelEffect) {
+                if (part instanceof EffectConjureTerrain) {
+                    augmentEffectCost = part.getCastingCost();
+                    foundPair = true;
+                    break;
+                }
+            }
+            prev = part;
         }
-        AttributeInstance earthPower = player.getAttribute(ModRegistry.EARTH_POWER);
-        if (earthPower == null) {
-            return;
+        
+        if (foundPair && augmentEffectCost > 0) {
+            event.currentCost = Math.max(0, event.currentCost - augmentEffectCost);
+            
+            AttributeInstance earthPower = player.getAttribute(ModRegistry.EARTH_POWER);
+            if (earthPower == null) {
+                return;
+            }
+            double power = earthPower.getValue();
+            if (power <= 0) {
+                return;
+            }
+            double reductionPercent = SpellDiscountUtil.computeReductionPercent(power);
+            int baseVoxelCost = ConjureVoxelEffect.INSTANCE.getDefaultManaCost();
+            int reducibleBase = Math.min(baseVoxelCost, event.currentCost);
+            int totalReduction = (int) Math.ceil(reducibleBase * reductionPercent / 100.0);
+            event.currentCost = Math.max(0, event.currentCost - totalReduction);
         }
-        double power = earthPower.getValue();
-        if (power <= 0) {
-            return;
-        }
-        double reductionPercent = SpellDiscountUtil.computeReductionPercent(power);
-        int reducibleBase = Math.min(adjacentPairCost, event.currentCost);
-        int totalReduction = (int) Math.ceil(reducibleBase * reductionPercent / 100.0);
-        event.currentCost = Math.max(0, event.currentCost - totalReduction);
     }
 }
 

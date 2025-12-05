@@ -19,7 +19,8 @@ public class VoxelSpawnerBlock extends Block implements EntityBlock {
         WATER,
         WIND,
         STONE,
-        ICE
+        ICE,
+        LIGHTNING
     }
     
     private final VoxelType voxelType;

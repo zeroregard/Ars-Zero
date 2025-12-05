@@ -183,7 +183,13 @@ public class StoneVoxelEntity extends BaseVoxelEntity {
         damage = Math.min(damage, MAX_DAMAGE);
         Entity owner = this.getOwner();
         LivingEntity sender = owner instanceof LivingEntity ? (LivingEntity) owner : null;
-        target.hurt(this.level().damageSources().thrown(this, sender), damage);
+        net.minecraft.world.damagesource.DamageSource damageSource;
+        if (sender != null) {
+            damageSource = this.level().damageSources().indirectMagic(this, sender);
+        } else {
+            damageSource = this.level().damageSources().magic();
+        }
+        target.hurt(damageSource, damage);
         Vec3 impulse = this.getDeltaMovement().scale(0.35);
         target.push(impulse.x, Math.max(0.1, impulse.y + 0.15), impulse.z);
         target.hurtMarked = true;
