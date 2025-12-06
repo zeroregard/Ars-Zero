@@ -18,7 +18,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
-public class PoisonVoxelEntity extends BaseVoxelEntity {
+public class BlightVoxelEntity extends BaseVoxelEntity {
     private static final int COLOR = 0x6BFF78;
     private static final ResourceKey<net.minecraft.world.effect.MobEffect> ENVENOM_EFFECT_KEY =
         ResourceKey.create(Registries.MOB_EFFECT, ResourceLocation.fromNamespaceAndPath("ars_nouveau", "envenom"));
@@ -27,12 +27,12 @@ public class PoisonVoxelEntity extends BaseVoxelEntity {
     private static final int LINGER_INTERVAL = 15;
     private static final double BASE_CLOUD_RADIUS = 1.5D;
 
-    public PoisonVoxelEntity(EntityType<? extends PoisonVoxelEntity> entityType, Level level) {
+    public BlightVoxelEntity(EntityType<? extends BlightVoxelEntity> entityType, Level level) {
         super(entityType, level);
     }
 
-    public PoisonVoxelEntity(Level level, double x, double y, double z, int lifetime) {
-        this(ModEntities.POISON_VOXEL_ENTITY.get(), level);
+    public BlightVoxelEntity(Level level, double x, double y, double z, int lifetime) {
+        this(ModEntities.BLIGHT_VOXEL_ENTITY.get(), level);
         this.setPos(x, y, z);
         this.setLifetime(lifetime);
     }

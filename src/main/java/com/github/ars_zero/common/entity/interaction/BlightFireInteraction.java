@@ -1,12 +1,12 @@
 package com.github.ars_zero.common.entity.interaction;
 
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
+import com.github.ars_zero.common.entity.BlightVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
-import com.github.ars_zero.common.entity.PoisonVoxelEntity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
 
-public class PoisonFireInteraction implements VoxelInteraction {
+public class BlightFireInteraction implements VoxelInteraction {
     @Override
     public VoxelInteractionResult interact(BaseVoxelEntity primary, BaseVoxelEntity secondary) {
         return VoxelInteractionResult.builder(primary.position())
@@ -19,7 +19,7 @@ public class PoisonFireInteraction implements VoxelInteraction {
 
     @Override
     public boolean shouldInteract(BaseVoxelEntity primary, BaseVoxelEntity secondary) {
-        return (primary instanceof PoisonVoxelEntity && secondary instanceof FireVoxelEntity) ||
-               (primary instanceof FireVoxelEntity && secondary instanceof PoisonVoxelEntity);
+        return (primary instanceof BlightVoxelEntity && secondary instanceof FireVoxelEntity) ||
+               (primary instanceof FireVoxelEntity && secondary instanceof BlightVoxelEntity);
     }
 }
