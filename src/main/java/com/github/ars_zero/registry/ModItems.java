@@ -70,9 +70,9 @@ public class ModItems {
         () -> new BlockItem(ModBlocks.LIGHTNING_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
 
-    public static final DeferredHolder<Item, BlockItem> POISON_VOXEL_SPAWNER = ITEMS.register(
-        "poison_voxel_spawner",
-        () -> new BlockItem(ModBlocks.POISON_VOXEL_SPAWNER.get(), defaultItemProperties())
+    public static final DeferredHolder<Item, BlockItem> BLIGHT_VOXEL_SPAWNER = ITEMS.register(
+        "blight_voxel_spawner",
+        () -> new BlockItem(ModBlocks.BLIGHT_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
 
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {

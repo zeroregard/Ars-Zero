@@ -5,14 +5,14 @@ import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
 import com.github.ars_zero.common.entity.LightningVoxelEntity;
-import com.github.ars_zero.common.entity.PoisonVoxelEntity;
+import com.github.ars_zero.common.entity.BlightVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.interaction.ArcaneCollisionInteraction;
 import com.github.ars_zero.common.entity.interaction.FireWaterInteraction;
 import com.github.ars_zero.common.entity.interaction.MergeInteraction;
-import com.github.ars_zero.common.entity.interaction.PoisonFireInteraction;
-import com.github.ars_zero.common.entity.interaction.PoisonWaterInteraction;
+import com.github.ars_zero.common.entity.interaction.BlightFireInteraction;
+import com.github.ars_zero.common.entity.interaction.BlightWaterInteraction;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.event.AnchorEffectEvents;
@@ -248,21 +248,21 @@ public class ArsZero {
         );
         
         VoxelInteractionRegistry.register(
-            PoisonVoxelEntity.class,
-            PoisonVoxelEntity.class,
+            BlightVoxelEntity.class,
+            BlightVoxelEntity.class,
             mergeInteraction
         );
         
         VoxelInteractionRegistry.register(
-            PoisonVoxelEntity.class,
+            BlightVoxelEntity.class,
             FireVoxelEntity.class,
-            new PoisonFireInteraction()
+            new BlightFireInteraction()
         );
         
         VoxelInteractionRegistry.register(
-            PoisonVoxelEntity.class,
+            BlightVoxelEntity.class,
             WaterVoxelEntity.class,
-            new PoisonWaterInteraction()
+            new BlightWaterInteraction()
         );
         
         VoxelInteractionRegistry.register(
@@ -273,7 +273,7 @@ public class ArsZero {
         
         VoxelInteractionRegistry.register(
             ArcaneVoxelEntity.class,
-            PoisonVoxelEntity.class,
+            BlightVoxelEntity.class,
             arcaneInteraction
         );
     }
