@@ -28,6 +28,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -63,18 +66,23 @@ public class SelectEffect extends AbstractEffect {
             return;
         }
         
-        if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, rayTraceResult.getBlockPos())) {
+        BlockPos pos = rayTraceResult.getBlockPos();
+        if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, pos)) {
             return;
         }
         
-        BlockPos pos = rayTraceResult.getBlockPos();
+        if (!canBlockBeDestroyed(world, pos)) {
+            return;
+        }
         double aoeBuff = spellStats.getAoeMultiplier();
         int pierceBuff = spellStats.getBuffCount(AugmentPierce.INSTANCE);
         List<BlockPos> posList = SpellUtil.calcAOEBlocks(shooter, pos, rayTraceResult, aoeBuff, pierceBuff);
         
         List<BlockPos> validBlocks = new ArrayList<>();
         for (BlockPos blockPos : posList) {
-            if (!world.isOutsideBuildHeight(blockPos) && BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)) {
+            if (!world.isOutsideBuildHeight(blockPos) 
+                && BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)
+                && canBlockBeDestroyed(world, blockPos)) {
                 validBlocks.add(blockPos);
             }
         }
@@ -107,6 +115,23 @@ public class SelectEffect extends AbstractEffect {
             context.beginResults.clear();
             context.beginResults.add(blockResult);
         }
+    }
+    
+    private boolean canBlockBeDestroyed(Level world, BlockPos pos) {
+        BlockState state = world.getBlockState(pos);
+        Block block = state.getBlock();
+        
+        if (block == Blocks.BEDROCK || block == Blocks.BARRIER || block == Blocks.COMMAND_BLOCK 
+            || block == Blocks.CHAIN_COMMAND_BLOCK || block == Blocks.REPEATING_COMMAND_BLOCK) {
+            return false;
+        }
+        
+        float destroySpeed = state.getDestroySpeed(world, pos);
+        if (destroySpeed < 0.0f) {
+            return false;
+        }
+        
+        return true;
     }
     
     private Vec3 calculateCenter(List<BlockPos> positions) {
