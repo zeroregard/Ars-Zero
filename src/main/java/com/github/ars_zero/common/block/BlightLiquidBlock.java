@@ -1,32 +1,38 @@
 package com.github.ars_zero.common.block;
 
-import com.github.ars_zero.registry.ModFluids;
+import com.github.ars_zero.common.block.interaction.ConvertMossyInteraction;
+import com.github.ars_zero.common.block.interaction.ConvertToDirtInteraction;
+import com.github.ars_zero.common.block.interaction.ConvertWaterInteraction;
+import com.github.ars_zero.common.block.interaction.DestroyFloraInteraction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.tags.FluidTags;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.material.FlowingFluid;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 public class BlightLiquidBlock extends LiquidBlock {
+    
+    private static final List<BlightInteraction> INTERACTIONS = List.of(
+        new ConvertToDirtInteraction(),
+        new ConvertMossyInteraction(),
+        new DestroyFloraInteraction(),
+        new ConvertWaterInteraction()
+    );
     
     public BlightLiquidBlock(Supplier<? extends FlowingFluid> fluidSupplier, Properties properties) {
         super(fluidSupplier.get(), properties);
@@ -60,114 +66,67 @@ public class BlightLiquidBlock extends LiquidBlock {
     }
     
     @Override
-    public void neighborChanged(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull Block neighborBlock, @NotNull BlockPos neighborPos, boolean movedByPiston) {
+    public void neighborChanged(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull net.minecraft.world.level.block.Block neighborBlock, @NotNull BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
         if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
             BlockPos belowPos = pos.below();
             BlockState belowState = level.getBlockState(belowPos);
-            if (shouldConvertToDirt(belowState)) {
-                serverLevel.setBlock(belowPos, Blocks.DIRT.defaultBlockState(), 3);
-                playInteractionEffects(serverLevel, belowPos);
+            for (BlightInteraction interaction : INTERACTIONS) {
+                if (interaction.matches(belowState)) {
+                    if (interaction instanceof ConvertWaterInteraction waterInteraction && !waterInteraction.shouldApply(serverLevel)) {
+                        continue;
+                    }
+                    interaction.apply(serverLevel, belowPos, belowState);
+                    playInteractionEffects(serverLevel, belowPos);
+                    break;
+                }
             }
         }
     }
     
     private void checkAndAffectAdjacentBlocks(ServerLevel level, BlockPos pos) {
-        BlockPos belowPos = pos.below();
-        BlockState belowState = level.getBlockState(belowPos);
-        
-        if (shouldConvertToDirt(belowState)) {
-            level.setBlock(belowPos, Blocks.DIRT.defaultBlockState(), 3);
-            playInteractionEffects(level, belowPos);
-            return;
-        }
-        if (shouldConvertWaterToBlight(belowState)) {
-            convertWaterToBlight(level, belowPos, belowState);
-            playInteractionEffects(level, belowPos);
-            return;
-        }
-        
-        BlockPos abovePos = pos.above();
-        BlockState aboveState = level.getBlockState(abovePos);
-        
-        if (shouldDestroyFlora(aboveState)) {
-            level.destroyBlock(abovePos, false);
-            playInteractionEffects(level, abovePos);
-            return;
-        }
-        if (shouldConvertWaterToBlight(aboveState)) {
-            convertWaterToBlight(level, abovePos, aboveState);
-            playInteractionEffects(level, abovePos);
-            return;
-        }
-        
-        for (var direction : net.minecraft.core.Direction.Plane.HORIZONTAL) {
-            BlockPos adjacentPos = pos.relative(direction);
-            BlockState adjacentState = level.getBlockState(adjacentPos);
+        for (BlockPos target : targetsAround(pos)) {
+            BlockState state = level.getBlockState(target);
             
-            if (shouldConvertToDirt(adjacentState)) {
-                level.setBlock(adjacentPos, Blocks.DIRT.defaultBlockState(), 3);
-                playInteractionEffects(level, adjacentPos);
-                return;
-            }
-            if (shouldDestroyFlora(adjacentState)) {
-                level.destroyBlock(adjacentPos, false);
-                playInteractionEffects(level, adjacentPos);
-                return;
-            }
-            if (shouldConvertWaterToBlight(adjacentState)) {
-                convertWaterToBlight(level, adjacentPos, adjacentState);
-                playInteractionEffects(level, adjacentPos);
-                return;
+            for (BlightInteraction interaction : INTERACTIONS) {
+                if (interaction.matches(state)) {
+                    if (interaction instanceof ConvertWaterInteraction waterInteraction && !waterInteraction.shouldApply(level)) {
+                        continue;
+                    }
+                    interaction.apply(level, target, state);
+                    playInteractionEffects(level, target);
+                    return;
+                }
             }
         }
     }
     
-    private boolean shouldDestroyFlora(BlockState state) {
-        return state.is(BlockTags.LEAVES) || 
-               state.is(BlockTags.FLOWERS) ||
-               state.is(BlockTags.SAPLINGS) ||
-               state.getBlock() == Blocks.SHORT_GRASS ||
-               state.getBlock() == Blocks.TALL_GRASS ||
-               state.getBlock() == Blocks.FERN ||
-               state.getBlock() == Blocks.LARGE_FERN ||
-               state.getBlock() == Blocks.DEAD_BUSH ||
-               state.getBlock() == Blocks.VINE ||
-               state.getBlock() == Blocks.GLOW_LICHEN;
+    private Iterable<BlockPos> targetsAround(BlockPos pos) {
+        return List.of(
+            pos.below(),
+            pos.above(),
+            pos.north(),
+            pos.south(),
+            pos.east(),
+            pos.west()
+        );
     }
     
-    private boolean shouldConvertToDirt(BlockState state) {
-        return state.getBlock() == Blocks.GRASS_BLOCK ||
-               state.getBlock() == Blocks.MYCELIUM ||
-               state.getBlock() == Blocks.PODZOL ||
-               state.getBlock() == Blocks.COARSE_DIRT ||
-               state.getBlock() == Blocks.FARMLAND ||
-               state.getBlock() == Blocks.MOSS_BLOCK;
-    }
-    
-    private boolean shouldConvertWaterToBlight(BlockState state) {
-        return state.getBlock() == Blocks.WATER || state.getFluidState().is(FluidTags.WATER);
-    }
-    
-    private void convertWaterToBlight(ServerLevel level, BlockPos pos, BlockState waterState) {
-        if (waterState.getBlock() == Blocks.WATER) {
-            int waterLevel = waterState.getValue(LiquidBlock.LEVEL);
-            BlockState blightState = ModFluids.BLIGHT_FLUID_BLOCK.get().defaultBlockState()
-                .setValue(LiquidBlock.LEVEL, waterLevel);
-            level.setBlock(pos, blightState, 3);
-        } else {
-            FluidState fluidState = waterState.getFluidState();
-            if (fluidState.isSource()) {
-                level.setBlock(pos, ModFluids.BLIGHT_FLUID_BLOCK.get().defaultBlockState(), 3);
-            } else {
-                int amount = fluidState.getAmount();
-                int levelValue = Math.max(0, Math.min(7, 8 - amount));
-                BlockState blightState = ModFluids.BLIGHT_FLUID_BLOCK.get().defaultBlockState()
-                    .setValue(LiquidBlock.LEVEL, levelValue);
-                level.setBlock(pos, blightState, 3);
+    @SuppressWarnings("unchecked")
+    public static BlockState copyProperties(BlockState from, BlockState to) {
+        BlockState result = to;
+        for (Property<?> prop : from.getProperties()) {
+            if (result.hasProperty(prop)) {
+                result = copyProperty(from, result, prop);
             }
         }
-        level.scheduleTick(pos, ModFluids.BLIGHT_FLUID_BLOCK.get(), ModFluids.BLIGHT_FLUID_FLOWING.get().getTickDelay(level));
+        return result;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private static <T extends Comparable<T>> BlockState copyProperty(BlockState from, BlockState to, Property<?> prop) {
+        Property<T> typedProp = (Property<T>) prop;
+        return to.setValue(typedProp, from.getValue(typedProp));
     }
     
     private void playInteractionEffects(Level level, BlockPos pos) {

@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.fluid;
 
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
@@ -45,6 +46,11 @@ public abstract class BlightFluid extends BaseFlowingFluid {
         
         @Override
         public boolean isSource(FluidState state) {
+            return false;
+        }
+        
+        @Override
+        protected boolean canConvertToSource(Level level) {
             return false;
         }
     }

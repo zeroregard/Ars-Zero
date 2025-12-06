@@ -17,11 +17,14 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -101,12 +104,28 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
             
             if (hitState.getBlock() == Blocks.WATER || hitState.getFluidState().is(FluidTags.WATER)) {
                 transformWaterToBlight(hitPos, hitState);
+            } else if (isFlower(hitState)) {
+                destroyFlowerAndPlaceLiquid(hitPos, hitState, blockHit);
             } else {
                 BlockPos placePos = hitPos.relative(blockHit.getDirection());
                 placeBlightFluidWithUnits(placePos);
             }
             spawnHitParticles(blockHit.getLocation());
         }
+    }
+    
+    private boolean isFlower(BlockState state) {
+        return state.is(BlockTags.FLOWERS);
+    }
+    
+    private void destroyFlowerAndPlaceLiquid(BlockPos pos, BlockState flowerState, BlockHitResult blockHit) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        serverLevel.destroyBlock(pos, false);
+        serverLevel.playSound(null, pos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5f, 1.0f);
+        BlockPos placePos = pos;
+        placeBlightFluidWithUnits(placePos);
     }
 
     @Override
@@ -162,7 +181,6 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
         }
         int blightLevel = waterLevel;
         serverLevel.setBlock(pos, ModFluids.BLIGHT_FLUID_BLOCK.get().defaultBlockState().setValue(LiquidBlock.LEVEL, blightLevel), 3);
-        serverLevel.scheduleTick(pos, ModFluids.BLIGHT_FLUID_BLOCK.get(), ModFluids.BLIGHT_FLUID_FLOWING.get().getTickDelay(serverLevel));
     }
     
     private int levelToUnits(int level) {
@@ -206,12 +224,10 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
         }
         int combinedUnits = Math.min(7, existingUnits + additionalUnits);
         if (combinedUnits == existingUnits) {
-            serverLevel.scheduleTick(pos, ModFluids.BLIGHT_FLUID_BLOCK.get(), ModFluids.BLIGHT_FLUID_FLOWING.get().getTickDelay(serverLevel));
             return false;
         }
         int newLevel = unitsToLevel(combinedUnits);
         serverLevel.setBlock(pos, ModFluids.BLIGHT_FLUID_BLOCK.get().defaultBlockState().setValue(LiquidBlock.LEVEL, newLevel), 3);
-        serverLevel.scheduleTick(pos, ModFluids.BLIGHT_FLUID_BLOCK.get(), ModFluids.BLIGHT_FLUID_FLOWING.get().getTickDelay(serverLevel));
         return true;
     }
 }
