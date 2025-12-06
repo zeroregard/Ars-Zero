@@ -23,3 +23,4 @@ public class BlightFireInteraction implements VoxelInteraction {
                (primary instanceof FireVoxelEntity && secondary instanceof BlightVoxelEntity);
     }
 }
+

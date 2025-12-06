@@ -26,6 +26,9 @@
   "block.ars_zero.ice_voxel_spawner": "Ice Voxel Spawner",
   "block.ars_zero.lightning_voxel_spawner": "Lightning Voxel Spawner",
   "block.ars_zero.blight_voxel_spawner": "Blight Voxel Spawner",
+  "block.ars_zero.blight_fluid": "Blight Fluid",
+
+  "item.ars_zero.blight_fluid_bucket": "Blight Fluid Bucket",
 
   "entity.ars_zero.arcane_voxel_entity": "Arcane Voxel",
   "entity.ars_zero.water_voxel_entity": "Water Voxel",

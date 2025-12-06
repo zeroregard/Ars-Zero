@@ -12,37 +12,20 @@ public class BlightWaterInteraction implements VoxelInteraction {
         BaseVoxelEntity blight = primary instanceof BlightVoxelEntity ? primary : secondary;
         BaseVoxelEntity water = blight == primary ? secondary : primary;
 
-        float blightSize = blight.getSize();
         float waterSize = water.getSize();
-        float neutralized = Math.min(blightSize, waterSize);
-        float blightRemaining = Math.max(0.0f, blightSize - (neutralized * 0.6f));
-        float waterRemaining = Math.max(0.0f, waterSize - neutralized);
-
-        boolean blightSurvives = blightRemaining >= 0.0625f;
-        boolean waterSurvives = waterRemaining >= 0.0625f;
 
         VoxelInteractionResult.Builder builder = VoxelInteractionResult.builder(primary.position())
             .particles(ParticleTypes.SPLASH, 28)
             .sound(SoundEvents.BREWING_STAND_BREW);
 
         if (primary instanceof BlightVoxelEntity) {
-            builder.primaryAction(blightSurvives ? VoxelInteractionResult.ActionType.RESIZE : VoxelInteractionResult.ActionType.DISCARD);
-            if (blightSurvives) {
-                builder.primaryNewSize(blightRemaining);
-            }
-            builder.secondaryAction(waterSurvives ? VoxelInteractionResult.ActionType.RESIZE : VoxelInteractionResult.ActionType.DISCARD);
-            if (waterSurvives) {
-                builder.secondaryNewSize(waterRemaining);
-            }
+            builder.primaryAction(VoxelInteractionResult.ActionType.RESIZE)
+                   .primaryNewSize(waterSize)
+                   .secondaryAction(VoxelInteractionResult.ActionType.DISCARD);
         } else {
-            builder.primaryAction(waterSurvives ? VoxelInteractionResult.ActionType.RESIZE : VoxelInteractionResult.ActionType.DISCARD);
-            if (waterSurvives) {
-                builder.primaryNewSize(waterRemaining);
-            }
-            builder.secondaryAction(blightSurvives ? VoxelInteractionResult.ActionType.RESIZE : VoxelInteractionResult.ActionType.DISCARD);
-            if (blightSurvives) {
-                builder.secondaryNewSize(blightRemaining);
-            }
+            builder.primaryAction(VoxelInteractionResult.ActionType.DISCARD)
+                   .secondaryAction(VoxelInteractionResult.ActionType.RESIZE)
+                   .secondaryNewSize(waterSize);
         }
 
         return builder.build();
@@ -54,3 +37,4 @@ public class BlightWaterInteraction implements VoxelInteraction {
                (primary instanceof WaterVoxelEntity && secondary instanceof BlightVoxelEntity);
     }
 }
+

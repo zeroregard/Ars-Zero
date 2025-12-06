@@ -34,6 +34,7 @@ public class ModCreativeTabs {
                     output.accept(ModItems.ICE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.LIGHTNING_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.BLIGHT_VOXEL_SPAWNER.get().getDefaultInstance());
+                    output.accept(ModFluids.BLIGHT_FLUID_BUCKET.get().getDefaultInstance());
                 })
                 .build();
     });

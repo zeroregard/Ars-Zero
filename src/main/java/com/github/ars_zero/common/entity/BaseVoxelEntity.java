@@ -9,6 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -186,6 +187,10 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     
     private void emitAmbientParticle() {
         if (!this.level().isClientSide) {
+            ParticleOptions particle = getAmbientParticle();
+            if (particle == null) {
+                return;
+            }
             double size = this.getSize();
             double radius = size / 2.0;
             
@@ -197,7 +202,7 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
             double z = radius * Math.cos(phi);
             
             ((net.minecraft.server.level.ServerLevel) this.level()).sendParticles(
-                getAmbientParticle(),
+                particle,
                 this.getX() + x,
                 this.getY() + y,
                 this.getZ() + z,

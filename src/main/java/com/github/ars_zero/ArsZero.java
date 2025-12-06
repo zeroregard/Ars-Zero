@@ -29,10 +29,12 @@ import com.github.ars_zero.registry.ModBlockEntities;
 import com.github.ars_zero.registry.ModBlocks;
 import com.github.ars_zero.registry.ModCreativeTabs;
 import com.github.ars_zero.registry.ModEntities;
+import com.github.ars_zero.registry.ModFluids;
 import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.registry.ModGlyphs;
 import com.github.ars_zero.registry.ModMobEffects;
 import com.github.ars_zero.registry.ModParticleTimelines;
+import com.github.ars_zero.registry.ModParticles;
 import com.github.ars_zero.registry.ModRecipes;
 import com.github.ars_zero.registry.ModSounds;
 import net.minecraft.resources.ResourceLocation;
@@ -50,10 +52,13 @@ public class ArsZero {
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 
     public ArsZero(IEventBus modEventBus, ModContainer modContainer) {
+        ModFluids.FLUID_TYPES.register(modEventBus);
+        ModFluids.FLUIDS.register(modEventBus);
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
         ModEntities.ENTITIES.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
+        ModParticles.PARTICLES.register(modEventBus);
         ModSounds.SOUNDS.register(modEventBus);
         ModCreativeTabs.TABS.register(modEventBus);
         ModMobEffects.MOB_EFFECTS.register(modEventBus);

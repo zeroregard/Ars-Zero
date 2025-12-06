@@ -35,6 +35,7 @@ import com.hollingsworth.arsnouveau.common.spell.effect.EffectWindshear;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectColdSnap;
 import alexthw.ars_elemental.common.glyphs.EffectDischarge;
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
+import alexthw.ars_elemental.common.glyphs.EffectEnvenom;
 import com.alexthw.sauce.registry.ModRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -60,7 +61,6 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
     private static final float BASE_VOXEL_SIZE = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final float AMPLIFY_SIZE_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
     private static final Map<AbstractEffect, VoxelVariant> VARIANT_CACHE = new IdentityHashMap<>();
-    private static final ResourceLocation ENVENOM_GLYPH_ID = ResourceLocation.fromNamespaceAndPath("ars_nouveau", "effect_envenom");
     private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[]{
         EffectConjureWater.INSTANCE.getRegistryName(),
         EffectIgnite.INSTANCE.getRegistryName(),
@@ -68,7 +68,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         EffectConjureTerrain.INSTANCE.getRegistryName(),
         EffectColdSnap.INSTANCE.getRegistryName(),
         EffectDischarge.INSTANCE.getRegistryName(),
-        ENVENOM_GLYPH_ID
+        EffectEnvenom.INSTANCE.getRegistryName()
     };
     
     static {
@@ -78,6 +78,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         VARIANT_CACHE.put(EffectConjureTerrain.INSTANCE, VoxelVariant.STONE);
         VARIANT_CACHE.put(EffectColdSnap.INSTANCE, VoxelVariant.ICE);
         VARIANT_CACHE.put(EffectDischarge.INSTANCE, VoxelVariant.LIGHTNING);
+        VARIANT_CACHE.put(EffectEnvenom.INSTANCE, VoxelVariant.BLIGHT);
     }
 
     public ConjureVoxelEffect() {
@@ -341,13 +342,9 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         if (cached != null) {
             return cached;
         }
-        ResourceLocation id = effect.getRegistryName();
-        if (id != null && id.equals(ENVENOM_GLYPH_ID)) {
-            VARIANT_CACHE.put(effect, VoxelVariant.BLIGHT);
-            return VoxelVariant.BLIGHT;
-        }
         return VoxelVariant.ARCANE;
     }
+    
     
     private void consumeEffect(SpellContext context, AbstractEffect targetEffect) {
         ResourceLocation targetId = targetEffect.getRegistryName();

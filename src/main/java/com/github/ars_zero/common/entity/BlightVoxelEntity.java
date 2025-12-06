@@ -1,7 +1,11 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.registry.ModEntities;
+import com.github.ars_zero.registry.ModFluids;
+import com.github.ars_zero.registry.ModParticles;
+import com.github.ars_zero.common.block.BlightLiquidBlock;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -12,8 +16,13 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -24,8 +33,6 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
         ResourceKey.create(Registries.MOB_EFFECT, ResourceLocation.fromNamespaceAndPath("ars_nouveau", "envenom"));
     private static final ResourceKey<net.minecraft.world.effect.MobEffect> POISON_EFFECT_KEY =
         ResourceKey.create(Registries.MOB_EFFECT, ResourceLocation.parse("minecraft:poison"));
-    private static final int LINGER_INTERVAL = 15;
-    private static final double BASE_CLOUD_RADIUS = 1.5D;
 
     public BlightVoxelEntity(EntityType<? extends BlightVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -49,14 +56,27 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
 
     @Override
     protected ParticleOptions getAmbientParticle() {
-        return ParticleTypes.ITEM_SLIME;
+        return null;
     }
-
+    
     @Override
     public void tick() {
         super.tick();
-        if (!this.level().isClientSide && this.isAlive() && this.age % LINGER_INTERVAL == 0) {
-            releaseCloud(false);
+        if (!this.level().isClientSide && this.isAlive()) {
+            BlockPos currentPos = this.blockPosition();
+            BlockState currentState = this.level().getBlockState(currentPos);
+            if (currentState.getBlock() == Blocks.WATER || currentState.getFluidState().is(FluidTags.WATER)) {
+                transformWaterToBlight(currentPos, currentState);
+            } else {
+                for (Direction dir : Direction.values()) {
+                    BlockPos adjacentPos = currentPos.relative(dir);
+                    BlockState adjacentState = this.level().getBlockState(adjacentPos);
+                    if (adjacentState.getBlock() == Blocks.WATER || adjacentState.getFluidState().is(FluidTags.WATER)) {
+                        transformWaterToBlight(adjacentPos, adjacentState);
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -70,48 +90,35 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
             applyEffect(living, true);
         }
         spawnHitParticles(result.getLocation());
-        releaseCloud(true);
         this.discard();
     }
 
     @Override
     protected void onBlockCollision(BlockHitResult blockHit) {
-        releaseCloud(true);
+        if (!this.level().isClientSide) {
+            BlockPos hitPos = blockHit.getBlockPos();
+            BlockState hitState = this.level().getBlockState(hitPos);
+            
+            if (hitState.getBlock() == Blocks.WATER || hitState.getFluidState().is(FluidTags.WATER)) {
+                transformWaterToBlight(hitPos, hitState);
+            } else {
+                BlockPos placePos = hitPos.relative(blockHit.getDirection());
+                placeBlightFluidWithUnits(placePos);
+            }
+            spawnHitParticles(blockHit.getLocation());
+        }
     }
 
     @Override
     protected void spawnHitParticles(Vec3 location) {
-        spawnCloudParticles(location, 32);
-    }
-
-    private void releaseCloud(boolean burst) {
-        if (this.level().isClientSide) {
-            return;
-        }
-        Vec3 center = this.position();
-        double sizeScale = Math.max(1.0D, this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE);
-        double radius = BASE_CLOUD_RADIUS * sizeScale * (burst ? 1.25D : 1.0D);
-        AABB area = AABB.ofSize(center, radius * 2.0D, radius * 2.0D, radius * 2.0D);
-        this.level().getEntitiesOfClass(LivingEntity.class, area, entity -> entity.isAlive() && !entity.isSpectator())
-            .forEach(living -> {
-                double distanceSq = living.distanceToSqr(center.x, center.y, center.z);
-                if (distanceSq <= radius * radius) {
-                    applyEffect(living, burst);
-                }
-            });
-        spawnCloudParticles(center, burst ? 48 : 20);
-    }
-
-    private void spawnCloudParticles(Vec3 center, int count) {
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
         }
-        double spread = Math.max(0.2D, this.getSize());
-        for (int i = 0; i < count; i++) {
-            double ox = (this.random.nextDouble() - 0.5D) * spread;
-            double oy = (this.random.nextDouble() - 0.5D) * spread;
-            double oz = (this.random.nextDouble() - 0.5D) * spread;
-            serverLevel.sendParticles(ParticleTypes.ITEM_SLIME, center.x + ox, center.y + oy, center.z + oz, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        for (int i = 0; i < 8; i++) {
+            double ox = (this.random.nextDouble() - 0.5D) * 0.3;
+            double oy = (this.random.nextDouble() - 0.5D) * 0.3;
+            double oz = (this.random.nextDouble() - 0.5D) * 0.3;
+            serverLevel.sendParticles(ModParticles.BLIGHT_SPLASH.get(), location.x + ox, location.y + oy, location.z + oz, 1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
     }
 
@@ -144,4 +151,68 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
         }
         return 0;
     }
+
+    private void transformWaterToBlight(BlockPos pos, BlockState waterState) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        int waterLevel = 0;
+        if (waterState.getBlock() == Blocks.WATER) {
+            waterLevel = waterState.getValue(LiquidBlock.LEVEL);
+        }
+        int blightLevel = waterLevel;
+        serverLevel.setBlock(pos, ModFluids.BLIGHT_FLUID_BLOCK.get().defaultBlockState().setValue(LiquidBlock.LEVEL, blightLevel), 3);
+        serverLevel.scheduleTick(pos, ModFluids.BLIGHT_FLUID_BLOCK.get(), ModFluids.BLIGHT_FLUID_FLOWING.get().getTickDelay(serverLevel));
+    }
+    
+    private int levelToUnits(int level) {
+        int clamped = Math.max(0, Math.min(7, level));
+        return 7 - clamped;
+    }
+    
+    private int unitsToLevel(int units) {
+        int clamped = Math.max(0, Math.min(7, units));
+        return 7 - clamped;
+    }
+    
+    private int additionalUnitsFromSize() {
+        float size = this.getSize();
+        float mediumThreshold = BaseVoxelEntity.DEFAULT_BASE_SIZE * 2.0f;
+        float fullThreshold = BaseVoxelEntity.DEFAULT_BASE_SIZE * 3.0f;
+        if (size >= fullThreshold) {
+            return 7;
+        }
+        if (size >= mediumThreshold) {
+            return 4;
+        }
+        return 1;
+    }
+    
+    private boolean placeBlightFluidWithUnits(BlockPos pos) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        BlockState state = serverLevel.getBlockState(pos);
+        if (!state.isAir() && state.getBlock() != ModFluids.BLIGHT_FLUID_BLOCK.get()) {
+            return false;
+        }
+        int additionalUnits = additionalUnitsFromSize();
+        if (additionalUnits <= 0) {
+            return false;
+        }
+        int existingUnits = 0;
+        if (state.getBlock() == ModFluids.BLIGHT_FLUID_BLOCK.get()) {
+            existingUnits = levelToUnits(state.getValue(LiquidBlock.LEVEL));
+        }
+        int combinedUnits = Math.min(7, existingUnits + additionalUnits);
+        if (combinedUnits == existingUnits) {
+            serverLevel.scheduleTick(pos, ModFluids.BLIGHT_FLUID_BLOCK.get(), ModFluids.BLIGHT_FLUID_FLOWING.get().getTickDelay(serverLevel));
+            return false;
+        }
+        int newLevel = unitsToLevel(combinedUnits);
+        serverLevel.setBlock(pos, ModFluids.BLIGHT_FLUID_BLOCK.get().defaultBlockState().setValue(LiquidBlock.LEVEL, newLevel), 3);
+        serverLevel.scheduleTick(pos, ModFluids.BLIGHT_FLUID_BLOCK.get(), ModFluids.BLIGHT_FLUID_FLOWING.get().getTickDelay(serverLevel));
+        return true;
+    }
 }
+

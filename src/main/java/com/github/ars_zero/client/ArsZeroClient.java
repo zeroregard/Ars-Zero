@@ -12,12 +12,17 @@ import com.github.ars_zero.client.renderer.entity.BlightVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.StoneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WindVoxelEntityRenderer;
+import com.github.ars_zero.client.particle.BlightSplashParticle;
 import com.github.ars_zero.registry.ModEntities;
+import com.github.ars_zero.registry.ModParticles;
 import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
 public class ArsZeroClient {
@@ -51,5 +56,13 @@ public class ArsZeroClient {
     
     @SubscribeEvent
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
+    }
+    
+    @EventBusSubscriber(modid = ArsZero.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    public static class ParticleRegistration {
+        @SubscribeEvent
+        public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
+            event.registerSpriteSet(ModParticles.BLIGHT_SPLASH.get(), BlightSplashParticle.Provider::new);
+        }
     }
 }
