@@ -18,4 +18,9 @@ public class ModSounds {
         "effect_anchor", 
         () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("effect_anchor"))
     );
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> LIGHTNING_VOXEL_HIT = SOUNDS.register(
+        "lightning_voxel_hit", 
+        () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("lightning_voxel_hit"))
+    );
 }

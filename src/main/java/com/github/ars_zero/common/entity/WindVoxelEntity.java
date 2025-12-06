@@ -68,6 +68,12 @@ public class WindVoxelEntity extends BaseVoxelEntity {
             }
         }
         
+        if (!this.level().isClientSide) {
+            Vec3 location = result.getLocation();
+            this.level().playSound(null, location.x, location.y, location.z, 
+                SoundEvents.BREEZE_CHARGE, SoundSource.BLOCKS, 0.5f, 1.0f + this.random.nextFloat() * 0.3f);
+        }
+        
         spawnHitParticles(result.getLocation());
         this.discard();
     }
@@ -86,6 +92,9 @@ public class WindVoxelEntity extends BaseVoxelEntity {
                 spawnWaterAndWindParticles(Vec3.atCenterOf(hitPos));
             } else {
                 spawnWindParticles(Vec3.atCenterOf(hitPos), 12);
+                Vec3 location = blockHit.getLocation();
+                this.level().playSound(null, location.x, location.y, location.z, 
+                    SoundEvents.BREEZE_CHARGE, SoundSource.BLOCKS, 0.4f, 1.0f + this.random.nextFloat() * 0.3f);
             }
         }
     }

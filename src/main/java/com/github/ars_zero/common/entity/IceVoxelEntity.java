@@ -6,6 +6,8 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -99,6 +101,7 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         this(ModEntities.ICE_VOXEL_ENTITY.get(), level);
         this.setPos(x, y, z);
         this.setLifetime(lifetime);
+        this.setNoGravityCustom(false);
     }
     
     @Override
@@ -144,6 +147,11 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         if (BREAKABLE_BLOCKS.contains(block)) {
             breakBlock(pos, state);
         } else {
+            if (!this.level().isClientSide) {
+                Vec3 location = blockHit.getLocation();
+                this.level().playSound(null, location.x, location.y, location.z, 
+                    SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 0.6f, 1.0f + this.random.nextFloat() * 0.3f);
+            }
             spawnHitParticles(blockHit.getLocation());
         }
         
@@ -181,6 +189,10 @@ public class IceVoxelEntity extends BaseVoxelEntity {
             return;
         }
         if (!this.level().isClientSide) {
+            Vec3 location = result.getLocation();
+            this.level().playSound(null, location.x, location.y, location.z, 
+                SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 0.6f, 1.0f + this.random.nextFloat() * 0.3f);
+            
             if (hit instanceof LivingEntity living) {
                 applyImpactDamage(living);
             }

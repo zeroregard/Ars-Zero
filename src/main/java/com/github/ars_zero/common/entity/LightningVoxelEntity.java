@@ -9,9 +9,15 @@ import alexthw.ars_elemental.common.glyphs.EffectDischarge;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import com.github.ars_zero.registry.ModSounds;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
@@ -35,6 +41,7 @@ public class LightningVoxelEntity extends BaseVoxelEntity {
         this(ModEntities.LIGHTNING_VOXEL_ENTITY.get(), level);
         this.setPos(x, y, z);
         this.setLifetime(lifetime);
+        this.setNoGravityCustom(true);
     }
     
     @Override
@@ -53,6 +60,12 @@ public class LightningVoxelEntity extends BaseVoxelEntity {
             return;
         }
         
+        if (!this.level().isClientSide) {
+            Vec3 location = blockHit.getLocation();
+            this.level().playSound(null, location.x, location.y, location.z, 
+                ModSounds.LIGHTNING_VOXEL_HIT.get(), SoundSource.BLOCKS, 0.4f, 2.0f);
+        }
+        
         spawnHitParticles(blockHit.getLocation());
         this.discard();
     }
@@ -65,9 +78,21 @@ public class LightningVoxelEntity extends BaseVoxelEntity {
             return;
         }
         if (!this.level().isClientSide) {
+            Vec3 location = result.getLocation();
+            this.level().playSound(null, location.x, location.y, location.z, 
+                ModSounds.LIGHTNING_VOXEL_HIT.get(), SoundSource.BLOCKS, 0.4f, 2.0f);
+            
             if (hit instanceof LivingEntity living) {
                 applyImpactDamage(living);
                 castDischargeEffect(living);
+                
+                // Charge creepers like lightning does
+                if (hit instanceof Creeper creeper) {
+                    CompoundTag nbt = new CompoundTag();
+                    creeper.saveWithoutId(nbt);
+                    nbt.putBoolean("powered", true);
+                    creeper.load(nbt);
+                }
             }
             spawnHitParticles(result.getLocation());
         }
@@ -121,18 +146,89 @@ public class LightningVoxelEntity extends BaseVoxelEntity {
     public void tick() {
         super.tick();
         
-        if (this.level().isClientSide && this.age % 15 == 0 && this.random.nextInt(3) == 0) {
-            spawnStaticEffect();
+        if (!this.level().isClientSide) {
+            if (this.age % 5 == 0) {
+                spawnAmbientElectricParticles();
+            }
+            if (this.age % 20 == 0 && this.random.nextInt(2) == 0) {
+                spawnStaticBurst();
+            }
+        } else {
+            if (this.age % 8 == 0 && this.random.nextInt(2) == 0) {
+                spawnClientStaticEffect();
+            }
         }
     }
     
-    private void spawnStaticEffect() {
+    private void spawnAmbientElectricParticles() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        
+        float size = this.getSize();
+        int count = 2 + this.random.nextInt(3);
+        
+        for (int i = 0; i < count; i++) {
+            double theta = this.random.nextDouble() * 2 * Math.PI;
+            double phi = this.random.nextDouble() * Math.PI;
+            double radius = size * (0.3 + this.random.nextDouble() * 0.4);
+            
+            double x = this.getX() + radius * Math.sin(phi) * Math.cos(theta);
+            double y = this.getY() + radius * Math.sin(phi) * Math.sin(theta);
+            double z = this.getZ() + radius * Math.cos(phi);
+            
+            double velX = (this.random.nextDouble() - 0.5) * 0.1;
+            double velY = (this.random.nextDouble() - 0.5) * 0.1;
+            double velZ = (this.random.nextDouble() - 0.5) * 0.1;
+            
+            serverLevel.sendParticles(
+                ParticleTypes.ELECTRIC_SPARK,
+                x, y, z,
+                1,
+                velX, velY, velZ,
+                0.03
+            );
+        }
+    }
+    
+    private void spawnStaticBurst() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        
+        float size = this.getSize();
+        int burstCount = 5 + this.random.nextInt(6);
+        
+        for (int i = 0; i < burstCount; i++) {
+            double angle = this.random.nextDouble() * 2 * Math.PI;
+            double distance = size * (0.4 + this.random.nextDouble() * 0.75);
+            double height = (this.random.nextDouble() - 0.5) * size * 0.8;
+            
+            double x = this.getX() + Math.cos(angle) * distance;
+            double y = this.getY() + height;
+            double z = this.getZ() + Math.sin(angle) * distance;
+            
+            double velX = (this.random.nextDouble() - 0.5) * 0.15;
+            double velY = (this.random.nextDouble() - 0.5) * 0.15;
+            double velZ = (this.random.nextDouble() - 0.5) * 0.15;
+            
+            serverLevel.sendParticles(
+                ParticleTypes.ELECTRIC_SPARK,
+                x, y, z,
+                1,
+                velX, velY, velZ,
+                0.05
+            );
+        }
+    }
+    
+    private void spawnClientStaticEffect() {
         if (!(this.level() instanceof net.minecraft.client.multiplayer.ClientLevel clientLevel)) {
             return;
         }
         
         float size = this.getSize();
-        int sparkCount = 3 + this.random.nextInt(4);
+        int sparkCount = 4 + this.random.nextInt(5);
         
         for (int i = 0; i < sparkCount; i++) {
             double angle = this.random.nextDouble() * 2 * Math.PI;
@@ -143,9 +239,9 @@ public class LightningVoxelEntity extends BaseVoxelEntity {
             double y = this.getY() + height;
             double z = this.getZ() + Math.sin(angle) * distance;
             
-            double velX = (this.random.nextDouble() - 0.5) * 0.1;
-            double velY = (this.random.nextDouble() - 0.5) * 0.1;
-            double velZ = (this.random.nextDouble() - 0.5) * 0.1;
+            double velX = (this.random.nextDouble() - 0.5) * 0.2;
+            double velY = (this.random.nextDouble() - 0.5) * 0.2;
+            double velZ = (this.random.nextDouble() - 0.5) * 0.2;
             
             clientLevel.addParticle(
                 ParticleTypes.ELECTRIC_SPARK,
@@ -179,23 +275,7 @@ public class LightningVoxelEntity extends BaseVoxelEntity {
                 location.z + offsetZ,
                 1,
                 velX, velY, velZ,
-                0.05
-            );
-        }
-        
-        for (int i = 0; i < particleCount / 3; i++) {
-            double offsetX = (this.random.nextDouble() - 0.5) * 0.8;
-            double offsetY = (this.random.nextDouble() - 0.5) * 0.6;
-            double offsetZ = (this.random.nextDouble() - 0.5) * 0.8;
-            
-            serverLevel.sendParticles(
-                ParticleTypes.ENCHANT,
-                location.x + offsetX,
-                location.y + offsetY,
-                location.z + offsetZ,
-                0,
-                0.0, 0.0, 0.0,
-                0.0
+                0.02
             );
         }
     }

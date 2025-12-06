@@ -106,9 +106,7 @@ public class VoxelSpawnerBlockEntity extends BlockEntity {
         voxel.setDeltaMovement(0, 0, 0);
         voxel.setPickable(false);
         voxel.setSpawnerOwned(true);
-        if (!(voxel instanceof StoneVoxelEntity) && !(voxel instanceof IceVoxelEntity) && !(voxel instanceof LightningVoxelEntity)) {
-            voxel.setNoGravityCustom(true);
-        }
+        voxel.setNoGravityCustom(true);
         
         level.addFreshEntity(voxel);
         
