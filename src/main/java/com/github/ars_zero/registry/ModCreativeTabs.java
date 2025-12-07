@@ -33,6 +33,7 @@ public class ModCreativeTabs {
                     output.accept(ModItems.STONE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.ICE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.LIGHTNING_VOXEL_SPAWNER.get().getDefaultInstance());
+                    output.accept(ModItems.MULTIPHASE_SPELL_TURRET.get().getDefaultInstance());
                 })
                 .build();
     });

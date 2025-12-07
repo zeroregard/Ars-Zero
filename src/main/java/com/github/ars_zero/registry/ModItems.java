@@ -70,6 +70,16 @@ public class ModItems {
         () -> new BlockItem(ModBlocks.LIGHTNING_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
 
+    public static final DeferredHolder<Item, BlockItem> MULTIPHASE_SPELL_TURRET = ITEMS.register(
+        "multiphase_spell_turret",
+        () -> {
+            ArsZero.LOGGER.info("Registering Multiphase Spell Turret item");
+            BlockItem item = new BlockItem(ModBlocks.MULTIPHASE_SPELL_TURRET.get(), defaultItemProperties());
+            ArsZero.LOGGER.info("Multiphase Spell Turret item created successfully");
+            return item;
+        }
+    );
+
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);
         return new ItemRegistryWrapper<>(ITEMS.register(name, item));
