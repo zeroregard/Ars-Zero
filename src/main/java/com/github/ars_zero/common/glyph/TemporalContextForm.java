@@ -122,21 +122,38 @@ public class TemporalContextForm extends AbstractCastMethod {
             casterPitch = playerCaster.getXRot();
             ItemStack casterTool = spellContext.getCasterTool();
             castContext = AbstractMultiPhaseCastDevice.findContextByStack(playerCaster, casterTool);
+            ArsZero.LOGGER.debug("[TemporalContextForm] Player caster, found context: {}", castContext != null);
         } else if (spellContext.getCaster() instanceof TileCaster tileCaster) {
             BlockEntity tile = tileCaster.getTile();
+            ArsZero.LOGGER.debug("[TemporalContextForm] TileCaster detected, tile type: {}", tile != null ? tile.getClass().getSimpleName() : "null");
             if (tile instanceof MultiphaseSpellTurretTile turretTile) {
                 castContext = turretTile.getCastContext();
+                ArsZero.LOGGER.debug("[TemporalContextForm] Turret tile found, castContext: {}, beginResults size: {}", 
+                    castContext != null, castContext != null ? castContext.beginResults.size() : 0);
                 BlockPos tilePos = turretTile.getBlockPos();
                 casterPos = Vec3.atCenterOf(tilePos);
                 Direction facing = turretTile.getBlockState().getValue(BasicSpellTurret.FACING);
                 casterYaw = directionToYaw(facing);
                 casterPitch = directionToPitch(facing);
+            } else {
+                ArsZero.LOGGER.warn("[TemporalContextForm] TileCaster tile is not MultiphaseSpellTurretTile: {}", tile != null ? tile.getClass().getName() : "null");
             }
+        } else {
+            ArsZero.LOGGER.warn("[TemporalContextForm] Caster is neither Player nor TileCaster: {}", caster != null ? caster.getClass().getName() : "null");
         }
         
-        if (castContext == null || castContext.beginResults.isEmpty()) {
+        if (castContext == null) {
+            ArsZero.LOGGER.debug("[TemporalContextForm] No cast context found, returning FAILURE");
             return CastResolveType.FAILURE;
         }
+        
+        if (castContext.beginResults.isEmpty()) {
+            ArsZero.LOGGER.debug("[TemporalContextForm] Cast context found but beginResults is empty (size: {}), tickResults: {}, endResults: {}", 
+                castContext.beginResults.size(), castContext.tickResults.size(), castContext.endResults.size());
+            return CastResolveType.FAILURE;
+        }
+        
+        ArsZero.LOGGER.debug("[TemporalContextForm] Resolving with {} begin results", castContext.beginResults.size());
         
         for (SpellResult result : castContext.beginResults) {
             resolver.hitResult = result.hitResult;
