@@ -13,6 +13,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentRandomize;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import net.minecraft.util.RandomSource;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
@@ -43,16 +44,24 @@ public class PushEffect extends AbstractEffect {
             return;
         }
         
-        Vec3 lookVec = shooter.getLookAngle();
+        Vec3 pushDirection;
+        if (spellStats.isSensitive()) {
+            Vec3 casterPos = shooter.position().add(0, shooter.getEyeHeight(), 0);
+            Vec3 targetPos = target.position().add(0, target.getBbHeight() / 2, 0);
+            pushDirection = targetPos.subtract(casterPos).normalize();
+        } else {
+            pushDirection = shooter.getLookAngle();
+        }
+        
         int randomizeLevel = spellStats.getBuffCount(AugmentRandomize.INSTANCE);
         if (randomizeLevel > 0) {
-            lookVec = applySpread(lookVec, world.random, randomizeLevel);
+            pushDirection = applySpread(pushDirection, world.random, randomizeLevel);
         }
         
         double baseStrength = 1.5;
         double strength = baseStrength + spellStats.getAmpMultiplier() * 0.5;
         
-        Vec3 velocity = lookVec.scale(strength);
+        Vec3 velocity = pushDirection.scale(strength);
         
         target.setDeltaMovement(velocity);
         target.hurtMarked = true;
@@ -77,7 +86,7 @@ public class PushEffect extends AbstractEffect {
     @NotNull
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
-        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE, AugmentRandomize.INSTANCE);
+        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE, AugmentRandomize.INSTANCE, AugmentSensitive.INSTANCE);
     }
 
     @Override
@@ -86,6 +95,7 @@ public class PushEffect extends AbstractEffect {
         map.put(AugmentAmplify.INSTANCE, "Increases the push strength");
         map.put(AugmentDampen.INSTANCE, "Decreases the push strength");
         map.put(AugmentRandomize.INSTANCE, "Adds spread to the push direction");
+        map.put(AugmentSensitive.INSTANCE, "Pushes from the direction between caster and target entity");
     }
 
     @Override
