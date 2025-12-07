@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
@@ -15,6 +16,7 @@ import com.hollingsworth.arsnouveau.api.spell.CastResolveType;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -61,34 +63,25 @@ public class TemporalContextForm extends AbstractCastMethod {
 
     @Override
     public CastResolveType onCast(ItemStack stack, LivingEntity caster, Level world, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        if (caster instanceof Player player) {
-            return resolveFromStoredContext(world, player, spellContext, resolver);
-        }
-        return CastResolveType.FAILURE;
+        return resolveFromStoredContext(world, caster, spellContext, resolver);
     }
 
     @Override
     public CastResolveType onCastOnBlock(UseOnContext context, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        if (context.getPlayer() instanceof Player player) {
-            return resolveFromStoredContext(context.getLevel(), player, spellContext, resolver);
+        if (context.getPlayer() != null) {
+            return resolveFromStoredContext(context.getLevel(), context.getPlayer(), spellContext, resolver);
         }
         return CastResolveType.FAILURE;
     }
 
     @Override
     public CastResolveType onCastOnBlock(BlockHitResult blockHitResult, LivingEntity caster, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        if (caster instanceof Player player) {
-            return resolveFromStoredContext(caster.getCommandSenderWorld(), player, spellContext, resolver);
-        }
-        return CastResolveType.FAILURE;
+        return resolveFromStoredContext(caster.getCommandSenderWorld(), caster, spellContext, resolver);
     }
 
     @Override
     public CastResolveType onCastOnEntity(ItemStack stack, LivingEntity caster, Entity target, InteractionHand hand, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        if (caster instanceof Player player) {
-            return resolveFromStoredContext(caster.getCommandSenderWorld(), player, spellContext, resolver);
-        }
-        return CastResolveType.FAILURE;
+        return resolveFromStoredContext(caster.getCommandSenderWorld(), caster, spellContext, resolver);
     }
 
     @Override
@@ -113,9 +106,25 @@ public class TemporalContextForm extends AbstractCastMethod {
         return "A form that acts as a marker for temporal context usage. When used in Tick or End phases, it will target the entity or block that was stored in the temporal context from previous phases.";
     }
 
-    private CastResolveType resolveFromStoredContext(Level level, Player player, SpellContext spellContext, SpellResolver resolver) {
-        ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+    private CastResolveType resolveFromStoredContext(Level level, LivingEntity caster, SpellContext spellContext, SpellResolver resolver) {
+        MultiPhaseCastContext castContext = null;
+        Player player = null;
+        
+        if (caster instanceof Player playerCaster) {
+            player = playerCaster;
+            ItemStack casterTool = spellContext.getCasterTool();
+            castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        } else if (spellContext.getCaster() instanceof TileCaster tileCaster) {
+            if (tileCaster.getTile() instanceof MultiphaseSpellTurretTile turretTile) {
+                castContext = turretTile.getCastContext();
+                if (level.getServer() != null) {
+                    UUID ownerUUID = turretTile.getOwnerUUID();
+                    if (ownerUUID != null) {
+                        player = level.getServer().getPlayerList().getPlayer(ownerUUID);
+                    }
+                }
+            }
+        }
         
         if (castContext == null || castContext.beginResults.isEmpty()) {
             return CastResolveType.FAILURE;
@@ -124,7 +133,9 @@ public class TemporalContextForm extends AbstractCastMethod {
         for (SpellResult result : castContext.beginResults) {
             resolver.hitResult = result.hitResult;
             resolver.onResolveEffect(level, result.hitResult);
-            triggerResolveEffects(spellContext, level, player, result);
+            if (player != null) {
+                triggerResolveEffects(spellContext, level, player, result);
+            }
         }
         return CastResolveType.SUCCESS;
     }

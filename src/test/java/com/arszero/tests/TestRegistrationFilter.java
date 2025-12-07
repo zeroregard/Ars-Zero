@@ -23,7 +23,7 @@ public final class TestRegistrationFilter {
         ArcaneVoxelTests.class,
         FireWaterVoxelInteractionBehaviour.class,
         ZeroGravityEffectTests.class,
-        PhasedSpellTurretTests.class
+        MultiphaseSpellTurretTests.class
     );
 
     private static final Map<String, Class<?>> NAME_LOOKUP = buildNameLookup();

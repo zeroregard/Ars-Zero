@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.block;
 
-import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
@@ -23,19 +23,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-public class PhasedSpellTurret extends BasicSpellTurret {
+public class MultiphaseSpellTurret extends BasicSpellTurret {
 
-    public PhasedSpellTurret(BlockBehaviour.Properties properties) {
+    public MultiphaseSpellTurret(BlockBehaviour.Properties properties) {
         super(properties);
     }
 
-    public PhasedSpellTurret() {
+    public MultiphaseSpellTurret() {
         super(defaultProperties().noOcclusion());
     }
 
     @Override
     public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
-        return new PhasedSpellTurretTile(pos, state);
+        return new MultiphaseSpellTurretTile(pos, state);
     }
 
     @Override
@@ -47,21 +47,23 @@ public class PhasedSpellTurret extends BasicSpellTurret {
             return ItemInteractionResult.SUCCESS;
         }
         Item item = stack.getItem();
-        if (item instanceof SpellBook) {
-            PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.phased_turret.multi_phase_required"));
-            return ItemInteractionResult.SUCCESS;
+        if (!(item instanceof AbstractMultiPhaseCastDevice)) {
+            if (item instanceof SpellBook) {
+                PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.multiphase_turret.multi_phase_required"));
+            }
+            return super.useItemOn(stack, state, level, pos, player, handIn, hitResult);
         }
-        if (item instanceof AbstractSpellStaff && level.getBlockEntity(pos) instanceof PhasedSpellTurretTile tile) {
-            configureFromStaff(stack, player, level, pos, tile);
+        if (level.getBlockEntity(pos) instanceof MultiphaseSpellTurretTile tile) {
+            configureFromDevice(stack, player, level, pos, tile);
             return ItemInteractionResult.SUCCESS;
         }
         return super.useItemOn(stack, state, level, pos, player, handIn, hitResult);
     }
 
-    private void configureFromStaff(ItemStack stack, Player player, Level level, BlockPos pos, PhasedSpellTurretTile tile) {
+    private void configureFromDevice(ItemStack stack, Player player, Level level, BlockPos pos, MultiphaseSpellTurretTile tile) {
         AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
         if (caster == null) {
-            PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.phased_turret.no_spell_data"));
+            PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.multiphase_turret.no_spell_data"));
             return;
         }
         int logicalSlot = caster.getCurrentSlot();
@@ -72,14 +74,14 @@ public class PhasedSpellTurret extends BasicSpellTurret {
         Spell tick = copySpell(caster.getSpell(logicalSlot * 3 + 1));
         Spell end = copySpell(caster.getSpell(logicalSlot * 3 + 2));
         if (begin.isEmpty() && tick.isEmpty() && end.isEmpty()) {
-            PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.phased_turret.empty_slot"));
+            PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.multiphase_turret.empty_slot"));
             return;
         }
         UUID owner = player.getUUID();
         tile.configureSpells(begin, tick, end, owner);
         tile.updateBlock();
         level.sendBlockUpdated(pos, tile.getBlockState(), tile.getBlockState(), 2);
-        PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.phased_turret.spell_set"));
+        PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.multiphase_turret.spell_set"));
     }
 
     private static Spell copySpell(Spell spell) {

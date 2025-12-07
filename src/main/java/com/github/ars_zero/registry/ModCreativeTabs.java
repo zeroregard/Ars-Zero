@@ -29,7 +29,7 @@ public class ModCreativeTabs {
                     output.accept(ModItems.ARCANE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.FIRE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.WATER_VOXEL_SPAWNER.get().getDefaultInstance());
-                    output.accept(ModItems.PHASED_SPELL_TURRET.get().getDefaultInstance());
+                    output.accept(ModItems.MULTIPHASE_SPELL_TURRET.get().getDefaultInstance());
                 })
                 .build();
     });

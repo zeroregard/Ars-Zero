@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "ars_zero:phased_spell_turret"
+          "name": "ars_zero:multiphase_spell_turret"
         }
       ],
       "conditions": [

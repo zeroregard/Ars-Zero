@@ -10,7 +10,8 @@ import java.util.UUID;
 public class MultiPhaseCastContext {
     public enum CastSource {
         ITEM,
-        CURIO
+        CURIO,
+        TURRET
     }
     
     public final UUID castId;

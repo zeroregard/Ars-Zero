@@ -1,7 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.block.PhasedSpellTurret;
+import com.github.ars_zero.common.block.MultiphaseSpellTurret;
 import com.github.ars_zero.common.block.VoxelSpawnerBlock;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
@@ -34,9 +34,9 @@ public class ModBlocks {
             .noOcclusion(), VoxelSpawnerBlock.VoxelType.WATER)
     );
 
-    public static final DeferredHolder<Block, PhasedSpellTurret> PHASED_SPELL_TURRET = BLOCKS.register(
-        "phased_spell_turret",
-        () -> new PhasedSpellTurret(BlockBehaviour.Properties.of()
+    public static final DeferredHolder<Block, MultiphaseSpellTurret> MULTIPHASE_SPELL_TURRET = BLOCKS.register(
+        "multiphase_spell_turret",
+        () -> new MultiphaseSpellTurret(BlockBehaviour.Properties.of()
             .strength(2.0f)
             .noOcclusion())
     );

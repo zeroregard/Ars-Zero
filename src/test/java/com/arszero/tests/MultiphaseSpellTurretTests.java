@@ -2,7 +2,7 @@ package com.arszero.tests;
 
 import com.github.ars_zero.ArsZero;
 import com.arszero.tests.ArsZeroTestsMod;
-import com.github.ars_zero.common.block.PhasedSpellTurretTile;
+import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.registry.ModBlocks;
 import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
@@ -28,24 +28,23 @@ import java.util.List;
 
 @GameTestHolder(ArsZero.MOD_ID)
 @PrefixGameTestTemplate(false)
-public class PhasedSpellTurretTests {
+public class MultiphaseSpellTurretTests {
 
     public static void registerGameTests(RegisterGameTestsEvent event) {
-        if (TestRegistrationFilter.shouldRegister(PhasedSpellTurretTests.class)) {
-            event.register(PhasedSpellTurretTests.class);
+        if (TestRegistrationFilter.shouldRegister(MultiphaseSpellTurretTests.class)) {
+            event.register(MultiphaseSpellTurretTests.class);
         }
     }
 
-    // Use a test-local template because the production ars_zero:common/empty_7x7 structure is not bundled with the ars_zero_tests mod at runtime.
-    @GameTest(batch = "PhasedSpellTurretTests", templateNamespace = ArsZeroTestsMod.MOD_ID, template = "phased_turret_pad")
-    public static void phasedTurretCastsBeginTickEnd(GameTestHelper helper) {
+    @GameTest(batch = "MultiphaseSpellTurretTests", templateNamespace = ArsZeroTestsMod.MOD_ID, template = "multiphase_turret_pad")
+    public static void multiphaseTurretCastsBeginTickEnd(GameTestHelper helper) {
         BlockPos turretPos = new BlockPos(3, 1, 3);
         BlockPos turretBase = turretPos.below();
         helper.setBlock(turretBase, Blocks.SMOOTH_STONE.defaultBlockState());
-        helper.setBlock(turretPos, ModBlocks.PHASED_SPELL_TURRET.get().defaultBlockState().setValue(BasicSpellTurret.FACING, Direction.SOUTH));
-        PhasedSpellTurretTile tile = helper.getBlockEntity(turretPos) instanceof PhasedSpellTurretTile phased ? phased : null;
+        helper.setBlock(turretPos, ModBlocks.MULTIPHASE_SPELL_TURRET.get().defaultBlockState().setValue(BasicSpellTurret.FACING, Direction.SOUTH));
+        MultiphaseSpellTurretTile tile = helper.getBlockEntity(turretPos) instanceof MultiphaseSpellTurretTile multiphase ? multiphase : null;
         if (tile == null) {
-            helper.fail("Expected PhasedSpellTurretTile at test position.");
+            helper.fail("Expected MultiphaseSpellTurretTile at test position.");
             return;
         }
         UUID owner = helper.makeMockPlayer(GameType.SURVIVAL).getUUID();
@@ -66,9 +65,9 @@ public class PhasedSpellTurretTests {
         helper.runAtTickTime(1, () -> helper.setBlock(signalPos, Blocks.REDSTONE_BLOCK.defaultBlockState()));
         helper.runAtTickTime(11, () -> helper.setBlock(signalPos, Blocks.SMOOTH_STONE.defaultBlockState()));
         helper.runAtTickTime(25, () -> {
-            List<PhasedSpellTurretTile.PhaseExecution> history = tile.getPhaseHistory();
+            List<MultiphaseSpellTurretTile.PhaseExecution> history = tile.getPhaseHistory();
             if (history.isEmpty()) {
-                helper.fail("Phased turret never recorded a cast.");
+                helper.fail("Multiphase turret never recorded a cast.");
                 return;
             }
             if (history.get(0).phase() != AbstractMultiPhaseCastDevice.Phase.BEGIN) {

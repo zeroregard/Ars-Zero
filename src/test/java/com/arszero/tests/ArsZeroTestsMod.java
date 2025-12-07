@@ -26,8 +26,8 @@ public final class ArsZeroTestsMod {
         if (TestRegistrationFilter.shouldRegister(ZeroGravityEffectTests.class)) {
             modEventBus.addListener(ZeroGravityEffectTests::registerGameTests);
         }
-        if (TestRegistrationFilter.shouldRegister(PhasedSpellTurretTests.class)) {
-            modEventBus.addListener(PhasedSpellTurretTests::registerGameTests);
+        if (TestRegistrationFilter.shouldRegister(MultiphaseSpellTurretTests.class)) {
+            modEventBus.addListener(MultiphaseSpellTurretTests::registerGameTests);
         }
         if (TestRegistrationFilter.shouldRegister(AnchorEffectTests.class)) {
             modEventBus.addListener(AnchorEffectTests::registerGameTests);
