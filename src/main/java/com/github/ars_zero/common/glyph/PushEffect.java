@@ -12,8 +12,8 @@ import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtract;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentRandomize;
-import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import net.minecraft.util.RandomSource;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
@@ -45,7 +45,7 @@ public class PushEffect extends AbstractEffect {
         }
         
         Vec3 pushDirection;
-        if (spellStats.isSensitive()) {
+        if (spellStats.getBuffCount(AugmentExtract.INSTANCE) > 0) {
             Vec3 casterPos = shooter.position().add(0, shooter.getEyeHeight(), 0);
             Vec3 targetPos = target.position().add(0, target.getBbHeight() / 2, 0);
             pushDirection = targetPos.subtract(casterPos).normalize();
@@ -86,7 +86,7 @@ public class PushEffect extends AbstractEffect {
     @NotNull
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
-        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE, AugmentRandomize.INSTANCE, AugmentSensitive.INSTANCE);
+        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE, AugmentRandomize.INSTANCE, AugmentExtract.INSTANCE);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class PushEffect extends AbstractEffect {
         map.put(AugmentAmplify.INSTANCE, "Increases the push strength");
         map.put(AugmentDampen.INSTANCE, "Decreases the push strength");
         map.put(AugmentRandomize.INSTANCE, "Adds spread to the push direction");
-        map.put(AugmentSensitive.INSTANCE, "Pushes from the direction between caster and target entity");
+        map.put(AugmentExtract.INSTANCE, "Pushes from the direction between caster and target entity");
     }
 
     @Override

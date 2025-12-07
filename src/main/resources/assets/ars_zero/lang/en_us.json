@@ -78,7 +78,7 @@
   "ars_nouveau.augment_desc.push_effect_glyph_amplify": "Increases the push strength",
   "ars_nouveau.augment_desc.push_effect_glyph_dampen": "Decreases the push strength",
   "ars_nouveau.augment_desc.push_effect_glyph_randomize": "Adds 10 degrees of spread per Randomize augment",
-  "ars_nouveau.augment_desc.push_effect_glyph_sensitive": "Pushes from the direction between caster and target entity",
+  "ars_nouveau.augment_desc.push_effect_glyph_extract": "Pushes from the direction between caster and target entity",
 
   "ars_nouveau.augment_desc.anchor_effect_glyph_amplify": "Increases the distance from the player",
   "ars_nouveau.augment_desc.anchor_effect_glyph_dampen": "Decreases the distance from the player",
