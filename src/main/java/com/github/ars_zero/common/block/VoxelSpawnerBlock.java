@@ -16,7 +16,11 @@ public class VoxelSpawnerBlock extends Block implements EntityBlock {
     public enum VoxelType {
         ARCANE,
         FIRE,
-        WATER
+        WATER,
+        WIND,
+        STONE,
+        ICE,
+        LIGHTNING
     }
     
     private final VoxelType voxelType;

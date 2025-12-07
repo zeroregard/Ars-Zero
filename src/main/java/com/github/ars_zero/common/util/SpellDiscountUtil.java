@@ -2,16 +2,24 @@ package com.github.ars_zero.common.util;
 
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.List;
 
 public class SpellDiscountUtil {
 
-	public static int computeAdjacentPairCost(Iterable<AbstractSpellPart> recipe, Class<? extends AbstractSpellPart> effectClass) {
+	public static int computeAdjacentPairCost(Iterable<AbstractSpellPart> recipe, List<Class<? extends AbstractSpellPart>> effectClasses) {
 		AbstractSpellPart prev = null;
 		int total = 0;
 		for (AbstractSpellPart part : recipe) {
-			if (prev instanceof ConjureVoxelEffect && effectClass.isInstance(part)) {
-				total += ((ConjureVoxelEffect) prev).getCastingCost();
-				total += part.getCastingCost();
+			if (prev instanceof ConjureVoxelEffect) {
+				for (Class<? extends AbstractSpellPart> effectClass : effectClasses) {
+					if (effectClass.isInstance(part)) {
+						total += ((ConjureVoxelEffect) prev).getCastingCost();
+						total += part.getCastingCost();
+						break;
+					}
+				}
 			}
 			prev = part;
 		}

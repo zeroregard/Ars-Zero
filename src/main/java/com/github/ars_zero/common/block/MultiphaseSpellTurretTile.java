@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.block;
 
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
-import com.github.ars_zero.common.spell.CastPhase;
+import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
 import com.github.ars_zero.registry.ModBlockEntities;
@@ -48,6 +48,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
     private boolean casting;
     private int tickCooldown;
     private int tickIntervalCounter;
+    private int tickDelayOffset = 0;
 
     private MultiPhaseCastContext castContext;
     private UUID ownerUUID;
@@ -152,7 +153,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         tickIntervalCounter = 0;
         tickCooldown = calculateTickCooldown(tickSpell);
         initializeCastContext();
-        castPhase(AbstractMultiPhaseCastDevice.Phase.BEGIN);
+        castPhase(SpellPhase.BEGIN);
     }
 
     private void handleTickCasting() {
@@ -163,18 +164,18 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
             tickIntervalCounter--;
             return;
         }
-        castPhase(AbstractMultiPhaseCastDevice.Phase.TICK);
+        castPhase(SpellPhase.TICK);
         tickIntervalCounter = tickCooldown;
     }
 
     private void finishCasting() {
         casting = false;
         tickIntervalCounter = 0;
-        castPhase(AbstractMultiPhaseCastDevice.Phase.END);
+        castPhase(SpellPhase.END);
         clearCastContext();
     }
 
-    private void castPhase(AbstractMultiPhaseCastDevice.Phase phase) {
+    private void castPhase(SpellPhase phase) {
         Spell spell = switch (phase) {
             case BEGIN -> beginSpell;
             case TICK -> tickSpell;
@@ -185,8 +186,8 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         }
         spellCaster = (SpellCaster) spellCaster.setSpell(spell, 0);
         
-        if (castContext != null && phase == AbstractMultiPhaseCastDevice.Phase.BEGIN) {
-            castContext.currentPhase = AbstractMultiPhaseCastDevice.Phase.BEGIN;
+        if (castContext != null && phase == SpellPhase.BEGIN) {
+            castContext.currentPhase = SpellPhase.BEGIN;
             castContext.isCasting = true;
         }
         
@@ -211,7 +212,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
             return;
         }
         
-        AbstractMultiPhaseCastDevice.Phase currentPhase = castContext != null ? castContext.currentPhase : AbstractMultiPhaseCastDevice.Phase.BEGIN;
+        SpellPhase currentPhase = castContext != null ? castContext.currentPhase : SpellPhase.BEGIN;
         int animationArg = switch (currentPhase) {
             case BEGIN -> 0;
             case TICK -> 1;
@@ -225,17 +226,17 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
                 ? net.neoforged.neoforge.common.util.FakePlayerFactory.get(serverLevel, new com.mojang.authlib.GameProfile(ownerUUID, ""))
                 : com.hollingsworth.arsnouveau.api.ANFakePlayer.getPlayer(serverLevel);
         fakePlayer.setPos(pos.getX(), pos.getY(), pos.getZ());
-        CastPhase castPhase = switch (currentPhase) {
-            case BEGIN -> CastPhase.BEGIN;
-            case TICK -> CastPhase.TICK;
-            case END -> CastPhase.END;
+        SpellPhase spellPhase = switch (currentPhase) {
+            case BEGIN -> SpellPhase.BEGIN;
+            case TICK -> SpellPhase.TICK;
+            case END -> SpellPhase.END;
         };
         
         SpellContext spellContext = new SpellContext(serverLevel, spellCaster.getSpell(), fakePlayer, new TileCaster(this, SpellContext.CasterType.TURRET));
         com.hollingsworth.arsnouveau.api.spell.SpellResolver resolver = new com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver(spellContext);
         
         if (castContext != null && ownerUUID != null) {
-            resolver = new WrappedSpellResolver((com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver) resolver, ownerUUID, castPhase, true);
+            resolver = new WrappedSpellResolver((com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver) resolver, ownerUUID, spellPhase, true);
         }
         
         if (resolver.castType != null && com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.TURRET_BEHAVIOR_MAP.containsKey(resolver.castType)) {
@@ -252,7 +253,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
             return;
         }
         castContext = new MultiPhaseCastContext(ownerUUID, MultiPhaseCastContext.CastSource.TURRET);
-        castContext.currentPhase = AbstractMultiPhaseCastDevice.Phase.BEGIN;
+        castContext.currentPhase = SpellPhase.BEGIN;
         castContext.isCasting = true;
         castContext.beginResults.clear();
         castContext.tickResults.clear();
@@ -260,12 +261,12 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         castContext.createdAt = System.currentTimeMillis();
     }
 
-    private void updateCastContextPhase(AbstractMultiPhaseCastDevice.Phase phase) {
+    private void updateCastContextPhase(SpellPhase phase) {
         if (castContext == null) {
             return;
         }
         castContext.currentPhase = phase;
-        if (phase == AbstractMultiPhaseCastDevice.Phase.TICK) {
+        if (phase == SpellPhase.TICK) {
             castContext.tickCount++;
             castContext.sequenceTick++;
         }
@@ -296,7 +297,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         }
     }
 
-    private void recordPhase(AbstractMultiPhaseCastDevice.Phase phase, Spell spell) {
+    private void recordPhase(SpellPhase phase, Spell spell) {
         if (phaseHistory.size() >= HISTORY_LIMIT) {
             phaseHistory.removeFirst();
         }
@@ -474,6 +475,6 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
     public void startAnimation(int arg) {
     }
 
-    public record PhaseExecution(AbstractMultiPhaseCastDevice.Phase phase, String spellName, long gameTime) {
+    public record PhaseExecution(SpellPhase phase, String spellName, long gameTime) {
     }
 }

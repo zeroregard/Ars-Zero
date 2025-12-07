@@ -77,8 +77,9 @@ public class MultiphaseSpellTurret extends BasicSpellTurret {
             PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.multiphase_turret.empty_slot"));
             return;
         }
+        int tickDelayOffset = AbstractMultiPhaseCastDevice.getSlotTickDelayOffset(stack, logicalSlot);
         UUID owner = player.getUUID();
-        tile.configureSpells(begin, tick, end, owner);
+        tile.configureSpells(begin, tick, end, owner, tickDelayOffset);
         tile.updateBlock();
         level.sendBlockUpdated(pos, tile.getBlockState(), tile.getBlockState(), 2);
         PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.multiphase_turret.spell_set"));

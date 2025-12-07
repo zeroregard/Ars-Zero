@@ -18,22 +18,24 @@ public class ModBlockEntities {
             VoxelSpawnerBlockEntity::new,
             ModBlocks.ARCANE_VOXEL_SPAWNER.get(),
             ModBlocks.FIRE_VOXEL_SPAWNER.get(),
-            ModBlocks.WATER_VOXEL_SPAWNER.get()
+            ModBlocks.WATER_VOXEL_SPAWNER.get(),
+            ModBlocks.WIND_VOXEL_SPAWNER.get(),
+            ModBlocks.STONE_VOXEL_SPAWNER.get(),
+            ModBlocks.ICE_VOXEL_SPAWNER.get(),
+            ModBlocks.LIGHTNING_VOXEL_SPAWNER.get()
         ).build(null)
     );
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MultiphaseSpellTurretTile>> MULTIPHASE_SPELL_TURRET = BLOCK_ENTITIES.register(
         "multiphase_spell_turret",
         () -> {
-            com.github.ars_zero.ArsZero.LOGGER.info("Registering Multiphase Spell Turret block entity type");
+            ArsZero.LOGGER.info("Registering Multiphase Spell Turret block entity type");
             BlockEntityType<MultiphaseSpellTurretTile> type = BlockEntityType.Builder.of(
                 MultiphaseSpellTurretTile::new,
                 ModBlocks.MULTIPHASE_SPELL_TURRET.get()
             ).build(null);
-            com.github.ars_zero.ArsZero.LOGGER.info("Multiphase Spell Turret block entity type created successfully");
+            ArsZero.LOGGER.info("Multiphase Spell Turret block entity type created successfully");
             return type;
         }
     );
 }
-
-

@@ -18,6 +18,14 @@ public class VoxelEntityModel<T extends BaseVoxelEntity> extends GeoModel<T> {
             return ArsZero.prefix("textures/entity/water_voxel.png");
         } else if (animatable instanceof com.github.ars_zero.common.entity.FireVoxelEntity) {
             return ArsZero.prefix("textures/entity/fire_voxel.png");
+        } else if (animatable instanceof com.github.ars_zero.common.entity.StoneVoxelEntity) {
+            return ArsZero.prefix("textures/entity/stone_voxel.png");
+        } else if (animatable instanceof com.github.ars_zero.common.entity.WindVoxelEntity) {
+            return ArsZero.prefix("textures/entity/wind_voxel.png");
+        } else if (animatable instanceof com.github.ars_zero.common.entity.IceVoxelEntity) {
+            return ArsZero.prefix("textures/entity/ice_voxel.png");
+        } else if (animatable instanceof com.github.ars_zero.common.entity.LightningVoxelEntity) {
+            return ArsZero.prefix("textures/entity/lightning_voxel.png");
         }
         return ArsZero.prefix("textures/entity/arcane_voxel.png");
     }

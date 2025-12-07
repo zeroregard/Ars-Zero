@@ -1,0 +1,1047 @@
+diff --git a/src/main/java/com/github/ars_zero/ArsZero.java b/src/main/java/com/github/ars_zero/ArsZero.java
+index 2eb8a6a..8ed5043 100644
+--- a/src/main/java/com/github/ars_zero/ArsZero.java
++++ b/src/main/java/com/github/ars_zero/ArsZero.java
+@@ -10,9 +10,10 @@
+ import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
+ import com.github.ars_zero.common.config.ServerConfig;
+ import com.github.ars_zero.common.event.AnchorEffectEvents;
+-import com.github.ars_zero.common.event.FirePowerCostReductionEvents;
+ import com.github.ars_zero.common.event.GravitySuppressionEvents;
++import com.github.ars_zero.common.event.FirePowerCostReductionEvents;
+ import com.github.ars_zero.common.event.WaterPowerCostReductionEvents;
++import com.github.ars_zero.common.event.WindPowerCostReductionEvents;
+ import com.github.ars_zero.common.event.ZeroGravityMobEffectEvents;
+ import com.github.ars_zero.event.CurioCastingHandler;
+ import com.github.ars_zero.common.network.Networking;
+@@ -70,6 +71,7 @@ public ArsZero(IEventBus modEventBus, ModContainer modContainer) {
+         
+         NeoForge.EVENT_BUS.register(WaterPowerCostReductionEvents.class);
+         NeoForge.EVENT_BUS.register(FirePowerCostReductionEvents.class);
++        NeoForge.EVENT_BUS.register(WindPowerCostReductionEvents.class);
+         NeoForge.EVENT_BUS.register(ZeroGravityMobEffectEvents.class);
+         NeoForge.EVENT_BUS.register(GravitySuppressionEvents.class);
+         NeoForge.EVENT_BUS.register(CurioCastingHandler.class);
+@@ -89,6 +91,16 @@ private static void registerVoxelInteractions() {
+             WaterVoxelEntity.class,
+             new FireWaterInteraction()
+         );
++        VoxelInteractionRegistry.register(
++            com.github.ars_zero.common.entity.WindVoxelEntity.class,
++            FireVoxelEntity.class,
++            new com.github.ars_zero.common.entity.interaction.WindFireInteraction()
++        );
++        VoxelInteractionRegistry.register(
++            com.github.ars_zero.common.entity.WindVoxelEntity.class,
++            WaterVoxelEntity.class,
++            new com.github.ars_zero.common.entity.interaction.WindWaterInteraction()
++        );
+         
+         VoxelInteractionRegistry.register(
+             FireVoxelEntity.class,
+@@ -131,7 +143,6 @@ public void gatherData(net.neoforged.neoforge.data.event.GatherDataEvent event)
+         if (event.includeServer()) {
+             generator.addProvider(true, new com.github.ars_zero.common.datagen.DyeRecipeDatagen(generator));
+             generator.addProvider(true, new com.github.ars_zero.common.datagen.StaffRecipeDatagen(generator));
+-            generator.addProvider(true, new com.github.ars_zero.common.datagen.GlyphRecipeDatagen(generator));
+         }
+     }
+ }
+diff --git a/src/main/java/com/github/ars_zero/client/ArsZeroClient.java b/src/main/java/com/github/ars_zero/client/ArsZeroClient.java
+index 3e154bc..082433b 100644
+--- a/src/main/java/com/github/ars_zero/client/ArsZeroClient.java
++++ b/src/main/java/com/github/ars_zero/client/ArsZeroClient.java
+@@ -7,6 +7,7 @@
+ import com.github.ars_zero.client.renderer.entity.BlockGroupEntityRenderer;
+ import com.github.ars_zero.client.renderer.entity.FireVoxelEntityRenderer;
+ import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
++import com.github.ars_zero.client.renderer.entity.WindVoxelEntityRenderer;
+ import com.github.ars_zero.registry.ModEntities;
+ import net.minecraft.client.renderer.entity.EntityRenderers;
+ import net.neoforged.bus.api.IEventBus;
+@@ -35,6 +36,7 @@ public static void onClientSetup(FMLClientSetupEvent event) {
+             EntityRenderers.register(ModEntities.ARCANE_VOXEL_ENTITY.get(), ArcaneVoxelEntityRenderer::new);
+             EntityRenderers.register(ModEntities.WATER_VOXEL_ENTITY.get(), WaterVoxelEntityRenderer::new);
+             EntityRenderers.register(ModEntities.FIRE_VOXEL_ENTITY.get(), FireVoxelEntityRenderer::new);
++            EntityRenderers.register(ModEntities.WIND_VOXEL_ENTITY.get(), WindVoxelEntityRenderer::new);
+             EntityRenderers.register(ModEntities.BLOCK_GROUP.get(), BlockGroupEntityRenderer::new);
+         });
+     }
+diff --git a/src/main/java/com/github/ars_zero/client/renderer/entity/VoxelEntityModel.java b/src/main/java/com/github/ars_zero/client/renderer/entity/VoxelEntityModel.java
+index d8957fb..61cbc3e 100644
+--- a/src/main/java/com/github/ars_zero/client/renderer/entity/VoxelEntityModel.java
++++ b/src/main/java/com/github/ars_zero/client/renderer/entity/VoxelEntityModel.java
+@@ -18,6 +18,8 @@ public ResourceLocation getTextureResource(T animatable) {
+             return ArsZero.prefix("textures/entity/water_voxel.png");
+         } else if (animatable instanceof com.github.ars_zero.common.entity.FireVoxelEntity) {
+             return ArsZero.prefix("textures/entity/fire_voxel.png");
++        } else if (animatable instanceof com.github.ars_zero.common.entity.WindVoxelEntity) {
++            return ArsZero.prefix("textures/entity/wind_voxel.png");
+         }
+         return ArsZero.prefix("textures/entity/arcane_voxel.png");
+     }
+diff --git a/src/main/java/com/github/ars_zero/client/renderer/entity/WindVoxelEntityRenderer.java b/src/main/java/com/github/ars_zero/client/renderer/entity/WindVoxelEntityRenderer.java
+new file mode 100644
+index 0000000..0a7d3b9
+--- /dev/null
++++ b/src/main/java/com/github/ars_zero/client/renderer/entity/WindVoxelEntityRenderer.java
+@@ -0,0 +1,25 @@
++package com.github.ars_zero.client.renderer.entity;
++
++import com.github.ars_zero.common.entity.WindVoxelEntity;
++import com.mojang.blaze3d.vertex.PoseStack;
++import com.mojang.blaze3d.vertex.VertexConsumer;
++import net.minecraft.client.renderer.MultiBufferSource;
++import net.minecraft.client.renderer.RenderType;
++import net.minecraft.client.renderer.entity.EntityRendererProvider;
++import software.bernie.geckolib.cache.object.BakedGeoModel;
++
++public class WindVoxelEntityRenderer extends VoxelAnimatedRenderer<WindVoxelEntity> {
++    
++    public WindVoxelEntityRenderer(EntityRendererProvider.Context context) {
++        super(context);
++    }
++    
++    @Override
++    public void actuallyRender(PoseStack poseStack, WindVoxelEntity animatable, BakedGeoModel model, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int color) {
++        int alpha = 255;
++        int finalColor = 0xFFFFFF | (alpha << 24);
++        
++        super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, finalColor);
++    }
++}
++
+diff --git a/src/main/java/com/github/ars_zero/common/block/VoxelSpawnerBlock.java b/src/main/java/com/github/ars_zero/common/block/VoxelSpawnerBlock.java
+index 184ea2f..527d04b 100644
+--- a/src/main/java/com/github/ars_zero/common/block/VoxelSpawnerBlock.java
++++ b/src/main/java/com/github/ars_zero/common/block/VoxelSpawnerBlock.java
+@@ -16,7 +16,8 @@ public class VoxelSpawnerBlock extends Block implements EntityBlock {
+     public enum VoxelType {
+         ARCANE,
+         FIRE,
+-        WATER
++        WATER,
++        WIND
+     }
+     
+     private final VoxelType voxelType;
+diff --git a/src/main/java/com/github/ars_zero/common/block/VoxelSpawnerBlockEntity.java b/src/main/java/com/github/ars_zero/common/block/VoxelSpawnerBlockEntity.java
+index 6c56c9d..5312179 100644
+--- a/src/main/java/com/github/ars_zero/common/block/VoxelSpawnerBlockEntity.java
++++ b/src/main/java/com/github/ars_zero/common/block/VoxelSpawnerBlockEntity.java
+@@ -4,6 +4,7 @@
+ import com.github.ars_zero.common.entity.BaseVoxelEntity;
+ import com.github.ars_zero.common.entity.FireVoxelEntity;
+ import com.github.ars_zero.common.entity.WaterVoxelEntity;
++import com.github.ars_zero.common.entity.WindVoxelEntity;
+ import com.github.ars_zero.registry.ModBlockEntities;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.HolderLookup;
+@@ -91,6 +92,7 @@ private void spawnVoxel() {
+         BaseVoxelEntity voxel = switch (voxelType) {
+             case FIRE -> new FireVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
+             case WATER -> new WaterVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
++            case WIND -> new WindVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
+             default -> new ArcaneVoxelEntity(level, x, y, z, Integer.MAX_VALUE);
+         };
+         
+@@ -131,6 +133,7 @@ private void searchForExistingVoxel() {
+                 boolean typeMatches = switch (expectedType) {
+                     case FIRE -> voxel instanceof FireVoxelEntity;
+                     case WATER -> voxel instanceof WaterVoxelEntity;
++                    case WIND -> voxel instanceof WindVoxelEntity;
+                     case ARCANE -> voxel instanceof ArcaneVoxelEntity;
+                 };
+                 
+diff --git a/src/main/java/com/github/ars_zero/common/entity/WindVoxelEntity.java b/src/main/java/com/github/ars_zero/common/entity/WindVoxelEntity.java
+new file mode 100644
+index 0000000..be17155
+--- /dev/null
++++ b/src/main/java/com/github/ars_zero/common/entity/WindVoxelEntity.java
+@@ -0,0 +1,154 @@
++package com.github.ars_zero.common.entity;
++
++import com.github.ars_zero.registry.ModEntities;
++import net.minecraft.core.BlockPos;
++import net.minecraft.core.particles.ParticleOptions;
++import net.minecraft.core.particles.ParticleTypes;
++import net.minecraft.server.level.ServerLevel;
++import net.minecraft.sounds.SoundEvents;
++import net.minecraft.sounds.SoundSource;
++import net.minecraft.world.entity.EntityType;
++import net.minecraft.world.entity.LivingEntity;
++import net.minecraft.world.entity.item.ItemEntity;
++import net.minecraft.world.level.Level;
++import net.minecraft.world.level.block.Blocks;
++import net.minecraft.world.level.block.state.BlockState;
++import net.minecraft.world.phys.BlockHitResult;
++import net.minecraft.world.phys.EntityHitResult;
++import net.minecraft.world.phys.Vec3;
++
++public class WindVoxelEntity extends BaseVoxelEntity {
++    
++    public WindVoxelEntity(EntityType<? extends WindVoxelEntity> entityType, Level level) {
++        super(entityType, level);
++    }
++    
++    public WindVoxelEntity(Level level, double x, double y, double z, int lifetime) {
++        this(ModEntities.WIND_VOXEL_ENTITY.get(), level);
++        this.setPos(x, y, z);
++        this.setLifetime(lifetime);
++    }
++    
++    @Override
++    public int getColor() {
++        return 0xA7E6FF;
++    }
++    
++    @Override
++    public boolean isEmissive() {
++        return false;
++    }
++    
++    protected net.minecraft.sounds.SoundEvent getSpawnSound() {
++        return null;
++    }
++    
++    @Override
++    protected void onHitEntity(EntityHitResult result) {
++        if (result.getEntity() instanceof BaseVoxelEntity) {
++            super.onHitEntity(result);
++            return;
++        }
++        
++        Vec3 push = this.getDeltaMovement();
++        if (!push.equals(Vec3.ZERO)) {
++            if (result.getEntity() instanceof LivingEntity living) {
++                Vec3 current = living.getDeltaMovement();
++                living.setDeltaMovement(current.add(push));
++                living.hurtMarked = true;
++            } else if (result.getEntity() instanceof ItemEntity itemEntity) {
++                Vec3 current = itemEntity.getDeltaMovement();
++                itemEntity.setDeltaMovement(current.add(push));
++                itemEntity.hasImpulse = true;
++                itemEntity.setPickUpDelay(10);
++            } else {
++                Vec3 current = result.getEntity().getDeltaMovement();
++                result.getEntity().setDeltaMovement(current.add(push));
++                result.getEntity().hasImpulse = true;
++            }
++        }
++        
++        spawnHitParticles(result.getLocation());
++        this.discard();
++    }
++    
++    @Override
++    protected void onBlockCollision(BlockHitResult blockHit) {
++        BlockPos hitPos = blockHit.getBlockPos();
++        BlockState state = this.level().getBlockState(hitPos);
++        
++        if (!this.level().isClientSide) {
++            if (state.is(Blocks.FIRE)) {
++                spawnFireAndWindParticles(Vec3.atCenterOf(hitPos));
++                this.level().explode(this, this.getX(), this.getY(), this.getZ(), 1.5f, Level.ExplosionInteraction.TNT);
++                ((ServerLevel)this.level()).playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 0.8f, 1.2f);
++            } else if (state.getFluidState().isSourceOfType(net.minecraft.world.level.material.Fluids.WATER) || state.is(Blocks.WATER)) {
++                spawnWaterAndWindParticles(Vec3.atCenterOf(hitPos));
++            } else {
++                spawnWindParticles(Vec3.atCenterOf(hitPos), 12);
++            }
++        }
++    }
++    
++    @Override
++    protected void spawnHitParticles(Vec3 location) {
++        if (!this.level().isClientSide) {
++            spawnWindParticles(location, 20);
++        }
++    }
++    
++    @Override
++    protected ParticleOptions getAmbientParticle() {
++        return ParticleTypes.CLOUD;
++    }
++    
++    @Override
++    public void tick() {
++        this.setNoGravityCustom(true);
++        super.tick();
++        if (!this.level().isClientSide) {
++            Vec3 motion = this.getDeltaMovement();
++            double speed = motion.length();
++            if (speed > 0.05) {
++                int count = Math.min(6, (int)Math.ceil(speed * 10));
++                for (int i = 0; i < count; i++) {
++                    double ox = (this.random.nextDouble() - 0.5) * 0.2;
++                    double oy = (this.random.nextDouble() - 0.5) * 0.2;
++                    double oz = (this.random.nextDouble() - 0.5) * 0.2;
++                    ((ServerLevel)this.level()).sendParticles(ParticleTypes.CLOUD, this.getX() + ox, this.getY() + oy, this.getZ() + oz, 1, 0.0, 0.0, 0.0, 0.01);
++                }
++            }
++        }
++    }
++    
++    private void spawnWindParticles(Vec3 location, int count) {
++        for (int i = 0; i < count; i++) {
++            double ox = (this.random.nextDouble() - 0.5) * 0.4;
++            double oy = (this.random.nextDouble() - 0.5) * 0.4;
++            double oz = (this.random.nextDouble() - 0.5) * 0.4;
++            ((ServerLevel)this.level()).sendParticles(ParticleTypes.CLOUD, location.x + ox, location.y + oy, location.z + oz, 1, 0.0, 0.0, 0.0, 0.01);
++        }
++    }
++    
++    private void spawnFireAndWindParticles(Vec3 location) {
++        spawnWindParticles(location, 16);
++        for (int i = 0; i < 10; i++) {
++            double ox = (this.random.nextDouble() - 0.5) * 0.3;
++            double oy = (this.random.nextDouble() - 0.5) * 0.3;
++            double oz = (this.random.nextDouble() - 0.5) * 0.3;
++            ((ServerLevel)this.level()).sendParticles(ParticleTypes.FLAME, location.x + ox, location.y + oy, location.z + oz, 1, 0.0, 0.0, 0.0, 0.0);
++        }
++    }
++    
++    private void spawnWaterAndWindParticles(Vec3 location) {
++        spawnWindParticles(location, 16);
++        for (int i = 0; i < 10; i++) {
++            double ox = (this.random.nextDouble() - 0.5) * 0.3;
++            double oy = (this.random.nextDouble() - 0.5) * 0.3;
++            double oz = (this.random.nextDouble() - 0.5) * 0.3;
++            ((ServerLevel)this.level()).sendParticles(ParticleTypes.SPLASH, location.x + ox, location.y + oy, location.z + oz, 1, 0.0, 0.0, 0.0, 0.1);
++        }
++    }
++}
++
++
+diff --git a/src/main/java/com/github/ars_zero/common/entity/interaction/WindFireInteraction.java b/src/main/java/com/github/ars_zero/common/entity/interaction/WindFireInteraction.java
+new file mode 100644
+index 0000000..8f81567
+--- /dev/null
++++ b/src/main/java/com/github/ars_zero/common/entity/interaction/WindFireInteraction.java
+@@ -0,0 +1,29 @@
++package com.github.ars_zero.common.entity.interaction;
++
++import com.github.ars_zero.common.entity.BaseVoxelEntity;
++import com.github.ars_zero.common.entity.FireVoxelEntity;
++import com.github.ars_zero.common.entity.WindVoxelEntity;
++import net.minecraft.core.particles.ParticleTypes;
++import net.minecraft.sounds.SoundEvents;
++
++public class WindFireInteraction implements VoxelInteraction {
++    
++    @Override
++    public boolean shouldInteract(BaseVoxelEntity primary, BaseVoxelEntity secondary) {
++        return (primary instanceof WindVoxelEntity && secondary instanceof FireVoxelEntity) ||
++               (primary instanceof FireVoxelEntity && secondary instanceof WindVoxelEntity);
++    }
++    
++    @Override
++    public VoxelInteractionResult interact(BaseVoxelEntity primary, BaseVoxelEntity secondary) {
++        return VoxelInteractionResult.builder(primary.position())
++            .particles(ParticleTypes.CLOUD, 20)
++            .particles(ParticleTypes.FLAME, 10)
++            .sound(SoundEvents.GENERIC_EXPLODE.value())
++            .primaryAction(VoxelInteractionResult.ActionType.DISCARD)
++            .secondaryAction(VoxelInteractionResult.ActionType.DISCARD)
++            .build();
++    }
++}
++
++
+diff --git a/src/main/java/com/github/ars_zero/common/entity/interaction/WindWaterInteraction.java b/src/main/java/com/github/ars_zero/common/entity/interaction/WindWaterInteraction.java
+new file mode 100644
+index 0000000..b5d0ba2
+--- /dev/null
++++ b/src/main/java/com/github/ars_zero/common/entity/interaction/WindWaterInteraction.java
+@@ -0,0 +1,29 @@
++package com.github.ars_zero.common.entity.interaction;
++
++import com.github.ars_zero.common.entity.BaseVoxelEntity;
++import com.github.ars_zero.common.entity.WaterVoxelEntity;
++import com.github.ars_zero.common.entity.WindVoxelEntity;
++import net.minecraft.core.particles.ParticleTypes;
++import net.minecraft.sounds.SoundEvents;
++
++public class WindWaterInteraction implements VoxelInteraction {
++    
++    @Override
++    public boolean shouldInteract(BaseVoxelEntity primary, BaseVoxelEntity secondary) {
++        return (primary instanceof WindVoxelEntity && secondary instanceof WaterVoxelEntity) ||
++               (primary instanceof WaterVoxelEntity && secondary instanceof WindVoxelEntity);
++    }
++    
++    @Override
++    public VoxelInteractionResult interact(BaseVoxelEntity primary, BaseVoxelEntity secondary) {
++        return VoxelInteractionResult.builder(primary.position())
++            .particles(ParticleTypes.CLOUD, 16)
++            .particles(ParticleTypes.SPLASH, 10)
++            .sound(SoundEvents.BUCKET_FILL)
++            .primaryAction(VoxelInteractionResult.ActionType.CONTINUE)
++            .secondaryAction(VoxelInteractionResult.ActionType.CONTINUE)
++            .build();
++    }
++}
++
++
+diff --git a/src/main/java/com/github/ars_zero/common/event/WindPowerCostReductionEvents.java b/src/main/java/com/github/ars_zero/common/event/WindPowerCostReductionEvents.java
+new file mode 100644
+index 0000000..edbad0b
+--- /dev/null
++++ b/src/main/java/com/github/ars_zero/common/event/WindPowerCostReductionEvents.java
+@@ -0,0 +1,54 @@
++package com.github.ars_zero.common.event;
++
++import com.alexthw.sauce.registry.ModRegistry;
++import com.github.ars_zero.common.util.SpellDiscountUtil;
++import com.hollingsworth.arsnouveau.api.event.SpellCostCalcEvent;
++import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
++import com.hollingsworth.arsnouveau.common.spell.effect.EffectWindshear;
++import net.minecraft.world.entity.ai.attributes.AttributeInstance;
++import net.minecraft.world.entity.player.Player;
++import net.neoforged.bus.api.SubscribeEvent;
++import net.neoforged.neoforge.common.util.FakePlayer;
++
++public class WindPowerCostReductionEvents {
++    
++    @SubscribeEvent
++    public static void onSpellCostCalcPre(SpellCostCalcEvent.Pre event) {
++        applyCostReduction(event);
++    }
++    
++    @SubscribeEvent
++    public static void onSpellCostCalcPost(SpellCostCalcEvent.Post event) {
++        applyCostReduction(event);
++    }
++    
++    private static void applyCostReduction(SpellCostCalcEvent event) {
++        if (!(event.context.getCaster() instanceof LivingCaster caster)) {
++            return;
++        }
++        if (!(caster.livingEntity instanceof Player player)) {
++            return;
++        }
++        if (player instanceof FakePlayer) {
++            return;
++        }
++        int adjacentPairCost = SpellDiscountUtil.computeAdjacentPairCost(event.context.getSpell().recipe(), EffectWindshear.class);
++        if (adjacentPairCost <= 0) {
++            return;
++        }
++        AttributeInstance airPower = player.getAttribute(ModRegistry.AIR_POWER);
++        if (airPower == null) {
++            return;
++        }
++        double power = airPower.getValue();
++        if (power <= 0) {
++            return;
++        }
++        double reductionPercent = SpellDiscountUtil.computeReductionPercent(power);
++        int reducibleBase = Math.min(adjacentPairCost, event.currentCost);
++        int totalReduction = (int) Math.ceil(reducibleBase * reductionPercent / 100.0);
++        event.currentCost = Math.max(0, event.currentCost - totalReduction);
++    }
++}
++
++
+diff --git a/src/main/java/com/github/ars_zero/common/glyph/ConjureVoxelEffect.java b/src/main/java/com/github/ars_zero/common/glyph/ConjureVoxelEffect.java
+index 8f125ab..88e3b07 100644
+--- a/src/main/java/com/github/ars_zero/common/glyph/ConjureVoxelEffect.java
++++ b/src/main/java/com/github/ars_zero/common/glyph/ConjureVoxelEffect.java
+@@ -5,6 +5,7 @@
+ import com.github.ars_zero.common.entity.BaseVoxelEntity;
+ import com.github.ars_zero.common.entity.FireVoxelEntity;
+ import com.github.ars_zero.common.entity.WaterVoxelEntity;
++import com.github.ars_zero.common.entity.WindVoxelEntity;
+ import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+ import com.github.ars_zero.common.item.AbstractSpellStaff;
+ import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
+@@ -26,6 +27,7 @@
+ import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSplit;
+ import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
+ import com.hollingsworth.arsnouveau.common.spell.effect.EffectIgnite;
++import com.hollingsworth.arsnouveau.common.spell.effect.EffectWindshear;
+ import com.alexthw.sauce.registry.ModRegistry;
+ import net.minecraft.resources.ResourceLocation;
+ import net.minecraft.server.level.ServerLevel;
+@@ -51,7 +53,8 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
+     private static final float AMPLIFY_SIZE_STEP = BaseVoxelEntity.DEFAULT_BASE_SIZE;
+     private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[]{
+         EffectConjureWater.INSTANCE.getRegistryName(),
+-        EffectIgnite.INSTANCE.getRegistryName()
++        EffectIgnite.INSTANCE.getRegistryName(),
++        EffectWindshear.INSTANCE.getRegistryName()
+     };
+ 
+     public ConjureVoxelEffect() {
+@@ -102,7 +105,7 @@ public void onResolveEntity(EntityHitResult rayTraceResult, Level world, @NotNul
+                     waterVoxel.setCasterWaterPower(waterPower);
+                 }
+                 
+-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
++                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
+                     voxel.setNoGravityCustom(true);
+                 }
+                 
+@@ -219,6 +222,7 @@ private void createSplitVoxels(ServerLevel level, double x, double y, double z,
+             SpellContext peekContext = context.clone();
+             boolean hasWater = false;
+             boolean hasFire = false;
++            boolean hasWind = false;
+             
+             while (peekContext.hasNextPart()) {
+                 AbstractSpellPart next = peekContext.nextPart();
+@@ -226,9 +230,15 @@ private void createSplitVoxels(ServerLevel level, double x, double y, double z,
+                     if (next == EffectConjureWater.INSTANCE) {
+                         hasWater = true;
+                         hasFire = false;
++                        hasWind = false;
+                     } else if (next == EffectIgnite.INSTANCE) {
+                         hasFire = true;
+                         hasWater = false;
++                        hasWind = false;
++                    } else if (next == EffectWindshear.INSTANCE) {
++                        hasWind = true;
++                        hasWater = false;
++                        hasFire = false;
+                     }
+                     break;
+                 }
+@@ -238,7 +248,7 @@ private void createSplitVoxels(ServerLevel level, double x, double y, double z,
+             Vec3 lookDirection = shooter.getLookAngle();
+             java.util.List<Vec3> positions = MathHelper.getCirclePositions(center, lookDirection, circleRadius, entityCount);
+             
+-            isArcane = !hasWater && !hasFire;
++            isArcane = !hasWater && !hasFire && !hasWind;
+             SpellContext newContext = null;
+             
+             if (isArcane) {
+@@ -252,6 +262,8 @@ private void createSplitVoxels(ServerLevel level, double x, double y, double z,
+                     voxel = new WaterVoxelEntity(level, pos.x, pos.y, pos.z, duration);
+                 } else if (hasFire) {
+                     voxel = new FireVoxelEntity(level, pos.x, pos.y, pos.z, duration);
++                } else if (hasWind) {
++                    voxel = new WindVoxelEntity(level, pos.x, pos.y, pos.z, duration);
+                 } else {
+                     voxel = new ArcaneVoxelEntity(level, pos.x, pos.y, pos.z, duration);
+                 }
+@@ -269,7 +281,7 @@ private void createSplitVoxels(ServerLevel level, double x, double y, double z,
+                     voxel.setResolver(null);
+                 }
+                 
+-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity) {
++                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity) {
+                     voxel.setNoGravityCustom(true);
+                 }
+                 
+@@ -292,11 +304,12 @@ private void createSplitVoxels(ServerLevel level, double x, double y, double z,
+     private BaseVoxelEntity createVoxel(ServerLevel level, double x, double y, double z, int duration, SpellContext context) {
+         boolean hasWater = false;
+         boolean hasFire = false;
++        boolean hasWind = false;
+         
+         SpellContext peekContext = context.clone();
+         while (peekContext.hasNextPart()) {
+             AbstractSpellPart next = peekContext.nextPart();
+-            if (next instanceof AbstractEffect) {
++                if (next instanceof AbstractEffect) {
+                 if (next == EffectConjureWater.INSTANCE) {
+                     hasWater = true;
+                     while (context.hasNextPart()) {
+@@ -313,6 +326,14 @@ private BaseVoxelEntity createVoxel(ServerLevel level, double x, double y, doubl
+                             break;
+                         }
+                     }
++                } else if (next == EffectWindshear.INSTANCE) {
++                    hasWind = true;
++                    while (context.hasNextPart()) {
++                        AbstractSpellPart consumed = context.nextPart();
++                        if (consumed == EffectWindshear.INSTANCE) {
++                            break;
++                        }
++                    }
+                 }
+                 break;
+             }
+@@ -323,6 +344,8 @@ private BaseVoxelEntity createVoxel(ServerLevel level, double x, double y, doubl
+             result = new WaterVoxelEntity(level, x, y, z, duration);
+         } else if (hasFire) {
+             result = new FireVoxelEntity(level, x, y, z, duration);
++        } else if (hasWind) {
++            result = new WindVoxelEntity(level, x, y, z, duration);
+         } else {
+             result = new ArcaneVoxelEntity(level, x, y, z, duration);
+         }
+@@ -448,7 +471,7 @@ public void addAugmentDescriptions(Map<AbstractAugment, String> map) {
+ 
+     @Override
+     public String getBookDescription() {
+-        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water' & 'Ignite'";
++        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water', 'Ignite', & 'Wind Shear'";
+     }
+ 
+     @Override
+diff --git a/src/main/java/com/github/ars_zero/registry/ModBlockEntities.java b/src/main/java/com/github/ars_zero/registry/ModBlockEntities.java
+index 8a32759..930919f 100644
+--- a/src/main/java/com/github/ars_zero/registry/ModBlockEntities.java
++++ b/src/main/java/com/github/ars_zero/registry/ModBlockEntities.java
+@@ -17,7 +17,8 @@ public class ModBlockEntities {
+             VoxelSpawnerBlockEntity::new,
+             ModBlocks.ARCANE_VOXEL_SPAWNER.get(),
+             ModBlocks.FIRE_VOXEL_SPAWNER.get(),
+-            ModBlocks.WATER_VOXEL_SPAWNER.get()
++            ModBlocks.WATER_VOXEL_SPAWNER.get(),
++            ModBlocks.WIND_VOXEL_SPAWNER.get()
+         ).build(null)
+     );
+ }
+diff --git a/src/main/java/com/github/ars_zero/registry/ModBlocks.java b/src/main/java/com/github/ars_zero/registry/ModBlocks.java
+index f37319b..dbae38d 100644
+--- a/src/main/java/com/github/ars_zero/registry/ModBlocks.java
++++ b/src/main/java/com/github/ars_zero/registry/ModBlocks.java
+@@ -32,6 +32,13 @@ public class ModBlocks {
+             .strength(2.0f)
+             .noOcclusion(), VoxelSpawnerBlock.VoxelType.WATER)
+     );
++    
++    public static final DeferredHolder<Block, VoxelSpawnerBlock> WIND_VOXEL_SPAWNER = BLOCKS.register(
++        "wind_voxel_spawner",
++        () -> new VoxelSpawnerBlock(BlockBehaviour.Properties.of()
++            .strength(2.0f)
++            .noOcclusion(), VoxelSpawnerBlock.VoxelType.WIND)
++    );
+ }
+ 
+ 
+diff --git a/src/main/java/com/github/ars_zero/registry/ModEntities.java b/src/main/java/com/github/ars_zero/registry/ModEntities.java
+index da670a7..c4772dd 100644
+--- a/src/main/java/com/github/ars_zero/registry/ModEntities.java
++++ b/src/main/java/com/github/ars_zero/registry/ModEntities.java
+@@ -6,6 +6,7 @@
+ import com.github.ars_zero.common.entity.BlockGroupEntity;
+ import com.github.ars_zero.common.entity.FireVoxelEntity;
+ import com.github.ars_zero.common.entity.WaterVoxelEntity;
++import com.github.ars_zero.common.entity.WindVoxelEntity;
+ import net.minecraft.core.registries.BuiltInRegistries;
+ import net.minecraft.world.entity.EntityType;
+ import net.minecraft.world.entity.MobCategory;
+@@ -46,6 +47,16 @@ public class ModEntities {
+                     .build(ArsZero.MOD_ID + ":fire_voxel_entity")
+     );
+     
++    public static final DeferredHolder<EntityType<?>, EntityType<WindVoxelEntity>> WIND_VOXEL_ENTITY = ENTITIES.register(
++            "wind_voxel_entity",
++            () -> EntityType.Builder.<WindVoxelEntity>of(WindVoxelEntity::new, MobCategory.MISC)
++                    .sized(BaseVoxelEntity.DEFAULT_BASE_SIZE, BaseVoxelEntity.DEFAULT_BASE_SIZE)
++                    .clientTrackingRange(64)
++                    .updateInterval(1)
++                    .setShouldReceiveVelocityUpdates(true)
++                    .build(ArsZero.MOD_ID + ":wind_voxel_entity")
++    );
++    
+     public static final DeferredHolder<EntityType<?>, EntityType<BlockGroupEntity>> BLOCK_GROUP = ENTITIES.register(
+             "block_group",
+             () -> EntityType.Builder.<BlockGroupEntity>of(BlockGroupEntity::new, MobCategory.MISC)
+diff --git a/src/main/resources/assets/ars_zero/lang/en_us.json b/src/main/resources/assets/ars_zero/lang/en_us.json
+index 045b8a6..0b4129a 100644
+--- a/src/main/resources/assets/ars_zero/lang/en_us.json
++++ b/src/main/resources/assets/ars_zero/lang/en_us.json
+@@ -21,10 +21,12 @@
+   "block.ars_zero.arcane_voxel_spawner": "Arcane Voxel Spawner",
+   "block.ars_zero.fire_voxel_spawner": "Fire Voxel Spawner",
+   "block.ars_zero.water_voxel_spawner": "Water Voxel Spawner",
++  "block.ars_zero.wind_voxel_spawner": "Wind Voxel Spawner",
+ 
+   "entity.ars_zero.arcane_voxel_entity": "Arcane Voxel",
+   "entity.ars_zero.water_voxel_entity": "Water Voxel",
+   "entity.ars_zero.fire_voxel_entity": "Fire Voxel",
++  "entity.ars_zero.wind_voxel_entity": "Wind Voxel",
+   "entity.ars_zero.block_group": "Block Group",
+ 
+   "gui.ars_zero.staff_title": "Creative Spell Staff",
+@@ -46,6 +48,8 @@
+ 
+   "ars_zero.glyph_name.conjure_voxel_effect": "Conjure Voxel",
+   "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity",
++  "ars_zero.glyph_name.effect_windshear": "Wind Shear",
++  "ars_zero.glyph_desc.effect_windshear": "Conjures a wind voxel when used with Conjure Voxel",
+ 
+   "ars_zero.glyph_name.select_effect": "Select",
+   "ars_zero.glyph_desc.select_effect": "Selects a target entity or block without performing any action.",
+@@ -76,6 +80,7 @@
+   "ars_nouveau.augment_desc.zero_gravity_effect_glyph_duration_down": "Reduces the gravity suppression duration",
+   "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_conjure_water": "Composite Effect: Conjure Water Voxel",
+   "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_ignite": "Composite Effect: Conjure Fire Voxel",
++  "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_windshear": "Composite Effect: Conjure Wind Voxel",
+ 
+   "ars_zero.glyph_name.temporal_context_form": "Temporal Context",
+   "ars_zero.glyph_desc.temporal_context_form": "A cast method that provides access to the context of the previous spell phase (Staff only)",
+@@ -94,7 +99,7 @@
+   "ars_zero.glyph_desc.push_effect": "Pushes the target in the direction you're looking.",
+ 
+   "ars_zero.glyph_name.enlarge_effect": "Enlarge",
+-  "ars_zero.glyph_desc.enlarge_effect": "Increases the size of the target entity",
++  "ars_zero.glyph_desc.enlarge_effect": "Increases the size of the target entity [NB: only works on Voxels so far]",
+ 
+   "ars_zero.glyph_name.zero_gravity_effect": "Remove Gravity",
+   "ars_zero.glyph_desc.zero_gravity_effect": "Temporarily removes gravity from the target, restoring it once the effect ends.",
+diff --git a/src/main/resources/assets/ars_zero/textures/entity/wind_voxel.png b/src/main/resources/assets/ars_zero/textures/entity/wind_voxel.png
+new file mode 100644
+index 0000000..a5cb3a9
+Binary files /dev/null and b/src/main/resources/assets/ars_zero/textures/entity/wind_voxel.png differ
+diff --git a/src/test/java/com/arszero/tests/TestRegistrationFilter.java b/src/test/java/com/arszero/tests/TestRegistrationFilter.java
+index 9ad549a..474966a 100644
+--- a/src/test/java/com/arszero/tests/TestRegistrationFilter.java
++++ b/src/test/java/com/arszero/tests/TestRegistrationFilter.java
+@@ -22,7 +22,9 @@ public final class TestRegistrationFilter {
+         FireVoxelTests.class,
+         ArcaneVoxelTests.class,
+         FireWaterVoxelInteractionBehaviour.class,
+-        ZeroGravityEffectTests.class
++        ZeroGravityEffectTests.class,
++        WindVoxelWorldInteractionBehaviour.class,
++        WindVoxelInteractionBehaviour.class
+     );
+ 
+     private static final Map<String, Class<?>> NAME_LOOKUP = buildNameLookup();
+diff --git a/src/test/java/com/arszero/tests/WindVoxelInteractionBehaviour.java b/src/test/java/com/arszero/tests/WindVoxelInteractionBehaviour.java
+new file mode 100644
+index 0000000..c5da046
+--- /dev/null
++++ b/src/test/java/com/arszero/tests/WindVoxelInteractionBehaviour.java
+@@ -0,0 +1,125 @@
++package com.arszero.tests;
++
++import com.github.ars_zero.ArsZero;
++import com.github.ars_zero.common.entity.FireVoxelEntity;
++import com.github.ars_zero.common.entity.WaterVoxelEntity;
++import com.github.ars_zero.common.entity.WindVoxelEntity;
++import com.github.ars_zero.registry.ModEntities;
++import java.util.concurrent.atomic.AtomicBoolean;
++import net.minecraft.core.BlockPos;
++import net.minecraft.gametest.framework.GameTest;
++import net.minecraft.gametest.framework.GameTestHelper;
++import net.minecraft.server.level.ServerLevel;
++import net.minecraft.world.level.block.Blocks;
++import net.minecraft.world.phys.Vec3;
++import net.neoforged.neoforge.event.RegisterGameTestsEvent;
++import net.neoforged.neoforge.gametest.GameTestHolder;
++import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
++
++@GameTestHolder(ArsZero.MOD_ID)
++@PrefixGameTestTemplate(false)
++public class WindVoxelInteractionBehaviour {
++    private static final BlockPos CENTER_RELATIVE = new BlockPos(2, 1, 2);
++    private static final int DEFAULT_LIFETIME = 200;
++    private static final int COLLISION_TIMEOUT = 200;
++    private static final float DEFAULT_SIZE = 0.25f;
++    
++    public static void registerGameTests(RegisterGameTestsEvent event) {
++        if (TestRegistrationFilter.shouldRegister(WindVoxelInteractionBehaviour.class)) {
++            event.register(WindVoxelInteractionBehaviour.class);
++        }
++    }
++    
++    @GameTest(batch = "WindVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
++    public static void windAndFireDiscardOnCollision(GameTestHelper helper) {
++        helper.setBlock(CENTER_RELATIVE.below(), Blocks.STONE.defaultBlockState());
++        
++        WindVoxelEntity wind = createWind(helper, DEFAULT_SIZE);
++        FireVoxelEntity fire = createFire(helper, DEFAULT_SIZE);
++        if (wind == null || fire == null) return;
++        
++        BlockPos left = helper.absolutePos(CENTER_RELATIVE.offset(-1, 0, 2));
++        BlockPos right = helper.absolutePos(CENTER_RELATIVE.offset(1, 0, 2));
++        
++        VoxelTestUtils.spawnVoxel(helper, wind, left, new Vec3(0.2D, 0.0D, 0.0D), DEFAULT_LIFETIME);
++        VoxelTestUtils.spawnVoxel(helper, fire, right, new Vec3(-0.2D, 0.0D, 0.0D), DEFAULT_LIFETIME);
++        
++        AtomicBoolean seenWind = new AtomicBoolean(wind.isAlive());
++        VoxelTestUtils.awaitVoxelRemoval(
++            helper,
++            wind,
++            seenWind,
++            COLLISION_TIMEOUT,
++            () -> helper.runAfterDelay(1, () -> {
++                if (fire.isAlive()) {
++                    helper.fail("Fire voxel should also be discarded after wind-fire interaction.");
++                    return;
++                }
++                helper.succeed();
++            }),
++            () -> helper.fail("Wind voxel did not collide within timeout."),
++            () -> helper.fail("Wind voxel must exist before impact.")
++        );
++    }
++    
++    @GameTest(batch = "WindVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
++    public static void windAndWaterContinueOnCollision(GameTestHelper helper) {
++        helper.setBlock(CENTER_RELATIVE.below(), Blocks.STONE.defaultBlockState());
++        
++        WindVoxelEntity wind = createWind(helper, DEFAULT_SIZE);
++        WaterVoxelEntity water = createWater(helper, DEFAULT_SIZE);
++        if (wind == null || water == null) return;
++        
++        BlockPos left = helper.absolutePos(CENTER_RELATIVE.offset(-1, 0, 2));
++        BlockPos right = helper.absolutePos(CENTER_RELATIVE.offset(1, 0, 2));
++        
++        VoxelTestUtils.spawnVoxel(helper, wind, left, new Vec3(0.2D, 0.0D, 0.0D), DEFAULT_LIFETIME);
++        VoxelTestUtils.spawnVoxel(helper, water, right, new Vec3(-0.2D, 0.0D, 0.0D), DEFAULT_LIFETIME);
++        
++        helper.runAfterDelay(20, () -> {
++            if (!wind.isAlive() || !water.isAlive()) {
++                helper.fail("Both wind and water voxels should continue after interaction.");
++                return;
++            }
++            helper.succeed();
++        });
++    }
++    
++    private static WindVoxelEntity createWind(GameTestHelper helper, float size) {
++        ServerLevel level = helper.getLevel();
++        WindVoxelEntity wind = ModEntities.WIND_VOXEL_ENTITY.get().create(level);
++        if (wind == null) {
++            helper.fail("Failed to create WindVoxelEntity.");
++            return null;
++        }
++        wind.setSize(size);
++        wind.refreshDimensions();
++        return wind;
++    }
++    
++    private static FireVoxelEntity createFire(GameTestHelper helper, float size) {
++        ServerLevel level = helper.getLevel();
++        FireVoxelEntity fire = ModEntities.FIRE_VOXEL_ENTITY.get().create(level);
++        if (fire == null) {
++            helper.fail("Failed to create FireVoxelEntity.");
++            return null;
++        }
++        fire.setSize(size);
++        fire.refreshDimensions();
++        return fire;
++    }
++    
++    private static WaterVoxelEntity createWater(GameTestHelper helper, float size) {
++        ServerLevel level = helper.getLevel();
++        WaterVoxelEntity water = ModEntities.WATER_VOXEL_ENTITY.get().create(level);
++        if (water == null) {
++            helper.fail("Failed to create WaterVoxelEntity.");
++            return null;
++        }
++        water.setSize(size);
++        water.refreshDimensions();
++        return water;
++    }
++}
++
++
+diff --git a/src/test/java/com/arszero/tests/WindVoxelWorldInteractionBehaviour.java b/src/test/java/com/arszero/tests/WindVoxelWorldInteractionBehaviour.java
+new file mode 100644
+index 0000000..0dc9989
+--- /dev/null
++++ b/src/test/java/com/arszero/tests/WindVoxelWorldInteractionBehaviour.java
+@@ -0,0 +1,205 @@
++package com.arszero.tests;
++
++import com.github.ars_zero.ArsZero;
++import com.github.ars_zero.common.entity.WindVoxelEntity;
++import com.github.ars_zero.registry.ModEntities;
++import java.util.concurrent.atomic.AtomicBoolean;
++import net.minecraft.core.BlockPos;
++import net.minecraft.gametest.framework.GameTest;
++import net.minecraft.gametest.framework.GameTestHelper;
++import net.minecraft.server.level.ServerLevel;
++import net.minecraft.world.entity.EntityType;
++import net.minecraft.world.entity.item.ItemEntity;
++import net.minecraft.world.entity.monster.Zombie;
++import net.minecraft.world.item.ItemStack;
++import net.minecraft.world.item.Items;
++import net.minecraft.world.level.block.Blocks;
++import net.minecraft.world.level.block.state.BlockState;
++import net.minecraft.world.phys.Vec3;
++import net.neoforged.neoforge.event.RegisterGameTestsEvent;
++import net.neoforged.neoforge.gametest.GameTestHolder;
++import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
++
++@GameTestHolder(ArsZero.MOD_ID)
++@PrefixGameTestTemplate(false)
++public class WindVoxelWorldInteractionBehaviour {
++    private static final BlockPos CENTER_RELATIVE = new BlockPos(2, 1, 2);
++    private static final Vec3 DEFAULT_VEL = new Vec3(0.45D, 0.0D, 0.0D);
++    private static final int COLLISION_TIMEOUT = 200;
++    private static final int DEFAULT_LIFETIME = 200;
++    private static final float DEFAULT_SIZE = 0.25f;
++    
++    public static void registerGameTests(RegisterGameTestsEvent event) {
++        if (TestRegistrationFilter.shouldRegister(WindVoxelWorldInteractionBehaviour.class)) {
++            event.register(WindVoxelWorldInteractionBehaviour.class);
++        }
++    }
++    
++    @GameTest(batch = "WindVoxelWorldInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
++    public static void fireInteractionCausesSmallExplosion(GameTestHelper helper) {
++        BlockPos firePos = CENTER_RELATIVE;
++        BlockPos fragilePos = CENTER_RELATIVE.offset(1, 0, 0);
++        helper.setBlock(firePos, Blocks.FIRE.defaultBlockState());
++        helper.setBlock(fragilePos, Blocks.GLASS.defaultBlockState());
++        
++        WindVoxelEntity wind = createWind(helper, DEFAULT_SIZE);
++        if (wind == null) {
++            return;
++        }
++        VoxelTestUtils.spawnVoxel(helper, wind, helper.absolutePos(CENTER_RELATIVE.offset(-1, 0, 0)), DEFAULT_VEL, DEFAULT_LIFETIME);
++        AtomicBoolean seen = new AtomicBoolean(wind.isAlive());
++        VoxelTestUtils.awaitVoxelRemoval(
++            helper,
++            wind,
++            seen,
++            COLLISION_TIMEOUT,
++            () -> helper.runAfterDelay(2, () -> {
++                BlockState fragile = helper.getBlockState(fragilePos);
++                if (!fragile.isAir()) {
++                    helper.fail("Fragile block should be destroyed by small explosion on fire interaction.");
++                    return;
++                }
++                helper.succeed();
++            }),
++            () -> helper.fail("Wind voxel did not collide within timeout."),
++            () -> helper.fail("Wind voxel must exist before impact.")
++        );
++    }
++    
++    @GameTest(batch = "WindVoxelWorldInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
++    public static void waterInteractionHasNoSideEffect(GameTestHelper helper) {
++        BlockPos waterPos = CENTER_RELATIVE;
++        helper.setBlock(waterPos, Blocks.WATER.defaultBlockState());
++        
++        WindVoxelEntity wind = createWind(helper, DEFAULT_SIZE);
++        if (wind == null) {
++            return;
++        }
++        VoxelTestUtils.spawnVoxel(helper, wind, helper.absolutePos(CENTER_RELATIVE.offset(-1, 0, 0)), DEFAULT_VEL, DEFAULT_LIFETIME);
++        AtomicBoolean seen = new AtomicBoolean(wind.isAlive());
++        VoxelTestUtils.awaitVoxelRemoval(
++            helper,
++            wind,
++            seen,
++            COLLISION_TIMEOUT,
++            () -> helper.runAfterDelay(2, () -> {
++                BlockState after = helper.getBlockState(waterPos);
++                if (!after.is(Blocks.WATER)) {
++                    helper.fail("Water block should remain unchanged after wind interaction.");
++                    return;
++                }
++                helper.succeed();
++            }),
++            () -> helper.fail("Wind voxel did not collide within timeout."),
++            () -> helper.fail("Wind voxel must exist before impact.")
++        );
++    }
++    
++    @GameTest(batch = "WindVoxelWorldInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
++    public static void windHitsStoneOnlyParticles(GameTestHelper helper) {
++        BlockPos stonePos = CENTER_RELATIVE;
++        helper.setBlock(stonePos, Blocks.STONE.defaultBlockState());
++        
++        WindVoxelEntity wind = createWind(helper, DEFAULT_SIZE);
++        if (wind == null) {
++            return;
++        }
++        VoxelTestUtils.spawnVoxel(helper, wind, helper.absolutePos(CENTER_RELATIVE.offset(-1, 0, 0)), DEFAULT_VEL, DEFAULT_LIFETIME);
++        AtomicBoolean seen = new AtomicBoolean(wind.isAlive());
++        VoxelTestUtils.awaitVoxelRemoval(
++            helper,
++            wind,
++            seen,
++            COLLISION_TIMEOUT,
++            () -> helper.runAfterDelay(2, () -> {
++                BlockState after = helper.getBlockState(stonePos);
++                if (!after.is(Blocks.STONE)) {
++                    helper.fail("Stone block should remain unchanged after wind voxel collision - only particles should spawn.");
++                    return;
++                }
++                helper.succeed();
++            }),
++            () -> helper.fail("Wind voxel did not collide within timeout."),
++            () -> helper.fail("Wind voxel must exist before impact.")
++        );
++    }
++    
++    @GameTest(batch = "WindVoxelWorldInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
++    public static void windPushesEntityAlongVelocity(GameTestHelper helper) {
++        BlockPos spawn = CENTER_RELATIVE;
++        ServerLevel level = helper.getLevel();
++        Zombie zombie = EntityType.ZOMBIE.create(level);
++        if (zombie == null) {
++            helper.fail("Failed to create zombie for push test.");
++            return;
++        }
++        Vec3 start = new Vec3(helper.absolutePos(spawn).getX() + 0.5D, helper.absolutePos(spawn).getY(), helper.absolutePos(spawn).getZ() + 0.5D);
++        zombie.moveTo(start.x + 0.5D, start.y, start.z);
++        level.addFreshEntity(zombie);
++        
++        WindVoxelEntity wind = createWind(helper, DEFAULT_SIZE);
++        if (wind == null) {
++            return;
++        }
++        VoxelTestUtils.spawnVoxel(helper, wind, helper.absolutePos(spawn.offset(-1, 0, 0)), DEFAULT_VEL, DEFAULT_LIFETIME);
++        
++        helper.runAfterDelay(10, () -> {
++            Vec3 posAfter = zombie.position();
++            if (posAfter.x <= start.x + 0.3D) {
++                helper.fail("Zombie should be pushed forward by wind voxel impact.");
++                return;
++            }
++            helper.succeed();
++        });
++    }
++    
++    @GameTest(batch = "WindVoxelWorldInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
++    public static void windPushesItemEntityAlongVelocity(GameTestHelper helper) {
++        BlockPos spawn = CENTER_RELATIVE;
++        ServerLevel level = helper.getLevel();
++        helper.setBlock(spawn.below(), Blocks.STONE.defaultBlockState());
++        
++        Vec3 start = new Vec3(helper.absolutePos(spawn).getX() + 0.5D, helper.absolutePos(spawn).getY(), helper.absolutePos(spawn).getZ() + 0.5D);
++        ItemEntity itemEntity = new ItemEntity(level, start.x, start.y, start.z, new ItemStack(Items.DIAMOND));
++        itemEntity.setDeltaMovement(Vec3.ZERO);
++        level.addFreshEntity(itemEntity);
++        
++        WindVoxelEntity wind = createWind(helper, DEFAULT_SIZE);
++        if (wind == null) {
++            return;
++        }
++        VoxelTestUtils.spawnVoxel(helper, wind, helper.absolutePos(spawn.offset(-1, 0, 0)), DEFAULT_VEL, DEFAULT_LIFETIME);
++        
++        helper.runAfterDelay(10, () -> {
++            if (!itemEntity.isAlive()) {
++                helper.fail("Item entity should still be alive after wind voxel impact.");
++                return;
++            }
++            Vec3 posAfter = itemEntity.position();
++            Vec3 velocityAfter = itemEntity.getDeltaMovement();
++            if (posAfter.x <= start.x + 0.3D && velocityAfter.lengthSqr() < 0.01D) {
++                helper.fail("Item entity should be pushed forward by wind voxel impact.");
++                return;
++            }
++            if (!itemEntity.hasPickUpDelay()) {
++                helper.fail("Item entity should have pickup delay set after wind voxel impact.");
++                return;
++            }
++            helper.succeed();
++        });
++    }
++    
++    private static WindVoxelEntity createWind(GameTestHelper helper, float size) {
++        ServerLevel level = helper.getLevel();
++        WindVoxelEntity wind = ModEntities.WIND_VOXEL_ENTITY.get().create(level);
++        if (wind == null) {
++            helper.fail("Failed to create WindVoxelEntity.");
++            return null;
++        }
++        wind.setSize(size);
++        wind.refreshDimensions();
++        return wind;
++    }
++}
++
++

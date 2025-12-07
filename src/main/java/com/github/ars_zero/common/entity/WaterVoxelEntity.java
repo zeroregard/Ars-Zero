@@ -148,6 +148,13 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
         }
         BlockPos pos = targetPos.relative(blockHit.getDirection());
         placeWaterWithUnits(pos);
+        
+        // General block impact sound
+        if (!this.level().isClientSide) {
+            Vec3 location = blockHit.getLocation();
+            this.level().playSound(null, location.x, location.y, location.z, 
+                SoundEvents.FISHING_BOBBER_SPLASH, SoundSource.BLOCKS, 0.5f, 1.0f + this.random.nextFloat() * 0.3f);
+        }
     }
     
     @Override
@@ -164,6 +171,10 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
         }
         
         if (!this.level().isClientSide) {
+            Vec3 location = result.getLocation();
+            this.level().playSound(null, location.x, location.y, location.z, 
+                SoundEvents.FISHING_BOBBER_SPLASH, SoundSource.BLOCKS, 0.5f, 1.0f + this.random.nextFloat() * 0.3f);
+            
             if (hit.isOnFire()) {
                 hit.clearFire();
                 spawnEvaporationFeedback(BlockPos.containing(hit.position()), false);

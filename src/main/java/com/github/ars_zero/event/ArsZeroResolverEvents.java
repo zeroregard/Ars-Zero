@@ -7,10 +7,10 @@ import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
-import com.github.ars_zero.common.spell.CastPhase;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
@@ -61,7 +61,7 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        if (wrapped.getPhase() != CastPhase.BEGIN) {
+        if (wrapped.getPhase() != SpellPhase.BEGIN) {
             return;
         }
         
@@ -119,7 +119,7 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        if (wrapped.getPhase() != CastPhase.BEGIN) {
+        if (wrapped.getPhase() != SpellPhase.BEGIN) {
             return;
         }
         
@@ -339,7 +339,7 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        if (!wrapped.isRootResolver() || wrapped.getPhase() != CastPhase.BEGIN) {
+        if (!wrapped.isRootResolver() || wrapped.getPhase() != SpellPhase.BEGIN) {
             return;
         }
         

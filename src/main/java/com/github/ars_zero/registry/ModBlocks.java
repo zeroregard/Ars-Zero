@@ -33,6 +33,34 @@ public class ModBlocks {
             .strength(2.0f)
             .noOcclusion(), VoxelSpawnerBlock.VoxelType.WATER)
     );
+    
+    public static final DeferredHolder<Block, VoxelSpawnerBlock> WIND_VOXEL_SPAWNER = BLOCKS.register(
+        "wind_voxel_spawner",
+        () -> new VoxelSpawnerBlock(BlockBehaviour.Properties.of()
+            .strength(2.0f)
+            .noOcclusion(), VoxelSpawnerBlock.VoxelType.WIND)
+    );
+    
+    public static final DeferredHolder<Block, VoxelSpawnerBlock> STONE_VOXEL_SPAWNER = BLOCKS.register(
+        "stone_voxel_spawner",
+        () -> new VoxelSpawnerBlock(BlockBehaviour.Properties.of()
+            .strength(2.0f)
+            .noOcclusion(), VoxelSpawnerBlock.VoxelType.STONE)
+    );
+    
+    public static final DeferredHolder<Block, VoxelSpawnerBlock> ICE_VOXEL_SPAWNER = BLOCKS.register(
+        "ice_voxel_spawner",
+        () -> new VoxelSpawnerBlock(BlockBehaviour.Properties.of()
+            .strength(2.0f)
+            .noOcclusion(), VoxelSpawnerBlock.VoxelType.ICE)
+    );
+    
+    public static final DeferredHolder<Block, VoxelSpawnerBlock> LIGHTNING_VOXEL_SPAWNER = BLOCKS.register(
+        "lightning_voxel_spawner",
+        () -> new VoxelSpawnerBlock(BlockBehaviour.Properties.of()
+            .strength(2.0f)
+            .noOcclusion(), VoxelSpawnerBlock.VoxelType.LIGHTNING)
+    );
 
     public static final DeferredHolder<Block, MultiphaseSpellTurret> MULTIPHASE_SPELL_TURRET = BLOCKS.register(
         "multiphase_spell_turret",
@@ -46,5 +74,3 @@ public class ModBlocks {
         }
     );
 }
-
-

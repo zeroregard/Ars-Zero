@@ -49,6 +49,26 @@ public class ModItems {
         "water_voxel_spawner",
         () -> new BlockItem(ModBlocks.WATER_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
+    
+    public static final DeferredHolder<Item, BlockItem> WIND_VOXEL_SPAWNER = ITEMS.register(
+        "wind_voxel_spawner",
+        () -> new BlockItem(ModBlocks.WIND_VOXEL_SPAWNER.get(), defaultItemProperties())
+    );
+    
+    public static final DeferredHolder<Item, BlockItem> STONE_VOXEL_SPAWNER = ITEMS.register(
+        "stone_voxel_spawner",
+        () -> new BlockItem(ModBlocks.STONE_VOXEL_SPAWNER.get(), defaultItemProperties())
+    );
+    
+    public static final DeferredHolder<Item, BlockItem> ICE_VOXEL_SPAWNER = ITEMS.register(
+        "ice_voxel_spawner",
+        () -> new BlockItem(ModBlocks.ICE_VOXEL_SPAWNER.get(), defaultItemProperties())
+    );
+    
+    public static final DeferredHolder<Item, BlockItem> LIGHTNING_VOXEL_SPAWNER = ITEMS.register(
+        "lightning_voxel_spawner",
+        () -> new BlockItem(ModBlocks.LIGHTNING_VOXEL_SPAWNER.get(), defaultItemProperties())
+    );
 
     public static final DeferredHolder<Item, BlockItem> MULTIPHASE_SPELL_TURRET = ITEMS.register(
         "multiphase_spell_turret",
