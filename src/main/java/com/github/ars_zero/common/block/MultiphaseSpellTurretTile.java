@@ -19,6 +19,10 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -43,8 +47,23 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
     private int tickIntervalCounter;
 
     private MultiPhaseCastContext castContext;
+    private UUID ownerUUID;
 
     private final Deque<PhaseExecution> phaseHistory = new ArrayDeque<>();
+
+    private enum AnimationState {
+        IDLE,
+        BEGIN,
+        TICK,
+        END
+    }
+
+    private AnimationState currentAnimationState = AnimationState.IDLE;
+    private AnimationController<MultiphaseSpellTurretTile> animationController;
+    private long animationStartTime = 0;
+    
+    private static final double BEGIN_ANIMATION_DURATION = 0.16;
+    private static final double END_ANIMATION_DURATION = 0.28;
 
     public MultiphaseSpellTurretTile(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MULTIPHASE_SPELL_TURRET.get(), pos, state);
@@ -82,7 +101,10 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         tickCooldown = calculateTickCooldown(tickSpell);
         phaseHistory.clear();
         clearCastContext();
+        ownerUUID = owner;
         setPlayer(owner);
+        currentAnimationState = AnimationState.IDLE;
+        animationStartTime = 0;
         setChanged();
         updateBlock();
     }
@@ -98,6 +120,9 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         saveSpell(tag, TICK_TAG, tickSpell);
         saveSpell(tag, END_TAG, endSpell);
         tag.putBoolean("was_powered", wasPowered);
+        if (ownerUUID != null) {
+            tag.putUUID("owner_uuid", ownerUUID);
+        }
     }
 
     @Override
@@ -107,6 +132,11 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         tickSpell = loadSpell(tag, TICK_TAG);
         endSpell = loadSpell(tag, END_TAG);
         wasPowered = tag.getBoolean("was_powered");
+        if (tag.contains("owner_uuid")) {
+            ownerUUID = tag.getUUID("owner_uuid");
+        } else {
+            ownerUUID = null;
+        }
         casting = false;
         tickIntervalCounter = 0;
         tickCooldown = calculateTickCooldown(tickSpell);
@@ -178,16 +208,20 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
             return;
         }
         
-        com.hollingsworth.arsnouveau.common.network.Networking.sendToNearbyClient(serverLevel, pos, new com.hollingsworth.arsnouveau.common.network.PacketOneShotAnimation(pos));
-        com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.TurretDispenseBehavior.DispensePosition iposition = com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.getDispensePosition(pos, serverLevel.getBlockState(pos).getValue(com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.FACING));
+        AbstractMultiPhaseCastDevice.Phase currentPhase = castContext != null ? castContext.currentPhase : AbstractMultiPhaseCastDevice.Phase.BEGIN;
+        int animationArg = switch (currentPhase) {
+            case BEGIN -> 0;
+            case TICK -> 1;
+            case END -> 2;
+        };
+        com.hollingsworth.arsnouveau.common.network.Networking.sendToNearbyClient(serverLevel, pos, new com.hollingsworth.arsnouveau.common.network.PacketOneShotAnimation(pos, animationArg));
+        net.minecraft.core.Position iposition = com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.getDispensePosition(pos, serverLevel.getBlockState(pos).getValue(com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.FACING));
         net.minecraft.core.Direction direction = serverLevel.getBlockState(pos).getValue(com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.FACING);
         
-        net.neoforged.neoforge.common.util.FakePlayer fakePlayer = uuid != null
-                ? net.neoforged.neoforge.common.util.FakePlayerFactory.get(serverLevel, new com.mojang.authlib.GameProfile(uuid, ""))
+        net.neoforged.neoforge.common.util.FakePlayer fakePlayer = ownerUUID != null
+                ? net.neoforged.neoforge.common.util.FakePlayerFactory.get(serverLevel, new com.mojang.authlib.GameProfile(ownerUUID, ""))
                 : com.hollingsworth.arsnouveau.api.ANFakePlayer.getPlayer(serverLevel);
         fakePlayer.setPos(pos.getX(), pos.getY(), pos.getZ());
-        
-        AbstractMultiPhaseCastDevice.Phase currentPhase = castContext != null ? castContext.currentPhase : AbstractMultiPhaseCastDevice.Phase.BEGIN;
         CastPhase castPhase = switch (currentPhase) {
             case BEGIN -> CastPhase.BEGIN;
             case TICK -> CastPhase.TICK;
@@ -195,10 +229,10 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         };
         
         SpellContext spellContext = new SpellContext(serverLevel, spellCaster.getSpell(), fakePlayer, new TileCaster(this, SpellContext.CasterType.TURRET));
-        com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver resolver = new com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver(spellContext);
+        com.hollingsworth.arsnouveau.api.spell.SpellResolver resolver = new com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver(spellContext);
         
-        if (castContext != null && uuid != null) {
-            resolver = new WrappedSpellResolver(resolver, uuid, castPhase, true);
+        if (castContext != null && ownerUUID != null) {
+            resolver = new WrappedSpellResolver((com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver) resolver, ownerUUID, castPhase, true);
         }
         
         if (resolver.castType != null && com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.TURRET_BEHAVIOR_MAP.containsKey(resolver.castType)) {
@@ -211,10 +245,10 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
     }
 
     private void initializeCastContext() {
-        if (uuid == null) {
+        if (ownerUUID == null) {
             return;
         }
-        castContext = new MultiPhaseCastContext(uuid, MultiPhaseCastContext.CastSource.TURRET);
+        castContext = new MultiPhaseCastContext(ownerUUID, MultiPhaseCastContext.CastSource.TURRET);
         castContext.currentPhase = AbstractMultiPhaseCastDevice.Phase.BEGIN;
         castContext.isCasting = true;
         castContext.beginResults.clear();
@@ -243,7 +277,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
     }
 
     public UUID getOwnerUUID() {
-        return uuid;
+        return ownerUUID;
     }
 
     private void recordPhase(AbstractMultiPhaseCastDevice.Phase phase, Spell spell) {
@@ -340,6 +374,83 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
             }
         }
         return Math.max(0, totalCooldown);
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar data) {
+        animationController = new AnimationController<>(this, "multiphaseController", 0, this::animationPredicate);
+        data.add(animationController);
+        super.registerControllers(data);
+    }
+
+    private PlayState animationPredicate(software.bernie.geckolib.animation.AnimationState<?> event) {
+        boolean powered = hasRedstoneSignal();
+        
+        switch (currentAnimationState) {
+            case IDLE -> {
+                if (powered) {
+                    currentAnimationState = AnimationState.BEGIN;
+                    animationStartTime = System.currentTimeMillis();
+                    event.getController().forceAnimationReset();
+                    event.getController().setAnimation(RawAnimation.begin().thenPlay("begin"));
+                    return PlayState.CONTINUE;
+                } else {
+                    event.getController().setAnimation(RawAnimation.begin().thenLoop("idle"));
+                    return PlayState.CONTINUE;
+                }
+            }
+            case BEGIN -> {
+                if (!powered) {
+                    currentAnimationState = AnimationState.IDLE;
+                    event.getController().forceAnimationReset();
+                    event.getController().setAnimation(RawAnimation.begin().thenLoop("idle"));
+                    return PlayState.CONTINUE;
+                }
+                double elapsed = (System.currentTimeMillis() - animationStartTime) / 1000.0;
+                if (elapsed >= BEGIN_ANIMATION_DURATION) {
+                    currentAnimationState = AnimationState.TICK;
+                    event.getController().setAnimation(RawAnimation.begin().thenLoop("tick"));
+                    return PlayState.CONTINUE;
+                }
+                event.getController().setAnimation(RawAnimation.begin().thenPlay("begin"));
+                return PlayState.CONTINUE;
+            }
+            case TICK -> {
+                if (!powered) {
+                    currentAnimationState = AnimationState.END;
+                    animationStartTime = System.currentTimeMillis();
+                    event.getController().forceAnimationReset();
+                    event.getController().setAnimation(RawAnimation.begin().thenPlay("end"));
+                    return PlayState.CONTINUE;
+                }
+                event.getController().setAnimation(RawAnimation.begin().thenLoop("tick"));
+                return PlayState.CONTINUE;
+            }
+            case END -> {
+                double elapsed = (System.currentTimeMillis() - animationStartTime) / 1000.0;
+                if (elapsed >= END_ANIMATION_DURATION) {
+                    currentAnimationState = AnimationState.IDLE;
+                    event.getController().forceAnimationReset();
+                    event.getController().setAnimation(RawAnimation.begin().thenLoop("idle"));
+                    return PlayState.CONTINUE;
+                }
+                if (powered) {
+                    currentAnimationState = AnimationState.BEGIN;
+                    animationStartTime = System.currentTimeMillis();
+                    event.getController().forceAnimationReset();
+                    event.getController().setAnimation(RawAnimation.begin().thenPlay("begin"));
+                    return PlayState.CONTINUE;
+                }
+                event.getController().setAnimation(RawAnimation.begin().thenPlay("end"));
+                return PlayState.CONTINUE;
+            }
+        }
+        
+        return PlayState.STOP;
+    }
+
+    @Override
+    public void startAnimation(int arg) {
     }
 
     public record PhaseExecution(AbstractMultiPhaseCastDevice.Phase phase, String spellName, long gameTime) {

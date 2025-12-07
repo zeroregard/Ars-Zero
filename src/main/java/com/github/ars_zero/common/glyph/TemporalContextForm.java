@@ -17,7 +17,9 @@ import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
+import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -25,6 +27,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -34,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * TemporalContextForm - A form that acts as a marker for temporal context usage.
@@ -108,21 +112,25 @@ public class TemporalContextForm extends AbstractCastMethod {
 
     private CastResolveType resolveFromStoredContext(Level level, LivingEntity caster, SpellContext spellContext, SpellResolver resolver) {
         MultiPhaseCastContext castContext = null;
-        Player player = null;
+        Vec3 casterPos = null;
+        float casterYaw = 0;
+        float casterPitch = 0;
         
         if (caster instanceof Player playerCaster) {
-            player = playerCaster;
+            casterPos = playerCaster.getEyePosition(1.0f);
+            casterYaw = playerCaster.getYRot();
+            casterPitch = playerCaster.getXRot();
             ItemStack casterTool = spellContext.getCasterTool();
-            castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+            castContext = AbstractMultiPhaseCastDevice.findContextByStack(playerCaster, casterTool);
         } else if (spellContext.getCaster() instanceof TileCaster tileCaster) {
-            if (tileCaster.getTile() instanceof MultiphaseSpellTurretTile turretTile) {
+            BlockEntity tile = tileCaster.getTile();
+            if (tile instanceof MultiphaseSpellTurretTile turretTile) {
                 castContext = turretTile.getCastContext();
-                if (level.getServer() != null) {
-                    UUID ownerUUID = turretTile.getOwnerUUID();
-                    if (ownerUUID != null) {
-                        player = level.getServer().getPlayerList().getPlayer(ownerUUID);
-                    }
-                }
+                BlockPos tilePos = turretTile.getBlockPos();
+                casterPos = Vec3.atCenterOf(tilePos);
+                Direction facing = turretTile.getBlockState().getValue(BasicSpellTurret.FACING);
+                casterYaw = directionToYaw(facing);
+                casterPitch = directionToPitch(facing);
             }
         }
         
@@ -133,18 +141,18 @@ public class TemporalContextForm extends AbstractCastMethod {
         for (SpellResult result : castContext.beginResults) {
             resolver.hitResult = result.hitResult;
             resolver.onResolveEffect(level, result.hitResult);
-            if (player != null) {
-                triggerResolveEffects(spellContext, level, player, result);
+            if (casterPos != null) {
+                triggerResolveEffects(spellContext, level, casterPos, casterYaw, casterPitch, result);
             }
         }
         return CastResolveType.SUCCESS;
     }
 
-    private void triggerResolveEffects(SpellContext spellContext, Level level, Player player, SpellResult result) {
+    private void triggerResolveEffects(SpellContext spellContext, Level level, Vec3 casterPos, float casterYaw, float casterPitch, SpellResult result) {
         if (level == null || result == null) {
             return;
         }
-        List<Vec3> targetPositions = computeTargetPositions(player, result);
+        List<Vec3> targetPositions = computeTargetPositions(casterPos, casterYaw, casterPitch, result);
         if (targetPositions.isEmpty() && result.hitResult != null) {
             targetPositions.add(result.hitResult.getLocation());
         }
@@ -161,7 +169,7 @@ public class TemporalContextForm extends AbstractCastMethod {
         }
     }
 
-    private List<Vec3> computeTargetPositions(Player player, SpellResult result) {
+    private List<Vec3> computeTargetPositions(Vec3 casterPos, float casterYaw, float casterPitch, SpellResult result) {
         List<Vec3> positions = new ArrayList<>();
         if (result.targetEntity != null && result.targetEntity.isAlive()) {
             positions.add(result.targetEntity.position());
@@ -180,12 +188,30 @@ public class TemporalContextForm extends AbstractCastMethod {
         } else if (result.targetPosition != null) {
             positions.add(Vec3.atCenterOf(result.targetPosition));
         }
-        if (positions.isEmpty()) {
-            Vec3 reconstructed = result.transformLocalToWorld(player.getYRot(), player.getXRot(), player.getEyePosition(1.0f));
+        if (positions.isEmpty() && result.relativeOffset != null) {
+            Vec3 reconstructed = result.transformLocalToWorld(casterYaw, casterPitch, casterPos);
             if (reconstructed != null) {
                 positions.add(reconstructed);
             }
         }
         return positions;
+    }
+
+    private static float directionToYaw(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 180.0f;
+            case SOUTH -> 0.0f;
+            case WEST -> 90.0f;
+            case EAST -> -90.0f;
+            default -> 0.0f;
+        };
+    }
+
+    private static float directionToPitch(Direction facing) {
+        return switch (facing) {
+            case UP -> -90.0f;
+            case DOWN -> 90.0f;
+            default -> 0.0f;
+        };
     }
 }

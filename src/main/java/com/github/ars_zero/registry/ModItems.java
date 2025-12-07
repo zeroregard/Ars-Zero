@@ -52,7 +52,12 @@ public class ModItems {
 
     public static final DeferredHolder<Item, BlockItem> MULTIPHASE_SPELL_TURRET = ITEMS.register(
         "multiphase_spell_turret",
-        () -> new BlockItem(ModBlocks.MULTIPHASE_SPELL_TURRET.get(), defaultItemProperties())
+        () -> {
+            ArsZero.LOGGER.info("Registering Multiphase Spell Turret item");
+            BlockItem item = new BlockItem(ModBlocks.MULTIPHASE_SPELL_TURRET.get(), defaultItemProperties());
+            ArsZero.LOGGER.info("Multiphase Spell Turret item created successfully");
+            return item;
+        }
     );
 
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
