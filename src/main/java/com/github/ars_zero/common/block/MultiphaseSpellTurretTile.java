@@ -16,9 +16,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.PlayState;
@@ -280,6 +283,19 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         return ownerUUID;
     }
 
+    @Override
+    public void getTooltip(List<Component> tooltip) {
+        if (!beginSpell.isEmpty()) {
+            tooltip.add(Component.literal("Begin: " + beginSpell.getDisplayString()));
+        }
+        if (!tickSpell.isEmpty()) {
+            tooltip.add(Component.literal("Tick: " + tickSpell.getDisplayString()));
+        }
+        if (!endSpell.isEmpty()) {
+            tooltip.add(Component.literal("End: " + endSpell.getDisplayString()));
+        }
+    }
+
     private void recordPhase(AbstractMultiPhaseCastDevice.Phase phase, Spell spell) {
         if (phaseHistory.size() >= HISTORY_LIMIT) {
             phaseHistory.removeFirst();
@@ -384,6 +400,11 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
     }
 
     private PlayState animationPredicate(software.bernie.geckolib.animation.AnimationState<?> event) {
+        if (level == null) {
+            event.getController().setAnimation(RawAnimation.begin().thenLoop("idle"));
+            return PlayState.CONTINUE;
+        }
+        
         boolean powered = hasRedstoneSignal();
         
         switch (currentAnimationState) {
