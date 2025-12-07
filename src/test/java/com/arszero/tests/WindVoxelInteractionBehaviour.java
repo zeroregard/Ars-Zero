@@ -2,6 +2,7 @@ package com.arszero.tests;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
+import com.github.ars_zero.common.entity.LightningVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
 import com.github.ars_zero.registry.ModEntities;
@@ -11,6 +12,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -34,8 +36,10 @@ public class WindVoxelInteractionBehaviour {
     public static void windAndFireDiscardOnCollision(GameTestHelper helper) {
         helper.setBlock(CENTER_RELATIVE.below(), Blocks.STONE.defaultBlockState());
         
-        WindVoxelEntity wind = createWind(helper, DEFAULT_SIZE);
-        FireVoxelEntity fire = createFire(helper, DEFAULT_SIZE);
+        float windSize = DEFAULT_SIZE;
+        float fireSize = DEFAULT_SIZE;
+        WindVoxelEntity wind = createWind(helper, windSize);
+        FireVoxelEntity fire = createFire(helper, fireSize);
         if (wind == null || fire == null) return;
         
         BlockPos left = helper.absolutePos(CENTER_RELATIVE.offset(-1, 0, 2));
@@ -50,11 +54,32 @@ public class WindVoxelInteractionBehaviour {
             wind,
             seenWind,
             COLLISION_TIMEOUT,
-            () -> helper.runAfterDelay(1, () -> {
+            () -> helper.runAfterDelay(5, () -> {
                 if (fire.isAlive()) {
                     helper.fail("Fire voxel should also be discarded after wind-fire interaction.");
                     return;
                 }
+                
+                ServerLevel level = helper.getLevel();
+                BlockPos centerPos = helper.absolutePos(CENTER_RELATIVE);
+                AABB searchArea = new AABB(centerPos).inflate(2.0D);
+                LightningVoxelEntity lightning = level.getEntitiesOfClass(
+                    LightningVoxelEntity.class,
+                    searchArea
+                ).stream().findFirst().orElse(null);
+                
+                if (lightning == null) {
+                    helper.fail("Lightning voxel should be created after wind-fire interaction.");
+                    return;
+                }
+                
+                float expectedSize = windSize + fireSize;
+                float actualSize = lightning.getSize();
+                if (Math.abs(actualSize - expectedSize) > 0.01f) {
+                    helper.fail(String.format("Lightning voxel size should be %f (sum of wind and fire), but was %f", expectedSize, actualSize));
+                    return;
+                }
+                
                 helper.succeed();
             }),
             () -> helper.fail("Wind voxel did not collide within timeout."),
