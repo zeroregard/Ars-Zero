@@ -50,7 +50,7 @@ public class MultiphaseSpellTurretTests {
         Spell beginSpell = new Spell(MethodTouch.INSTANCE, EffectBreak.INSTANCE).withName("Begin");
         Spell tickSpell = new Spell(MethodTouch.INSTANCE, EffectLight.INSTANCE).withName("Tick");
         Spell endSpell = new Spell(MethodTouch.INSTANCE, EffectBreak.INSTANCE).withName("End");
-        tile.configureSpells(beginSpell, tickSpell, endSpell, owner);
+        tile.configureSpells(beginSpell, tickSpell, endSpell, owner, 0);
         BlockPos jarPos = turretPos.east();
         helper.setBlock(jarPos.below(), Blocks.SMOOTH_STONE.defaultBlockState());
         helper.setBlock(jarPos, BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("ars_nouveau", "source_jar")).defaultBlockState());

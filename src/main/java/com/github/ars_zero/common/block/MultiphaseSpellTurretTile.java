@@ -95,14 +95,15 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         wasPowered = powered;
     }
 
-    public void configureSpells(Spell begin, Spell tick, Spell end, UUID owner) {
+    public void configureSpells(Spell begin, Spell tick, Spell end, UUID owner, int tickDelayOffset) {
         beginSpell = sanitizeSpell(begin);
         tickSpell = sanitizeSpell(tick);
         endSpell = sanitizeSpell(end);
         casting = false;
         wasPowered = false;
         tickIntervalCounter = 0;
-        tickCooldown = calculateTickCooldown(tickSpell);
+        this.tickDelayOffset = tickDelayOffset;
+        tickCooldown = calculateTickCooldown(tickSpell) + tickDelayOffset;
         phaseHistory.clear();
         clearCastContext();
         ownerUUID = owner;
@@ -124,6 +125,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         saveSpell(tag, TICK_TAG, tickSpell);
         saveSpell(tag, END_TAG, endSpell);
         tag.putBoolean("was_powered", wasPowered);
+        tag.putInt("tick_delay_offset", tickDelayOffset);
         if (ownerUUID != null) {
             tag.putUUID("owner_uuid", ownerUUID);
         }
@@ -136,6 +138,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         tickSpell = loadSpell(tag, TICK_TAG);
         endSpell = loadSpell(tag, END_TAG);
         wasPowered = tag.getBoolean("was_powered");
+        tickDelayOffset = tag.contains("tick_delay_offset") ? tag.getInt("tick_delay_offset") : 0;
         if (tag.contains("owner_uuid")) {
             ownerUUID = tag.getUUID("owner_uuid");
         } else {
@@ -143,7 +146,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         }
         casting = false;
         tickIntervalCounter = 0;
-        tickCooldown = calculateTickCooldown(tickSpell);
+        tickCooldown = calculateTickCooldown(tickSpell) + tickDelayOffset;
         phaseHistory.clear();
         clearCastContext();
     }
@@ -151,7 +154,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
     private void startCasting() {
         casting = true;
         tickIntervalCounter = 0;
-        tickCooldown = calculateTickCooldown(tickSpell);
+        tickCooldown = calculateTickCooldown(tickSpell) + tickDelayOffset;
         initializeCastContext();
         castPhase(SpellPhase.BEGIN);
     }
