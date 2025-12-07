@@ -1,9 +1,8 @@
 package com.arszero.tests;
 
 import com.github.ars_zero.ArsZero;
-import com.arszero.tests.ArsZeroTestsMod;
 import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.registry.ModBlocks;
 import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
 import com.hollingsworth.arsnouveau.common.block.tile.SourceJarTile;
@@ -36,7 +35,7 @@ public class MultiphaseSpellTurretTests {
         }
     }
 
-    @GameTest(batch = "MultiphaseSpellTurretTests", templateNamespace = ArsZeroTestsMod.MOD_ID, template = "multiphase_turret_pad")
+    @GameTest(batch = "MultiphaseSpellTurretTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void multiphaseTurretCastsBeginTickEnd(GameTestHelper helper) {
         BlockPos turretPos = new BlockPos(3, 1, 3);
         BlockPos turretBase = turretPos.below();
@@ -70,16 +69,16 @@ public class MultiphaseSpellTurretTests {
                 helper.fail("Multiphase turret never recorded a cast.");
                 return;
             }
-            if (history.get(0).phase() != AbstractMultiPhaseCastDevice.Phase.BEGIN) {
+            if (history.get(0).phase() != SpellPhase.BEGIN) {
                 helper.fail("First recorded phase should be BEGIN.");
                 return;
             }
-            long tickCount = history.stream().filter(record -> record.phase() == AbstractMultiPhaseCastDevice.Phase.TICK).count();
+            long tickCount = history.stream().filter(record -> record.phase() == SpellPhase.TICK).count();
             if (tickCount != 9) {
                 helper.fail("Expected 9 tick casts while powered; got " + tickCount);
                 return;
             }
-            if (history.get(history.size() - 1).phase() != AbstractMultiPhaseCastDevice.Phase.END) {
+            if (history.get(history.size() - 1).phase() != SpellPhase.END) {
                 helper.fail("Final recorded phase should be END.");
                 return;
             }
