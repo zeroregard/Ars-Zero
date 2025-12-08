@@ -198,14 +198,10 @@ public class StaffParticleScreen extends BaseBook {
     private void saveParticleConfig() {
         StaffParticleScreen.lastOpenedHash = timelineMap.immutable().hashCode();
         
-        boolean isForCirclet = staffStack != null && staffStack.getItem() instanceof com.github.ars_zero.common.item.SpellcastingCirclet;
-        
         com.github.ars_zero.common.network.Networking.sendToServer(
             new com.github.ars_zero.common.network.PacketUpdateStaffParticleTimeline(
                 hotkeySlot, 
-                timelineMap.immutable(), 
-                this.hand == InteractionHand.MAIN_HAND,
-                isForCirclet
+                timelineMap.immutable()
             )
         );
     }

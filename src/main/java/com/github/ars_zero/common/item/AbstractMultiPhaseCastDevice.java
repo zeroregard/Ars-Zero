@@ -124,6 +124,30 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         return null;
     }
 
+    public static ItemStack findDeviceStack(Player player) {
+        ItemStack mainStack = player.getMainHandItem();
+        if (mainStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+            return mainStack;
+        }
+        
+        ItemStack offStack = player.getOffhandItem();
+        if (offStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+            return offStack;
+        }
+        
+        if (player.level().isClientSide) {
+            return ItemStack.EMPTY;
+        }
+        
+        return top.theillusivec4.curios.api.CuriosApi.getCuriosHelper()
+            .findEquippedCurio(
+                equipped -> equipped.getItem() instanceof AbstractMultiPhaseCastDevice,
+                player
+            )
+            .map(result -> result.getRight())
+            .orElse(ItemStack.EMPTY);
+    }
+
     public static void clearContext(Player player, MultiPhaseCastContext.CastSource source) {
         MultiPhaseCastContextMap contextMap = player.getData(ModAttachments.CAST_CONTEXTS);
         if (contextMap != null) {
