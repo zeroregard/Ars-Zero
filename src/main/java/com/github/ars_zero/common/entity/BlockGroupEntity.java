@@ -104,6 +104,7 @@ public class BlockGroupEntity extends Entity {
             }
             
             if (BlockImmutabilityUtil.isBlockImmutable(state)) {
+                ArsZero.LOGGER.warn("Attempted to add immutable block {} at {} to BlockGroupEntity, skipping", state.getBlock(), pos);
                 continue;
             }
             
@@ -131,6 +132,7 @@ public class BlockGroupEntity extends Entity {
             }
             
             if (BlockImmutabilityUtil.isBlockImmutable(state)) {
+                ArsZero.LOGGER.warn("Attempted to add immutable block {} at {} to BlockGroupEntity, skipping", state.getBlock(), pos);
                 continue;
             }
             
@@ -157,6 +159,7 @@ public class BlockGroupEntity extends Entity {
         if (state.isAir()) return;
         
         if (BlockImmutabilityUtil.isBlockImmutable(state)) {
+            ArsZero.LOGGER.warn("Attempted to add immutable block {} at {} to BlockGroupEntity, skipping", state.getBlock(), pos);
             return;
         }
         
@@ -214,10 +217,16 @@ public class BlockGroupEntity extends Entity {
         Player fakePlayer = ANFakePlayer.getPlayer(serverLevel, casterUUID);
 
         for (BlockData blockData : blocks) {
+            BlockState originalState = blockData.blockState;
+            
+            if (BlockImmutabilityUtil.isBlockImmutable(originalState)) {
+                ArsZero.LOGGER.warn("BlockGroupEntity contains immutable block {} at {}, skipping placement", originalState.getBlock(), blockData.originalPosition);
+                continue;
+            }
+            
             Vec3 relativePos = blockData.relativePosition;
             BlockPos targetPos = BlockPos.containing(this.position().add(relativePos));
             
-            BlockState originalState = blockData.blockState;
             BlockState stateForPlacement = originalState;
             boolean placed = false;
             
@@ -283,6 +292,10 @@ public class BlockGroupEntity extends Entity {
     
     private void dropBlockAsItem(BlockState state, BlockPos originalPos) {
         if (level().isClientSide || !level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
+            return;
+        }
+        
+        if (BlockImmutabilityUtil.isBlockImmutable(state)) {
             return;
         }
         
@@ -365,6 +378,7 @@ public class BlockGroupEntity extends Entity {
         super.tick();
         
         if (!level().isClientSide) {
+            validateAndRemoveImmutableBlocks();
             age();
             Vec3 deltaMovement = this.getDeltaMovement();
             this.move(MoverType.SELF, deltaMovement);
@@ -425,6 +439,19 @@ public class BlockGroupEntity extends Entity {
         syncBlockData();
     }
     
+    public void validateAndRemoveImmutableBlocks() {
+        if (blocks.removeIf(blockData -> {
+            boolean isImmutable = BlockImmutabilityUtil.isBlockImmutable(blockData.blockState);
+            if (isImmutable) {
+                ArsZero.LOGGER.warn("Removing immutable block {} from BlockGroupEntity at {}", blockData.blockState.getBlock(), blockData.originalPosition);
+            }
+            return isImmutable;
+        })) {
+            updateBoundingBox();
+            syncBlockData();
+        }
+    }
+    
     @Override
     public void remove(@NotNull RemovalReason reason) {
         if (!level().isClientSide && reason == RemovalReason.DISCARDED && !blocks.isEmpty()) {
@@ -447,6 +474,7 @@ public class BlockGroupEntity extends Entity {
                 BlockState state = NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK), blockTag.getCompound("state"));
                 
                 if (BlockImmutabilityUtil.isBlockImmutable(state)) {
+                    ArsZero.LOGGER.warn("BlockGroupEntity loaded immutable block {} from NBT, skipping", state.getBlock());
                     continue;
                 }
                 
@@ -523,6 +551,7 @@ public class BlockGroupEntity extends Entity {
                     BlockState state = NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK), blockTag.getCompound("state"));
                     
                     if (BlockImmutabilityUtil.isBlockImmutable(state)) {
+                        ArsZero.LOGGER.warn("BlockGroupEntity synced immutable block {} to client, skipping", state.getBlock());
                         continue;
                     }
                     

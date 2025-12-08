@@ -9,6 +9,7 @@ import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
@@ -184,6 +185,10 @@ public class AnchorEffect extends AbstractEffect {
     
     private static boolean canMoveToPosition(Vec3 targetPos, Level world) {
         BlockPos blockPos = BlockPos.containing(targetPos);
+        
+        if (BlockImmutabilityUtil.isBlockImmutable(world, blockPos)) {
+            return false;
+        }
         
         return !world.getBlockState(blockPos).blocksMotion();
     }
