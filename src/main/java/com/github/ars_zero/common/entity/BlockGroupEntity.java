@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.ANFakePlayer;
 import com.hollingsworth.arsnouveau.api.util.BlockUtil;
@@ -102,6 +103,10 @@ public class BlockGroupEntity extends Entity {
                 continue;
             }
             
+            if (BlockImmutabilityUtil.isBlockImmutable(state)) {
+                continue;
+            }
+            
             BlockEntity tileEntity = level().getBlockEntity(pos);
             if (tileEntity != null) {
                 blockEntityData.put(pos, tileEntity.saveWithoutMetadata(level().registryAccess()));
@@ -125,7 +130,10 @@ public class BlockGroupEntity extends Entity {
                 continue;
             }
             
-            // Capture BlockEntity data from world before it might be removed
+            if (BlockImmutabilityUtil.isBlockImmutable(state)) {
+                continue;
+            }
+            
             BlockEntity tileEntity = level().getBlockEntity(pos);
             if (tileEntity != null) {
                 blockEntityData.put(pos, tileEntity.saveWithoutMetadata(level().registryAccess()));
@@ -147,6 +155,10 @@ public class BlockGroupEntity extends Entity {
         
         BlockState state = level().getBlockState(pos);
         if (state.isAir()) return;
+        
+        if (BlockImmutabilityUtil.isBlockImmutable(state)) {
+            return;
+        }
         
         BlockEntity tileEntity = level().getBlockEntity(pos);
         if (tileEntity != null) {
@@ -170,8 +182,10 @@ public class BlockGroupEntity extends Entity {
             if (!level().isOutsideBuildHeight(originalPos)) {
                 BlockState beforeState = level().getBlockState(originalPos);
                 
-                // Only remove if the block is not already air
-                // This prevents removing blocks that were already removed by effects
+                if (BlockImmutabilityUtil.isBlockImmutable(beforeState)) {
+                    continue;
+                }
+                
                 if (!beforeState.isAir()) {
                     if (caster != null && !BlockUtil.destroyRespectsClaim(caster, level(), originalPos)) {
                         continue;
@@ -209,6 +223,11 @@ public class BlockGroupEntity extends Entity {
             
             if (!level().isOutsideBuildHeight(targetPos)) {
                 BlockState existingState = level().getBlockState(targetPos);
+                
+                if (BlockImmutabilityUtil.isBlockImmutable(existingState)) {
+                    dropBlockAsItem(originalState, blockData.originalPosition);
+                    continue;
+                }
                 
                 if (existingState.canBeReplaced()) {
                     var event = NeoForge.EVENT_BUS.post(new BlockEvent.EntityPlaceEvent(BlockSnapshot.create(level().dimension(), level(), targetPos), existingState, fakePlayer));
@@ -426,6 +445,11 @@ public class BlockGroupEntity extends Entity {
             for (int i = 0; i < blocksTag.size(); i++) {
                 CompoundTag blockTag = blocksTag.getCompound(i);
                 BlockState state = NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK), blockTag.getCompound("state"));
+                
+                if (BlockImmutabilityUtil.isBlockImmutable(state)) {
+                    continue;
+                }
+                
                 CompoundTag posTag = blockTag.getCompound("pos");
                 Vec3 relativePos = new Vec3(posTag.getDouble("x"), posTag.getDouble("y"), posTag.getDouble("z"));
                 BlockPos originalPos = NbtUtils.readBlockPos(blockTag, "original").orElse(BlockPos.ZERO);
@@ -497,6 +521,11 @@ public class BlockGroupEntity extends Entity {
                 CompoundTag blockTag = blocksTag.getCompound(i);
                 try {
                     BlockState state = NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK), blockTag.getCompound("state"));
+                    
+                    if (BlockImmutabilityUtil.isBlockImmutable(state)) {
+                        continue;
+                    }
+                    
                     CompoundTag posTag = blockTag.getCompound("pos");
                     Vec3 relativePos = new Vec3(posTag.getDouble("x"), posTag.getDouble("y"), posTag.getDouble("z"));
                     BlockPos originalPos = NbtUtils.readBlockPos(blockTag, "original").orElse(BlockPos.ZERO);

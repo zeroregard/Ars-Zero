@@ -12,6 +12,7 @@ import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
+import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
 import net.minecraft.world.level.block.Blocks;
@@ -84,24 +85,21 @@ public class ArsZeroResolverEvents {
                     // Store in map keyed by dimension and position
                     capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>()).put(pos, state);
                     
-                    // Also capture AOE blocks and remove them immediately
                     double aoeBuff = event.spellStats.getAoeMultiplier();
                     int pierceBuff = event.spellStats.getBuffCount(com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce.INSTANCE);
                     List<BlockPos> posList = SpellUtil.calcAOEBlocks(player, pos, blockHit, aoeBuff, pierceBuff);
                     for (BlockPos aoePos : posList) {
                         if (!event.world.isOutsideBuildHeight(aoePos)) {
                             var aoeState = event.world.getBlockState(aoePos);
-                            if (!aoeState.isAir()) {
+                            if (!aoeState.isAir() && !BlockImmutabilityUtil.isBlockImmutable(aoeState)) {
                                 capturedBlockStates.get(dimensionKey).put(aoePos, aoeState);
                                 
-                                // Remove block immediately in PRE event, before effects run
                                 event.world.setBlock(aoePos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                             }
                         }
                     }
                     
-                    // Also remove the main block
-                    if (!state.isAir()) {
+                    if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
                         event.world.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                     }
                 }
@@ -194,16 +192,14 @@ public class ArsZeroResolverEvents {
                 
                 for (BlockPos blockPos : posList) {
                     if (!event.world.isOutsideBuildHeight(blockPos) && BlockUtil.destroyRespectsClaim(player, event.world, blockPos)) {
-                        // Use captured state if available, otherwise try to read from world
                         var state = capturedStates.get(blockPos);
                         if (state == null) {
                             state = event.world.getBlockState(blockPos);
                         }
                         
-                        // Only add if not air
-                        if (state != null && !state.isAir()) {
+                        if (state != null && !state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
                             validBlocks.add(blockPos);
-                            capturedStates.put(blockPos, state); // Ensure it's in the map
+                            capturedStates.put(blockPos, state);
                         }
                     }
                 }
