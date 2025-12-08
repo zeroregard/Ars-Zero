@@ -189,59 +189,31 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         List<RadialMenuSlot<AbstractSpellPart>> radialMenuSlots = new ArrayList<>();
 
         for (int logicalSlot = 0; logicalSlot < 10; logicalSlot++) {
-            int beginPhysicalSlot = logicalSlot * 3 + SpellPhase.BEGIN.ordinal();
-            int tickPhysicalSlot = logicalSlot * 3 + SpellPhase.TICK.ordinal();
-            int endPhysicalSlot = logicalSlot * 3 + SpellPhase.END.ordinal();
-            
-            Spell beginSpell = spellCaster.getSpell(beginPhysicalSlot);
-            Spell tickSpell = spellCaster.getSpell(tickPhysicalSlot);
-            Spell endSpell = spellCaster.getSpell(endPhysicalSlot);
-            
-            String spellName = "";
-            AbstractSpellPart iconGlyph = null;
-            
-            if (!tickSpell.isEmpty()) {
-                spellName = spellCaster.getSpellName(tickPhysicalSlot);
-                for (AbstractSpellPart part : tickSpell.recipe()) {
-                    if (!(part instanceof AbstractCastMethod)) {
-                        iconGlyph = part;
-                        break;
-                    }
-                }
-                if (iconGlyph == null && tickSpell.recipe().iterator().hasNext()) {
-                    iconGlyph = tickSpell.recipe().iterator().next();
-                }
-            } else if (!beginSpell.isEmpty()) {
-                spellName = spellCaster.getSpellName(beginPhysicalSlot);
-                for (AbstractSpellPart part : beginSpell.recipe()) {
-                    if (!(part instanceof AbstractCastMethod)) {
-                        iconGlyph = part;
-                        break;
-                    }
-                }
-                if (iconGlyph == null && beginSpell.recipe().iterator().hasNext()) {
-                    iconGlyph = beginSpell.recipe().iterator().next();
-                }
-            } else if (!endSpell.isEmpty()) {
-                spellName = spellCaster.getSpellName(endPhysicalSlot);
-                for (AbstractSpellPart part : endSpell.recipe()) {
-                    if (!(part instanceof AbstractCastMethod)) {
-                        iconGlyph = part;
-                        break;
-                    }
-                }
-                if (iconGlyph == null && endSpell.recipe().iterator().hasNext()) {
-                    iconGlyph = endSpell.recipe().iterator().next();
-                }
-            } else {
-                spellName = spellCaster.getSpellName(tickPhysicalSlot);
-                if (spellName.isEmpty()) {
-                    spellName = spellCaster.getSpellName(beginPhysicalSlot);
-                }
-                if (spellName.isEmpty()) {
-                    spellName = spellCaster.getSpellName(endPhysicalSlot);
-                }
+            SpellPhase[] phases = SpellPhase.values();
+            int[] physicalSlots = new int[phases.length];
+            for (int i = 0; i < phases.length; i++) {
+                physicalSlots[i] = logicalSlot * 3 + phases[i].ordinal();
             }
+            
+            String spellName = Arrays.stream(physicalSlots)
+                .mapToObj(slot -> spellCaster.getSpellName(slot))
+                .filter(name -> !name.isEmpty())
+                .findFirst()
+                .orElse("");
+            
+            AbstractSpellPart iconGlyph = Arrays.stream(physicalSlots)
+                .mapToObj(slot -> spellCaster.getSpell(slot))
+                .filter(spell -> !spell.isEmpty())
+                .findFirst()
+                .map(spell -> {
+                    for (AbstractSpellPart part : spell.recipe()) {
+                        if (!(part instanceof AbstractCastMethod)) {
+                            return part;
+                        }
+                    }
+                    return spell.recipe().iterator().hasNext() ? spell.recipe().iterator().next() : null;
+                })
+                .orElse(null);
             
             if (spellName.isEmpty()) {
                 radialMenuSlots.add(new RadialMenuSlot<>("Empty", null));
