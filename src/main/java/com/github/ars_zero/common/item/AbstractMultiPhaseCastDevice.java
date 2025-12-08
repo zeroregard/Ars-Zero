@@ -189,23 +189,64 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         List<RadialMenuSlot<AbstractSpellPart>> radialMenuSlots = new ArrayList<>();
 
         for (int logicalSlot = 0; logicalSlot < 10; logicalSlot++) {
+            int beginPhysicalSlot = logicalSlot * 3 + SpellPhase.BEGIN.ordinal();
             int tickPhysicalSlot = logicalSlot * 3 + SpellPhase.TICK.ordinal();
-            Spell spell = spellCaster.getSpell(tickPhysicalSlot);
-
-            if (!spell.isEmpty()) {
-                AbstractSpellPart iconGlyph = null;
-                for (AbstractSpellPart part : spell.recipe()) {
+            int endPhysicalSlot = logicalSlot * 3 + SpellPhase.END.ordinal();
+            
+            Spell beginSpell = spellCaster.getSpell(beginPhysicalSlot);
+            Spell tickSpell = spellCaster.getSpell(tickPhysicalSlot);
+            Spell endSpell = spellCaster.getSpell(endPhysicalSlot);
+            
+            String spellName = "";
+            AbstractSpellPart iconGlyph = null;
+            
+            if (!tickSpell.isEmpty()) {
+                spellName = spellCaster.getSpellName(tickPhysicalSlot);
+                for (AbstractSpellPart part : tickSpell.recipe()) {
                     if (!(part instanceof AbstractCastMethod)) {
                         iconGlyph = part;
                         break;
                     }
                 }
-                if (iconGlyph == null && spell.recipe().iterator().hasNext()) {
-                    iconGlyph = spell.recipe().iterator().next();
+                if (iconGlyph == null && tickSpell.recipe().iterator().hasNext()) {
+                    iconGlyph = tickSpell.recipe().iterator().next();
                 }
-                radialMenuSlots.add(new RadialMenuSlot<>(spellCaster.getSpellName(tickPhysicalSlot), iconGlyph));
+            } else if (!beginSpell.isEmpty()) {
+                spellName = spellCaster.getSpellName(beginPhysicalSlot);
+                for (AbstractSpellPart part : beginSpell.recipe()) {
+                    if (!(part instanceof AbstractCastMethod)) {
+                        iconGlyph = part;
+                        break;
+                    }
+                }
+                if (iconGlyph == null && beginSpell.recipe().iterator().hasNext()) {
+                    iconGlyph = beginSpell.recipe().iterator().next();
+                }
+            } else if (!endSpell.isEmpty()) {
+                spellName = spellCaster.getSpellName(endPhysicalSlot);
+                for (AbstractSpellPart part : endSpell.recipe()) {
+                    if (!(part instanceof AbstractCastMethod)) {
+                        iconGlyph = part;
+                        break;
+                    }
+                }
+                if (iconGlyph == null && endSpell.recipe().iterator().hasNext()) {
+                    iconGlyph = endSpell.recipe().iterator().next();
+                }
             } else {
+                spellName = spellCaster.getSpellName(tickPhysicalSlot);
+                if (spellName.isEmpty()) {
+                    spellName = spellCaster.getSpellName(beginPhysicalSlot);
+                }
+                if (spellName.isEmpty()) {
+                    spellName = spellCaster.getSpellName(endPhysicalSlot);
+                }
+            }
+            
+            if (spellName.isEmpty()) {
                 radialMenuSlots.add(new RadialMenuSlot<>("Empty", null));
+            } else {
+                radialMenuSlots.add(new RadialMenuSlot<>(spellName, iconGlyph));
             }
         }
         return radialMenuSlots;

@@ -27,9 +27,17 @@ public class GuiStaffHUD {
             AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
             
             int logicalSlot = caster.getCurrentSlot();
+            int beginPhysicalSlot = logicalSlot * 3 + 0;
             int tickPhysicalSlot = logicalSlot * 3 + 1;
+            int endPhysicalSlot = logicalSlot * 3 + 2;
             
             String spellName = caster.getSpellName(tickPhysicalSlot);
+            if (spellName.isEmpty()) {
+                spellName = caster.getSpellName(beginPhysicalSlot);
+            }
+            if (spellName.isEmpty()) {
+                spellName = caster.getSpellName(endPhysicalSlot);
+            }
             String renderString = (logicalSlot + 1) + " " + spellName;
             
             graphics.drawString(
