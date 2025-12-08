@@ -11,8 +11,9 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import top.theillusivec4.curios.api.CuriosApi;
 
-public record PacketUpdateStaffParticleTimeline(int hotkeySlot, TimelineMap particles) implements CustomPacketPayload {
+public record PacketUpdateStaffParticleTimeline(int hotkeySlot, TimelineMap particles, boolean isForCirclet) implements CustomPacketPayload {
     
     public static final CustomPacketPayload.Type<PacketUpdateStaffParticleTimeline> TYPE = 
         new CustomPacketPayload.Type<>(ArsZero.prefix("update_staff_particle_timeline"));
@@ -21,12 +22,13 @@ public record PacketUpdateStaffParticleTimeline(int hotkeySlot, TimelineMap part
         StreamCodec.ofMember(PacketUpdateStaffParticleTimeline::toBytes, PacketUpdateStaffParticleTimeline::new);
     
     public PacketUpdateStaffParticleTimeline(RegistryFriendlyByteBuf buf) {
-        this(buf.readInt(), TimelineMap.STREAM.decode(buf));
+        this(buf.readInt(), TimelineMap.STREAM.decode(buf), buf.readBoolean());
     }
     
     public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeInt(hotkeySlot);
         TimelineMap.STREAM.encode(buf, particles);
+        buf.writeBoolean(isForCirclet);
     }
     
     @Override
@@ -37,10 +39,11 @@ public record PacketUpdateStaffParticleTimeline(int hotkeySlot, TimelineMap part
     public static void handle(PacketUpdateStaffParticleTimeline packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
-                ItemStack stack = AbstractMultiPhaseCastDevice.findDeviceStack(player);
+                ItemStack stack = findTargetDeviceStack(player, packet.isForCirclet);
                 
                 if (stack.isEmpty() || !(stack.getItem() instanceof AbstractMultiPhaseCastDevice)) {
-                    ArsZero.LOGGER.warn("[SERVER] No multi-phase cast device found!");
+                    ArsZero.LOGGER.warn("[SERVER] No multi-phase cast device found for {}!", 
+                        packet.isForCirclet ? "circlet" : "staff");
                     return;
                 }
                 
@@ -58,6 +61,30 @@ public record PacketUpdateStaffParticleTimeline(int hotkeySlot, TimelineMap part
                 }
             }
         });
+    }
+    
+    private static ItemStack findTargetDeviceStack(ServerPlayer player, boolean isForCirclet) {
+        if (isForCirclet) {
+            return CuriosApi.getCuriosHelper()
+                .findEquippedCurio(
+                    equipped -> equipped.getItem() instanceof AbstractMultiPhaseCastDevice,
+                    player
+                )
+                .map(result -> result.getRight())
+                .orElse(ItemStack.EMPTY);
+        } else {
+            ItemStack mainStack = player.getMainHandItem();
+            if (mainStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+                return mainStack;
+            }
+            
+            ItemStack offStack = player.getOffhandItem();
+            if (offStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+                return offStack;
+            }
+            
+            return ItemStack.EMPTY;
+        }
     }
 }
 
