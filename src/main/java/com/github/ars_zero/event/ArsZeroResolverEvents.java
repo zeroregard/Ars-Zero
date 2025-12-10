@@ -80,7 +80,7 @@ public class ArsZeroResolverEvents {
                 ItemStack casterTool = event.resolver.spellContext.getCasterTool();
                 boolean willCreateEntityGroup = requiresEntityGroupForTemporalAnchor(casterTool, player);
                 
-                if (willCreateEntityGroup) {
+                if (willCreateEntityGroup && wrapped.isRootResolver()) {
                     // Store in map keyed by dimension and position
                     capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>()).put(pos, state);
                     
@@ -213,7 +213,7 @@ public class ArsZeroResolverEvents {
                 cleanedUp = true;
                 
                 ItemStack casterTool = event.resolver.spellContext.getCasterTool();
-                if (!validBlocks.isEmpty() && !casterTool.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player)) {
+                if (!validBlocks.isEmpty() && !casterTool.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player) && wrapped.isRootResolver()) {
                     Vec3 centerPos = calculateCenter(validBlocks);
                     
                     BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), serverLevel);
