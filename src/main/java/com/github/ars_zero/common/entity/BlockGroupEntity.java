@@ -53,8 +53,8 @@ public class BlockGroupEntity extends Entity {
     @Nullable
     private UUID casterUUID;
     private float originalYRot = 0.0f;
-    private int lifespan = 20;
-    private int maxLifeSpan = 20;
+    private int lifespan = 5;
+    private int maxLifeSpan = 5;
     
     public BlockGroupEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
