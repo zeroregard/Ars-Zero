@@ -27,3 +27,4 @@ public class MultiphaseTurretModel extends GeoModel<MultiphaseSpellTurretTile> {
         return ANIMATION_RESOURCE;
     }
 }
+
