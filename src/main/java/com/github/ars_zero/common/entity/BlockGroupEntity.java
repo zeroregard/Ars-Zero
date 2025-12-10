@@ -53,8 +53,8 @@ public class BlockGroupEntity extends Entity {
     @Nullable
     private UUID casterUUID;
     private float originalYRot = 0.0f;
-    private int lifespan = 5;
-    private int maxLifeSpan = 5;
+    private int lifespan = 20;
+    private int maxLifeSpan = 20;
     
     public BlockGroupEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -103,11 +103,6 @@ public class BlockGroupEntity extends Entity {
                 continue;
             }
             
-            if (BlockImmutabilityUtil.isBlockImmutable(state)) {
-                ArsZero.LOGGER.warn("Attempted to add immutable block {} at {} to BlockGroupEntity, skipping", state.getBlock(), pos);
-                continue;
-            }
-            
             BlockEntity tileEntity = level().getBlockEntity(pos);
             if (tileEntity != null) {
                 blockEntityData.put(pos, tileEntity.saveWithoutMetadata(level().registryAccess()));
@@ -128,11 +123,6 @@ public class BlockGroupEntity extends Entity {
         for (BlockPos pos : positions) {
             BlockState state = capturedStates.get(pos);
             if (state == null || state.isAir()) {
-                continue;
-            }
-            
-            if (BlockImmutabilityUtil.isBlockImmutable(state)) {
-                ArsZero.LOGGER.warn("Attempted to add immutable block {} at {} to BlockGroupEntity, skipping", state.getBlock(), pos);
                 continue;
             }
             
@@ -157,11 +147,6 @@ public class BlockGroupEntity extends Entity {
         
         BlockState state = level().getBlockState(pos);
         if (state.isAir()) return;
-        
-        if (BlockImmutabilityUtil.isBlockImmutable(state)) {
-            ArsZero.LOGGER.warn("Attempted to add immutable block {} at {} to BlockGroupEntity, skipping", state.getBlock(), pos);
-            return;
-        }
         
         BlockEntity tileEntity = level().getBlockEntity(pos);
         if (tileEntity != null) {
@@ -218,12 +203,6 @@ public class BlockGroupEntity extends Entity {
 
         for (BlockData blockData : blocks) {
             BlockState originalState = blockData.blockState;
-            
-            if (BlockImmutabilityUtil.isBlockImmutable(originalState)) {
-                ArsZero.LOGGER.warn("BlockGroupEntity contains immutable block {} at {}, skipping placement", originalState.getBlock(), blockData.originalPosition);
-                continue;
-            }
-            
             Vec3 relativePos = blockData.relativePosition;
             BlockPos targetPos = BlockPos.containing(this.position().add(relativePos));
             
@@ -292,10 +271,6 @@ public class BlockGroupEntity extends Entity {
     
     private void dropBlockAsItem(BlockState state, BlockPos originalPos) {
         if (level().isClientSide || !level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
-            return;
-        }
-        
-        if (BlockImmutabilityUtil.isBlockImmutable(state)) {
             return;
         }
         
@@ -378,7 +353,6 @@ public class BlockGroupEntity extends Entity {
         super.tick();
         
         if (!level().isClientSide) {
-            validateAndRemoveImmutableBlocks();
             age();
             Vec3 deltaMovement = this.getDeltaMovement();
             this.move(MoverType.SELF, deltaMovement);
@@ -437,19 +411,6 @@ public class BlockGroupEntity extends Entity {
         blocks.clear();
         blockEntityData.clear();
         syncBlockData();
-    }
-    
-    public void validateAndRemoveImmutableBlocks() {
-        if (blocks.removeIf(blockData -> {
-            boolean isImmutable = BlockImmutabilityUtil.isBlockImmutable(blockData.blockState);
-            if (isImmutable) {
-                ArsZero.LOGGER.warn("Removing immutable block {} from BlockGroupEntity at {}", blockData.blockState.getBlock(), blockData.originalPosition);
-            }
-            return isImmutable;
-        })) {
-            updateBoundingBox();
-            syncBlockData();
-        }
     }
     
     @Override

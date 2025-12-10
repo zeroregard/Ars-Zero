@@ -189,23 +189,36 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         List<RadialMenuSlot<AbstractSpellPart>> radialMenuSlots = new ArrayList<>();
 
         for (int logicalSlot = 0; logicalSlot < 10; logicalSlot++) {
-            int tickPhysicalSlot = logicalSlot * 3 + SpellPhase.TICK.ordinal();
-            Spell spell = spellCaster.getSpell(tickPhysicalSlot);
-
-            if (!spell.isEmpty()) {
-                AbstractSpellPart iconGlyph = null;
-                for (AbstractSpellPart part : spell.recipe()) {
-                    if (!(part instanceof AbstractCastMethod)) {
-                        iconGlyph = part;
-                        break;
+            SpellPhase[] phases = SpellPhase.values();
+            int[] physicalSlots = new int[phases.length];
+            for (int i = 0; i < phases.length; i++) {
+                physicalSlots[i] = logicalSlot * 3 + phases[i].ordinal();
+            }
+            
+            String spellName = Arrays.stream(physicalSlots)
+                .mapToObj(slot -> spellCaster.getSpellName(slot))
+                .filter(name -> !name.isEmpty())
+                .findFirst()
+                .orElse("");
+            
+            AbstractSpellPart iconGlyph = Arrays.stream(physicalSlots)
+                .mapToObj(slot -> spellCaster.getSpell(slot))
+                .filter(spell -> !spell.isEmpty())
+                .findFirst()
+                .map(spell -> {
+                    for (AbstractSpellPart part : spell.recipe()) {
+                        if (!(part instanceof AbstractCastMethod)) {
+                            return part;
+                        }
                     }
-                }
-                if (iconGlyph == null && spell.recipe().iterator().hasNext()) {
-                    iconGlyph = spell.recipe().iterator().next();
-                }
-                radialMenuSlots.add(new RadialMenuSlot<>(spellCaster.getSpellName(tickPhysicalSlot), iconGlyph));
-            } else {
+                    return spell.recipe().iterator().hasNext() ? spell.recipe().iterator().next() : null;
+                })
+                .orElse(null);
+            
+            if (spellName.isEmpty()) {
                 radialMenuSlots.add(new RadialMenuSlot<>("Empty", null));
+            } else {
+                radialMenuSlots.add(new RadialMenuSlot<>(spellName, iconGlyph));
             }
         }
         return radialMenuSlots;
