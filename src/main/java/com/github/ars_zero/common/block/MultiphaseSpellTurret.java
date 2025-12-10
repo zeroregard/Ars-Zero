@@ -7,8 +7,10 @@ import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
 import com.hollingsworth.arsnouveau.common.items.SpellBook;
 import com.hollingsworth.arsnouveau.common.util.PortUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -55,6 +57,7 @@ public class MultiphaseSpellTurret extends BasicSpellTurret {
         }
         if (level.getBlockEntity(pos) instanceof MultiphaseSpellTurretTile tile) {
             configureFromDevice(stack, player, level, pos, tile);
+            player.getCooldowns().addCooldown(item, 10);
             return ItemInteractionResult.SUCCESS;
         }
         return super.useItemOn(stack, state, level, pos, player, handIn, hitResult);
@@ -77,12 +80,14 @@ public class MultiphaseSpellTurret extends BasicSpellTurret {
             PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.multiphase_turret.empty_slot"));
             return;
         }
-        int tickDelayOffset = AbstractMultiPhaseCastDevice.getSlotTickDelayOffset(stack, logicalSlot);
+        int delay = AbstractMultiPhaseCastDevice.getSlotTickDelay(stack, logicalSlot);
         UUID owner = player.getUUID();
-        tile.configureSpells(begin, tick, end, owner, tickDelayOffset);
+        tile.configureSpells(begin, tick, end, owner, delay);
         tile.updateBlock();
         level.sendBlockUpdated(pos, tile.getBlockState(), tile.getBlockState(), 2);
-        PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.multiphase_turret.spell_set"));
+        Component message = Component.translatable("ars_zero.alert.multiphase_turret.spell_set")
+            .append(Component.literal(" (" + delay + ")").withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY)));
+        PortUtil.sendMessage(player, message);
     }
 
     private static Spell copySpell(Spell spell) {
