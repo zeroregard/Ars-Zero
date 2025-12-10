@@ -113,7 +113,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         wasPowered = powered;
     }
 
-    public void configureSpells(Spell begin, Spell tick, Spell end, UUID owner, int delay) {
+    public void configureSpells(Spell begin, Spell tick, Spell end, UUID owner, int tickDelayOffset) {
         beginSpell = sanitizeSpell(begin);
         tickSpell = sanitizeSpell(tick);
         endSpell = sanitizeSpell(end);
@@ -125,6 +125,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         clearCastContext();
         ownerUUID = owner;
         setPlayer(owner);
+        this.tickDelayOffset = tickDelayOffset;
         currentAnimationState = AnimationState.IDLE;
         animationStartTime = 0;
         setChanged();

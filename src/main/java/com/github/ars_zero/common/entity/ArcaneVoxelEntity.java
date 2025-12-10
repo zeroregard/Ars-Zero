@@ -54,7 +54,6 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity {
                 SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.BLOCKS, 0.5f, 1.2f + this.random.nextFloat() * 0.3f);
         }
         spawnHitParticles(blockHit.getLocation());
-        this.discard();
     }
     
     @Override
@@ -70,7 +69,7 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity {
                 SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.BLOCKS, 0.5f, 1.2f + this.random.nextFloat() * 0.3f);
         }
         spawnHitParticles(result.getLocation());
-        this.discard();
+        resolveAndDiscard(result);
     }
     
     @Override
