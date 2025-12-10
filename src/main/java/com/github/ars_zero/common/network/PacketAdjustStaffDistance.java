@@ -2,7 +2,7 @@ package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -37,7 +37,7 @@ public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPac
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
                 ItemStack heldItem = player.getMainHandItem();
-                MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, heldItem);
+                MultiPhaseCastContext castContext = AbstractMultiphaseHandheldDevice.findContextByStack(player, heldItem);
                 
                 if (castContext == null || !castContext.isCasting) {
                     return;

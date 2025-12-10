@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -46,7 +46,7 @@ public record PacketSetMultiPhaseSpellCastingSlot(int logicalSlot, boolean isFor
                 InteractionHand hand = null;
                 
                 Optional<ItemStack> curioStack = CuriosApi.getCuriosHelper().findEquippedCurio(
-                    equipped -> equipped.getItem() instanceof AbstractMultiPhaseCastDevice,
+                    equipped -> equipped.getItem() instanceof AbstractMultiphaseHandheldDevice,
                     player
                 ).map(result -> result.getRight());
                 
@@ -61,10 +61,10 @@ public record PacketSetMultiPhaseSpellCastingSlot(int logicalSlot, boolean isFor
                         return;
                     }
                 } else {
-                    if (mainStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+                    if (mainStack.getItem() instanceof AbstractMultiphaseHandheldDevice) {
                         stack = mainStack;
                         hand = InteractionHand.MAIN_HAND;
-                    } else if (offStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+                    } else if (offStack.getItem() instanceof AbstractMultiphaseHandheldDevice) {
                         stack = offStack;
                         hand = InteractionHand.OFF_HAND;
                     } else if (curioStack.isPresent()) {

@@ -26,7 +26,7 @@ import top.theillusivec4.curios.api.type.capability.ICurioItem;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class SpellcastingCirclet extends AbstractMultiPhaseCastDevice implements ICurioItem {
+public class SpellcastingCirclet extends AbstractMultiphaseHandheldDevice implements ICurioItem {
     public SpellcastingCirclet() {
         super(SpellTier.THREE, new Properties());
     }

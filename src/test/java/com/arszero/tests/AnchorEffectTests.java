@@ -3,7 +3,7 @@ package com.arszero.tests;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.glyph.AnchorEffect;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.SpellEffectType;

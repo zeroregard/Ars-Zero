@@ -2,7 +2,7 @@ package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
@@ -109,7 +109,7 @@ public class SelectEffect extends AbstractEffect {
         level.addFreshEntity(blockGroup);
         
         ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        MultiPhaseCastContext context = AbstractMultiphaseHandheldDevice.findContextByStack(player, casterTool);
         if (context != null) {
             SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, blockPositions, player);
             context.beginResults.clear();

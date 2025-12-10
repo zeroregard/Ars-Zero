@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -44,7 +44,7 @@ public record PacketUpdateTickDelay(int logicalSlot, int delay, boolean mainHand
             ItemStack stack = ItemStack.EMPTY;
             if (packet.circlet()) {
                 stack = CuriosApi.getCuriosHelper()
-                    .findEquippedCurio(itemStack -> itemStack.getItem() instanceof AbstractMultiPhaseCastDevice, player)
+                    .findEquippedCurio(itemStack -> itemStack.getItem() instanceof AbstractMultiphaseHandheldDevice, player)
                     .map(result -> result.getRight())
                     .orElse(ItemStack.EMPTY);
             } else {
@@ -52,11 +52,11 @@ public record PacketUpdateTickDelay(int logicalSlot, int delay, boolean mainHand
                 stack = player.getItemInHand(hand);
             }
 
-            if (!(stack.getItem() instanceof AbstractMultiPhaseCastDevice)) {
+            if (!(stack.getItem() instanceof AbstractMultiphaseHandheldDevice)) {
                 return;
             }
 
-            AbstractMultiPhaseCastDevice.setSlotTickDelay(stack, packet.logicalSlot(), packet.delay());
+            AbstractMultiphaseHandheldDevice.setSlotTickDelay(stack, packet.logicalSlot(), packet.delay());
             player.containerMenu.broadcastChanges();
         });
     }

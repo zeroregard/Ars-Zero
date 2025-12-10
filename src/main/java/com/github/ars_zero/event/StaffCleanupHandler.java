@@ -2,7 +2,7 @@ package com.github.ars_zero.event;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.glyph.AnchorEffect;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.registry.ModAttachments;
@@ -20,7 +20,7 @@ public class StaffCleanupHandler {
         Player player = event.getEntity();
         if (player.level().isClientSide) return;
         
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.getCastContext(player, MultiPhaseCastContext.CastSource.ITEM);
+        MultiPhaseCastContext context = AbstractMultiphaseHandheldDevice.getCastContext(player, MultiPhaseCastContext.CastSource.ITEM);
         if (context == null || !context.isCasting) {
             return;
         }
@@ -31,7 +31,7 @@ public class StaffCleanupHandler {
         
         if (!isHoldingStaff || !isUsingItem) {
             AnchorEffect.restoreEntityPhysics(context);
-            AbstractMultiPhaseCastDevice.clearContext(player, MultiPhaseCastContext.CastSource.ITEM);
+            AbstractMultiphaseHandheldDevice.clearContext(player, MultiPhaseCastContext.CastSource.ITEM);
         }
     }
 }

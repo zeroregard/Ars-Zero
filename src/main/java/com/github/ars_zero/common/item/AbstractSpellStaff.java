@@ -28,7 +28,7 @@ import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice implements GeoItem {
+public abstract class AbstractSpellStaff extends AbstractMultiphaseHandheldDevice implements GeoItem {
 
     public AbstractSpellStaff(SpellTier tier) {
         super(tier, new Properties());
@@ -45,7 +45,7 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
         if (livingEntity instanceof Player player && !level.isClientSide) {
             int totalDuration = getUseDuration(stack, livingEntity);
             boolean isFirstTick = remainingUseDuration == totalDuration - 1;
-            MultiPhaseCastContext context = getCastContext(player, MultiPhaseCastContext.CastSource.ITEM);
+            MultiPhaseCastContext context = AbstractMultiphaseHandheldDevice.getCastContext(player, MultiPhaseCastContext.CastSource.ITEM);
             boolean alreadyCasting = context != null && context.isCasting;
             if (isFirstTick && !alreadyCasting) {
                 beginPhase(player, stack, MultiPhaseCastContext.CastSource.ITEM);
@@ -59,7 +59,7 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (!level.isClientSide) {
-            MultiPhaseCastContext context = getCastContext(player, MultiPhaseCastContext.CastSource.ITEM);
+            MultiPhaseCastContext context = AbstractMultiphaseHandheldDevice.getCastContext(player, MultiPhaseCastContext.CastSource.ITEM);
             boolean isCasting = context != null && context.isCasting;
             if (isCasting) {
                 return InteractionResultHolder.pass(stack);

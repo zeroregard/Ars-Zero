@@ -5,7 +5,7 @@ import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.client.gui.buttons.ManaIndicator;
 import com.github.ars_zero.client.gui.buttons.StaffArrowButton;
 import com.github.ars_zero.client.gui.spell.SpellPhaseSlots;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
@@ -185,7 +185,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
                 isCreativeStaff = true;
                 parts = new ArrayList<>(GlyphRegistry.getSpellpartMap().values().stream().filter(AbstractSpellPart::shouldShowInSpellBook).toList());
             }
-        } else if (bookStack.getItem() instanceof AbstractMultiPhaseCastDevice device) {
+        } else if (bookStack.getItem() instanceof AbstractMultiphaseHandheldDevice device) {
             tier = device.getTier().value;
             if (device.getTier() == SpellTier.CREATIVE) {
                 isCreativeStaff = true;
@@ -475,7 +475,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         int clamped = Mth.clamp(value, 1, 20);
         slotDelays[selectedSpellSlot] = clamped;
         if (deviceStack != null && !deviceStack.isEmpty()) {
-            AbstractMultiPhaseCastDevice.setSlotTickDelay(deviceStack, selectedSpellSlot, clamped);
+            AbstractMultiphaseHandheldDevice.setSlotTickDelay(deviceStack, selectedSpellSlot, clamped);
         }
         boolean mainHand = guiHand == null || guiHand == InteractionHand.MAIN_HAND;
         Networking.sendToServer(new PacketUpdateTickDelay(selectedSpellSlot, clamped, mainHand, isCircletDevice()));
@@ -493,7 +493,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         if (deviceStack == null || deviceStack.isEmpty()) {
             return;
         }
-        int[] stored = AbstractMultiPhaseCastDevice.getSlotTickDelays(deviceStack);
+        int[] stored = AbstractMultiphaseHandheldDevice.getSlotTickDelays(deviceStack);
         System.arraycopy(stored, 0, slotDelays, 0, Math.min(slotDelays.length, stored.length));
     }
 
@@ -857,7 +857,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             int tier = 1;
             if (bookStack.getItem() instanceof AbstractSpellStaff staff) {
                 tier = staff.getTier().value;
-            } else if (bookStack.getItem() instanceof AbstractMultiPhaseCastDevice device) {
+            } else if (bookStack.getItem() instanceof AbstractMultiphaseHandheldDevice device) {
                 tier = device.getTier().value;
             }
             int finalTier = tier;
@@ -884,7 +884,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             int tier = 1;
             if (bookStack.getItem() instanceof AbstractSpellStaff staff) {
                 tier = staff.getTier().value;
-            } else if (bookStack.getItem() instanceof AbstractMultiPhaseCastDevice device) {
+            } else if (bookStack.getItem() instanceof AbstractMultiphaseHandheldDevice device) {
                 tier = device.getTier().value;
             }
             int finalTier = tier;

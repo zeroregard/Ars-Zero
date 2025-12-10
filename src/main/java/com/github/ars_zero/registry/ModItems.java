@@ -125,7 +125,7 @@ public class ModItems {
         });
     }
     
-    private static void registerDevice(com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice device) {
+    private static void registerDevice(com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice device) {
         SpellCasterRegistry.register(device, (stack) -> {
             return stack.get(com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry.SPELL_CASTER);
         });

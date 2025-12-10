@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.block;
 
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
+import com.github.ars_zero.common.item.IMultiphaseDevice;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
@@ -18,6 +19,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +38,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.UUID;
 
-public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
+public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements IMultiphaseDevice {
 
     private static final String BEGIN_TAG = "begin_spell";
     private static final String TICK_TAG = "tick_spell";
@@ -212,9 +217,8 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         }
         spellCaster = (SpellCaster) spellCaster.setSpell(spell, 0);
         
-        if (castContext != null && phase == SpellPhase.BEGIN) {
-            castContext.currentPhase = SpellPhase.BEGIN;
-            castContext.isCasting = true;
+        if (castContext != null) {
+            AbstractMultiphaseHandheldDevice.updateCastContextPhase(castContext, phase);
         }
         
         super.shootSpell();
@@ -223,7 +227,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
 
     @Override
     public void shootSpell() {
-        if (level == null || !(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
+        if (level == null || !(level instanceof ServerLevel serverLevel)) {
             super.shootSpell();
             return;
         }
@@ -252,25 +256,16 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
                 ? net.neoforged.neoforge.common.util.FakePlayerFactory.get(serverLevel, new com.mojang.authlib.GameProfile(ownerUUID, ""))
                 : com.hollingsworth.arsnouveau.api.ANFakePlayer.getPlayer(serverLevel);
         fakePlayer.setPos(pos.getX(), pos.getY(), pos.getZ());
-        SpellPhase spellPhase = switch (currentPhase) {
-            case BEGIN -> SpellPhase.BEGIN;
-            case TICK -> SpellPhase.TICK;
-            case END -> SpellPhase.END;
-        };
         
         SpellContext spellContext = new SpellContext(serverLevel, spellCaster.getSpell(), fakePlayer, new TileCaster(this, SpellContext.CasterType.TURRET));
         com.hollingsworth.arsnouveau.api.spell.SpellResolver resolver = new com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver(spellContext);
         
         if (castContext != null && ownerUUID != null) {
-            resolver = new WrappedSpellResolver((com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver) resolver, ownerUUID, spellPhase, true);
+            resolver = new WrappedSpellResolver((com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver) resolver, ownerUUID, currentPhase, currentPhase == SpellPhase.BEGIN);
         }
         
         if (resolver.castType != null && com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.TURRET_BEHAVIOR_MAP.containsKey(resolver.castType)) {
             com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.TURRET_BEHAVIOR_MAP.get(resolver.castType).onCast(resolver, serverLevel, pos, fakePlayer, iposition, direction);
-        }
-        
-        if (castContext != null) {
-            updateCastContextPhase(currentPhase);
         }
     }
 
@@ -279,27 +274,34 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
             return;
         }
         castContext = new MultiPhaseCastContext(ownerUUID, MultiPhaseCastContext.CastSource.TURRET);
-        castContext.currentPhase = SpellPhase.BEGIN;
-        castContext.isCasting = true;
-        castContext.beginResults.clear();
-        castContext.tickResults.clear();
-        castContext.endResults.clear();
-        castContext.createdAt = System.currentTimeMillis();
-    }
-
-    private void updateCastContextPhase(SpellPhase phase) {
-        if (castContext == null) {
-            return;
-        }
-        castContext.currentPhase = phase;
-        if (phase == SpellPhase.TICK) {
-            castContext.tickCount++;
-            castContext.sequenceTick++;
-        }
+        AbstractMultiphaseHandheldDevice.initializeCastContext(castContext, ownerUUID, MultiPhaseCastContext.CastSource.TURRET);
     }
 
     private void clearCastContext() {
         castContext = null;
+    }
+    
+    @Override
+    public MultiPhaseCastContext getOrCreateContext(Player player, MultiPhaseCastContext.CastSource source) {
+        if (castContext == null && ownerUUID != null) {
+            initializeCastContext();
+        }
+        return castContext;
+    }
+    
+    @Override
+    public MultiPhaseCastContext getCastContext(Player player, MultiPhaseCastContext.CastSource source) {
+        return castContext;
+    }
+    
+    @Override
+    public MultiPhaseCastContext findContextByStack(Player player, ItemStack stack) {
+        return castContext;
+    }
+    
+    @Override
+    public void clearContext(Player player, MultiPhaseCastContext.CastSource source) {
+        clearCastContext();
     }
 
     public MultiPhaseCastContext getCastContext() {

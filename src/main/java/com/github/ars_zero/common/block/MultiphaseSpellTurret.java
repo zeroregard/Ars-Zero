@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.block;
 
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
@@ -49,7 +49,7 @@ public class MultiphaseSpellTurret extends BasicSpellTurret {
             return ItemInteractionResult.SUCCESS;
         }
         Item item = stack.getItem();
-        if (!(item instanceof AbstractMultiPhaseCastDevice)) {
+        if (!(item instanceof AbstractMultiphaseHandheldDevice)) {
             if (item instanceof SpellBook) {
                 PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.multiphase_turret.multi_phase_required"));
             }
@@ -80,7 +80,7 @@ public class MultiphaseSpellTurret extends BasicSpellTurret {
             PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.multiphase_turret.empty_slot"));
             return;
         }
-        int delay = AbstractMultiPhaseCastDevice.getSlotTickDelay(stack, logicalSlot);
+        int delay = AbstractMultiphaseHandheldDevice.getSlotTickDelay(stack, logicalSlot);
         UUID owner = player.getUUID();
         tile.configureSpells(begin, tick, end, owner, delay);
         tile.updateBlock();
