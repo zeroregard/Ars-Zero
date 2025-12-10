@@ -114,7 +114,7 @@ public class SpellResult {
                              blockGroup, blockPositions);
     }
     
-    private static Vec3 calculateRelativeOffsetInLocalSpace(Vec3 casterPos, Vec3 targetPos, float yaw, float pitch) {
+    public static Vec3 calculateRelativeOffsetInLocalSpace(Vec3 casterPos, Vec3 targetPos, float yaw, float pitch) {
         Vec3 worldOffset = targetPos.subtract(casterPos);
         
         double yawRad = Math.toRadians(yaw);
