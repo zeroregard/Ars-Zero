@@ -28,9 +28,9 @@ public class Networking {
         );
 
         registrar.playToServer(
-            PacketUpdateStaffParticleTimeline.TYPE,
-            PacketUpdateStaffParticleTimeline.CODEC,
-            PacketUpdateStaffParticleTimeline::handle
+            PacketUpdateMultiphaseDeviceParticleTimeline.TYPE,
+            PacketUpdateMultiphaseDeviceParticleTimeline.CODEC,
+            PacketUpdateMultiphaseDeviceParticleTimeline::handle
         );
 
         registrar.playToServer(
@@ -72,7 +72,7 @@ public class Networking {
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
     }
 
-    public static void sendToServer(PacketUpdateStaffParticleTimeline packet) {
+    public static void sendToServer(PacketUpdateMultiphaseDeviceParticleTimeline packet) {
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
     }
 

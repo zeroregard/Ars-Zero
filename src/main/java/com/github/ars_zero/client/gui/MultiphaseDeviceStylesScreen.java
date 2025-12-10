@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class StaffParticleScreen extends BaseBook {
+public class MultiphaseDeviceStylesScreen extends BaseBook {
     TimelineMap.MutableTimelineMap timelineMap;
 
     public IParticleTimelineType<?> selectedTimeline = null;
@@ -49,7 +49,7 @@ public class StaffParticleScreen extends BaseBook {
     boolean hasPreviousElements = false;
     public static IParticleTimelineType<?> LAST_SELECTED_PART = null;
     public static int lastOpenedHash;
-    public static StaffParticleScreen lastScreen;
+    public static MultiphaseDeviceStylesScreen lastScreen;
 
     AbstractMultiPhaseCastDeviceScreen previousScreen;
     GuiImageButton upButton;
@@ -60,16 +60,32 @@ public class StaffParticleScreen extends BaseBook {
     int hotkeySlot;
     ItemStack staffStack;
     InteractionHand hand;
+    boolean isForCirclet;
 
-    public StaffParticleScreen(AbstractMultiPhaseCastDeviceScreen previousScreen, int hotkeySlot, ItemStack stack, InteractionHand stackHand) {
+    public MultiphaseDeviceStylesScreen(AbstractMultiPhaseCastDeviceScreen previousScreen, int hotkeySlot, ItemStack stack, InteractionHand stackHand) {
         super();
         this.previousScreen = previousScreen;
         this.hotkeySlot = hotkeySlot;
         this.staffStack = stack;
         this.hand = stackHand;
+        this.isForCirclet = stack != null && stack.getItem() instanceof com.github.ars_zero.common.item.SpellcastingCirclet;
+        
+        if (stack == null || stack.isEmpty()) {
+            this.timelineMap = new TimelineMap().mutable();
+            selectedTimeline = ParticleTimelineRegistry.PROJECTILE_TIMELINE.get();
+            LAST_SELECTED_PART = selectedTimeline;
+            return;
+        }
         
         int beginPhysicalSlot = hotkeySlot * 3 + 0;
         var caster = com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry.from(stack);
+        if (caster == null) {
+            this.timelineMap = new TimelineMap().mutable();
+            selectedTimeline = ParticleTimelineRegistry.PROJECTILE_TIMELINE.get();
+            LAST_SELECTED_PART = selectedTimeline;
+            return;
+        }
+        
         this.timelineMap = caster.getParticles(beginPhysicalSlot).mutable();
         selectedTimeline = LAST_SELECTED_PART == null ? findTimelineFromSlot(caster, beginPhysicalSlot) : LAST_SELECTED_PART;
         LAST_SELECTED_PART = selectedTimeline;
@@ -115,6 +131,11 @@ public class StaffParticleScreen extends BaseBook {
         addBackButton(previousScreen, b -> {});
         addSaveButton((b) -> saveParticleConfig());
         
+        if (selectedTimeline == null) {
+            selectedTimeline = ParticleTimelineRegistry.PROJECTILE_TIMELINE.get();
+            LAST_SELECTED_PART = selectedTimeline;
+        }
+        
         timelineButton = addRenderableWidget(new DocEntryButton(bookLeft + LEFT_PAGE_OFFSET, bookTop + 36, selectedTimeline.getSpellPart().glyphItem.getDefaultInstance(), Component.translatable(selectedTimeline.getSpellPart().getLocaleName()), (b) -> onTimelineSelectorHit()));
 
         timelineButton.isSelected = true;
@@ -144,7 +165,15 @@ public class StaffParticleScreen extends BaseBook {
     }
     
     private void initHotkeySlots() {
+        if (staffStack == null || staffStack.isEmpty()) {
+            return;
+        }
+        
         var caster = com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry.from(staffStack);
+        if (caster == null) {
+            return;
+        }
+        
         for (int i = 0; i < 10; i++) {
             int beginPhysicalSlot = i * 3 + 0;
             String name = caster.getSpellName(beginPhysicalSlot);
@@ -166,10 +195,52 @@ public class StaffParticleScreen extends BaseBook {
                 hotkeySlot = slotIndex;
                 
                 var player = net.minecraft.client.Minecraft.getInstance().player;
-                var freshStack = player.getItemInHand(hand);
+                if (player == null) {
+                    return;
+                }
+                
+                ItemStack freshStack = ItemStack.EMPTY;
+                
+                if (staffStack != null && !staffStack.isEmpty() && staffStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
+                    freshStack = staffStack;
+                } else if (hand != null) {
+                    freshStack = player.getItemInHand(hand);
+                    if (!(freshStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice)) {
+                        freshStack = ItemStack.EMPTY;
+                    }
+                } else {
+                    ItemStack mainStack = player.getMainHandItem();
+                    if (mainStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
+                        freshStack = mainStack;
+                    } else {
+                        ItemStack offStack = player.getOffhandItem();
+                        if (offStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
+                            freshStack = offStack;
+                        }
+                    }
+                }
+                
+                if (freshStack.isEmpty() && isForCirclet) {
+                    freshStack = top.theillusivec4.curios.api.CuriosApi.getCuriosHelper()
+                        .findEquippedCurio(
+                            equipped -> equipped.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice,
+                            player
+                        )
+                        .map(result -> result.getRight())
+                        .orElse(ItemStack.EMPTY);
+                }
+                
+                if (freshStack.isEmpty() || !(freshStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice)) {
+                    return;
+                }
+                
                 staffStack = freshStack;
                 
                 var freshCaster = com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry.from(freshStack);
+                if (freshCaster == null) {
+                    return;
+                }
+                
                 int newBeginPhysicalSlot = hotkeySlot * 3 + 0;
                 timelineMap = freshCaster.getParticles(newBeginPhysicalSlot).mutable();
                 selectedTimeline = findTimelineFromSlot(freshCaster, newBeginPhysicalSlot);
@@ -196,13 +267,13 @@ public class StaffParticleScreen extends BaseBook {
     }
     
     private void saveParticleConfig() {
-        StaffParticleScreen.lastOpenedHash = timelineMap.immutable().hashCode();
+        MultiphaseDeviceStylesScreen.lastOpenedHash = timelineMap.immutable().hashCode();
         
         com.github.ars_zero.common.network.Networking.sendToServer(
-            new com.github.ars_zero.common.network.PacketUpdateStaffParticleTimeline(
+            new com.github.ars_zero.common.network.PacketUpdateMultiphaseDeviceParticleTimeline(
                 hotkeySlot, 
-                timelineMap.immutable(), 
-                this.hand == InteractionHand.MAIN_HAND
+                timelineMap.immutable(),
+                isForCirclet
             )
         );
     }
@@ -227,19 +298,29 @@ public class StaffParticleScreen extends BaseBook {
     }
 
     public static void openScreen(AbstractMultiPhaseCastDeviceScreen parentScreen, int hotkeySlot, ItemStack stack, InteractionHand stackHand) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        
         var caster = com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry.from(stack);
+        if (caster == null) {
+            return;
+        }
+        
         int beginPhysicalSlot = hotkeySlot * 3 + 0;
         int hash = caster.getParticles(beginPhysicalSlot).hashCode();
-        if (LAST_SELECTED_PART == null || StaffParticleScreen.lastOpenedHash != hash || StaffParticleScreen.lastScreen == null) {
+        if (LAST_SELECTED_PART == null || MultiphaseDeviceStylesScreen.lastOpenedHash != hash || MultiphaseDeviceStylesScreen.lastScreen == null) {
             LAST_SELECTED_PART = null;
-            StaffParticleScreen.lastOpenedHash = hash;
-            Minecraft.getInstance().setScreen(new StaffParticleScreen(parentScreen, hotkeySlot, stack, stackHand));
+            MultiphaseDeviceStylesScreen.lastOpenedHash = hash;
+            Minecraft.getInstance().setScreen(new MultiphaseDeviceStylesScreen(parentScreen, hotkeySlot, stack, stackHand));
         } else {
-            StaffParticleScreen screen = StaffParticleScreen.lastScreen;
+            MultiphaseDeviceStylesScreen screen = MultiphaseDeviceStylesScreen.lastScreen;
             if (screen.hotkeySlot != hotkeySlot) {
                 screen.hotkeySlot = hotkeySlot;
-                screen.timelineMap = caster.getParticles(beginPhysicalSlot).mutable();
-                screen.selectedTimeline = screen.findTimelineFromSlot(caster, beginPhysicalSlot);
+                if (caster != null) {
+                    screen.timelineMap = caster.getParticles(beginPhysicalSlot).mutable();
+                    screen.selectedTimeline = screen.findTimelineFromSlot(caster, beginPhysicalSlot);
+                }
             }
             Minecraft.getInstance().setScreen(screen);
         }
@@ -249,13 +330,13 @@ public class StaffParticleScreen extends BaseBook {
     @Override
     public void onClose() {
         super.onClose();
-        StaffParticleScreen.lastScreen = this;
+        MultiphaseDeviceStylesScreen.lastScreen = this;
     }
 
     @Override
     public void removed() {
         super.removed();
-        StaffParticleScreen.lastScreen = this;
+        MultiphaseDeviceStylesScreen.lastScreen = this;
     }
 
     @Override

@@ -167,8 +167,13 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         bookBottom = height / 2 + STAFF_GUI_HEIGHT / 2;
         
         if (selectedSpellSlot == -1) {
-            selectedSpellSlot = caster.getCurrentSlot();
-            if (selectedSpellSlot < 0 || selectedSpellSlot >= 10) {
+            refreshDeviceStack();
+            if (caster != null) {
+                selectedSpellSlot = caster.getCurrentSlot();
+                if (selectedSpellSlot < 0 || selectedSpellSlot >= 10) {
+                    selectedSpellSlot = 0;
+                }
+            } else {
                 selectedSpellSlot = 0;
             }
         }
@@ -438,7 +443,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
     
     private void openParticleScreen() {
-        StaffParticleScreen.openScreen(this, selectedSpellSlot, deviceStack, this.guiHand);
+        MultiphaseDeviceStylesScreen.openScreen(this, selectedSpellSlot, deviceStack, this.guiHand);
     }
     
     private int getSelectedPhysicalSlot() {
@@ -499,6 +504,48 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
     private boolean isCircletDevice() {
         return bookStack != null && bookStack.getItem() instanceof SpellcastingCirclet;
+    }
+    
+    private void refreshDeviceStack() {
+        if (player == null) {
+            return;
+        }
+        
+        ItemStack freshStack = ItemStack.EMPTY;
+        boolean isCirclet = bookStack != null && bookStack.getItem() instanceof SpellcastingCirclet;
+        
+        if (guiHand != null) {
+            freshStack = player.getItemInHand(guiHand);
+            if (!(freshStack.getItem() instanceof AbstractMultiPhaseCastDevice)) {
+                freshStack = ItemStack.EMPTY;
+            }
+        } else {
+            ItemStack mainStack = player.getMainHandItem();
+            if (mainStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+                freshStack = mainStack;
+            } else {
+                ItemStack offStack = player.getOffhandItem();
+                if (offStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+                    freshStack = offStack;
+                }
+            }
+        }
+        
+        if (freshStack.isEmpty() && isCirclet) {
+            freshStack = top.theillusivec4.curios.api.CuriosApi.getCuriosHelper()
+                .findEquippedCurio(
+                    equipped -> equipped.getItem() instanceof AbstractMultiPhaseCastDevice,
+                    player
+                )
+                .map(result -> result.getRight())
+                .orElse(ItemStack.EMPTY);
+        }
+        
+        if (!freshStack.isEmpty() && freshStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+            deviceStack = freshStack;
+            caster = SpellCasterRegistry.from(freshStack);
+            onBookstackUpdated(freshStack);
+        }
     }
 
     private void addPaginationButtons() {
