@@ -64,8 +64,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
-public abstract class AbstractMultiPhaseCastDevice extends Item implements ICasterTool, IRadialProvider {
+public abstract class AbstractMultiphaseHandheldDevice extends Item implements ICasterTool, IRadialProvider {
 
     public static class ArsZeroSpellContext extends SpellContext {
         public final SpellPhase phase;
@@ -82,7 +83,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     private static final int DEFAULT_TICK_DELAY = 1;
     private static final int MAX_TICK_DELAY = 20;
 
-    protected AbstractMultiPhaseCastDevice(SpellTier tier, Properties properties) {
+    protected AbstractMultiphaseHandheldDevice(SpellTier tier, Properties properties) {
         super(properties
             .stacksTo(1)
             .component(DataComponents.BASE_COLOR, DyeColor.PURPLE)
@@ -94,7 +95,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         return tier;
     }
 
-    protected static MultiPhaseCastContext getOrCreateContext(Player player, MultiPhaseCastContext.CastSource source) {
+    public static MultiPhaseCastContext getOrCreateContext(Player player, MultiPhaseCastContext.CastSource source) {
         MultiPhaseCastContextMap contextMap = player.getData(ModAttachments.CAST_CONTEXTS);
         if (contextMap == null) {
             contextMap = new MultiPhaseCastContextMap(player.getUUID());
@@ -133,6 +134,32 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             }
         }
     }
+
+    public static void initializeCastContext(MultiPhaseCastContext context, UUID playerId, MultiPhaseCastContext.CastSource source) {
+        if (context != null) {
+            context.currentPhase = SpellPhase.BEGIN;
+            context.isCasting = true;
+            context.tickCount = 0;
+            context.sequenceTick = 0;
+            context.outOfMana = false;
+            context.createdAt = System.currentTimeMillis();
+            context.beginResults.clear();
+            context.tickResults.clear();
+            context.endResults.clear();
+            context.source = source;
+        }
+    }
+
+    public static void updateCastContextPhase(MultiPhaseCastContext context, SpellPhase phase) {
+        if (context != null) {
+            context.currentPhase = phase;
+            if (phase == SpellPhase.TICK) {
+                context.tickCount++;
+                context.sequenceTick++;
+            }
+        }
+    }
+
 
     @Override
     public void onCraftedBy(ItemStack stack, Level level, Player player) {
@@ -227,16 +254,18 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     protected void beginPhase(Player player, ItemStack stack, MultiPhaseCastContext.CastSource source) {
         MultiPhaseCastContext context = getOrCreateContext(player, source);
 
-        context.currentPhase = SpellPhase.BEGIN;
-        context.isCasting = true;
-        context.tickCount = 0;
-        context.sequenceTick = 0;
-        context.outOfMana = false;
-        context.createdAt = System.currentTimeMillis();
-        context.beginResults.clear();
-        context.tickResults.clear();
-        context.endResults.clear();
-        context.source = source;
+        if (context != null) {
+            context.currentPhase = SpellPhase.BEGIN;
+            context.isCasting = true;
+            context.tickCount = 0;
+            context.sequenceTick = 0;
+            context.outOfMana = false;
+            context.createdAt = System.currentTimeMillis();
+            context.beginResults.clear();
+            context.tickResults.clear();
+            context.endResults.clear();
+            context.source = source;
+        }
         context.castingStack = stack;
 
         executeSpell(player, stack, SpellPhase.BEGIN);
@@ -261,9 +290,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             return;
         }
 
-        context.currentPhase = SpellPhase.TICK;
-        context.tickCount++;
-        context.sequenceTick++;
+        updateCastContextPhase(context, SpellPhase.TICK);
 
         AbstractCaster<?> caster = SpellCasterRegistry.from(castingStack);
         if (caster == null) {
@@ -304,7 +331,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             return;
         }
 
-        context.currentPhase = SpellPhase.END;
+        updateCastContextPhase(context, SpellPhase.END);
 
         AnchorEffect.restoreEntityPhysics(context);
 
@@ -383,18 +410,15 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         ArsZeroSpellContext context = new ArsZeroSpellContext(player.level(), spell, player, phase, stack);
         SpellResolver resolver = new SpellResolver(context);
 
-        if (phase == SpellPhase.BEGIN) {
-            MultiPhaseCastContext castContext = findContextByStack(player, stack);
-            if (castContext != null) {
-                resolver = new WrappedSpellResolver(resolver, player.getUUID(), SpellPhase.BEGIN, true);
-            }
+        MultiPhaseCastContext castContext = findContextByStack(player, stack);
+        if (castContext != null) {
+            resolver = new WrappedSpellResolver(resolver, player.getUUID(), phase, phase == SpellPhase.BEGIN);
         }
 
         boolean canCast = resolver.canCast(player);
 
         if (canCast) {
             try {
-                MultiPhaseCastContext castContext = findContextByStack(player, stack);
                 InteractionHand hand = InteractionHand.MAIN_HAND;
                 if (castContext != null && castContext.source == MultiPhaseCastContext.CastSource.CURIO) {
                     if (player.getMainHandItem().isEmpty()) {
@@ -651,4 +675,3 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         return stack;
     }
 }
-

@@ -2,7 +2,7 @@ package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellResult;
@@ -121,7 +121,7 @@ public class TemporalContextForm extends AbstractCastMethod {
             casterYaw = playerCaster.getYRot();
             casterPitch = playerCaster.getXRot();
             ItemStack casterTool = spellContext.getCasterTool();
-            castContext = AbstractMultiPhaseCastDevice.findContextByStack(playerCaster, casterTool);
+            castContext = AbstractMultiphaseHandheldDevice.findContextByStack(playerCaster, casterTool);
             ArsZero.LOGGER.debug("[TemporalContextForm] Player caster, found context: {}", castContext != null);
         } else if (spellContext.getCaster() instanceof TileCaster tileCaster) {
             BlockEntity tile = tileCaster.getTile();

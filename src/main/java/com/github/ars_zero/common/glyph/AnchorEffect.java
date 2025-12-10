@@ -4,7 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
@@ -64,7 +64,7 @@ public class AnchorEffect extends AbstractEffect {
         if (!(world instanceof ServerLevel serverLevel)) return;
         
         ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        MultiPhaseCastContext castContext = AbstractMultiphaseHandheldDevice.findContextByStack(player, casterTool);
         
         if (castContext == null || castContext.beginResults.isEmpty()) {
             return;
@@ -256,7 +256,7 @@ public class AnchorEffect extends AbstractEffect {
         if (!(shooter instanceof Player player)) return;
         
         ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        MultiPhaseCastContext castContext = AbstractMultiphaseHandheldDevice.findContextByStack(player, casterTool);
         
         if (castContext == null || castContext.beginResults.isEmpty()) {
             return;

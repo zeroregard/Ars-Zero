@@ -9,7 +9,7 @@ import com.github.ars_zero.common.entity.LightningVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.SpellEffectType;
@@ -387,7 +387,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         }
         
         ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        MultiPhaseCastContext context = AbstractMultiphaseHandheldDevice.findContextByStack(player, casterTool);
         if (context == null) {
             return;
         }
@@ -415,7 +415,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         }
         
         ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        MultiPhaseCastContext context = AbstractMultiphaseHandheldDevice.findContextByStack(player, casterTool);
         if (context == null) {
             return;
         }

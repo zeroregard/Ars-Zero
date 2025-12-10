@@ -5,7 +5,7 @@ import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
@@ -166,7 +166,7 @@ public class ArsZeroResolverEvents {
             }
             
             ItemStack casterTool = event.resolver.spellContext.getCasterTool();
-            context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+            context = AbstractMultiphaseHandheldDevice.findContextByStack(player, casterTool);
             if (context == null) {
                 ArsZero.LOGGER.debug("[ArsZeroResolverEvents] No context found for player");
                 if (dimensionKey != null) {
@@ -359,7 +359,7 @@ public class ArsZeroResolverEvents {
         }
         
         ItemStack casterTool = event.resolver.spellContext.getCasterTool();
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        MultiPhaseCastContext context = AbstractMultiphaseHandheldDevice.findContextByStack(player, casterTool);
         if (context == null) {
             if (dimensionKey != null) {
                 capturedBlockStates.remove(dimensionKey);
