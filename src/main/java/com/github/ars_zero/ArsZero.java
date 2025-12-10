@@ -70,6 +70,7 @@ public class ArsZero {
                 ModItems.registerSpellCasters();
                 registerVoxelInteractions();
                 ModParticleTimelines.configureTimelineOptions();
+                registerTurretBehaviors();
             });
         });
         
@@ -85,6 +86,52 @@ public class ArsZero {
         if (FMLEnvironment.dist.isClient()) {
             ArsZeroClient.init(modEventBus);
         }
+    }
+
+    private static void registerTurretBehaviors() {
+        com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.TURRET_BEHAVIOR_MAP.put(
+            com.github.ars_zero.registry.ModGlyphs.NEAR_FORM,
+            new com.hollingsworth.arsnouveau.api.spell.ITurretBehavior() {
+                @Override
+                public void onCast(com.hollingsworth.arsnouveau.api.spell.SpellResolver resolver, 
+                                   net.minecraft.server.level.ServerLevel world, 
+                                   net.minecraft.core.BlockPos pos, 
+                                   net.minecraft.world.entity.player.Player fakePlayer, 
+                                   net.minecraft.core.Position iposition, 
+                                   net.minecraft.core.Direction direction) {
+                    net.minecraft.core.Direction facingDir = world.getBlockState(pos).getValue(com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.FACING);
+                    double baseDistance = 1.0;
+                    double distance = baseDistance + resolver.getCastStats().getAmpMultiplier() * 0.5;
+                    net.minecraft.world.phys.Vec3 eyePos = new net.minecraft.world.phys.Vec3(iposition.x(), iposition.y(), iposition.z());
+                    net.minecraft.world.phys.Vec3 lookVec = new net.minecraft.world.phys.Vec3(
+                        facingDir.getStepX(), 
+                        facingDir.getStepY(), 
+                        facingDir.getStepZ()
+                    ).normalize();
+                    net.minecraft.world.phys.Vec3 targetPos = eyePos.add(lookVec.scale(distance));
+                    net.minecraft.core.Direction hitDirection = net.minecraft.core.Direction.getNearest(lookVec.x, lookVec.y, lookVec.z);
+                    net.minecraft.core.BlockPos blockPos = net.minecraft.core.BlockPos.containing(targetPos);
+                    net.minecraft.world.phys.BlockHitResult result = new net.minecraft.world.phys.BlockHitResult(targetPos, hitDirection, blockPos, false);
+                    resolver.onResolveEffect(world, result);
+                }
+            }
+        );
+        
+        com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.TURRET_BEHAVIOR_MAP.put(
+            com.hollingsworth.arsnouveau.common.spell.method.MethodSelf.INSTANCE,
+            new com.hollingsworth.arsnouveau.api.spell.ITurretBehavior() {
+                @Override
+                public void onCast(com.hollingsworth.arsnouveau.api.spell.SpellResolver resolver, 
+                                   net.minecraft.server.level.ServerLevel world, 
+                                   net.minecraft.core.BlockPos pos, 
+                                   net.minecraft.world.entity.player.Player fakePlayer, 
+                                   net.minecraft.core.Position iposition, 
+                                   net.minecraft.core.Direction direction) {
+                    fakePlayer.setPos(iposition.x(), iposition.y(), iposition.z());
+                    resolver.onResolveEffect(world, new net.minecraft.world.phys.EntityHitResult(fakePlayer));
+                }
+            }
+        );
     }
 
     private static void registerVoxelInteractions() {

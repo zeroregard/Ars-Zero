@@ -12,6 +12,7 @@ import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
+import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
 import net.minecraft.world.level.block.Blocks;
@@ -48,8 +49,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @EventBusSubscriber(modid = "ars_zero")
 public class ArsZeroResolverEvents {
     
-    // Store block states captured before effects run
     private static final Map<ResourceKey<Level>, Map<BlockPos, BlockState>> capturedBlockStates = new ConcurrentHashMap<>();
+    
+    private static final Map<ResourceKey<Level>, Boolean> blockGroupCreated = new ConcurrentHashMap<>();
     
     @SubscribeEvent
     public static void onEffectResolving(com.hollingsworth.arsnouveau.api.event.EffectResolveEvent.Pre event) {
@@ -80,28 +82,25 @@ public class ArsZeroResolverEvents {
                 ItemStack casterTool = event.resolver.spellContext.getCasterTool();
                 boolean willCreateEntityGroup = requiresEntityGroupForTemporalAnchor(casterTool, player);
                 
-                if (willCreateEntityGroup) {
+                if (willCreateEntityGroup && wrapped.isRootResolver()) {
                     // Store in map keyed by dimension and position
                     capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>()).put(pos, state);
                     
-                    // Also capture AOE blocks and remove them immediately
                     double aoeBuff = event.spellStats.getAoeMultiplier();
                     int pierceBuff = event.spellStats.getBuffCount(com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce.INSTANCE);
                     List<BlockPos> posList = SpellUtil.calcAOEBlocks(player, pos, blockHit, aoeBuff, pierceBuff);
                     for (BlockPos aoePos : posList) {
                         if (!event.world.isOutsideBuildHeight(aoePos)) {
                             var aoeState = event.world.getBlockState(aoePos);
-                            if (!aoeState.isAir()) {
+                            if (!aoeState.isAir() && !BlockImmutabilityUtil.isBlockImmutable(aoeState)) {
                                 capturedBlockStates.get(dimensionKey).put(aoePos, aoeState);
                                 
-                                // Remove block immediately in PRE event, before effects run
                                 event.world.setBlock(aoePos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                             }
                         }
                     }
                     
-                    // Also remove the main block
-                    if (!state.isAir()) {
+                    if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
                         event.world.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                     }
                 }
@@ -142,6 +141,7 @@ public class ArsZeroResolverEvents {
                     ArsZero.LOGGER.warn("[ArsZeroResolverEvents] Turret tile has no cast context!");
                     if (dimensionKey != null) {
                         capturedBlockStates.remove(dimensionKey);
+                        blockGroupCreated.remove(dimensionKey);
                     }
                     return;
                 }
@@ -152,6 +152,7 @@ public class ArsZeroResolverEvents {
                 ArsZero.LOGGER.debug("[ArsZeroResolverEvents] TileCaster is not MultiphaseSpellTurretTile");
                 if (dimensionKey != null) {
                     capturedBlockStates.remove(dimensionKey);
+                    blockGroupCreated.remove(dimensionKey);
                 }
                 return;
             }
@@ -161,6 +162,7 @@ public class ArsZeroResolverEvents {
                 ArsZero.LOGGER.debug("[ArsZeroResolverEvents] No player found for resolver");
                 if (dimensionKey != null) {
                     capturedBlockStates.remove(dimensionKey);
+                    blockGroupCreated.remove(dimensionKey);
                 }
                 return;
             }
@@ -171,6 +173,7 @@ public class ArsZeroResolverEvents {
                 ArsZero.LOGGER.debug("[ArsZeroResolverEvents] No context found for player");
                 if (dimensionKey != null) {
                     capturedBlockStates.remove(dimensionKey);
+                    blockGroupCreated.remove(dimensionKey);
                 }
                 return;
             }
@@ -194,41 +197,47 @@ public class ArsZeroResolverEvents {
                 
                 for (BlockPos blockPos : posList) {
                     if (!event.world.isOutsideBuildHeight(blockPos) && BlockUtil.destroyRespectsClaim(player, event.world, blockPos)) {
-                        // Use captured state if available, otherwise try to read from world
                         var state = capturedStates.get(blockPos);
                         if (state == null) {
                             state = event.world.getBlockState(blockPos);
                         }
                         
-                        // Only add if not air
-                        if (state != null && !state.isAir()) {
+                        if (state != null && !state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
                             validBlocks.add(blockPos);
-                            capturedStates.put(blockPos, state); // Ensure it's in the map
+                            capturedStates.put(blockPos, state);
                         }
                     }
                 }
                 
-                // Clear captured states for this dimension after use
-                capturedBlockStates.remove(dimensionKey);
-                cleanedUp = true;
-                
                 ItemStack casterTool = event.resolver.spellContext.getCasterTool();
-                if (!validBlocks.isEmpty() && !casterTool.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player)) {
-                    Vec3 centerPos = calculateCenter(validBlocks);
+                if (!validBlocks.isEmpty() && !casterTool.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player) && wrapped.isRootResolver()) {
+                    if (!blockGroupCreated.getOrDefault(dimensionKey, false)) {
+                        Vec3 centerPos = calculateCenter(validBlocks);
+                        
+                        BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), serverLevel);
+                        blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
+                        blockGroup.setCasterUUID(player.getUUID());
+                        
+                        blockGroup.addBlocksWithStates(validBlocks, capturedStates);
+                        
+                        serverLevel.addFreshEntity(blockGroup);
+                        
+                        result = SpellResult.fromBlockGroup(blockGroup, validBlocks, player);
+                        
+                        blockGroupCreated.put(dimensionKey, true);
+                    } else {
+                        result = SpellResult.fromHitResultWithCaster(hitResult, SpellEffectType.RESOLVED, player);
+                    }
                     
-                    BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), serverLevel);
-                    blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
-                    blockGroup.setCasterUUID(player.getUUID());
-                    
-                    blockGroup.addBlocksWithStates(validBlocks, capturedStates);
-                    
-                    serverLevel.addFreshEntity(blockGroup);
-                    
-                    result = SpellResult.fromBlockGroup(blockGroup, validBlocks, player);
+                    capturedBlockStates.remove(dimensionKey);
+                } else {
+                    capturedBlockStates.remove(dimensionKey);
+                    cleanedUp = true;
                 }
             } else {
                 if (dimensionKey != null) {
                     capturedBlockStates.remove(dimensionKey);
+                    blockGroupCreated.remove(dimensionKey);
                     cleanedUp = true;
                 }
             }
@@ -236,27 +245,27 @@ public class ArsZeroResolverEvents {
         
         if (!cleanedUp && dimensionKey != null) {
             capturedBlockStates.remove(dimensionKey);
+            blockGroupCreated.remove(dimensionKey);
         }
         
         if (result == null) {
             result = SpellResult.fromHitResultWithCaster(hitResult, SpellEffectType.RESOLVED, player);
         }
         
-        ArsZero.LOGGER.debug("[ArsZeroResolverEvents] Storing SpellResult for phase: {}, result type: {}", 
-            wrapped.getPhase(), result != null ? (result.targetEntity != null ? "ENTITY" : result.targetPosition != null ? "BLOCK" : "OTHER") : "NULL");
-        
         switch (wrapped.getPhase()) {
             case BEGIN -> {
-                context.beginResults.add(result);
-                ArsZero.LOGGER.debug("[ArsZeroResolverEvents] Added to beginResults, new size: {}", context.beginResults.size());
+                if (result != null && result.blockGroup != null) {
+                    context.beginResults.clear();
+                    context.beginResults.add(result);
+                } else {
+                    context.beginResults.add(result);
+                }
             }
             case TICK -> {
                 context.tickResults.add(result);
-                ArsZero.LOGGER.debug("[ArsZeroResolverEvents] Added to tickResults, new size: {}", context.tickResults.size());
             }
             case END -> {
                 context.endResults.add(result);
-                ArsZero.LOGGER.debug("[ArsZeroResolverEvents] Added to endResults, new size: {}", context.endResults.size());
             }
         }
     }
@@ -354,6 +363,7 @@ public class ArsZeroResolverEvents {
         if (player == null) {
             if (dimensionKey != null) {
                 capturedBlockStates.remove(dimensionKey);
+                blockGroupCreated.remove(dimensionKey);
             }
             return;
         }
@@ -363,12 +373,14 @@ public class ArsZeroResolverEvents {
         if (context == null) {
             if (dimensionKey != null) {
                 capturedBlockStates.remove(dimensionKey);
+                blockGroupCreated.remove(dimensionKey);
             }
             return;
         }
         
         if (dimensionKey != null) {
             capturedBlockStates.remove(dimensionKey);
+            blockGroupCreated.remove(dimensionKey);
         }
         
         context.beginFinished = true;

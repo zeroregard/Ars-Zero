@@ -66,8 +66,26 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
     private AnimationController<MultiphaseSpellTurretTile> animationController;
     private long animationStartTime = 0;
     
-    private static final double BEGIN_ANIMATION_DURATION = 0.16;
-    private static final double END_ANIMATION_DURATION = 0.28;
+    private static final double BASE_BEGIN_ANIMATION_DURATION = 0.16;
+    private static final double BASE_END_ANIMATION_DURATION = 0.28;
+    
+    private double getBeginAnimationDuration() {
+        double speedMultiplier = getAnimationSpeedMultiplier();
+        return BASE_BEGIN_ANIMATION_DURATION / speedMultiplier;
+    }
+    
+    private double getEndAnimationDuration() {
+        double speedMultiplier = getAnimationSpeedMultiplier();
+        return BASE_END_ANIMATION_DURATION / speedMultiplier;
+    }
+    
+    private double getAnimationSpeedMultiplier() {
+        int delay = tickCooldown;
+        if (delay <= 0) {
+            return 1.0;
+        }
+        return 1.0 / Math.max(1.0, delay);
+    }
 
     public MultiphaseSpellTurretTile(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MULTIPHASE_SPELL_TURRET.get(), pos, state);
@@ -112,6 +130,10 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         animationStartTime = 0;
         setChanged();
         updateBlock();
+    }
+
+    public void configureSpells(Spell begin, Spell tick, Spell end, UUID owner) {
+        configureSpells(begin, tick, end, owner, calculateTickCooldown(tick));
     }
 
     public List<PhaseExecution> getPhaseHistory() {
@@ -168,7 +190,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
             return;
         }
         castPhase(SpellPhase.TICK);
-        tickIntervalCounter = tickCooldown;
+        tickIntervalCounter = Math.max(0, tickCooldown);
     }
 
     private void finishCasting() {
@@ -285,6 +307,10 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
 
     public UUID getOwnerUUID() {
         return ownerUUID;
+    }
+
+    public int getTickCooldown() {
+        return tickCooldown;
     }
 
     @Override
@@ -413,6 +439,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         
         switch (currentAnimationState) {
             case IDLE -> {
+                event.getController().setAnimationSpeed(1.0);
                 if (powered) {
                     currentAnimationState = AnimationState.BEGIN;
                     animationStartTime = System.currentTimeMillis();
@@ -429,18 +456,24 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
                     currentAnimationState = AnimationState.IDLE;
                     event.getController().forceAnimationReset();
                     event.getController().setAnimation(RawAnimation.begin().thenLoop("idle"));
+                    event.getController().setAnimationSpeed(1.0);
                     return PlayState.CONTINUE;
                 }
+                double animationSpeed = getAnimationSpeedMultiplier();
+                event.getController().setAnimationSpeed(animationSpeed);
                 double elapsed = (System.currentTimeMillis() - animationStartTime) / 1000.0;
-                if (elapsed >= BEGIN_ANIMATION_DURATION) {
+                if (elapsed >= getBeginAnimationDuration()) {
                     currentAnimationState = AnimationState.TICK;
                     event.getController().setAnimation(RawAnimation.begin().thenLoop("tick"));
+                    event.getController().setAnimationSpeed(animationSpeed);
                     return PlayState.CONTINUE;
                 }
                 event.getController().setAnimation(RawAnimation.begin().thenPlay("begin"));
                 return PlayState.CONTINUE;
             }
             case TICK -> {
+                double animationSpeed = getAnimationSpeedMultiplier();
+                event.getController().setAnimationSpeed(animationSpeed);
                 if (!powered) {
                     currentAnimationState = AnimationState.END;
                     animationStartTime = System.currentTimeMillis();
@@ -452,11 +485,14 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
                 return PlayState.CONTINUE;
             }
             case END -> {
+                double animationSpeed = getAnimationSpeedMultiplier();
+                event.getController().setAnimationSpeed(animationSpeed);
                 double elapsed = (System.currentTimeMillis() - animationStartTime) / 1000.0;
-                if (elapsed >= END_ANIMATION_DURATION) {
+                if (elapsed >= getEndAnimationDuration()) {
                     currentAnimationState = AnimationState.IDLE;
                     event.getController().forceAnimationReset();
                     event.getController().setAnimation(RawAnimation.begin().thenLoop("idle"));
+                    event.getController().setAnimationSpeed(1.0);
                     return PlayState.CONTINUE;
                 }
                 if (powered) {

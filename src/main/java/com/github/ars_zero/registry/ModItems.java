@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.client.renderer.item.MultiphaseTurretItemRenderer;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
@@ -9,12 +10,18 @@ import com.github.ars_zero.common.item.MageSpellStaff;
 import com.github.ars_zero.common.item.NoviceSpellStaff;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
+import com.hollingsworth.arsnouveau.common.items.RendererBlockItem;
 import com.hollingsworth.arsnouveau.setup.registry.ItemRegistryWrapper;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.function.Supplier;
 
 public class ModItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Registries.ITEM, ArsZero.MOD_ID);
@@ -34,6 +41,13 @@ public class ModItems {
     public static final ItemRegistryWrapper<DullCirclet> DULL_CIRCLET = register("dull_circlet", () -> new DullCirclet(defaultItemProperties()));
     
     public static final ItemRegistryWrapper<Item> ARCHWOOD_ROD = register("archwood_rod", () -> new Item(defaultItemProperties()));
+    
+    public static final ItemRegistryWrapper<Item> MULTIPHASE_ORB = register("multiphase_orb", () -> new Item(defaultItemProperties()) {
+        @Override
+        public boolean isFoil(net.minecraft.world.item.ItemStack stack) {
+            return true;
+        }
+    });
     
     public static final DeferredHolder<Item, BlockItem> ARCANE_VOXEL_SPAWNER = ITEMS.register(
         "arcane_voxel_spawner",
@@ -70,11 +84,17 @@ public class ModItems {
         () -> new BlockItem(ModBlocks.LIGHTNING_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
 
-    public static final DeferredHolder<Item, BlockItem> MULTIPHASE_SPELL_TURRET = ITEMS.register(
+    public static final DeferredHolder<Item, RendererBlockItem> MULTIPHASE_SPELL_TURRET = ITEMS.register(
         "multiphase_spell_turret",
         () -> {
             ArsZero.LOGGER.info("Registering Multiphase Spell Turret item");
-            BlockItem item = new BlockItem(ModBlocks.MULTIPHASE_SPELL_TURRET.get(), defaultItemProperties());
+            RendererBlockItem item = new RendererBlockItem(ModBlocks.MULTIPHASE_SPELL_TURRET.get(), defaultItemProperties()) {
+                @Override
+                @OnlyIn(Dist.CLIENT)
+                public Supplier<BlockEntityWithoutLevelRenderer> getRenderer() {
+                    return MultiphaseTurretItemRenderer.getISTER();
+                }
+            };
             ArsZero.LOGGER.info("Multiphase Spell Turret item created successfully");
             return item;
         }

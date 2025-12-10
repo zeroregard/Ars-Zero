@@ -11,6 +11,8 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.Arrays;
+
 public class GuiStaffHUD {
     public static final LayeredDraw.Layer OVERLAY = GuiStaffHUD::renderOverlay;
 
@@ -27,9 +29,18 @@ public class GuiStaffHUD {
             AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
             
             int logicalSlot = caster.getCurrentSlot();
-            int tickPhysicalSlot = logicalSlot * 3 + 1;
+            int[] physicalSlots = {
+                logicalSlot * 3 + 0,
+                logicalSlot * 3 + 1,
+                logicalSlot * 3 + 2
+            };
             
-            String spellName = caster.getSpellName(tickPhysicalSlot);
+            String spellName = Arrays.stream(physicalSlots)
+                .mapToObj(caster::getSpellName)
+                .filter(name -> !name.isEmpty())
+                .findFirst()
+                .orElse("");
+            
             String renderString = (logicalSlot + 1) + " " + spellName;
             
             graphics.drawString(
