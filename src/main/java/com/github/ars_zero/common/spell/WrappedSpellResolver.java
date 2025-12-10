@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.spell;
 
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
@@ -23,6 +24,9 @@ public class WrappedSpellResolver extends SpellResolver {
         this.silent = original.silent;
         this.hitResult = original.hitResult;
         this.previousResolver = original.previousResolver;
+        
+        ArsZero.LOGGER.debug("[WrappedSpellResolver] Created - playerId: {}, phase: {}, isRoot: {}, caster type: {}", 
+            playerId, phase, isRootResolver, original.spellContext.getCaster() != null ? original.spellContext.getCaster().getClass().getSimpleName() : "null");
     }
     
     public UUID getPlayerId() {

@@ -115,7 +115,11 @@ public class ArsZeroResolverEvents {
             return;
         }
         
+        ArsZero.LOGGER.debug("[ArsZeroResolverEvents] onEffectResolved: Event received - resolver type: {}, isWrapped: {}", 
+            event.resolver.getClass().getSimpleName(), event.resolver instanceof WrappedSpellResolver);
+        
         if (!(event.resolver instanceof WrappedSpellResolver wrapped)) {
+            ArsZero.LOGGER.debug("[ArsZeroResolverEvents] onEffectResolved: Resolver is not WrappedSpellResolver, skipping");
             return;
         }
         
@@ -134,22 +138,31 @@ public class ArsZeroResolverEvents {
         Player player = null;
         
         if (event.resolver.spellContext.getCaster() instanceof TileCaster tileCaster) {
+            ArsZero.LOGGER.info("[ArsZeroResolverEvents] onEffectResolved: TileCaster detected, tile type: {}", 
+                tileCaster.getTile() != null ? tileCaster.getTile().getClass().getSimpleName() : "null");
             if (tileCaster.getTile() instanceof MultiphaseSpellTurretTile turretTile) {
                 context = turretTile.getCastContext();
-                ArsZero.LOGGER.debug("[ArsZeroResolverEvents] Turret detected, context: {}, phase: {}", 
-                    context != null, wrapped.getPhase());
+                ArsZero.LOGGER.info("[ArsZeroResolverEvents] onEffectResolved: Turret detected, context: {}, phase: {}, ownerUUID: {}", 
+                    context != null, wrapped.getPhase(), turretTile.getOwnerUUID());
                 if (context == null) {
-                    ArsZero.LOGGER.warn("[ArsZeroResolverEvents] Turret tile has no cast context!");
+                    ArsZero.LOGGER.error("[ArsZeroResolverEvents] onEffectResolved: Turret tile has no cast context! ownerUUID: {}", 
+                        turretTile.getOwnerUUID());
                     if (dimensionKey != null) {
                         capturedBlockStates.remove(dimensionKey);
                     }
                     return;
                 }
+                ArsZero.LOGGER.info("[ArsZeroResolverEvents] onEffectResolved: Context found - currentPhase: {}, isCasting: {}, beginResults: {}, tickResults: {}, endResults: {}", 
+                    context.currentPhase, context.isCasting, context.beginResults.size(), 
+                    context.tickResults.size(), context.endResults.size());
                 if (serverLevel != null) {
                     player = serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
+                    ArsZero.LOGGER.info("[ArsZeroResolverEvents] onEffectResolved: Player lookup - playerId: {}, player found: {}", 
+                        wrapped.getPlayerId(), player != null);
                 }
             } else {
-                ArsZero.LOGGER.debug("[ArsZeroResolverEvents] TileCaster is not MultiphaseSpellTurretTile");
+                ArsZero.LOGGER.debug("[ArsZeroResolverEvents] onEffectResolved: TileCaster is not MultiphaseSpellTurretTile: {}", 
+                    tileCaster.getTile() != null ? tileCaster.getTile().getClass().getName() : "null");
                 if (dimensionKey != null) {
                     capturedBlockStates.remove(dimensionKey);
                 }

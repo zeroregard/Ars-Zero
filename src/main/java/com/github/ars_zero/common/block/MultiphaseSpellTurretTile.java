@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.block;
 
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.item.AbstractMultiphaseHandheldDevice;
 import com.github.ars_zero.common.item.IMultiphaseDevice;
 import com.github.ars_zero.common.spell.SpellPhase;
@@ -181,6 +182,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
     }
 
     private void startCasting() {
+        ArsZero.LOGGER.info("[MultiphaseSpellTurretTile] startCasting() called - ownerUUID: {}, tickCooldown: {}", ownerUUID, tickCooldown);
         casting = true;
         tickIntervalCounter = Math.max(0, tickCooldown);
         initializeCastContext();
@@ -200,9 +202,12 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
     }
 
     private void finishCasting() {
+        ArsZero.LOGGER.info("[MultiphaseSpellTurretTile] finishCasting() called - castContext before END: {}, beginResults: {}", 
+            castContext != null, castContext != null ? castContext.beginResults.size() : 0);
         casting = false;
         tickIntervalCounter = 0;
         castPhase(SpellPhase.END);
+        ArsZero.LOGGER.info("[MultiphaseSpellTurretTile] finishCasting() - After END phase, clearing context");
         clearCastContext();
     }
 
@@ -213,26 +218,40 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
             case END -> endSpell;
         };
         if (spell == null || spell.isEmpty()) {
+            ArsZero.LOGGER.debug("[MultiphaseSpellTurretTile] castPhase({}): spell is empty, skipping", phase);
             return;
         }
         spellCaster = (SpellCaster) spellCaster.setSpell(spell, 0);
         
+        ArsZero.LOGGER.info("[MultiphaseSpellTurretTile] castPhase({}): Before update - castContext: {}, currentPhase: {}, beginResults size: {}", 
+            phase, castContext != null, castContext != null ? castContext.currentPhase : "null",
+            castContext != null ? castContext.beginResults.size() : 0);
+        
         if (castContext != null) {
             AbstractMultiphaseHandheldDevice.updateCastContextPhase(castContext, phase);
+            ArsZero.LOGGER.info("[MultiphaseSpellTurretTile] castPhase({}): After update - currentPhase: {}, beginResults size: {}, tickResults size: {}, endResults size: {}", 
+                phase, castContext.currentPhase, castContext.beginResults.size(), 
+                castContext.tickResults.size(), castContext.endResults.size());
+        } else {
+            ArsZero.LOGGER.warn("[MultiphaseSpellTurretTile] castPhase({}): castContext is null!", phase);
         }
         
-        super.shootSpell();
+        this.shootSpell();
         recordPhase(phase, spell);
     }
 
     @Override
     public void shootSpell() {
+        ArsZero.LOGGER.info("[MultiphaseSpellTurretTile] shootSpell() called - castContext: {}, currentPhase: {}", 
+            castContext != null, castContext != null ? castContext.currentPhase : "null");
+        
         if (level == null || !(level instanceof ServerLevel serverLevel)) {
             super.shootSpell();
             return;
         }
         
         if (spellCaster.getSpell().isEmpty()) {
+            ArsZero.LOGGER.debug("[MultiphaseSpellTurretTile] shootSpell(): spell is empty, returning");
             return;
         }
         
@@ -261,23 +280,41 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         com.hollingsworth.arsnouveau.api.spell.SpellResolver resolver = new com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver(spellContext);
         
         if (castContext != null && ownerUUID != null) {
+            ArsZero.LOGGER.info("[MultiphaseSpellTurretTile] shootSpell(): Wrapping resolver for phase: {}, isRoot: {}, castContext phase: {}, beginResults: {}", 
+                currentPhase, currentPhase == SpellPhase.BEGIN, castContext.currentPhase, castContext.beginResults.size());
             resolver = new WrappedSpellResolver((com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver) resolver, ownerUUID, currentPhase, currentPhase == SpellPhase.BEGIN);
+        } else {
+            ArsZero.LOGGER.warn("[MultiphaseSpellTurretTile] shootSpell(): Not wrapping resolver - castContext: {}, ownerUUID: {}", 
+                castContext != null, ownerUUID != null);
         }
         
+        ArsZero.LOGGER.info("[MultiphaseSpellTurretTile] shootSpell(): About to call onCast - resolver type: {}, isWrapped: {}, castType: {}", 
+            resolver.getClass().getSimpleName(), resolver instanceof WrappedSpellResolver, resolver.castType);
+        
         if (resolver.castType != null && com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.TURRET_BEHAVIOR_MAP.containsKey(resolver.castType)) {
+            ArsZero.LOGGER.info("[MultiphaseSpellTurretTile] shootSpell(): Calling onCast from TURRET_BEHAVIOR_MAP");
             com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.TURRET_BEHAVIOR_MAP.get(resolver.castType).onCast(resolver, serverLevel, pos, fakePlayer, iposition, direction);
+        } else {
+            ArsZero.LOGGER.info("[MultiphaseSpellTurretTile] shootSpell(): castType {} not in map, resolving directly", 
+                resolver.castType != null ? resolver.castType.getClass().getSimpleName() : "null");
+            resolver.onCast(ItemStack.EMPTY, serverLevel);
         }
     }
 
     private void initializeCastContext() {
         if (ownerUUID == null) {
+            ArsZero.LOGGER.warn("[MultiphaseSpellTurretTile] Cannot initialize cast context: ownerUUID is null");
             return;
         }
         castContext = new MultiPhaseCastContext(ownerUUID, MultiPhaseCastContext.CastSource.TURRET);
         AbstractMultiphaseHandheldDevice.initializeCastContext(castContext, ownerUUID, MultiPhaseCastContext.CastSource.TURRET);
+        ArsZero.LOGGER.info("[MultiphaseSpellTurretTile] Initialized cast context for owner: {}, context: {}, isCasting: {}, currentPhase: {}", 
+            ownerUUID, castContext != null, castContext != null ? castContext.isCasting : false, 
+            castContext != null ? castContext.currentPhase : "null");
     }
 
     private void clearCastContext() {
+        ArsZero.LOGGER.info("[MultiphaseSpellTurretTile] clearCastContext() called - clearing context (was: {})", castContext != null);
         castContext = null;
     }
     
@@ -305,6 +342,10 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
     }
 
     public MultiPhaseCastContext getCastContext() {
+        ArsZero.LOGGER.debug("[MultiphaseSpellTurretTile] getCastContext() called - returning: {}, beginResults: {}, tickResults: {}, endResults: {}", 
+            castContext != null, castContext != null ? castContext.beginResults.size() : 0,
+            castContext != null ? castContext.tickResults.size() : 0,
+            castContext != null ? castContext.endResults.size() : 0);
         return castContext;
     }
 

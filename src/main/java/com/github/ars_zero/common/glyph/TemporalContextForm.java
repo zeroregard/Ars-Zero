@@ -116,44 +116,62 @@ public class TemporalContextForm extends AbstractCastMethod {
         float casterYaw = 0;
         float casterPitch = 0;
         
-        if (caster instanceof Player playerCaster) {
-            casterPos = playerCaster.getEyePosition(1.0f);
-            casterYaw = playerCaster.getYRot();
-            casterPitch = playerCaster.getXRot();
-            ItemStack casterTool = spellContext.getCasterTool();
-            castContext = AbstractMultiphaseHandheldDevice.findContextByStack(playerCaster, casterTool);
-            ArsZero.LOGGER.debug("[TemporalContextForm] Player caster, found context: {}", castContext != null);
-        } else if (spellContext.getCaster() instanceof TileCaster tileCaster) {
+        ArsZero.LOGGER.info("[TemporalContextForm] resolveFromStoredContext: caster type: {}, spellContext caster type: {}", 
+            caster != null ? caster.getClass().getSimpleName() : "null",
+            spellContext.getCaster() != null ? spellContext.getCaster().getClass().getSimpleName() : "null");
+        
+        if (spellContext.getCaster() instanceof TileCaster tileCaster) {
             BlockEntity tile = tileCaster.getTile();
-            ArsZero.LOGGER.debug("[TemporalContextForm] TileCaster detected, tile type: {}", tile != null ? tile.getClass().getSimpleName() : "null");
+            ArsZero.LOGGER.info("[TemporalContextForm] resolveFromStoredContext: TileCaster detected, tile type: {}", 
+                tile != null ? tile.getClass().getSimpleName() : "null");
             if (tile instanceof MultiphaseSpellTurretTile turretTile) {
                 castContext = turretTile.getCastContext();
-                ArsZero.LOGGER.debug("[TemporalContextForm] Turret tile found, castContext: {}, beginResults size: {}", 
-                    castContext != null, castContext != null ? castContext.beginResults.size() : 0);
+                ArsZero.LOGGER.info("[TemporalContextForm] resolveFromStoredContext: Turret tile found at {}, castContext: {}, ownerUUID: {}", 
+                    turretTile.getBlockPos(), castContext != null, turretTile.getOwnerUUID());
+                if (castContext != null) {
+                    ArsZero.LOGGER.info("[TemporalContextForm] resolveFromStoredContext: Context details - currentPhase: {}, isCasting: {}, beginResults: {}, tickResults: {}, endResults: {}", 
+                        castContext.currentPhase, castContext.isCasting, castContext.beginResults.size(), 
+                        castContext.tickResults.size(), castContext.endResults.size());
+                } else {
+                    ArsZero.LOGGER.error("[TemporalContextForm] resolveFromStoredContext: Turret tile returned null context! ownerUUID: {}", 
+                        turretTile.getOwnerUUID());
+                }
                 BlockPos tilePos = turretTile.getBlockPos();
                 casterPos = Vec3.atCenterOf(tilePos);
                 Direction facing = turretTile.getBlockState().getValue(BasicSpellTurret.FACING);
                 casterYaw = directionToYaw(facing);
                 casterPitch = directionToPitch(facing);
             } else {
-                ArsZero.LOGGER.warn("[TemporalContextForm] TileCaster tile is not MultiphaseSpellTurretTile: {}", tile != null ? tile.getClass().getName() : "null");
+                ArsZero.LOGGER.warn("[TemporalContextForm] resolveFromStoredContext: TileCaster tile is not MultiphaseSpellTurretTile: {}", 
+                    tile != null ? tile.getClass().getName() : "null");
             }
+        } else if (caster instanceof Player playerCaster) {
+            casterPos = playerCaster.getEyePosition(1.0f);
+            casterYaw = playerCaster.getYRot();
+            casterPitch = playerCaster.getXRot();
+            ItemStack casterTool = spellContext.getCasterTool();
+            castContext = AbstractMultiphaseHandheldDevice.findContextByStack(playerCaster, casterTool);
+            ArsZero.LOGGER.debug("[TemporalContextForm] Player caster, found context: {}", castContext != null);
         } else {
-            ArsZero.LOGGER.warn("[TemporalContextForm] Caster is neither Player nor TileCaster: {}", caster != null ? caster.getClass().getName() : "null");
+            ArsZero.LOGGER.warn("[TemporalContextForm] resolveFromStoredContext: Caster is neither TileCaster nor Player: {}", caster != null ? caster.getClass().getName() : "null");
         }
         
         if (castContext == null) {
-            ArsZero.LOGGER.debug("[TemporalContextForm] No cast context found, returning FAILURE");
+            ArsZero.LOGGER.warn("[TemporalContextForm] resolveFromStoredContext: No cast context found, returning FAILURE");
             return CastResolveType.FAILURE;
         }
+        
+        ArsZero.LOGGER.info("[TemporalContextForm] resolveFromStoredContext: Context found - currentPhase: {}, isCasting: {}, beginResults: {}, tickResults: {}, endResults: {}", 
+            castContext.currentPhase, castContext.isCasting, castContext.beginResults.size(), 
+            castContext.tickResults.size(), castContext.endResults.size());
         
         if (castContext.beginResults.isEmpty()) {
-            ArsZero.LOGGER.debug("[TemporalContextForm] Cast context found but beginResults is empty (size: {}), tickResults: {}, endResults: {}", 
-                castContext.beginResults.size(), castContext.tickResults.size(), castContext.endResults.size());
+            ArsZero.LOGGER.warn("[TemporalContextForm] resolveFromStoredContext: Cast context found but beginResults is empty! tickResults: {}, endResults: {}", 
+                castContext.tickResults.size(), castContext.endResults.size());
             return CastResolveType.FAILURE;
         }
         
-        ArsZero.LOGGER.debug("[TemporalContextForm] Resolving with {} begin results", castContext.beginResults.size());
+        ArsZero.LOGGER.info("[TemporalContextForm] resolveFromStoredContext: Resolving with {} begin results", castContext.beginResults.size());
         
         for (SpellResult result : castContext.beginResults) {
             resolver.hitResult = result.hitResult;
