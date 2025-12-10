@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class StaffParticleScreen extends BaseBook {
+public class MultiphaseDeviceStylesScreen extends BaseBook {
     TimelineMap.MutableTimelineMap timelineMap;
 
     public IParticleTimelineType<?> selectedTimeline = null;
@@ -49,7 +49,7 @@ public class StaffParticleScreen extends BaseBook {
     boolean hasPreviousElements = false;
     public static IParticleTimelineType<?> LAST_SELECTED_PART = null;
     public static int lastOpenedHash;
-    public static StaffParticleScreen lastScreen;
+    public static MultiphaseDeviceStylesScreen lastScreen;
 
     AbstractMultiPhaseCastDeviceScreen previousScreen;
     GuiImageButton upButton;
@@ -60,13 +60,15 @@ public class StaffParticleScreen extends BaseBook {
     int hotkeySlot;
     ItemStack staffStack;
     InteractionHand hand;
+    boolean isForCirclet;
 
-    public StaffParticleScreen(AbstractMultiPhaseCastDeviceScreen previousScreen, int hotkeySlot, ItemStack stack, InteractionHand stackHand) {
+    public MultiphaseDeviceStylesScreen(AbstractMultiPhaseCastDeviceScreen previousScreen, int hotkeySlot, ItemStack stack, InteractionHand stackHand) {
         super();
         this.previousScreen = previousScreen;
         this.hotkeySlot = hotkeySlot;
         this.staffStack = stack;
         this.hand = stackHand;
+        this.isForCirclet = stack != null && stack.getItem() instanceof com.github.ars_zero.common.item.SpellcastingCirclet;
         
         int beginPhysicalSlot = hotkeySlot * 3 + 0;
         var caster = com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry.from(stack);
@@ -166,7 +168,30 @@ public class StaffParticleScreen extends BaseBook {
                 hotkeySlot = slotIndex;
                 
                 var player = net.minecraft.client.Minecraft.getInstance().player;
-                var freshStack = player.getItemInHand(hand);
+                ItemStack freshStack = ItemStack.EMPTY;
+                if (isForCirclet) {
+                    freshStack = top.theillusivec4.curios.api.CuriosApi.getCuriosHelper()
+                        .findEquippedCurio(
+                            equipped -> equipped.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice,
+                            player
+                        )
+                        .map(result -> result.getRight())
+                        .orElse(ItemStack.EMPTY);
+                } else {
+                    if (hand != null) {
+                        freshStack = player.getItemInHand(hand);
+                    } else {
+                        ItemStack mainStack = player.getMainHandItem();
+                        if (mainStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
+                            freshStack = mainStack;
+                        } else {
+                            ItemStack offStack = player.getOffhandItem();
+                            if (offStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
+                                freshStack = offStack;
+                            }
+                        }
+                    }
+                }
                 staffStack = freshStack;
                 
                 var freshCaster = com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry.from(freshStack);
@@ -196,12 +221,10 @@ public class StaffParticleScreen extends BaseBook {
     }
     
     private void saveParticleConfig() {
-        StaffParticleScreen.lastOpenedHash = timelineMap.immutable().hashCode();
-        
-        boolean isForCirclet = staffStack != null && staffStack.getItem() instanceof com.github.ars_zero.common.item.SpellcastingCirclet;
+        MultiphaseDeviceStylesScreen.lastOpenedHash = timelineMap.immutable().hashCode();
         
         com.github.ars_zero.common.network.Networking.sendToServer(
-            new com.github.ars_zero.common.network.PacketUpdateStaffParticleTimeline(
+            new com.github.ars_zero.common.network.PacketUpdateMultiphaseDeviceParticleTimeline(
                 hotkeySlot, 
                 timelineMap.immutable(),
                 isForCirclet
@@ -232,12 +255,12 @@ public class StaffParticleScreen extends BaseBook {
         var caster = com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry.from(stack);
         int beginPhysicalSlot = hotkeySlot * 3 + 0;
         int hash = caster.getParticles(beginPhysicalSlot).hashCode();
-        if (LAST_SELECTED_PART == null || StaffParticleScreen.lastOpenedHash != hash || StaffParticleScreen.lastScreen == null) {
+        if (LAST_SELECTED_PART == null || MultiphaseDeviceStylesScreen.lastOpenedHash != hash || MultiphaseDeviceStylesScreen.lastScreen == null) {
             LAST_SELECTED_PART = null;
-            StaffParticleScreen.lastOpenedHash = hash;
-            Minecraft.getInstance().setScreen(new StaffParticleScreen(parentScreen, hotkeySlot, stack, stackHand));
+            MultiphaseDeviceStylesScreen.lastOpenedHash = hash;
+            Minecraft.getInstance().setScreen(new MultiphaseDeviceStylesScreen(parentScreen, hotkeySlot, stack, stackHand));
         } else {
-            StaffParticleScreen screen = StaffParticleScreen.lastScreen;
+            MultiphaseDeviceStylesScreen screen = MultiphaseDeviceStylesScreen.lastScreen;
             if (screen.hotkeySlot != hotkeySlot) {
                 screen.hotkeySlot = hotkeySlot;
                 screen.timelineMap = caster.getParticles(beginPhysicalSlot).mutable();
@@ -251,13 +274,13 @@ public class StaffParticleScreen extends BaseBook {
     @Override
     public void onClose() {
         super.onClose();
-        StaffParticleScreen.lastScreen = this;
+        MultiphaseDeviceStylesScreen.lastScreen = this;
     }
 
     @Override
     public void removed() {
         super.removed();
-        StaffParticleScreen.lastScreen = this;
+        MultiphaseDeviceStylesScreen.lastScreen = this;
     }
 
     @Override
@@ -492,4 +515,3 @@ public class StaffParticleScreen extends BaseBook {
         }
     }
 }
-

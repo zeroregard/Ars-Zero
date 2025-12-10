@@ -2,7 +2,7 @@ package com.github.ars_zero.client.network;
 
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
-import com.github.ars_zero.client.gui.StaffParticleScreen;
+import com.github.ars_zero.client.gui.MultiphaseDeviceStylesScreen;
 import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.client.sound.StaffSoundManager;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
@@ -56,7 +56,7 @@ final class ClientPacketHandlers {
             }
 
             var minecraft = Minecraft.getInstance();
-            if (minecraft.screen instanceof StaffParticleScreen staffScreen) {
+            if (minecraft.screen instanceof MultiphaseDeviceStylesScreen staffScreen) {
                 staffScreen.onStaffUpdated(packet.stack());
                 return;
             }

@@ -13,15 +13,15 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import top.theillusivec4.curios.api.CuriosApi;
 
-public record PacketUpdateStaffParticleTimeline(int hotkeySlot, TimelineMap particles, boolean isForCirclet) implements CustomPacketPayload {
+public record PacketUpdateMultiphaseDeviceParticleTimeline(int hotkeySlot, TimelineMap particles, boolean isForCirclet) implements CustomPacketPayload {
     
-    public static final CustomPacketPayload.Type<PacketUpdateStaffParticleTimeline> TYPE = 
-        new CustomPacketPayload.Type<>(ArsZero.prefix("update_staff_particle_timeline"));
+    public static final CustomPacketPayload.Type<PacketUpdateMultiphaseDeviceParticleTimeline> TYPE = 
+        new CustomPacketPayload.Type<>(ArsZero.prefix("update_multiphase_device_particle_timeline"));
     
-    public static final StreamCodec<RegistryFriendlyByteBuf, PacketUpdateStaffParticleTimeline> CODEC = 
-        StreamCodec.ofMember(PacketUpdateStaffParticleTimeline::toBytes, PacketUpdateStaffParticleTimeline::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, PacketUpdateMultiphaseDeviceParticleTimeline> CODEC = 
+        StreamCodec.ofMember(PacketUpdateMultiphaseDeviceParticleTimeline::toBytes, PacketUpdateMultiphaseDeviceParticleTimeline::new);
     
-    public PacketUpdateStaffParticleTimeline(RegistryFriendlyByteBuf buf) {
+    public PacketUpdateMultiphaseDeviceParticleTimeline(RegistryFriendlyByteBuf buf) {
         this(buf.readInt(), TimelineMap.STREAM.decode(buf), buf.readBoolean());
     }
     
@@ -36,7 +36,7 @@ public record PacketUpdateStaffParticleTimeline(int hotkeySlot, TimelineMap part
         return TYPE;
     }
     
-    public static void handle(PacketUpdateStaffParticleTimeline packet, IPayloadContext context) {
+    public static void handle(PacketUpdateMultiphaseDeviceParticleTimeline packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
                 ItemStack stack = findTargetDeviceStack(player, packet.isForCirclet);
@@ -49,16 +49,20 @@ public record PacketUpdateStaffParticleTimeline(int hotkeySlot, TimelineMap part
                 
                 AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
                 
-                if (caster != null) {
-                    for (int phase = 0; phase < 3; phase++) {
-                        int physicalSlot = packet.hotkeySlot * 3 + phase;
-                        caster = caster.setParticles(packet.particles, physicalSlot);
-                    }
-                    
-                    caster.saveToStack(stack);
-                    
-                    net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new PacketUpdateStaffGUI(stack));
+                if (caster == null) {
+                    ArsZero.LOGGER.warn("[SERVER] No caster found on stack!");
+                    return;
                 }
+                
+                for (int phase = 0; phase < 3; phase++) {
+                    int physicalSlot = packet.hotkeySlot * 3 + phase;
+                    caster = caster.setParticles(packet.particles, physicalSlot);
+                }
+                
+                caster.saveToStack(stack);
+                player.containerMenu.broadcastChanges();
+                
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new PacketUpdateStaffGUI(stack));
             }
         });
     }
@@ -87,4 +91,3 @@ public record PacketUpdateStaffParticleTimeline(int hotkeySlot, TimelineMap part
         }
     }
 }
-

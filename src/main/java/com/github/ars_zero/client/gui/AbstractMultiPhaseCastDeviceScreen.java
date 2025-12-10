@@ -438,7 +438,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
     
     private void openParticleScreen() {
-        StaffParticleScreen.openScreen(this, selectedSpellSlot, deviceStack, this.guiHand);
+        MultiphaseDeviceStylesScreen.openScreen(this, selectedSpellSlot, deviceStack, this.guiHand);
     }
     
     private int getSelectedPhysicalSlot() {
