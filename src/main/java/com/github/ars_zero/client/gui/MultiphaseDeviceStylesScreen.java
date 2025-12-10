@@ -70,8 +70,22 @@ public class MultiphaseDeviceStylesScreen extends BaseBook {
         this.hand = stackHand;
         this.isForCirclet = stack != null && stack.getItem() instanceof com.github.ars_zero.common.item.SpellcastingCirclet;
         
+        if (stack == null || stack.isEmpty()) {
+            this.timelineMap = new TimelineMap().mutable();
+            selectedTimeline = ParticleTimelineRegistry.PROJECTILE_TIMELINE.get();
+            LAST_SELECTED_PART = selectedTimeline;
+            return;
+        }
+        
         int beginPhysicalSlot = hotkeySlot * 3 + 0;
         var caster = com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry.from(stack);
+        if (caster == null) {
+            this.timelineMap = new TimelineMap().mutable();
+            selectedTimeline = ParticleTimelineRegistry.PROJECTILE_TIMELINE.get();
+            LAST_SELECTED_PART = selectedTimeline;
+            return;
+        }
+        
         this.timelineMap = caster.getParticles(beginPhysicalSlot).mutable();
         selectedTimeline = LAST_SELECTED_PART == null ? findTimelineFromSlot(caster, beginPhysicalSlot) : LAST_SELECTED_PART;
         LAST_SELECTED_PART = selectedTimeline;
@@ -117,6 +131,11 @@ public class MultiphaseDeviceStylesScreen extends BaseBook {
         addBackButton(previousScreen, b -> {});
         addSaveButton((b) -> saveParticleConfig());
         
+        if (selectedTimeline == null) {
+            selectedTimeline = ParticleTimelineRegistry.PROJECTILE_TIMELINE.get();
+            LAST_SELECTED_PART = selectedTimeline;
+        }
+        
         timelineButton = addRenderableWidget(new DocEntryButton(bookLeft + LEFT_PAGE_OFFSET, bookTop + 36, selectedTimeline.getSpellPart().glyphItem.getDefaultInstance(), Component.translatable(selectedTimeline.getSpellPart().getLocaleName()), (b) -> onTimelineSelectorHit()));
 
         timelineButton.isSelected = true;
@@ -146,7 +165,15 @@ public class MultiphaseDeviceStylesScreen extends BaseBook {
     }
     
     private void initHotkeySlots() {
+        if (staffStack == null || staffStack.isEmpty()) {
+            return;
+        }
+        
         var caster = com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry.from(staffStack);
+        if (caster == null) {
+            return;
+        }
+        
         for (int i = 0; i < 10; i++) {
             int beginPhysicalSlot = i * 3 + 0;
             String name = caster.getSpellName(beginPhysicalSlot);
@@ -168,8 +195,32 @@ public class MultiphaseDeviceStylesScreen extends BaseBook {
                 hotkeySlot = slotIndex;
                 
                 var player = net.minecraft.client.Minecraft.getInstance().player;
+                if (player == null) {
+                    return;
+                }
+                
                 ItemStack freshStack = ItemStack.EMPTY;
-                if (isForCirclet) {
+                
+                if (staffStack != null && !staffStack.isEmpty() && staffStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
+                    freshStack = staffStack;
+                } else if (hand != null) {
+                    freshStack = player.getItemInHand(hand);
+                    if (!(freshStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice)) {
+                        freshStack = ItemStack.EMPTY;
+                    }
+                } else {
+                    ItemStack mainStack = player.getMainHandItem();
+                    if (mainStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
+                        freshStack = mainStack;
+                    } else {
+                        ItemStack offStack = player.getOffhandItem();
+                        if (offStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
+                            freshStack = offStack;
+                        }
+                    }
+                }
+                
+                if (freshStack.isEmpty() && isForCirclet) {
                     freshStack = top.theillusivec4.curios.api.CuriosApi.getCuriosHelper()
                         .findEquippedCurio(
                             equipped -> equipped.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice,
@@ -177,24 +228,19 @@ public class MultiphaseDeviceStylesScreen extends BaseBook {
                         )
                         .map(result -> result.getRight())
                         .orElse(ItemStack.EMPTY);
-                } else {
-                    if (hand != null) {
-                        freshStack = player.getItemInHand(hand);
-                    } else {
-                        ItemStack mainStack = player.getMainHandItem();
-                        if (mainStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
-                            freshStack = mainStack;
-                        } else {
-                            ItemStack offStack = player.getOffhandItem();
-                            if (offStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
-                                freshStack = offStack;
-                            }
-                        }
-                    }
                 }
+                
+                if (freshStack.isEmpty() || !(freshStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice)) {
+                    return;
+                }
+                
                 staffStack = freshStack;
                 
                 var freshCaster = com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry.from(freshStack);
+                if (freshCaster == null) {
+                    return;
+                }
+                
                 int newBeginPhysicalSlot = hotkeySlot * 3 + 0;
                 timelineMap = freshCaster.getParticles(newBeginPhysicalSlot).mutable();
                 selectedTimeline = findTimelineFromSlot(freshCaster, newBeginPhysicalSlot);
@@ -252,7 +298,15 @@ public class MultiphaseDeviceStylesScreen extends BaseBook {
     }
 
     public static void openScreen(AbstractMultiPhaseCastDeviceScreen parentScreen, int hotkeySlot, ItemStack stack, InteractionHand stackHand) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        
         var caster = com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry.from(stack);
+        if (caster == null) {
+            return;
+        }
+        
         int beginPhysicalSlot = hotkeySlot * 3 + 0;
         int hash = caster.getParticles(beginPhysicalSlot).hashCode();
         if (LAST_SELECTED_PART == null || MultiphaseDeviceStylesScreen.lastOpenedHash != hash || MultiphaseDeviceStylesScreen.lastScreen == null) {
@@ -263,8 +317,10 @@ public class MultiphaseDeviceStylesScreen extends BaseBook {
             MultiphaseDeviceStylesScreen screen = MultiphaseDeviceStylesScreen.lastScreen;
             if (screen.hotkeySlot != hotkeySlot) {
                 screen.hotkeySlot = hotkeySlot;
-                screen.timelineMap = caster.getParticles(beginPhysicalSlot).mutable();
-                screen.selectedTimeline = screen.findTimelineFromSlot(caster, beginPhysicalSlot);
+                if (caster != null) {
+                    screen.timelineMap = caster.getParticles(beginPhysicalSlot).mutable();
+                    screen.selectedTimeline = screen.findTimelineFromSlot(caster, beginPhysicalSlot);
+                }
             }
             Minecraft.getInstance().setScreen(screen);
         }
@@ -515,3 +571,4 @@ public class MultiphaseDeviceStylesScreen extends BaseBook {
         }
     }
 }
+

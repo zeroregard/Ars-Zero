@@ -53,26 +53,20 @@ public record PacketSetMultiPhaseSpellCastingSlot(int logicalSlot, boolean isFor
                 ItemStack mainStack = player.getMainHandItem();
                 ItemStack offStack = player.getOffhandItem();
                 
-                if (packet.isForCirclet) {
-                    if (curioStack.isPresent()) {
-                        stack = curioStack.get();
-                    } else {
-                        ArsZero.LOGGER.warn("[SERVER] Packet marked for circlet but no circlet found!");
-                        return;
-                    }
+                if (mainStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+                    stack = mainStack;
+                    hand = InteractionHand.MAIN_HAND;
+                } else if (offStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+                    stack = offStack;
+                    hand = InteractionHand.OFF_HAND;
+                } else if (packet.isForCirclet && curioStack.isPresent()) {
+                    stack = curioStack.get();
+                } else if (!packet.isForCirclet && curioStack.isPresent()) {
+                    stack = curioStack.get();
                 } else {
-                    if (mainStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
-                        stack = mainStack;
-                        hand = InteractionHand.MAIN_HAND;
-                    } else if (offStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
-                        stack = offStack;
-                        hand = InteractionHand.OFF_HAND;
-                    } else if (curioStack.isPresent()) {
-                        stack = curioStack.get();
-                    } else {
-                        ArsZero.LOGGER.warn("[SERVER] No staff found in hands or curios!");
-                        return;
-                    }
+                    ArsZero.LOGGER.warn("[SERVER] No multi-phase cast device found for {}!", 
+                        packet.isForCirclet ? "circlet" : "staff");
+                    return;
                 }
                 
                 AbstractCaster<?> caster = SpellCasterRegistry.from(stack);

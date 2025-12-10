@@ -6,13 +6,16 @@ import com.github.ars_zero.client.gui.MultiphaseDeviceStylesScreen;
 import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.client.sound.StaffSoundManager;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.network.PacketUpdateStaffGUI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import top.theillusivec4.curios.api.CuriosApi;
 
 final class ClientPacketHandlers {
     private ClientPacketHandlers() {
@@ -46,23 +49,28 @@ final class ClientPacketHandlers {
                 return;
             }
 
+            ItemStack updatedStack = packet.stack();
+            boolean isCirclet = updatedStack.getItem() instanceof SpellcastingCirclet;
+
             var mainHandStack = player.getMainHandItem();
             var offHandStack = player.getOffhandItem();
 
-            if (mainHandStack.is(packet.stack().getItem())) {
-                player.setItemInHand(InteractionHand.MAIN_HAND, packet.stack());
-            } else if (offHandStack.is(packet.stack().getItem())) {
-                player.setItemInHand(InteractionHand.OFF_HAND, packet.stack());
+            if (mainHandStack.is(updatedStack.getItem())) {
+                player.setItemInHand(InteractionHand.MAIN_HAND, updatedStack);
+            } else if (offHandStack.is(updatedStack.getItem())) {
+                player.setItemInHand(InteractionHand.OFF_HAND, updatedStack);
+            } else if (!isCirclet) {
+                return;
             }
 
             var minecraft = Minecraft.getInstance();
             if (minecraft.screen instanceof MultiphaseDeviceStylesScreen staffScreen) {
-                staffScreen.onStaffUpdated(packet.stack());
+                staffScreen.onStaffUpdated(updatedStack);
                 return;
             }
 
             if (minecraft.screen instanceof AbstractMultiPhaseCastDeviceScreen staffGUI) {
-                staffGUI.onBookstackUpdated(packet.stack());
+                staffGUI.onBookstackUpdated(updatedStack);
             }
         });
     }

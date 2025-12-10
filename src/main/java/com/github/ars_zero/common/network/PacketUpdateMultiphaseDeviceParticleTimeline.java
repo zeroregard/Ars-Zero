@@ -68,6 +68,16 @@ public record PacketUpdateMultiphaseDeviceParticleTimeline(int hotkeySlot, Timel
     }
     
     private static ItemStack findTargetDeviceStack(ServerPlayer player, boolean isForCirclet) {
+        ItemStack mainStack = player.getMainHandItem();
+        if (mainStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+            return mainStack;
+        }
+        
+        ItemStack offStack = player.getOffhandItem();
+        if (offStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+            return offStack;
+        }
+        
         if (isForCirclet) {
             return CuriosApi.getCuriosHelper()
                 .findEquippedCurio(
@@ -76,18 +86,9 @@ public record PacketUpdateMultiphaseDeviceParticleTimeline(int hotkeySlot, Timel
                 )
                 .map(result -> result.getRight())
                 .orElse(ItemStack.EMPTY);
-        } else {
-            ItemStack mainStack = player.getMainHandItem();
-            if (mainStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
-                return mainStack;
-            }
-            
-            ItemStack offStack = player.getOffhandItem();
-            if (offStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
-                return offStack;
-            }
-            
-            return ItemStack.EMPTY;
         }
+        
+        return ItemStack.EMPTY;
     }
 }
+
