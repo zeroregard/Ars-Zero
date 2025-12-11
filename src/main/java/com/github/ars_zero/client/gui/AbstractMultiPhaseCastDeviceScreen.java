@@ -307,9 +307,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             for (int i = 0; i < recipeList.size() && i < 10; i++) {
                 phaseSpell.set(i, recipeList.get(i));
             }
-            
-            ArsZero.LOGGER.debug("Loaded {} phase from physical slot {} with {} glyphs", 
-                phase, physicalSlot, recipeList.size());
         }
         
         resetCraftingCells();
@@ -365,7 +362,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         addRenderableWidget(spellNameBox);
 
         addRenderableWidget(new CreateSpellButton(bookRight - 84, bookBottom - 29, (b) -> {
-            ArsZero.LOGGER.debug("Save button clicked!");
             this.saveSpell();
         }, this::getValidationErrors));
         addRenderableWidget(new ClearButton(bookRight - 137, bookBottom - 29, Component.translatable("ars_nouveau.spell_book_gui.clear"), (button) -> clear()));
@@ -1012,21 +1008,12 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
     
     private void renderManaIndicators(GuiGraphics graphics, int mouseX, int mouseY) {
-        ArsZero.LOGGER.debug("=== MANA INDICATOR RENDER START ===");
-        ArsZero.LOGGER.debug("bookLeft: {}, bookTop: {}", bookLeft, bookTop);
-        ArsZero.LOGGER.debug("PHASE_SECTION_SHIFT_X: {}, PHASE_ROW_TEXTURE_X_OFFSET: {}", PHASE_SECTION_SHIFT_X, PHASE_ROW_TEXTURE_X_OFFSET);
-        ArsZero.LOGGER.debug("PHASE_ROW_TEXTURE_WIDTH: {}", PHASE_ROW_TEXTURE_WIDTH);
-        
         int phaseRowStartX = bookLeft + PHASE_ROW_TEXTURE_X_OFFSET + PHASE_SECTION_SHIFT_X - 4;
         int phaseRowEndX = phaseRowStartX + PHASE_ROW_TEXTURE_WIDTH;
         int indicatorX = phaseRowEndX + 4 - 8 - 4 + 1;
         int baseY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y;
         int rowHeight = PHASE_ROW_HEIGHT + 2;
         int indicatorHeight = 14;
-        
-        ArsZero.LOGGER.debug("Phase row start X: {}, end X: {}", phaseRowStartX, phaseRowEndX);
-        ArsZero.LOGGER.debug("Indicator X: {}, baseY: {}", indicatorX, baseY);
-        ArsZero.LOGGER.debug("Player: {}", player != null ? player.getName().getString() : "NULL");
         
         ManaIndicator hoveredIndicator = null;
         
@@ -1035,16 +1022,11 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             int indicatorY = baseY + phaseIndex * rowHeight + (PHASE_ROW_HEIGHT - indicatorHeight) / 2 - 1 + 1;
             
-            ArsZero.LOGGER.debug("Phase {}: indicatorY={}, spell parts count={}", phase, indicatorY, phaseSpell.size());
-            
             ManaIndicator indicator = new ManaIndicator(indicatorX, indicatorY, phaseSpell);
             indicator.render(graphics, player);
             
-            ArsZero.LOGGER.debug("Phase {}: After render call", phase);
-            
             if (indicator.isHovered(mouseX, mouseY)) {
                 hoveredIndicator = indicator;
-                ArsZero.LOGGER.debug("Phase {}: HOVERED! mouseX={}, mouseY={}", phase, mouseX, mouseY);
             }
             phaseIndex++;
         }
@@ -1052,8 +1034,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         if (hoveredIndicator != null) {
             hoveredIndicator.renderTooltip(graphics, mouseX, mouseY);
         }
-        
-        ArsZero.LOGGER.debug("=== MANA INDICATOR RENDER END ===");
     }
     
     private void refreshCategoryButtons() {
