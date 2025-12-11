@@ -98,22 +98,65 @@ public class SelectEffect extends AbstractEffect {
             return;
         }
         
-        Vec3 centerPos = calculateCenter(blockPositions);
+        java.util.Map<BlockPos, BlockState> capturedStates = new java.util.HashMap<>();
+        for (BlockPos pos : blockPositions) {
+            if (!level.isOutsideBuildHeight(pos)) {
+                BlockState state = level.getBlockState(pos);
+                if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
+                    capturedStates.put(pos, state);
+                }
+            }
+        }
+        
+        List<BlockPos> validPositions = new ArrayList<>(capturedStates.keySet());
+        
+        ItemStack casterTool = spellContext.getCasterTool();
+        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        
+        List<BlockPos> filteredPositions = validPositions;
+        if (context != null) {
+            java.util.Set<BlockPos> claimedBlocks = new java.util.HashSet<>();
+            for (SpellResult result : context.beginResults) {
+                if (result != null && result.blockGroup != null && result.blockPositions != null) {
+                    claimedBlocks.addAll(result.blockPositions);
+                }
+            }
+            
+            filteredPositions = validPositions.stream()
+                .filter(pos -> !claimedBlocks.contains(pos))
+                .toList();
+            
+            java.util.Map<BlockPos, BlockState> filteredStates = new java.util.HashMap<>();
+            for (BlockPos pos : filteredPositions) {
+                BlockState state = capturedStates.get(pos);
+                if (state != null) {
+                    filteredStates.put(pos, state);
+                }
+            }
+            capturedStates = filteredStates;
+        }
+        
+        if (filteredPositions.isEmpty()) {
+            return;
+        }
+        
+        Vec3 centerPos = calculateCenter(filteredPositions);
         
         BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), level);
         blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
         blockGroup.setCasterUUID(player.getUUID());
         
-        blockGroup.addBlocks(blockPositions);
-        blockGroup.removeOriginalBlocks();
+        blockGroup.addBlocksWithStates(filteredPositions, capturedStates);
         
         level.addFreshEntity(blockGroup);
         
-        ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context != null) {
-            SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, blockPositions, player);
-            context.beginResults.clear();
+            SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, filteredPositions, player);
+            boolean hasExistingBlockGroups = context.beginResults.stream()
+                .anyMatch(r -> r != null && r.blockGroup != null);
+            if (!hasExistingBlockGroups) {
+                context.beginResults.clear();
+            }
             context.beginResults.add(blockResult);
         }
     }

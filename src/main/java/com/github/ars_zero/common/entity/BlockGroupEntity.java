@@ -55,6 +55,7 @@ public class BlockGroupEntity extends Entity {
     private float originalYRot = 0.0f;
     private int lifespan = 5;
     private int maxLifeSpan = 5;
+    private boolean originalBlocksRemoved = false;
     
     public BlockGroupEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -353,6 +354,11 @@ public class BlockGroupEntity extends Entity {
         super.tick();
         
         if (!level().isClientSide) {
+            if (!originalBlocksRemoved && this.tickCount == 1) {
+                removeOriginalBlocks();
+                originalBlocksRemoved = true;
+            }
+            
             age();
             Vec3 deltaMovement = this.getDeltaMovement();
             this.move(MoverType.SELF, deltaMovement);
@@ -365,8 +371,12 @@ public class BlockGroupEntity extends Entity {
             lifespan--;
         }
 
-        if (lifespan <= 0 && !blocks.isEmpty()) {
-            placeAndDiscard();
+        if (lifespan <= 0) {
+            if (!blocks.isEmpty()) {
+                placeAndDiscard();
+            } else {
+                remove(RemovalReason.DISCARDED);
+            }
         }
     }
 

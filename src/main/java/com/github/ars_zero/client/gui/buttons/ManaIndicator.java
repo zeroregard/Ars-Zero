@@ -38,7 +38,6 @@ public class ManaIndicator {
         
         IManaCap manaCap = CapabilityRegistry.getMana(player);
         if (manaCap == null) {
-            ArsZero.LOGGER.warn("ManaIndicator: manaCap is NULL! Drawing debug indicator anyway");
             graphics.fill(x - 1, y - 1, x + INDICATOR_WIDTH + 1, y + INDICATOR_HEIGHT + 1, 0xFFFF0000);
             graphics.fill(x, y, x + INDICATOR_WIDTH, y + INDICATOR_HEIGHT, 0x33FF0000);
             return;
@@ -46,7 +45,6 @@ public class ManaIndicator {
         
         double maxMana = manaCap.getMaxMana();
         if (maxMana <= 0) {
-            ArsZero.LOGGER.warn("ManaIndicator: maxMana <= 0, drawing debug indicator");
             graphics.fill(x - 1, y - 1, x + INDICATOR_WIDTH + 1, y + INDICATOR_HEIGHT + 1, 0xFFFF0000);
             graphics.fill(x, y, x + INDICATOR_WIDTH, y + INDICATOR_HEIGHT, 0x33FF0000);
             return;
@@ -64,7 +62,6 @@ public class ManaIndicator {
             int fillY = y + INDICATOR_HEIGHT - fillHeight;
             graphics.fill(x, fillY, x + INDICATOR_WIDTH, y + INDICATOR_HEIGHT, MANA_COLOR);
         } else {
-            ArsZero.LOGGER.warn("ManaIndicator: fillHeight is 0, drawing empty indicator");
             graphics.fill(x, y, x + INDICATOR_WIDTH, y + INDICATOR_HEIGHT, 0x33C67EDE);
         }
     }

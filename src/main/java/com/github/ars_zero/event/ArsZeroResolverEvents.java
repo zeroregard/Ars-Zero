@@ -213,7 +213,7 @@ public class ArsZeroResolverEvents {
                 if (!validBlocks.isEmpty() && !casterTool.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player) && wrapped.isRootResolver()) {
                     if (!blockGroupCreated.getOrDefault(dimensionKey, false)) {
                         Vec3 centerPos = calculateCenter(validBlocks);
-                        
+
                         BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), serverLevel);
                         blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
                         blockGroup.setCasterUUID(player.getUUID());
