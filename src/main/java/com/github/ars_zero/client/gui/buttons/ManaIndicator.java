@@ -28,19 +28,19 @@ public class ManaIndicator {
         this.x = x;
         this.y = y;
         this.phaseSpell = phaseSpell;
-        ArsZero.LOGGER.info("ManaIndicator created: x={}, y={}, spell parts={}", x, y, phaseSpell.size());
+        ArsZero.LOGGER.debug("ManaIndicator created: x={}, y={}, spell parts={}", x, y, phaseSpell.size());
     }
     
     public void render(GuiGraphics graphics, Player player) {
-        ArsZero.LOGGER.info("ManaIndicator.render() called: x={}, y={}, player={}", x, y, player != null ? player.getName().getString() : "NULL");
+        ArsZero.LOGGER.debug("ManaIndicator.render() called: x={}, y={}, player={}", x, y, player != null ? player.getName().getString() : "NULL");
         
         int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int screenHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
-        ArsZero.LOGGER.info("ManaIndicator: Screen dimensions: {}x{}", screenWidth, screenHeight);
-        ArsZero.LOGGER.info("ManaIndicator: Indicator bounds: x=[{}, {}], y=[{}, {}]", x, x + INDICATOR_WIDTH, y, y + INDICATOR_HEIGHT);
+        ArsZero.LOGGER.debug("ManaIndicator: Screen dimensions: {}x{}", screenWidth, screenHeight);
+        ArsZero.LOGGER.debug("ManaIndicator: Indicator bounds: x=[{}, {}], y=[{}, {}]", x, x + INDICATOR_WIDTH, y, y + INDICATOR_HEIGHT);
         
         boolean inBounds = x >= 0 && x < screenWidth && y >= 0 && y < screenHeight;
-        ArsZero.LOGGER.info("ManaIndicator: In screen bounds: {}", inBounds);
+        ArsZero.LOGGER.debug("ManaIndicator: In screen bounds: {}", inBounds);
         
         IManaCap manaCap = CapabilityRegistry.getMana(player);
         if (manaCap == null) {
@@ -51,7 +51,7 @@ public class ManaIndicator {
         }
         
         double maxMana = manaCap.getMaxMana();
-        ArsZero.LOGGER.info("ManaIndicator: maxMana={}", maxMana);
+        ArsZero.LOGGER.debug("ManaIndicator: maxMana={}", maxMana);
         if (maxMana <= 0) {
             ArsZero.LOGGER.warn("ManaIndicator: maxMana <= 0, drawing debug indicator");
             graphics.fill(x - 1, y - 1, x + INDICATOR_WIDTH + 1, y + INDICATOR_HEIGHT + 1, 0xFFFF0000);
@@ -60,7 +60,7 @@ public class ManaIndicator {
         }
         
         int spellCost = calculatePhaseManaCost();
-        ArsZero.LOGGER.info("ManaIndicator: spellCost={}", spellCost);
+        ArsZero.LOGGER.debug("ManaIndicator: spellCost={}", spellCost);
         double fillRatio = Math.min(spellCost / maxMana, 1.0);
         int fillHeight = (int) (INDICATOR_HEIGHT * fillRatio);
         
@@ -68,19 +68,19 @@ public class ManaIndicator {
             fillHeight = 1;
         }
         
-        ArsZero.LOGGER.info("ManaIndicator: fillRatio={}, fillHeight={}", fillRatio, fillHeight);
+        ArsZero.LOGGER.debug("ManaIndicator: fillRatio={}, fillHeight={}", fillRatio, fillHeight);
         
         if (fillHeight > 0) {
             int fillY = y + INDICATOR_HEIGHT - fillHeight;
-            ArsZero.LOGGER.info("ManaIndicator: Drawing fill at x={}, y={} to x={}, y={}, color=0x{:08X}", x, fillY, x + INDICATOR_WIDTH, y + INDICATOR_HEIGHT, MANA_COLOR);
+            ArsZero.LOGGER.debug("ManaIndicator: Drawing fill at x={}, y={} to x={}, y={}, color=0x{:08X}", x, fillY, x + INDICATOR_WIDTH, y + INDICATOR_HEIGHT, MANA_COLOR);
             graphics.fill(x, fillY, x + INDICATOR_WIDTH, y + INDICATOR_HEIGHT, MANA_COLOR);
-            ArsZero.LOGGER.info("ManaIndicator: Fill drawn successfully");
+            ArsZero.LOGGER.debug("ManaIndicator: Fill drawn successfully");
         } else {
             ArsZero.LOGGER.warn("ManaIndicator: fillHeight is 0, drawing empty indicator");
             graphics.fill(x, y, x + INDICATOR_WIDTH, y + INDICATOR_HEIGHT, 0x33C67EDE);
         }
         
-        ArsZero.LOGGER.info("ManaIndicator.render() completed");
+        ArsZero.LOGGER.debug("ManaIndicator.render() completed");
     }
     
     public boolean isHovered(int mouseX, int mouseY) {

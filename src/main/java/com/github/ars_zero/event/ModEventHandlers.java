@@ -16,10 +16,10 @@ public class ModEventHandlers {
         // This event fires every tick for each player
         // We only need to register once, so we'll use a static flag
         if (!ModItems.SPELL_CASTERS_REGISTERED) {
-            ArsZero.LOGGER.info("PlayerTick event fired - registering spell casters with Ars Nouveau...");
+            ArsZero.LOGGER.debug("PlayerTick event fired - registering spell casters with Ars Nouveau...");
             ModItems.registerSpellCasters();
             ModItems.SPELL_CASTERS_REGISTERED = true;
-            ArsZero.LOGGER.info("Spell caster registration completed");
+            ArsZero.LOGGER.debug("Spell caster registration completed");
         }
     }
 }

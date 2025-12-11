@@ -365,7 +365,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         addRenderableWidget(spellNameBox);
 
         addRenderableWidget(new CreateSpellButton(bookRight - 84, bookBottom - 29, (b) -> {
-            ArsZero.LOGGER.info("Save button clicked!");
+            ArsZero.LOGGER.debug("Save button clicked!");
             this.saveSpell();
         }, this::getValidationErrors));
         addRenderableWidget(new ClearButton(bookRight - 137, bookBottom - 29, Component.translatable("ars_nouveau.spell_book_gui.clear"), (button) -> clear()));
@@ -1012,10 +1012,10 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
     
     private void renderManaIndicators(GuiGraphics graphics, int mouseX, int mouseY) {
-        ArsZero.LOGGER.info("=== MANA INDICATOR RENDER START ===");
-        ArsZero.LOGGER.info("bookLeft: {}, bookTop: {}", bookLeft, bookTop);
-        ArsZero.LOGGER.info("PHASE_SECTION_SHIFT_X: {}, PHASE_ROW_TEXTURE_X_OFFSET: {}", PHASE_SECTION_SHIFT_X, PHASE_ROW_TEXTURE_X_OFFSET);
-        ArsZero.LOGGER.info("PHASE_ROW_TEXTURE_WIDTH: {}", PHASE_ROW_TEXTURE_WIDTH);
+        ArsZero.LOGGER.debug("=== MANA INDICATOR RENDER START ===");
+        ArsZero.LOGGER.debug("bookLeft: {}, bookTop: {}", bookLeft, bookTop);
+        ArsZero.LOGGER.debug("PHASE_SECTION_SHIFT_X: {}, PHASE_ROW_TEXTURE_X_OFFSET: {}", PHASE_SECTION_SHIFT_X, PHASE_ROW_TEXTURE_X_OFFSET);
+        ArsZero.LOGGER.debug("PHASE_ROW_TEXTURE_WIDTH: {}", PHASE_ROW_TEXTURE_WIDTH);
         
         int phaseRowStartX = bookLeft + PHASE_ROW_TEXTURE_X_OFFSET + PHASE_SECTION_SHIFT_X - 4;
         int phaseRowEndX = phaseRowStartX + PHASE_ROW_TEXTURE_WIDTH;
@@ -1024,9 +1024,9 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         int rowHeight = PHASE_ROW_HEIGHT + 2;
         int indicatorHeight = 14;
         
-        ArsZero.LOGGER.info("Phase row start X: {}, end X: {}", phaseRowStartX, phaseRowEndX);
-        ArsZero.LOGGER.info("Indicator X: {}, baseY: {}", indicatorX, baseY);
-        ArsZero.LOGGER.info("Player: {}", player != null ? player.getName().getString() : "NULL");
+        ArsZero.LOGGER.debug("Phase row start X: {}, end X: {}", phaseRowStartX, phaseRowEndX);
+        ArsZero.LOGGER.debug("Indicator X: {}, baseY: {}", indicatorX, baseY);
+        ArsZero.LOGGER.debug("Player: {}", player != null ? player.getName().getString() : "NULL");
         
         ManaIndicator hoveredIndicator = null;
         
@@ -1035,16 +1035,16 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             int indicatorY = baseY + phaseIndex * rowHeight + (PHASE_ROW_HEIGHT - indicatorHeight) / 2 - 1 + 1;
             
-            ArsZero.LOGGER.info("Phase {}: indicatorY={}, spell parts count={}", phase, indicatorY, phaseSpell.size());
+            ArsZero.LOGGER.debug("Phase {}: indicatorY={}, spell parts count={}", phase, indicatorY, phaseSpell.size());
             
             ManaIndicator indicator = new ManaIndicator(indicatorX, indicatorY, phaseSpell);
             indicator.render(graphics, player);
             
-            ArsZero.LOGGER.info("Phase {}: After render call", phase);
+            ArsZero.LOGGER.debug("Phase {}: After render call", phase);
             
             if (indicator.isHovered(mouseX, mouseY)) {
                 hoveredIndicator = indicator;
-                ArsZero.LOGGER.info("Phase {}: HOVERED! mouseX={}, mouseY={}", phase, mouseX, mouseY);
+                ArsZero.LOGGER.debug("Phase {}: HOVERED! mouseX={}, mouseY={}", phase, mouseX, mouseY);
             }
             phaseIndex++;
         }
@@ -1053,7 +1053,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             hoveredIndicator.renderTooltip(graphics, mouseX, mouseY);
         }
         
-        ArsZero.LOGGER.info("=== MANA INDICATOR RENDER END ===");
+        ArsZero.LOGGER.debug("=== MANA INDICATOR RENDER END ===");
     }
     
     private void refreshCategoryButtons() {

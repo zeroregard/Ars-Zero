@@ -62,7 +62,7 @@ public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPac
                 double oldMultiplier = castContext.distanceMultiplier;
                 castContext.distanceMultiplier += multiplierChange;
                 
-                ArsZero.LOGGER.info("Scroll: voxelSize={}, scrollDelta={}, sensitivity={}, multiplierChange={}, distanceMultiplier: {} -> {}", 
+                ArsZero.LOGGER.debug("Scroll: voxelSize={}, scrollDelta={}, sensitivity={}, multiplierChange={}, distanceMultiplier: {} -> {}", 
                     entitySize, packet.scrollDelta, scrollSensitivity, multiplierChange, oldMultiplier, castContext.distanceMultiplier);
                 
                 castContext.distanceMultiplier = Math.max(MIN_DISTANCE_MULTIPLIER, 

@@ -42,7 +42,7 @@ public final class FriendlyTestReporter implements TestReporter {
         int totalCount = passedCount + failedCount;
         List<String> lines = buildSummary(totalCount, passedCount, failedCount);
         FINAL_LINES.set(lines);
-        lines.forEach(line -> LOGGER.info("{}", line));
+        lines.forEach(line -> LOGGER.debug("{}", line));
         summaryPrinted = true;
     }
 

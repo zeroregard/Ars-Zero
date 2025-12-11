@@ -65,11 +65,11 @@ public class ModBlocks {
     public static final DeferredHolder<Block, MultiphaseSpellTurret> MULTIPHASE_SPELL_TURRET = BLOCKS.register(
         "multiphase_spell_turret",
         () -> {
-            ArsZero.LOGGER.info("Registering Multiphase Spell Turret block");
+            ArsZero.LOGGER.debug("Registering Multiphase Spell Turret block");
             MultiphaseSpellTurret block = new MultiphaseSpellTurret(BlockBehaviour.Properties.of()
                 .strength(2.0f)
                 .noOcclusion());
-            ArsZero.LOGGER.info("Multiphase Spell Turret block created successfully");
+            ArsZero.LOGGER.debug("Multiphase Spell Turret block created successfully");
             return block;
         }
     );
