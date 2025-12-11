@@ -7,6 +7,7 @@ import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
@@ -71,7 +72,7 @@ public class SelectEffect extends AbstractEffect {
             return;
         }
         
-        if (!canBlockBeDestroyed(world, pos)) {
+        if (!BlockImmutabilityUtil.canBlockBeDestroyed(world, pos)) {
             return;
         }
         double aoeBuff = spellStats.getAoeMultiplier();
@@ -82,7 +83,7 @@ public class SelectEffect extends AbstractEffect {
         for (BlockPos blockPos : posList) {
             if (!world.isOutsideBuildHeight(blockPos) 
                 && BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)
-                && canBlockBeDestroyed(world, blockPos)) {
+                && BlockImmutabilityUtil.canBlockBeDestroyed(world, blockPos)) {
                 validBlocks.add(blockPos);
             }
         }
@@ -117,22 +118,6 @@ public class SelectEffect extends AbstractEffect {
         }
     }
     
-    private boolean canBlockBeDestroyed(Level world, BlockPos pos) {
-        BlockState state = world.getBlockState(pos);
-        Block block = state.getBlock();
-        
-        if (block == Blocks.BEDROCK || block == Blocks.BARRIER || block == Blocks.COMMAND_BLOCK 
-            || block == Blocks.CHAIN_COMMAND_BLOCK || block == Blocks.REPEATING_COMMAND_BLOCK) {
-            return false;
-        }
-        
-        float destroySpeed = state.getDestroySpeed(world, pos);
-        if (destroySpeed < 0.0f) {
-            return false;
-        }
-        
-        return true;
-    }
     
     private Vec3 calculateCenter(List<BlockPos> positions) {
         if (positions.isEmpty()) return Vec3.ZERO;

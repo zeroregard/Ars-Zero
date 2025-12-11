@@ -119,14 +119,15 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         wasPowered = powered;
     }
 
-    public void configureSpells(Spell begin, Spell tick, Spell end, UUID owner, int delay) {
+    public void configureSpells(Spell begin, Spell tick, Spell end, UUID owner, int tickDelayOffset) {
         beginSpell = sanitizeSpell(begin);
         tickSpell = sanitizeSpell(tick);
         endSpell = sanitizeSpell(end);
         casting = false;
         wasPowered = false;
         tickIntervalCounter = 0;
-        tickCooldown = Math.max(0, delay);
+        this.tickDelayOffset = tickDelayOffset;
+        tickCooldown = calculateTickCooldown(tickSpell) + tickDelayOffset;
         phaseHistory.clear();
         clearCastContext();
         ownerUUID = owner;
@@ -152,7 +153,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         saveSpell(tag, TICK_TAG, tickSpell);
         saveSpell(tag, END_TAG, endSpell);
         tag.putBoolean("was_powered", wasPowered);
-        tag.putInt("tick_cooldown", tickCooldown);
+        tag.putInt("tick_delay_offset", tickDelayOffset);
         if (ownerUUID != null) {
             tag.putUUID("owner_uuid", ownerUUID);
         }
@@ -165,11 +166,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         tickSpell = loadSpell(tag, TICK_TAG);
         endSpell = loadSpell(tag, END_TAG);
         wasPowered = tag.getBoolean("was_powered");
-        if (tag.contains("tick_cooldown")) {
-            tickCooldown = tag.getInt("tick_cooldown");
-        } else {
-            tickCooldown = calculateTickCooldown(tickSpell);
-        }
+        tickDelayOffset = tag.contains("tick_delay_offset") ? tag.getInt("tick_delay_offset") : 0;
         if (tag.contains("owner_uuid")) {
             ownerUUID = tag.getUUID("owner_uuid");
         } else {
@@ -177,13 +174,15 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         }
         casting = false;
         tickIntervalCounter = 0;
+        tickCooldown = calculateTickCooldown(tickSpell) + tickDelayOffset;
         phaseHistory.clear();
         clearCastContext();
     }
 
     private void startCasting() {
         casting = true;
-        tickIntervalCounter = Math.max(0, tickCooldown);
+        tickIntervalCounter = 0;
+        tickCooldown = calculateTickCooldown(tickSpell) + tickDelayOffset;
         initializeCastContext();
         castPhase(SpellPhase.BEGIN);
     }

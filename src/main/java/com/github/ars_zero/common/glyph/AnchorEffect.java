@@ -11,6 +11,7 @@ import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellPhase;
+import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
 import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
@@ -153,11 +154,28 @@ public class AnchorEffect extends AbstractEffect {
             if (blockGroup != null) {
                 ArsZero.LOGGER.info("[AnchorEffect] onResolveEntity: Found blockGroup, adding lifespan");
                 blockGroup.addLifespan(1);
+                if (blockGroup.isRemoved()) {
+                    ArsZero.LOGGER.debug("[AnchorEffect] BlockGroup is removed, skipping");
+                    continue;
+                }
                 target = blockGroup;
             }
             
-            if (target == null || !target.isAlive()) {
-                ArsZero.LOGGER.debug("[AnchorEffect] Target is null or not alive, skipping");
+            if (target == null) {
+                ArsZero.LOGGER.debug("[AnchorEffect] Target is null, skipping");
+                continue;
+            }
+            
+            if (target instanceof BlockGroupEntity) {
+                if (target.isRemoved()) {
+                    ArsZero.LOGGER.debug("[AnchorEffect] BlockGroup target is removed, skipping");
+                    continue;
+                }
+            } else if (target instanceof LivingEntity living && !living.isAlive()) {
+                ArsZero.LOGGER.debug("[AnchorEffect] LivingEntity target is not alive, skipping");
+                continue;
+            } else if (target.isRemoved()) {
+                ArsZero.LOGGER.debug("[AnchorEffect] Target is removed, skipping");
                 continue;
             }
             
@@ -293,6 +311,10 @@ public class AnchorEffect extends AbstractEffect {
     
     private static boolean canMoveToPosition(Vec3 targetPos, Level world) {
         BlockPos blockPos = BlockPos.containing(targetPos);
+        
+        if (BlockImmutabilityUtil.isBlockImmutable(world, blockPos)) {
+            return false;
+        }
         
         return !world.getBlockState(blockPos).blocksMotion();
     }
