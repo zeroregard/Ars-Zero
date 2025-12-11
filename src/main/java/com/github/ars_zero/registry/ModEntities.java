@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.entity.ArcaneShieldEntity;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
@@ -98,5 +99,15 @@ public class ModEntities {
                     .updateInterval(1)
                     .setShouldReceiveVelocityUpdates(true)
                     .build(ArsZero.MOD_ID + ":block_group")
+    );
+    
+    public static final DeferredHolder<EntityType<?>, EntityType<ArcaneShieldEntity>> ARCANE_SHIELD_ENTITY = ENTITIES.register(
+            "arcane_shield_entity",
+            () -> EntityType.Builder.<ArcaneShieldEntity>of(ArcaneShieldEntity::new, MobCategory.MISC)
+                    .sized(1.0f, 1.0f)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(ArsZero.MOD_ID + ":arcane_shield_entity")
     );
 }

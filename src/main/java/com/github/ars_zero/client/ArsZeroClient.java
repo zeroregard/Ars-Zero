@@ -3,6 +3,7 @@ package com.github.ars_zero.client;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.client.network.ClientNetworking;
+import com.github.ars_zero.client.renderer.entity.ArcaneShieldEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.ArcaneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.BlockGroupEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.FireVoxelEntityRenderer;
@@ -50,6 +51,7 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.ICE_VOXEL_ENTITY.get(), IceVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.LIGHTNING_VOXEL_ENTITY.get(), LightningVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.BLOCK_GROUP.get(), BlockGroupEntityRenderer::new);
+            EntityRenderers.register(ModEntities.ARCANE_SHIELD_ENTITY.get(), ArcaneShieldEntityRenderer::new);
         });
     }
     
