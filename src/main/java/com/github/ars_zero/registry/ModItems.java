@@ -87,7 +87,7 @@ public class ModItems {
     public static final DeferredHolder<Item, RendererBlockItem> MULTIPHASE_SPELL_TURRET = ITEMS.register(
         "multiphase_spell_turret",
         () -> {
-            ArsZero.LOGGER.info("Registering Multiphase Spell Turret item");
+            ArsZero.LOGGER.debug("Registering Multiphase Spell Turret item");
             RendererBlockItem item = new RendererBlockItem(ModBlocks.MULTIPHASE_SPELL_TURRET.get(), defaultItemProperties()) {
                 @Override
                 @OnlyIn(Dist.CLIENT)
@@ -95,7 +95,7 @@ public class ModItems {
                     return MultiphaseTurretItemRenderer.getISTER();
                 }
             };
-            ArsZero.LOGGER.info("Multiphase Spell Turret item created successfully");
+            ArsZero.LOGGER.debug("Multiphase Spell Turret item created successfully");
             return item;
         }
     );
@@ -110,13 +110,13 @@ public class ModItems {
     }
 
     public static void registerSpellCasters() {
-        ArsZero.LOGGER.info("Registering Ars Zero staves with SpellCasterRegistry");
+        ArsZero.LOGGER.debug("Registering Ars Zero staves with SpellCasterRegistry");
         registerStaff(NOVICE_SPELL_STAFF.get());
         registerStaff(MAGE_SPELL_STAFF.get());
         registerStaff(ARCHMAGE_SPELL_STAFF.get());
         registerStaff(CREATIVE_SPELL_STAFF.get());
         registerDevice(SPELLCASTING_CIRCLET.get());
-        ArsZero.LOGGER.info("SpellCasterRegistry registration completed");
+        ArsZero.LOGGER.debug("SpellCasterRegistry registration completed");
     }
     
     private static void registerStaff(AbstractSpellStaff staff) {

@@ -29,12 +29,12 @@ public class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MultiphaseSpellTurretTile>> MULTIPHASE_SPELL_TURRET = BLOCK_ENTITIES.register(
         "multiphase_spell_turret",
         () -> {
-            ArsZero.LOGGER.info("Registering Multiphase Spell Turret block entity type");
+            ArsZero.LOGGER.debug("Registering Multiphase Spell Turret block entity type");
             BlockEntityType<MultiphaseSpellTurretTile> type = BlockEntityType.Builder.of(
                 MultiphaseSpellTurretTile::new,
                 ModBlocks.MULTIPHASE_SPELL_TURRET.get()
             ).build(null);
-            ArsZero.LOGGER.info("Multiphase Spell Turret block entity type created successfully");
+            ArsZero.LOGGER.debug("Multiphase Spell Turret block entity type created successfully");
             return type;
         }
     );
