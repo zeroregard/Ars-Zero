@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
+import com.github.ars_zero.common.entity.ExplosionControllerEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
 import com.github.ars_zero.common.entity.LightningVoxelEntity;
@@ -98,5 +99,15 @@ public class ModEntities {
                     .updateInterval(1)
                     .setShouldReceiveVelocityUpdates(true)
                     .build(ArsZero.MOD_ID + ":block_group")
+    );
+
+    public static final DeferredHolder<EntityType<?>, EntityType<ExplosionControllerEntity>> EXPLOSION_CONTROLLER = ENTITIES.register(
+            "explosion_controller",
+            () -> EntityType.Builder.<ExplosionControllerEntity>of(ExplosionControllerEntity::new, MobCategory.MISC)
+                    .sized(0.1f, 0.1f)
+                    .clientTrackingRange(1)
+                    .updateInterval(20)
+                    .setShouldReceiveVelocityUpdates(false)
+                    .build(ArsZero.MOD_ID + ":explosion_controller")
     );
 }
