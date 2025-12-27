@@ -168,6 +168,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                     SpellContext remainingContext = spellContext.makeChildContext();
                     spellContext.setCanceled(true);
                     
+                    voxel.setCaster(shooter);
                     serverLevel.addFreshEntity(voxel);
                     updateTemporalContext(shooter, voxel, spellContext);
                     

@@ -210,11 +210,14 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         float damage = BASE_DAMAGE + (float) ((speed - DAMAGE_SPEED_THRESHOLD) * DAMAGE_SCALE);
         damage *= sizeScale;
         damage = Math.min(damage, MAX_DAMAGE);
-        Entity owner = this.getOwner();
-        LivingEntity sender = owner instanceof LivingEntity ? (LivingEntity) owner : null;
+        LivingEntity sender = this.getStoredCaster();
         net.minecraft.world.damagesource.DamageSource damageSource;
         if (sender != null) {
             damageSource = this.level().damageSources().indirectMagic(this, sender);
+            target.setLastHurtByMob(sender);
+            if (sender instanceof net.minecraft.world.entity.player.Player) {
+                target.setLastHurtByPlayer((net.minecraft.world.entity.player.Player) sender);
+            }
         } else {
             damageSource = this.level().damageSources().magic();
         }

@@ -41,8 +41,6 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
     private static final int COLOR = 0x6BFF78;
     private static final ResourceKey<net.minecraft.world.effect.MobEffect> ENVENOM_EFFECT_KEY =
         ResourceKey.create(Registries.MOB_EFFECT, ResourceLocation.fromNamespaceAndPath("ars_nouveau", "envenom"));
-    private static final ResourceKey<net.minecraft.world.effect.MobEffect> POISON_EFFECT_KEY =
-        ResourceKey.create(Registries.MOB_EFFECT, ResourceLocation.parse("minecraft:poison"));
 
     public BlightVoxelEntity(EntityType<? extends BlightVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -375,8 +373,7 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
     private void applyDamage(LivingEntity target) {
         float sizeScale = Math.max(1.0f, this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE);
         float damage = 2.0f * sizeScale;
-        Entity owner = this.getOwner();
-        LivingEntity sender = owner instanceof LivingEntity ? (LivingEntity) owner : null;
+        LivingEntity sender = this.getStoredCaster();
         net.minecraft.world.damagesource.DamageSource damageSource;
         if (sender != null) {
             damageSource = this.level().damageSources().indirectMagic(this, sender);
@@ -400,7 +397,6 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
 
     private Holder<net.minecraft.world.effect.MobEffect> resolveEnvenomEffect() {
         return BuiltInRegistries.MOB_EFFECT.getHolder(ENVENOM_EFFECT_KEY)
-            .or(() -> BuiltInRegistries.MOB_EFFECT.getHolder(POISON_EFFECT_KEY))
             .orElseThrow();
     }
 

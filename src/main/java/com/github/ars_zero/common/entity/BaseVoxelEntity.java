@@ -13,6 +13,7 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
@@ -45,6 +46,8 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     
     protected int age = 0;
     protected SpellResolver resolver;
+    @Nullable
+    private LivingEntity storedCaster;
     
     public BaseVoxelEntity(EntityType<? extends BaseVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -223,6 +226,20 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     
     public void setCaster(Entity caster) {
         this.setOwner(caster);
+        if (caster instanceof LivingEntity living) {
+            this.storedCaster = living;
+        } else {
+            this.storedCaster = null;
+        }
+    }
+    
+    @Nullable
+    public LivingEntity getStoredCaster() {
+        Entity owner = this.getOwner();
+        if (owner instanceof LivingEntity living) {
+            return living;
+        }
+        return this.storedCaster;
     }
     
     @Override

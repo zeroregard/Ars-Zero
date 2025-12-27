@@ -14,11 +14,11 @@ public class BlightSplashParticle extends TextureSheetParticle {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.pickSprite(spriteSet);
         this.gravity = 0.04f;
-        this.lifetime = (int)(5.0D / (Math.random() * 0.8D + 0.2D));
+        this.lifetime = (int)(4.0D / (Math.random() * 0.8D + 0.2D));
         this.quadSize = 0.2f + (float)(Math.random() * 0.1);
-        this.rCol = 0.1f;
-        this.gCol = 1.0f;
-        this.bCol = 0.1f;
+        this.rCol = (float) Math.random() * 0.15f;
+        this.gCol = 0.6f + (float) Math.random() * 0.3f;
+        this.bCol = (float) Math.random() * 0.15f;
         this.alpha = 1.0f;
     }
     
@@ -40,9 +40,6 @@ public class BlightSplashParticle extends TextureSheetParticle {
             this.xd *= 0.98D;
             this.yd *= 0.98D;
             this.zd *= 0.98D;
-            this.rCol = 0.1f;
-            this.gCol = 0.75f;
-            this.bCol = 0.1f;
         }
     }
     
