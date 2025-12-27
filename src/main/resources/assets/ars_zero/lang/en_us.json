@@ -28,6 +28,8 @@
   "block.ars_zero.lightning_voxel_spawner": "Lightning Voxel Spawner",
   "block.ars_zero.blight_voxel_spawner": "Blight Voxel Spawner",
   "block.ars_zero.blight_fluid": "Blight Fluid",
+  "block.ars_zero.blight_cauldron": "Blight Cauldron",
+  "block.ars_zero.frozen_blight": "Frozen Blight",
   "block.ars_zero.multiphase_spell_turret": "Multiphase Spell Turret",
 
   "item.ars_zero.blight_fluid_bucket": "Blight Fluid Bucket",
@@ -51,8 +53,6 @@
   "ars_affinity.gui.affinities": "Affinities",
 
   "key.category.ars_zero.general": "Ars Zero",
-  "key.ars_zero.curio_cast": "Channel Circlet",
-  "key.ars_zero.curio_radial": "Circlet Spell Radial",
 
   "itemGroup.ars_zero": "Ars Zero",
 

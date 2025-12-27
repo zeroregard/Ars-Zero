@@ -1,6 +1,8 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.registry.ModEntities;
+import com.github.ars_zero.registry.ModBlocks;
+import com.github.ars_zero.registry.ModFluids;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
@@ -16,6 +18,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
@@ -123,6 +126,16 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         BlockPos pos = blockHit.getBlockPos();
         BlockState state = this.level().getBlockState(pos);
         Block block = state.getBlock();
+        FluidState fluidState = state.getFluidState();
+        
+        if (fluidState.isSource() && fluidState.getType() == ModFluids.BLIGHT_FLUID.get()) {
+            if (!this.level().isClientSide) {
+                this.level().setBlock(pos, ModBlocks.FROZEN_BLIGHT.get().defaultBlockState(), 3);
+                spawnHitParticles(blockHit.getLocation());
+            }
+            this.discard();
+            return;
+        }
         
         if (block == Blocks.WATER) {
             if (!this.level().isClientSide) {
@@ -135,6 +148,15 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         
         BlockPos adjacentPos = pos.relative(blockHit.getDirection());
         BlockState adjacentState = this.level().getBlockState(adjacentPos);
+        FluidState adjacentFluidState = adjacentState.getFluidState();
+        if (adjacentFluidState.isSource() && adjacentFluidState.getType() == ModFluids.BLIGHT_FLUID.get()) {
+            if (!this.level().isClientSide) {
+                this.level().setBlock(adjacentPos, ModBlocks.FROZEN_BLIGHT.get().defaultBlockState(), 3);
+                spawnHitParticles(blockHit.getLocation());
+            }
+            this.discard();
+            return;
+        }
         if (adjacentState.getBlock() == Blocks.WATER) {
             if (!this.level().isClientSide) {
                 this.level().setBlock(adjacentPos, Blocks.ICE.defaultBlockState(), 3);
@@ -164,7 +186,6 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         }
         
         ServerLevel serverLevel = (ServerLevel) this.level();
-        Block block = state.getBlock();
         
         LootParams.Builder lootParams = new LootParams.Builder(serverLevel)
             .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))

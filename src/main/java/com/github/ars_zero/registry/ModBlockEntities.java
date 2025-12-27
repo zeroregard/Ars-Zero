@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.block.BlightCauldronBlockEntity;
 import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
 import com.github.ars_zero.common.block.VoxelSpawnerBlockEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -38,5 +39,13 @@ public class ModBlockEntities {
             ArsZero.LOGGER.debug("Multiphase Spell Turret block entity type created successfully");
             return type;
         }
+    );
+    
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BlightCauldronBlockEntity>> BLIGHT_CAULDRON = BLOCK_ENTITIES.register(
+        "blight_cauldron",
+        () -> BlockEntityType.Builder.of(
+            BlightCauldronBlockEntity::new,
+            ModBlocks.BLIGHT_CAULDRON.get()
+        ).build(null)
     );
 }

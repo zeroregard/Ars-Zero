@@ -1,6 +1,8 @@
 package com.github.ars_zero.common.entity;
 
+import com.github.ars_zero.common.block.BlightCauldronBlock;
 import com.github.ars_zero.common.block.BlightLiquidBlock;
+import com.github.ars_zero.registry.ModBlocks;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModFluids;
 import com.github.ars_zero.registry.ModParticles;
@@ -41,6 +43,8 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
     private static final int COLOR = 0x6BFF78;
     private static final ResourceKey<net.minecraft.world.effect.MobEffect> ENVENOM_EFFECT_KEY =
         ResourceKey.create(Registries.MOB_EFFECT, ResourceLocation.fromNamespaceAndPath("ars_nouveau", "envenom"));
+    private static final ResourceKey<net.minecraft.world.effect.MobEffect> POISON_EFFECT_KEY =
+        ResourceKey.create(Registries.MOB_EFFECT, ResourceLocation.parse("minecraft:poison"));
 
     public BlightVoxelEntity(EntityType<? extends BlightVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -198,6 +202,28 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
                 return;
             }
             
+            if (hitState.is(Blocks.CAULDRON) && isTopHit) {
+                serverLevel.setBlock(
+                    hitPos,
+                    ModBlocks.BLIGHT_CAULDRON.get().defaultBlockState().setValue(BlightCauldronBlock.LEVEL, 1),
+                    3
+                );
+                spawnHitParticles(blockHit.getLocation());
+                return;
+            }
+            if (hitState.getBlock() == ModBlocks.BLIGHT_CAULDRON.get() && isTopHit) {
+                int currentLevel = hitState.getValue(BlightCauldronBlock.LEVEL);
+                if (currentLevel < BlightCauldronBlock.MAX_FILL_LEVEL) {
+                    serverLevel.setBlock(
+                        hitPos,
+                        hitState.setValue(BlightCauldronBlock.LEVEL, currentLevel + 1),
+                        3
+                    );
+                    spawnHitParticles(blockHit.getLocation());
+                    return;
+                }
+            }
+            
             if (hitState.is(BlockTags.LOGS)) {
                 spawnVaporizationEffects(blockHit.getLocation());
                 if (shouldPlaceLiquid) {
@@ -344,9 +370,9 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
             return;
         }
         for (int i = 0; i < 16; i++) {
-            double ox = (this.random.nextDouble() - 0.5D) * 0.3;
-            double oy = (this.random.nextDouble() - 0.5D) * 0.3;
-            double oz = (this.random.nextDouble() - 0.5D) * 0.3;
+            double ox = (this.random.nextDouble() - 0.5D) * 0.45;
+            double oy = (this.random.nextDouble() - 0.5D) * 0.45;
+            double oz = (this.random.nextDouble() - 0.5D) * 0.45;
             serverLevel.sendParticles(ModParticles.BLIGHT_SPLASH.get(), location.x + ox, location.y + oy, location.z + oz, 1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
     }
@@ -397,7 +423,8 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
 
     private Holder<net.minecraft.world.effect.MobEffect> resolveEnvenomEffect() {
         return BuiltInRegistries.MOB_EFFECT.getHolder(ENVENOM_EFFECT_KEY)
-            .orElseThrow();
+            .or(() -> BuiltInRegistries.MOB_EFFECT.getHolder(POISON_EFFECT_KEY))
+            .orElseThrow(() -> new IllegalStateException("Neither Envenom nor Poison effect found"));
     }
 
     private int getEffectDuration(boolean burst) {
