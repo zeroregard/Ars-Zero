@@ -26,6 +26,8 @@ public class ModCreativeTabs {
                     output.accept(ModItems.CREATIVE_SPELL_STAFF.get().getDefaultInstance());
                     output.accept(ModItems.DULL_CIRCLET.get().getDefaultInstance());
                     output.accept(ModItems.SPELLCASTING_CIRCLET.get().getDefaultInstance());
+                    output.accept(ModItems.ARCHWOOD_ROD.get().getDefaultInstance());
+                    output.accept(ModItems.MULTIPHASE_ORB.get().getDefaultInstance());
                     output.accept(ModItems.ARCANE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.FIRE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.WATER_VOXEL_SPAWNER.get().getDefaultInstance());
@@ -35,6 +37,7 @@ public class ModCreativeTabs {
                     output.accept(ModItems.LIGHTNING_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.BLIGHT_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModFluids.BLIGHT_FLUID_BUCKET.get().getDefaultInstance());
+                    output.accept(ModItems.MULTIPHASE_SPELL_TURRET.get().getDefaultInstance());
                 })
                 .build();
     });

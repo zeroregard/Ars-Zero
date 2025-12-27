@@ -129,10 +129,10 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                     waterVoxel.setCasterWaterPower(waterPower);
                 }
                 
-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity || voxel instanceof BlightVoxelEntity) {
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity || voxel instanceof BlightVoxelEntity || voxel instanceof LightningVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
-                if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity || voxel instanceof LightningVoxelEntity) {
+                if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity) {
                     voxel.setNoGravityCustom(false);
                 }
                 
@@ -180,10 +180,10 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                     waterVoxel.setCasterWaterPower(waterPower);
                 }
                 
-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity || voxel instanceof BlightVoxelEntity) {
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity || voxel instanceof BlightVoxelEntity || voxel instanceof LightningVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
-                if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity || voxel instanceof LightningVoxelEntity) {
+                if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity) {
                     voxel.setNoGravityCustom(false);
                 }
                 
@@ -279,10 +279,10 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                     voxel.setResolver(null);
                 }
                 
-                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity || voxel instanceof BlightVoxelEntity) {
+                if (voxel instanceof FireVoxelEntity || voxel instanceof ArcaneVoxelEntity || voxel instanceof WindVoxelEntity || voxel instanceof BlightVoxelEntity || voxel instanceof LightningVoxelEntity) {
                     voxel.setNoGravityCustom(true);
                 }
-                if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity || voxel instanceof LightningVoxelEntity) {
+                if (voxel instanceof IceVoxelEntity || voxel instanceof StoneVoxelEntity) {
                     voxel.setNoGravityCustom(false);
                 }
                 

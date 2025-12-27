@@ -9,23 +9,16 @@ import net.minecraft.sounds.SoundEvents;
 public class BlightWaterInteraction implements VoxelInteraction {
     @Override
     public VoxelInteractionResult interact(BaseVoxelEntity primary, BaseVoxelEntity secondary) {
-        BaseVoxelEntity blight = primary instanceof BlightVoxelEntity ? primary : secondary;
-        BaseVoxelEntity water = blight == primary ? secondary : primary;
-
-        float waterSize = water.getSize();
-
         VoxelInteractionResult.Builder builder = VoxelInteractionResult.builder(primary.position())
             .particles(ParticleTypes.SPLASH, 28)
             .sound(SoundEvents.BREWING_STAND_BREW);
 
         if (primary instanceof BlightVoxelEntity) {
-            builder.primaryAction(VoxelInteractionResult.ActionType.RESIZE)
-                   .primaryNewSize(waterSize)
-                   .secondaryAction(VoxelInteractionResult.ActionType.DISCARD);
-        } else {
             builder.primaryAction(VoxelInteractionResult.ActionType.DISCARD)
-                   .secondaryAction(VoxelInteractionResult.ActionType.RESIZE)
-                   .secondaryNewSize(waterSize);
+                   .secondaryAction(VoxelInteractionResult.ActionType.CONTINUE);
+        } else {
+            builder.primaryAction(VoxelInteractionResult.ActionType.CONTINUE)
+                   .secondaryAction(VoxelInteractionResult.ActionType.DISCARD);
         }
 
         return builder.build();

@@ -14,5 +14,13 @@
         "stream": false
       }
     ]
+  },
+  "lightning_voxel_hit": {
+    "sounds": [
+      {
+        "name": "ars_zero:lightning_voxel_hit",
+        "stream": false
+      }
+    ]
   }
 }

@@ -167,8 +167,13 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         bookBottom = height / 2 + STAFF_GUI_HEIGHT / 2;
         
         if (selectedSpellSlot == -1) {
-            selectedSpellSlot = caster.getCurrentSlot();
-            if (selectedSpellSlot < 0 || selectedSpellSlot >= 10) {
+            refreshDeviceStack();
+            if (caster != null) {
+                selectedSpellSlot = caster.getCurrentSlot();
+                if (selectedSpellSlot < 0 || selectedSpellSlot >= 10) {
+                    selectedSpellSlot = 0;
+                }
+            } else {
                 selectedSpellSlot = 0;
             }
         }
@@ -302,9 +307,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             for (int i = 0; i < recipeList.size() && i < 10; i++) {
                 phaseSpell.set(i, recipeList.get(i));
             }
-            
-            ArsZero.LOGGER.debug("Loaded {} phase from physical slot {} with {} glyphs", 
-                phase, physicalSlot, recipeList.size());
         }
         
         resetCraftingCells();
@@ -360,7 +362,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         addRenderableWidget(spellNameBox);
 
         addRenderableWidget(new CreateSpellButton(bookRight - 84, bookBottom - 29, (b) -> {
-            ArsZero.LOGGER.info("Save button clicked!");
             this.saveSpell();
         }, this::getValidationErrors));
         addRenderableWidget(new ClearButton(bookRight - 137, bookBottom - 29, Component.translatable("ars_nouveau.spell_book_gui.clear"), (button) -> clear()));
@@ -438,7 +439,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
     
     private void openParticleScreen() {
-        StaffParticleScreen.openScreen(this, selectedSpellSlot, deviceStack, this.guiHand);
+        MultiphaseDeviceStylesScreen.openScreen(this, selectedSpellSlot, deviceStack, this.guiHand);
     }
     
     private int getSelectedPhysicalSlot() {
@@ -499,6 +500,48 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
     private boolean isCircletDevice() {
         return bookStack != null && bookStack.getItem() instanceof SpellcastingCirclet;
+    }
+    
+    private void refreshDeviceStack() {
+        if (player == null) {
+            return;
+        }
+        
+        ItemStack freshStack = ItemStack.EMPTY;
+        boolean isCirclet = bookStack != null && bookStack.getItem() instanceof SpellcastingCirclet;
+        
+        if (guiHand != null) {
+            freshStack = player.getItemInHand(guiHand);
+            if (!(freshStack.getItem() instanceof AbstractMultiPhaseCastDevice)) {
+                freshStack = ItemStack.EMPTY;
+            }
+        } else {
+            ItemStack mainStack = player.getMainHandItem();
+            if (mainStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+                freshStack = mainStack;
+            } else {
+                ItemStack offStack = player.getOffhandItem();
+                if (offStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+                    freshStack = offStack;
+                }
+            }
+        }
+        
+        if (freshStack.isEmpty() && isCirclet) {
+            freshStack = top.theillusivec4.curios.api.CuriosApi.getCuriosHelper()
+                .findEquippedCurio(
+                    equipped -> equipped.getItem() instanceof AbstractMultiPhaseCastDevice,
+                    player
+                )
+                .map(result -> result.getRight())
+                .orElse(ItemStack.EMPTY);
+        }
+        
+        if (!freshStack.isEmpty() && freshStack.getItem() instanceof AbstractMultiPhaseCastDevice) {
+            deviceStack = freshStack;
+            caster = SpellCasterRegistry.from(freshStack);
+            onBookstackUpdated(freshStack);
+        }
     }
 
     private void addPaginationButtons() {
@@ -965,21 +1008,12 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
     
     private void renderManaIndicators(GuiGraphics graphics, int mouseX, int mouseY) {
-        ArsZero.LOGGER.info("=== MANA INDICATOR RENDER START ===");
-        ArsZero.LOGGER.info("bookLeft: {}, bookTop: {}", bookLeft, bookTop);
-        ArsZero.LOGGER.info("PHASE_SECTION_SHIFT_X: {}, PHASE_ROW_TEXTURE_X_OFFSET: {}", PHASE_SECTION_SHIFT_X, PHASE_ROW_TEXTURE_X_OFFSET);
-        ArsZero.LOGGER.info("PHASE_ROW_TEXTURE_WIDTH: {}", PHASE_ROW_TEXTURE_WIDTH);
-        
         int phaseRowStartX = bookLeft + PHASE_ROW_TEXTURE_X_OFFSET + PHASE_SECTION_SHIFT_X - 4;
         int phaseRowEndX = phaseRowStartX + PHASE_ROW_TEXTURE_WIDTH;
         int indicatorX = phaseRowEndX + 4 - 8 - 4 + 1;
         int baseY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y;
         int rowHeight = PHASE_ROW_HEIGHT + 2;
         int indicatorHeight = 14;
-        
-        ArsZero.LOGGER.info("Phase row start X: {}, end X: {}", phaseRowStartX, phaseRowEndX);
-        ArsZero.LOGGER.info("Indicator X: {}, baseY: {}", indicatorX, baseY);
-        ArsZero.LOGGER.info("Player: {}", player != null ? player.getName().getString() : "NULL");
         
         ManaIndicator hoveredIndicator = null;
         
@@ -988,16 +1022,11 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             int indicatorY = baseY + phaseIndex * rowHeight + (PHASE_ROW_HEIGHT - indicatorHeight) / 2 - 1 + 1;
             
-            ArsZero.LOGGER.info("Phase {}: indicatorY={}, spell parts count={}", phase, indicatorY, phaseSpell.size());
-            
             ManaIndicator indicator = new ManaIndicator(indicatorX, indicatorY, phaseSpell);
             indicator.render(graphics, player);
             
-            ArsZero.LOGGER.info("Phase {}: After render call", phase);
-            
             if (indicator.isHovered(mouseX, mouseY)) {
                 hoveredIndicator = indicator;
-                ArsZero.LOGGER.info("Phase {}: HOVERED! mouseX={}, mouseY={}", phase, mouseX, mouseY);
             }
             phaseIndex++;
         }
@@ -1005,8 +1034,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         if (hoveredIndicator != null) {
             hoveredIndicator.renderTooltip(graphics, mouseX, mouseY);
         }
-        
-        ArsZero.LOGGER.info("=== MANA INDICATOR RENDER END ===");
     }
     
     private void refreshCategoryButtons() {

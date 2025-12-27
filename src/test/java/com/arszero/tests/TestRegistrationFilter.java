@@ -23,6 +23,7 @@ public final class TestRegistrationFilter {
         ArcaneVoxelTests.class,
         FireWaterVoxelInteractionBehaviour.class,
         ZeroGravityEffectTests.class,
+        MultiphaseSpellTurretTests.class,
         WindVoxelWorldInteractionBehaviour.class,
         WindVoxelInteractionBehaviour.class
     );
@@ -35,7 +36,7 @@ public final class TestRegistrationFilter {
 
     public static void applyFilterToRegistry() {
         if (ALLOWED_CLASSES.isEmpty()) {
-            LOGGER.info("No test filter provided; registry pruning skipped.");
+            LOGGER.debug("No test filter provided; registry pruning skipped.");
             return;
         }
         GameTestHooks.registerGametests();
@@ -50,7 +51,7 @@ public final class TestRegistrationFilter {
         int before = allFunctions.size();
         allFunctions.removeIf(function -> !allowedFunctions.contains(function));
         int removed = before - allFunctions.size();
-        LOGGER.info("Filtered game tests: removed {}, remaining {}.", removed, allFunctions.size());
+        LOGGER.debug("Filtered game tests: removed {}, remaining {}.", removed, allFunctions.size());
         GameTestRegistry.getAllTestClassNames().retainAll(allowedBatchNames);
     }
 
@@ -60,7 +61,7 @@ public final class TestRegistrationFilter {
         }
         boolean enabled = ALLOWED_CLASSES.contains(testClass);
         if (!enabled) {
-            LOGGER.info("Skipping registration for {} due to test filter property.", testClass.getName());
+            LOGGER.debug("Skipping registration for {} due to test filter property.", testClass.getName());
         }
         return enabled;
     }
@@ -77,7 +78,7 @@ public final class TestRegistrationFilter {
     private static Set<Class<?>> resolveAllowedClasses() {
         String raw = resolveRawFilter();
         if (raw.isEmpty()) {
-            LOGGER.info("No test filter provided; running full suite.");
+            LOGGER.debug("No test filter provided; running full suite.");
             return Collections.emptySet();
         }
         String source = determineFilterSource();
@@ -98,7 +99,7 @@ public final class TestRegistrationFilter {
             LOGGER.warn("No valid test filters resolved; running full suite.");
             return Collections.emptySet();
         }
-        LOGGER.info("Applying test filter ({}) for classes: {}", source, parsed.stream().map(Class::getSimpleName).collect(Collectors.joining(", ")));
+        LOGGER.debug("Applying test filter ({}) for classes: {}", source, parsed.stream().map(Class::getSimpleName).collect(Collectors.joining(", ")));
         return Collections.unmodifiableSet(parsed);
     }
 

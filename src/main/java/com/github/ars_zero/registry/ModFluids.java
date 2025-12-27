@@ -68,8 +68,8 @@ public class ModFluids {
         )
         .block(() -> BLIGHT_FLUID_BLOCK.get())
         .bucket(() -> BLIGHT_FLUID_BUCKET.get())
-        .tickRate(15)
-        .slopeFindDistance(3)
+        .tickRate(30)
+        .slopeFindDistance(4)
         .levelDecreasePerBlock(2);
     }
 }

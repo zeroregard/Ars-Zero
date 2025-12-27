@@ -4,6 +4,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.core.particles.SimpleParticleType;
 
@@ -14,15 +15,16 @@ public class BlightSplashParticle extends TextureSheetParticle {
         this.pickSprite(spriteSet);
         this.gravity = 0.04f;
         this.lifetime = (int)(5.0D / (Math.random() * 0.8D + 0.2D));
-        this.rCol = 0.42f;
+        this.quadSize = 0.2f + (float)(Math.random() * 0.1);
+        this.rCol = 0.1f;
         this.gCol = 1.0f;
-        this.bCol = 0.47f;
+        this.bCol = 0.1f;
         this.alpha = 1.0f;
     }
     
     @Override
-    public net.minecraft.client.particle.ParticleRenderType getRenderType() {
-        return net.minecraft.client.particle.ParticleRenderType.PARTICLE_SHEET_OPAQUE;
+    public ParticleRenderType getRenderType() {
+        return ParticleRenderType.PARTICLE_SHEET_LIT;
     }
     
     @Override
@@ -38,9 +40,9 @@ public class BlightSplashParticle extends TextureSheetParticle {
             this.xd *= 0.98D;
             this.yd *= 0.98D;
             this.zd *= 0.98D;
-            this.rCol = 0.42f;
-            this.gCol = 1.0f;
-            this.bCol = 0.47f;
+            this.rCol = 0.1f;
+            this.gCol = 0.75f;
+            this.bCol = 0.1f;
         }
     }
     

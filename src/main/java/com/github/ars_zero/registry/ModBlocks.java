@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.block.MultiphaseSpellTurret;
 import com.github.ars_zero.common.block.VoxelSpawnerBlock;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
@@ -67,6 +68,16 @@ public class ModBlocks {
             .strength(2.0f)
             .noOcclusion(), VoxelSpawnerBlock.VoxelType.BLIGHT)
     );
+
+    public static final DeferredHolder<Block, MultiphaseSpellTurret> MULTIPHASE_SPELL_TURRET = BLOCKS.register(
+        "multiphase_spell_turret",
+        () -> {
+            ArsZero.LOGGER.debug("Registering Multiphase Spell Turret block");
+            MultiphaseSpellTurret block = new MultiphaseSpellTurret(BlockBehaviour.Properties.of()
+                .strength(2.0f)
+                .noOcclusion());
+            ArsZero.LOGGER.debug("Multiphase Spell Turret block created successfully");
+            return block;
+        }
+    );
 }
-
-

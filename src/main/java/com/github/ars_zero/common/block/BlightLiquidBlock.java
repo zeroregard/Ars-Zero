@@ -2,19 +2,21 @@ package com.github.ars_zero.common.block;
 
 import com.github.ars_zero.common.block.interaction.ConvertMossyInteraction;
 import com.github.ars_zero.common.block.interaction.ConvertToDirtInteraction;
-import com.github.ars_zero.common.block.interaction.ConvertWaterInteraction;
 import com.github.ars_zero.common.block.interaction.DestroyFloraInteraction;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -30,8 +32,7 @@ public class BlightLiquidBlock extends LiquidBlock {
     private static final List<BlightInteraction> INTERACTIONS = List.of(
         new ConvertToDirtInteraction(),
         new ConvertMossyInteraction(),
-        new DestroyFloraInteraction(),
-        new ConvertWaterInteraction()
+        new DestroyFloraInteraction()
     );
     
     public BlightLiquidBlock(Supplier<? extends FlowingFluid> fluidSupplier, Properties properties) {
@@ -54,7 +55,10 @@ public class BlightLiquidBlock extends LiquidBlock {
     @Override
     public void tick(@NotNull BlockState state, @NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull RandomSource random) {
         super.tick(state, level, pos, random);
-        checkAndAffectAdjacentBlocks(level, pos);
+        
+        if (random.nextInt(8) == 0) {
+            checkAndAffectAdjacentBlocks(level, pos);
+        }
     }
     
     @Override
@@ -73,9 +77,6 @@ public class BlightLiquidBlock extends LiquidBlock {
             BlockState belowState = level.getBlockState(belowPos);
             for (BlightInteraction interaction : INTERACTIONS) {
                 if (interaction.matches(belowState)) {
-                    if (interaction instanceof ConvertWaterInteraction waterInteraction && !waterInteraction.shouldApply(serverLevel)) {
-                        continue;
-                    }
                     interaction.apply(serverLevel, belowPos, belowState);
                     playInteractionEffects(serverLevel, belowPos);
                     break;
@@ -88,11 +89,12 @@ public class BlightLiquidBlock extends LiquidBlock {
         for (BlockPos target : targetsAround(pos)) {
             BlockState state = level.getBlockState(target);
             
+            if (state.getBlock() == Blocks.WATER || state.getFluidState().is(FluidTags.WATER)) {
+                continue;
+            }
+            
             for (BlightInteraction interaction : INTERACTIONS) {
                 if (interaction.matches(state)) {
-                    if (interaction instanceof ConvertWaterInteraction waterInteraction && !waterInteraction.shouldApply(level)) {
-                        continue;
-                    }
                     interaction.apply(level, target, state);
                     playInteractionEffects(level, target);
                     return;

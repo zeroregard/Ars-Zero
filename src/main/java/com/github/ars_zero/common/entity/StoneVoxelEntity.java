@@ -6,6 +6,8 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -129,6 +131,11 @@ public class StoneVoxelEntity extends BaseVoxelEntity {
         } else {
             spawnHitParticles(blockHit.getLocation());
         }
+
+        if (!this.level().isClientSide) {
+            Vec3 location = blockHit.getLocation();
+            this.level().playSound(null, location.x, location.y, location.z, SoundEvents.STONE_HIT, SoundSource.BLOCKS, 0.6f, 0.8f + this.random.nextFloat() * 0.4f);
+        }
         
         this.discard();
     }
@@ -164,6 +171,10 @@ public class StoneVoxelEntity extends BaseVoxelEntity {
             return;
         }
         if (!this.level().isClientSide) {
+            Vec3 location = result.getLocation();
+            this.level().playSound(null, location.x, location.y, location.z, 
+                SoundEvents.STONE_HIT, SoundSource.BLOCKS, 0.6f, 0.8f + this.random.nextFloat() * 0.4f);
+            
             if (hit instanceof LivingEntity living) {
                 applyImpactDamage(living);
             }

@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.registry.ModEntities;
+import com.github.ars_zero.registry.ModFluids;
 import com.hollingsworth.arsnouveau.setup.registry.SoundRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -119,6 +120,26 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
                 return;
             }
         }
+        if (targetState.getBlock() == ModFluids.BLIGHT_FLUID_BLOCK.get() || targetState.getFluidState().is(ModFluids.BLIGHT_FLUID.get())) {
+            if (!this.level().isClientSide) {
+                int blightLevel = targetState.getValue(LiquidBlock.LEVEL);
+                BlockState waterState = Blocks.WATER.defaultBlockState()
+                    .setValue(LiquidBlock.LEVEL, blightLevel);
+                this.level().setBlock(targetPos, waterState, 3);
+                this.level().playSound(null, targetPos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5f, 1.0f);
+                
+                Vec3 location = blockHit.getLocation();
+                for (int i = 0; i < 12; i++) {
+                    double ox = (this.random.nextDouble() - 0.5D) * 0.4;
+                    double oy = (this.random.nextDouble() - 0.5D) * 0.4;
+                    double oz = (this.random.nextDouble() - 0.5D) * 0.4;
+                    ((ServerLevel) this.level()).sendParticles(ParticleTypes.SMOKE, 
+                        location.x + ox, location.y + oy, location.z + oz, 
+                        1, 0.0D, 0.05D, 0.0D, 0.02D);
+                }
+            }
+            return;
+        }
         if (targetState.getFluidState().is(FluidTags.LAVA)) {
             if (targetState.getFluidState().isSource()) {
                 this.level().setBlock(targetPos, Blocks.OBSIDIAN.defaultBlockState(), 3);
@@ -148,6 +169,13 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
         }
         BlockPos pos = targetPos.relative(blockHit.getDirection());
         placeWaterWithUnits(pos);
+        
+        // General block impact sound
+        if (!this.level().isClientSide) {
+            Vec3 location = blockHit.getLocation();
+            this.level().playSound(null, location.x, location.y, location.z, 
+                SoundEvents.FISHING_BOBBER_SPLASH, SoundSource.BLOCKS, 0.5f, 1.0f + this.random.nextFloat() * 0.3f);
+        }
     }
     
     @Override
@@ -164,6 +192,10 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
         }
         
         if (!this.level().isClientSide) {
+            Vec3 location = result.getLocation();
+            this.level().playSound(null, location.x, location.y, location.z, 
+                SoundEvents.FISHING_BOBBER_SPLASH, SoundSource.BLOCKS, 0.5f, 1.0f + this.random.nextFloat() * 0.3f);
+            
             if (hit.isOnFire()) {
                 hit.clearFire();
                 spawnEvaporationFeedback(BlockPos.containing(hit.position()), false);

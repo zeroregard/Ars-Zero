@@ -115,6 +115,13 @@ public class FireVoxelEntity extends BaseVoxelEntity {
                 return;
             }
             this.level().setBlock(placePos, Blocks.FIRE.defaultBlockState(), 3);
+        } else {
+            // General block impact sound
+            if (!this.level().isClientSide) {
+                Vec3 location = blockHit.getLocation();
+                this.level().playSound(null, location.x, location.y, location.z, 
+                    SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.4f, 1.0f + this.random.nextFloat() * 0.3f);
+            }
         }
     }
     
@@ -131,6 +138,10 @@ public class FireVoxelEntity extends BaseVoxelEntity {
         }
         
         if (!this.level().isClientSide) {
+            Vec3 location = result.getLocation();
+            this.level().playSound(null, location.x, location.y, location.z, 
+                SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5f, 1.0f + this.random.nextFloat() * 0.3f);
+            
             Entity hitEntity = result.getEntity();
             
             if (hitEntity instanceof LivingEntity living) {

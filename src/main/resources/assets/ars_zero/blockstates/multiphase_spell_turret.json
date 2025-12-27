@@ -1,0 +1,76 @@
+{
+  "variants": {
+    "facing=north,triggered=false,waterlogged=false": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=south,triggered=false,waterlogged=false": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=east,triggered=false,waterlogged=false": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=west,triggered=false,waterlogged=false": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=up,triggered=false,waterlogged=false": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=down,triggered=false,waterlogged=false": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=north,triggered=true,waterlogged=false": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=south,triggered=true,waterlogged=false": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=east,triggered=true,waterlogged=false": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=west,triggered=true,waterlogged=false": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=up,triggered=true,waterlogged=false": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=down,triggered=true,waterlogged=false": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=north,triggered=false,waterlogged=true": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=south,triggered=false,waterlogged=true": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=east,triggered=false,waterlogged=true": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=west,triggered=false,waterlogged=true": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=up,triggered=false,waterlogged=true": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=down,triggered=false,waterlogged=true": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=north,triggered=true,waterlogged=true": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=south,triggered=true,waterlogged=true": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=east,triggered=true,waterlogged=true": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=west,triggered=true,waterlogged=true": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=up,triggered=true,waterlogged=true": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    },
+    "facing=down,triggered=true,waterlogged=true": {
+      "model": "ars_zero:block/multiphase_spell_turret"
+    }
+  }
+}

@@ -1,12 +1,12 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
-import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
@@ -28,6 +28,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -63,18 +64,23 @@ public class SelectEffect extends AbstractEffect {
             return;
         }
         
-        if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, rayTraceResult.getBlockPos())) {
+        BlockPos pos = rayTraceResult.getBlockPos();
+        if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, pos)) {
             return;
         }
         
-        BlockPos pos = rayTraceResult.getBlockPos();
+        if (!BlockImmutabilityUtil.canBlockBeDestroyed(world, pos)) {
+            return;
+        }
         double aoeBuff = spellStats.getAoeMultiplier();
         int pierceBuff = spellStats.getBuffCount(AugmentPierce.INSTANCE);
         List<BlockPos> posList = SpellUtil.calcAOEBlocks(shooter, pos, rayTraceResult, aoeBuff, pierceBuff);
         
         List<BlockPos> validBlocks = new ArrayList<>();
         for (BlockPos blockPos : posList) {
-            if (!world.isOutsideBuildHeight(blockPos) && BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)) {
+            if (!world.isOutsideBuildHeight(blockPos) 
+                && BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)
+                && BlockImmutabilityUtil.canBlockBeDestroyed(world, blockPos)) {
                 validBlocks.add(blockPos);
             }
         }
@@ -89,25 +95,73 @@ public class SelectEffect extends AbstractEffect {
             return;
         }
         
-        Vec3 centerPos = calculateCenter(blockPositions);
+        if (!ServerConfig.ALLOW_BLOCK_GROUP_CREATION.get()) {
+            return;
+        }
+        
+        java.util.Map<BlockPos, BlockState> capturedStates = new java.util.HashMap<>();
+        for (BlockPos pos : blockPositions) {
+            if (!level.isOutsideBuildHeight(pos)) {
+                BlockState state = level.getBlockState(pos);
+                if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
+                    capturedStates.put(pos, state);
+                }
+            }
+        }
+        
+        List<BlockPos> validPositions = new ArrayList<>(capturedStates.keySet());
+        
+        ItemStack casterTool = spellContext.getCasterTool();
+        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        
+        List<BlockPos> filteredPositions = validPositions;
+        if (context != null) {
+            java.util.Set<BlockPos> claimedBlocks = new java.util.HashSet<>();
+            for (SpellResult result : context.beginResults) {
+                if (result != null && result.blockGroup != null && result.blockPositions != null) {
+                    claimedBlocks.addAll(result.blockPositions);
+                }
+            }
+            
+            filteredPositions = validPositions.stream()
+                .filter(pos -> !claimedBlocks.contains(pos))
+                .toList();
+            
+            java.util.Map<BlockPos, BlockState> filteredStates = new java.util.HashMap<>();
+            for (BlockPos pos : filteredPositions) {
+                BlockState state = capturedStates.get(pos);
+                if (state != null) {
+                    filteredStates.put(pos, state);
+                }
+            }
+            capturedStates = filteredStates;
+        }
+        
+        if (filteredPositions.isEmpty()) {
+            return;
+        }
+        
+        Vec3 centerPos = calculateCenter(filteredPositions);
         
         BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), level);
         blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
         blockGroup.setCasterUUID(player.getUUID());
         
-        blockGroup.addBlocks(blockPositions);
-        blockGroup.removeOriginalBlocks();
+        blockGroup.addBlocksWithStates(filteredPositions, capturedStates);
         
         level.addFreshEntity(blockGroup);
         
-        ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context != null) {
-            SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, blockPositions, player);
-            context.beginResults.clear();
+            SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, filteredPositions, player);
+            boolean hasExistingBlockGroups = context.beginResults.stream()
+                .anyMatch(r -> r != null && r.blockGroup != null);
+            if (!hasExistingBlockGroups) {
+                context.beginResults.clear();
+            }
             context.beginResults.add(blockResult);
         }
     }
+    
     
     private Vec3 calculateCenter(List<BlockPos> positions) {
         if (positions.isEmpty()) return Vec3.ZERO;
