@@ -84,6 +84,16 @@ public class ModItems {
         () -> new BlockItem(ModBlocks.LIGHTNING_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
 
+    public static final DeferredHolder<Item, BlockItem> BLIGHT_VOXEL_SPAWNER = ITEMS.register(
+        "blight_voxel_spawner",
+        () -> new BlockItem(ModBlocks.BLIGHT_VOXEL_SPAWNER.get(), defaultItemProperties())
+    );
+    
+    public static final DeferredHolder<Item, BlockItem> FROZEN_BLIGHT = ITEMS.register(
+        "frozen_blight",
+        () -> new BlockItem(ModBlocks.FROZEN_BLIGHT.get(), defaultItemProperties())
+    );
+
     public static final DeferredHolder<Item, RendererBlockItem> MULTIPHASE_SPELL_TURRET = ITEMS.register(
         "multiphase_spell_turret",
         () -> {

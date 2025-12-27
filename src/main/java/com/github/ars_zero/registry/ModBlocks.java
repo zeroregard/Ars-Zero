@@ -1,10 +1,13 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.block.BlightCauldronBlock;
+import com.github.ars_zero.common.block.FrozenBlightBlock;
 import com.github.ars_zero.common.block.MultiphaseSpellTurret;
 import com.github.ars_zero.common.block.VoxelSpawnerBlock;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -62,6 +65,13 @@ public class ModBlocks {
             .noOcclusion(), VoxelSpawnerBlock.VoxelType.LIGHTNING)
     );
 
+    public static final DeferredHolder<Block, VoxelSpawnerBlock> BLIGHT_VOXEL_SPAWNER = BLOCKS.register(
+        "blight_voxel_spawner",
+        () -> new VoxelSpawnerBlock(BlockBehaviour.Properties.of()
+            .strength(2.0f)
+            .noOcclusion(), VoxelSpawnerBlock.VoxelType.BLIGHT)
+    );
+
     public static final DeferredHolder<Block, MultiphaseSpellTurret> MULTIPHASE_SPELL_TURRET = BLOCKS.register(
         "multiphase_spell_turret",
         () -> {
@@ -72,5 +82,19 @@ public class ModBlocks {
             ArsZero.LOGGER.debug("Multiphase Spell Turret block created successfully");
             return block;
         }
+    );
+    
+    public static final DeferredHolder<Block, BlightCauldronBlock> BLIGHT_CAULDRON = BLOCKS.register(
+        "blight_cauldron",
+        () -> new BlightCauldronBlock(BlockBehaviour.Properties.of()
+            .strength(2.0f)
+            .noOcclusion())
+    );
+    
+    public static final DeferredHolder<Block, FrozenBlightBlock> FROZEN_BLIGHT = BLOCKS.register(
+        "frozen_blight",
+        () -> new FrozenBlightBlock(BlockBehaviour.Properties.of()
+            .strength(0.5f)
+            .sound(SoundType.GLASS))
     );
 }
