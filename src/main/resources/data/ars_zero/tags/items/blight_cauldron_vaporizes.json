@@ -1,0 +1,18 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:flowers",
+    "#minecraft:small_flowers",
+    "#minecraft:tall_flowers",
+    "#minecraft:saplings",
+    "#minecraft:leaves",
+    "minecraft:short_grass",
+    "minecraft:tall_grass",
+    "minecraft:fern",
+    "minecraft:large_fern",
+    "minecraft:sugar_cane",
+    "minecraft:seagrass",
+    "minecraft:kelp"
+  ]
+}
+

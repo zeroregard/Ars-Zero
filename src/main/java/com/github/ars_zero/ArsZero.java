@@ -5,11 +5,14 @@ import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
 import com.github.ars_zero.common.entity.LightningVoxelEntity;
+import com.github.ars_zero.common.entity.BlightVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.interaction.ArcaneCollisionInteraction;
 import com.github.ars_zero.common.entity.interaction.FireWaterInteraction;
 import com.github.ars_zero.common.entity.interaction.MergeInteraction;
+import com.github.ars_zero.common.entity.interaction.BlightFireInteraction;
+import com.github.ars_zero.common.entity.interaction.BlightWaterInteraction;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.event.AnchorEffectEvents;
@@ -26,12 +29,24 @@ import com.github.ars_zero.registry.ModBlockEntities;
 import com.github.ars_zero.registry.ModBlocks;
 import com.github.ars_zero.registry.ModCreativeTabs;
 import com.github.ars_zero.registry.ModEntities;
+import com.github.ars_zero.registry.ModFluids;
 import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.registry.ModGlyphs;
 import com.github.ars_zero.registry.ModMobEffects;
 import com.github.ars_zero.registry.ModParticleTimelines;
+import com.github.ars_zero.registry.ModParticles;
 import com.github.ars_zero.registry.ModRecipes;
 import com.github.ars_zero.registry.ModSounds;
+import net.minecraft.core.cauldron.CauldronInteraction;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemUtils;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -47,10 +62,13 @@ public class ArsZero {
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 
     public ArsZero(IEventBus modEventBus, ModContainer modContainer) {
+        ModFluids.FLUID_TYPES.register(modEventBus);
+        ModFluids.FLUIDS.register(modEventBus);
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
         ModEntities.ENTITIES.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
+        ModParticles.PARTICLES.register(modEventBus);
         ModSounds.SOUNDS.register(modEventBus);
         ModCreativeTabs.TABS.register(modEventBus);
         ModMobEffects.MOB_EFFECTS.register(modEventBus);
@@ -71,6 +89,7 @@ public class ArsZero {
                 registerVoxelInteractions();
                 ModParticleTimelines.configureTimelineOptions();
                 registerTurretBehaviors();
+                registerCauldronInteractions();
             });
         });
         
@@ -292,8 +311,32 @@ public class ArsZero {
         );
         
         VoxelInteractionRegistry.register(
+            BlightVoxelEntity.class,
+            BlightVoxelEntity.class,
+            mergeInteraction
+        );
+        
+        VoxelInteractionRegistry.register(
+            BlightVoxelEntity.class,
+            FireVoxelEntity.class,
+            new BlightFireInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
+            BlightVoxelEntity.class,
+            WaterVoxelEntity.class,
+            new BlightWaterInteraction()
+        );
+        
+        VoxelInteractionRegistry.register(
             ArcaneVoxelEntity.class,
             LightningVoxelEntity.class,
+            arcaneInteraction
+        );
+        
+        VoxelInteractionRegistry.register(
+            ArcaneVoxelEntity.class,
+            BlightVoxelEntity.class,
             arcaneInteraction
         );
     }
@@ -309,5 +352,24 @@ public class ArsZero {
             generator.addProvider(true, new com.github.ars_zero.common.datagen.DyeRecipeDatagen(generator));
             generator.addProvider(true, new com.github.ars_zero.common.datagen.StaffRecipeDatagen(generator));
         }
+    }
+    
+    private static void registerCauldronInteractions() {
+        CauldronInteraction.InteractionMap empty = CauldronInteraction.EMPTY;
+        empty.map().put(
+            ModFluids.BLIGHT_FLUID_BUCKET.get(),
+            (state, level, pos, player, hand, stack) -> {
+                if (!level.isClientSide) {
+                    Item item = stack.getItem();
+                    player.setItemInHand(hand, ItemUtils.createFilledResult(stack, player, new ItemStack(Items.BUCKET)));
+                    player.awardStat(Stats.FILL_CAULDRON);
+                    player.awardStat(Stats.ITEM_USED.get(item));
+                    level.setBlockAndUpdate(pos, ModBlocks.BLIGHT_CAULDRON.get().defaultBlockState().setValue(com.github.ars_zero.common.block.BlightCauldronBlock.LEVEL, 3));
+                    level.playSound(null, pos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    level.gameEvent(null, GameEvent.FLUID_PLACE, pos);
+                }
+                return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            }
+        );
     }
 }

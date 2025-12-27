@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "level=1": { "model": "ars_zero:block/blight_cauldron_level1" },
+    "level=2": { "model": "ars_zero:block/blight_cauldron_level2" },
+    "level=3": { "model": "ars_zero:block/blight_cauldron_full" }
+  }
+}
+
