@@ -16,6 +16,12 @@ public class Networking {
         );
 
         registrar.playToServer(
+            PacketSetStaffClipboard.TYPE,
+            PacketSetStaffClipboard.CODEC,
+            PacketSetStaffClipboard::handle
+        );
+
+        registrar.playToServer(
             PacketSetStaffSound.TYPE,
             PacketSetStaffSound.CODEC,
             PacketSetStaffSound::handle
@@ -61,6 +67,10 @@ public class Networking {
     }
 
     public static void sendToServer(PacketSetMultiPhaseSpellCastingSlot packet) {
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
+    }
+
+    public static void sendToServer(PacketSetStaffClipboard packet) {
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
     }
 

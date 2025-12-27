@@ -1,0 +1,157 @@
+package com.github.ars_zero.client.gui;
+
+import com.github.ars_zero.client.gui.buttons.StaffSpellSlot;
+import com.github.ars_zero.common.network.ArsNouveauNetworking;
+import com.github.ars_zero.common.network.Networking;
+import com.github.ars_zero.common.network.PacketSetStaffClipboard;
+import com.github.ars_zero.common.network.PacketUpdateTickDelay;
+import com.github.ars_zero.common.spell.SpellPhase;
+import com.github.ars_zero.common.spell.StaffSpellClipboard;
+import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
+import com.hollingsworth.arsnouveau.api.spell.Spell;
+import com.hollingsworth.arsnouveau.common.network.PacketUpdateCaster;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+public final class StaffSlotClipboardSupport {
+
+    private final StaffSlotClipboardHost host;
+    private final StaffSlotContextMenu menu;
+
+    public StaffSlotClipboardSupport(StaffSlotClipboardHost host) {
+        this.host = Objects.requireNonNull(host);
+        this.menu = new StaffSlotContextMenu(Minecraft.getInstance().font);
+    }
+
+    public void onInit() {
+        menu.hide();
+    }
+
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        if (menu.isVisible()) {
+            menu.render(graphics, mouseX, mouseY);
+        }
+    }
+
+    public boolean mouseClicked(double mouseX, double mouseY, int button, StaffSpellSlot[] spellSlots) {
+        if (menu.isVisible()) {
+            if (menu.mouseClicked(mouseX, mouseY, button)) {
+                return true;
+            }
+            menu.hide();
+        }
+
+        if (button != 1) {
+            return false;
+        }
+
+        for (StaffSpellSlot slot : spellSlots) {
+            if (slot != null && slot.isMouseOver(mouseX, mouseY)) {
+                int logicalSlot = slot.slotNum;
+                boolean pasteEnabled = StaffSpellClipboardClient.get().isPresent() || StaffSpellClipboard.readFromStack(host.getHostDeviceStack()).isPresent();
+                menu.show((int) mouseX, (int) mouseY, pasteEnabled, () -> copyWholeSlot(logicalSlot), () -> pasteWholeSlot(logicalSlot));
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void copyWholeSlot(int logicalSlot) {
+        var caster = host.getHostCaster();
+        if (caster == null) {
+            return;
+        }
+
+        int beginPhysicalSlot = logicalSlot * 3 + SpellPhase.BEGIN.ordinal();
+        int tickPhysicalSlot = logicalSlot * 3 + SpellPhase.TICK.ordinal();
+        int endPhysicalSlot = logicalSlot * 3 + SpellPhase.END.ordinal();
+
+        Spell beginSpell = caster.getSpell(beginPhysicalSlot);
+        Spell tickSpell = caster.getSpell(tickPhysicalSlot);
+        Spell endSpell = caster.getSpell(endPhysicalSlot);
+        String name = caster.getSpellName(beginPhysicalSlot);
+        int delay = host.getHostStoredDelayValueForSlot(logicalSlot);
+
+        StaffSpellClipboard clipboard = new StaffSpellClipboard(
+            beginSpell == null ? new Spell() : beginSpell,
+            tickSpell == null ? new Spell() : tickSpell,
+            endSpell == null ? new Spell() : endSpell,
+            name,
+            delay
+        );
+
+        StaffSpellClipboardClient.set(clipboard);
+        StaffSpellClipboard.writeToStack(host.getHostDeviceStack(), clipboard);
+
+        InteractionHand guiHand = host.getHostGuiHand();
+        boolean mainHand = guiHand == null || guiHand == InteractionHand.MAIN_HAND;
+        Networking.sendToServer(new PacketSetStaffClipboard(clipboard.toTag(), mainHand, host.isHostCircletDevice()));
+    }
+
+    private void pasteWholeSlot(int logicalSlot) {
+        StaffSpellClipboard clipboard = StaffSpellClipboardClient.get()
+            .or(() -> StaffSpellClipboard.readFromStack(host.getHostDeviceStack()))
+            .orElse(null);
+        if (clipboard == null) {
+            return;
+        }
+
+        int beginPhysicalSlot = logicalSlot * 3 + SpellPhase.BEGIN.ordinal();
+        int tickPhysicalSlot = logicalSlot * 3 + SpellPhase.TICK.ordinal();
+        int endPhysicalSlot = logicalSlot * 3 + SpellPhase.END.ordinal();
+
+        ArsNouveauNetworking.sendToServer(new PacketUpdateCaster(clipboard.begin(), beginPhysicalSlot, clipboard.name(), true));
+        ArsNouveauNetworking.sendToServer(new PacketUpdateCaster(clipboard.tick(), tickPhysicalSlot, clipboard.name(), true));
+        ArsNouveauNetworking.sendToServer(new PacketUpdateCaster(clipboard.end(), endPhysicalSlot, clipboard.name(), true));
+
+        applyDelayToSlot(logicalSlot, clipboard.tickDelay());
+        host.setHostSlotSpellName(logicalSlot, clipboard.name());
+
+        if (logicalSlot == host.getHostSelectedSpellSlot()) {
+            host.setHostSpellNameBoxValue(clipboard.name());
+            host.getHostPhaseSpells().getPhaseList(SpellPhase.BEGIN).clear();
+            host.getHostPhaseSpells().getPhaseList(SpellPhase.TICK).clear();
+            host.getHostPhaseSpells().getPhaseList(SpellPhase.END).clear();
+            fillPhaseListFromSpell(SpellPhase.BEGIN, clipboard.begin());
+            fillPhaseListFromSpell(SpellPhase.TICK, clipboard.tick());
+            fillPhaseListFromSpell(SpellPhase.END, clipboard.end());
+            host.hostResetCraftingCells();
+            host.hostValidate();
+        }
+    }
+
+    private void applyDelayToSlot(int logicalSlot, int delay) {
+        int clamped = Mth.clamp(delay, 1, 20);
+        host.setHostStoredDelayValueForSlot(logicalSlot, clamped);
+
+        InteractionHand guiHand = host.getHostGuiHand();
+        boolean mainHand = guiHand == null || guiHand == InteractionHand.MAIN_HAND;
+        Networking.sendToServer(new PacketUpdateTickDelay(logicalSlot, clamped, mainHand, host.isHostCircletDevice()));
+    }
+
+    private void fillPhaseListFromSpell(SpellPhase phase, Spell spell) {
+        List<AbstractSpellPart> phaseList = host.getHostPhaseSpells().getPhaseList(phase);
+        for (int i = 0; i < 10; i++) {
+            phaseList.add(null);
+        }
+        if (spell == null || spell.isEmpty()) {
+            return;
+        }
+        List<AbstractSpellPart> recipeList = new ArrayList<>();
+        for (AbstractSpellPart part : spell.recipe()) {
+            recipeList.add(part);
+        }
+        for (int i = 0; i < recipeList.size() && i < 10; i++) {
+            phaseList.set(i, recipeList.get(i));
+        }
+    }
+}
+
+

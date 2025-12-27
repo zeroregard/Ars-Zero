@@ -72,7 +72,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScreen {
+public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScreen implements StaffSlotClipboardHost {
 
     private SpellPhase currentPhase = SpellPhase.BEGIN;
     
@@ -84,6 +84,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     private StaffSpellSlot[] spellSlots = new StaffSpellSlot[10];
     private StaffSpellSlot selectedSlotButton;
     private int selectedSpellSlot = -1;
+    private StaffSlotClipboardSupport slotClipboardSupport;
     
     // Glyph selection
     private List<GlyphButton> glyphButtons = new ArrayList<>();
@@ -240,6 +241,11 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         selectPhase(SpellPhase.BEGIN);
         
         validate();
+
+        if (slotClipboardSupport == null) {
+            slotClipboardSupport = new StaffSlotClipboardSupport(this);
+        }
+        slotClipboardSupport.onInit();
     }
 
     private void initSpellSlots() {
@@ -985,6 +991,97 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         super.render(graphics, mouseX, mouseY, partialTicks);
         renderManaIndicators(graphics, mouseX, mouseY);
         renderTickPhaseTooltip(graphics, mouseX, mouseY);
+        if (slotClipboardSupport != null) {
+            slotClipboardSupport.render(graphics, mouseX, mouseY, partialTicks);
+        }
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (slotClipboardSupport != null && slotClipboardSupport.mouseClicked(mouseX, mouseY, button, spellSlots)) {
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public AbstractCaster<?> getHostCaster() {
+        return caster;
+    }
+
+    @Override
+    public ItemStack getHostDeviceStack() {
+        return deviceStack;
+    }
+
+    @Override
+    public InteractionHand getHostGuiHand() {
+        return guiHand;
+    }
+
+    @Override
+    public boolean isHostCircletDevice() {
+        return isCircletDevice();
+    }
+
+    @Override
+    public int getHostSelectedSpellSlot() {
+        return selectedSpellSlot;
+    }
+
+    @Override
+    public int getHostStoredDelayValueForSlot(int logicalSlot) {
+        if (logicalSlot < 0 || logicalSlot >= slotDelays.length) {
+            return 1;
+        }
+        return slotDelays[logicalSlot];
+    }
+
+    @Override
+    public void setHostStoredDelayValueForSlot(int logicalSlot, int delay) {
+        if (logicalSlot < 0 || logicalSlot >= slotDelays.length) {
+            return;
+        }
+        int clamped = Mth.clamp(delay, 1, 20);
+        slotDelays[logicalSlot] = clamped;
+        if (deviceStack != null && !deviceStack.isEmpty()) {
+            AbstractMultiPhaseCastDevice.setSlotTickDelay(deviceStack, logicalSlot, clamped);
+        }
+    }
+
+    @Override
+    public void setHostSlotSpellName(int logicalSlot, String name) {
+        if (logicalSlot < 0 || logicalSlot >= spellSlots.length || spellSlots[logicalSlot] == null) {
+            return;
+        }
+        spellSlots[logicalSlot].spellName = name;
+    }
+
+    @Override
+    public void setHostSpellNameBoxValue(String value) {
+        if (spellNameBox != null) {
+            spellNameBox.setValue(value);
+        }
+    }
+
+    @Override
+    public SpellPhaseSlots getHostPhaseSpells() {
+        return phaseSpells;
+    }
+
+    @Override
+    public void hostResetCraftingCells() {
+        resetCraftingCells();
+    }
+
+    @Override
+    public void hostValidate() {
+        validate();
+    }
+
+    @Override
+    public SpellPhase getHostCurrentPhase() {
+        return currentPhase;
     }
     
     private void renderTickPhaseTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
