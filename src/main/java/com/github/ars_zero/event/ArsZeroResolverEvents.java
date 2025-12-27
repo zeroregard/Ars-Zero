@@ -1,12 +1,12 @@
 package com.github.ars_zero.event;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
@@ -21,8 +21,6 @@ import com.hollingsworth.arsnouveau.api.event.EffectResolveEvent;
 import com.hollingsworth.arsnouveau.api.event.SpellResolveEvent;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
-import com.hollingsworth.arsnouveau.api.spell.AbstractCastMethod;
-import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.api.util.BlockUtil;
@@ -82,7 +80,7 @@ public class ArsZeroResolverEvents {
                 ItemStack casterTool = event.resolver.spellContext.getCasterTool();
                 boolean willCreateEntityGroup = requiresEntityGroupForTemporalAnchor(casterTool, player);
                 
-                if (willCreateEntityGroup && wrapped.isRootResolver()) {
+                if (willCreateEntityGroup && wrapped.isRootResolver() && ServerConfig.ALLOW_BLOCK_GROUP_CREATION.get()) {
                     // Store in map keyed by dimension and position
                     capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>()).put(pos, state);
                     
@@ -210,7 +208,7 @@ public class ArsZeroResolverEvents {
                 }
                 
                 ItemStack casterTool = event.resolver.spellContext.getCasterTool();
-                if (!validBlocks.isEmpty() && !casterTool.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player) && wrapped.isRootResolver()) {
+                if (!validBlocks.isEmpty() && !casterTool.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player) && wrapped.isRootResolver() && ServerConfig.ALLOW_BLOCK_GROUP_CREATION.get()) {
                     if (!blockGroupCreated.getOrDefault(dimensionKey, false)) {
                         Vec3 centerPos = calculateCenter(validBlocks);
 
