@@ -23,7 +23,7 @@ public class ServerConfig {
         SERVER_BUILDER.comment("Large Explosion Settings").push("large_explosion");
         LARGE_EXPLOSION_MAX_BLOCKS_PER_TICK = SERVER_BUILDER.comment(
             "Hard per-tick block destruction budget for large explosions."
-        ).defineInRange("maxBlocksPerTick", 2048, 1, 1000000);
+        ).defineInRange("maxBlocksPerTick", 256, 1, 1000000);
         SERVER_BUILDER.pop();
         
         SERVER_BUILDER.comment("Select/Anchor Block Group Settings").push("select_anchor");

@@ -19,6 +19,10 @@ public final class ExplosionWorkList {
         return positions[index];
     }
 
+    public int distanceSquaredAt(int index) {
+        return dist2[index];
+    }
+
     public void add(long position, int distanceSquared) {
         ensureCapacity(size + 1);
         positions[size] = position;

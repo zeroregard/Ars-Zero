@@ -21,6 +21,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -29,9 +30,9 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public class ExplosionControllerEntity extends AbstractConvergenceEntity {
-    private static final int SILENT_UPDATE_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_SUPPRESS_DROPS;
+    private static final int UPDATE_FLAGS = Block.UPDATE_CLIENTS;
     private static final EntityDataAccessor<Float> DATA_CHARGE = SynchedEntityData.defineId(ExplosionControllerEntity.class, EntityDataSerializers.FLOAT);
-    private static final double CHARGE_PER_TICK_DIVISOR = 80.0;
+    private static final double CHARGE_PER_TICK_DIVISOR = 160.0;
     private static final double LOW_CHARGE_THRESHOLD = 0.10;
 
     private boolean active;
@@ -40,6 +41,8 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
     private float powerMultiplier;
     private float charge;
     private double firePower; // Store firepower for radius calculation
+    private Vec3 explosionCenter; // Store explosion center for distance calculations
+    private double explosionRadius; // Store explosion radius for distance calculations
 
     private ExplosionWorkList workList;
     private int nextWorkIndex;
@@ -91,7 +94,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
             }
             // Store the latest firepower value for radius calculation
             this.firePower = power;
-            double chargePerTick = (1.0 + power) / CHARGE_PER_TICK_DIVISOR;
+            double chargePerTick = (1.0 + power / 4.0d) / CHARGE_PER_TICK_DIVISOR;
             float newCharge = (float) (this.charge + chargePerTick);
             setCharge(newCharge);
         }
@@ -118,39 +121,29 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
         Vec3 center = this.position();
         float currentCharge = this.charge;
 
-        // Calculate radius based on charge and firepower: Radius = Charge * 10 + Charge * (1 + FIREPOWER)
-        // Simplified: Radius = Charge * (11 + FIREPOWER)
-        double calculatedRadius = currentCharge * (11.0 + this.firePower);
-        
-        ArsZero.LOGGER.info("[ExplosionControllerEntity] Starting explosion - charge: {}, firePower: {}, calculatedRadius: {}, baseDamage: {}, powerMultiplier: {}", 
-            currentCharge, this.firePower, calculatedRadius, this.baseDamage, this.powerMultiplier);
+        double calculatedRadius = currentCharge * (14.0 + 3.0 * this.firePower);
 
         if (currentCharge <= LOW_CHARGE_THRESHOLD) {
-            ArsZero.LOGGER.info("[ExplosionControllerEntity] Low charge, creating regular explosion");
             createRegularExplosion(serverLevel, center, calculatedRadius);
             this.discard();
             return;
         }
 
-        double adjustedRadius = calculatedRadius;
         float adjustedDamage = this.baseDamage * currentCharge;
         float adjustedPower = this.powerMultiplier * currentCharge;
+        this.explosionCenter = center;
+        this.explosionRadius = calculatedRadius;
 
-        ArsZero.LOGGER.info("[ExplosionControllerEntity] Large explosion - adjustedRadius: {}, adjustedDamage: {}, adjustedPower: {}", 
-            adjustedRadius, adjustedDamage, adjustedPower);
+        LargeExplosionDamage.apply(serverLevel, this, center, calculatedRadius, adjustedDamage, adjustedPower);
 
-        LargeExplosionDamage.apply(serverLevel, this, center, adjustedRadius, adjustedDamage, adjustedPower);
-
-        this.workList = LargeExplosionPrecompute.compute(this.level(), this.blockPosition(), adjustedRadius);
+        this.workList = LargeExplosionPrecompute.compute(this.level(), this.blockPosition(), calculatedRadius);
         this.nextWorkIndex = 0;
-
-        ArsZero.LOGGER.info("[ExplosionControllerEntity] WorkList computed - size: {}", workList != null ? workList.size() : 0);
 
         // Even if workList is empty, we should still create a visual explosion effect
         // The damage has already been applied above, so we can discard after a brief delay
         if (workList == null || workList.size() == 0) {
             // Create a small visual explosion effect even if no blocks to destroy
-            serverLevel.explode(this, center.x, center.y, center.z, (float) Math.max(0.5, adjustedRadius), Level.ExplosionInteraction.NONE);
+            serverLevel.explode(this, center.x, center.y, center.z, (float) Math.max(0.5, calculatedRadius), Level.ExplosionInteraction.NONE);
             this.discard();
         }
     }
@@ -181,6 +174,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int i = 0; i < budget; i++) {
             long packedPos = workList.positionAt(nextWorkIndex);
+            int distSq = workList.distanceSquaredAt(nextWorkIndex);
             nextWorkIndex++;
 
             pos.set(packedPos);
@@ -199,7 +193,21 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
                 continue;
             }
 
-            boolean removed = serverLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), SILENT_UPDATE_FLAGS);
+            // Calculate destruction chance based on distance and block hardness
+            if (!shouldDestroyBlock(serverLevel, pos, state, distSq)) {
+                continue;
+            }
+
+            // Drop chance based on block hardness: hardness / 10, capped at 100%
+            // Softer blocks (dirt, hardness 0.5) = 5% chance
+            // Harder blocks (obsidian, hardness 50) = 100% chance
+            float hardness = state.getDestroySpeed(serverLevel, pos);
+            double dropChance = Math.min(1.0, hardness / 10.0);
+            if (serverLevel.getRandom().nextDouble() < dropChance) {
+                Block.dropResources(state, serverLevel, pos, null, this, ItemStack.EMPTY);
+            }
+            
+            boolean removed = serverLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), UPDATE_FLAGS);
             if (!removed) {
                 defer(packedPos);
             }
@@ -269,6 +277,57 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
         this.workList = list;
         this.nextWorkIndex = 0;
         this.deferredSize = 0;
+    }
+
+    /**
+     * Determines if a block should be destroyed based on distance from explosion center and block hardness.
+     * Closer blocks have higher chance, harder blocks have lower chance.
+     */
+    private boolean shouldDestroyBlock(ServerLevel level, BlockPos pos, BlockState state, int distanceSquared) {
+        if (this.explosionCenter == null || this.explosionRadius <= 0) {
+            return true;
+        }
+
+        double distance = Math.sqrt(distanceSquared);
+        double normalizedDistance = Math.min(1.0, distance / this.explosionRadius);
+        float hardness = state.getDestroySpeed(level, pos);
+        
+        if (hardness <= 3.5f) {
+            return calculateSoftBlockChance(level, normalizedDistance, hardness);
+        }
+        
+        return calculateHardBlockChance(level, normalizedDistance, hardness);
+    }
+    
+    private boolean calculateSoftBlockChance(ServerLevel level, double normalizedDistance, float hardness) {
+        if (normalizedDistance <= 0.75) {
+            return true;
+        }
+        
+        double edgeDistance = (normalizedDistance - 0.75) / 0.25;
+        double minChanceAtEdge = 0.70 - ((hardness - 1.5f) / 2.0f) * 0.30;
+        double finalChance = 1.0 - (edgeDistance * (1.0 - minChanceAtEdge));
+        return level.getRandom().nextDouble() < finalChance;
+    }
+    
+    private boolean calculateHardBlockChance(ServerLevel level, double normalizedDistance, float hardness) {
+        double distanceFactor = 1.0 - normalizedDistance;
+        double hardnessResistance = Math.min(0.80, hardness / 200.0);
+        double baseChance = distanceFactor * (1.0 - hardnessResistance);
+        
+        double minChance = getMinimumChance(hardness);
+        double finalChance = Math.max(minChance, baseChance);
+        
+        return level.getRandom().nextDouble() < finalChance;
+    }
+    
+    private double getMinimumChance(float hardness) {
+        if (hardness <= 5.0f) {
+            return 0.50;
+        } else if (hardness <= 10.0f) {
+            return 0.30;
+        }
+        return 0.0;
     }
 }
 

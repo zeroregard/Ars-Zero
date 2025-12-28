@@ -33,14 +33,14 @@ public final class LargeExplosionDamage {
             }
 
             double t = 1.0 - (dist / radius);
-            double damage = maxDamage * t;
+            double damage = maxDamage * t * 2.0; // Double the damage
             if (damage > 0.0 && entity instanceof LivingEntity living) {
                 living.hurt(damageSource, (float) damage);
             }
 
             Vec3 knockDir = delta.scale(1.0 / dist);
-            double knock = maxKnockback * t;
-            entity.push(knockDir.x * knock, knockDir.y * knock * 0.6, knockDir.z * knock);
+            double knock = maxKnockback * t * 2.0; // Double the knockback
+            entity.push(knockDir.x * knock, knockDir.y * knock * 1.2, knockDir.z * knock); // Y component is 2x stronger (was 0.6, now 1.2)
             entity.hurtMarked = true;
         }
     }
