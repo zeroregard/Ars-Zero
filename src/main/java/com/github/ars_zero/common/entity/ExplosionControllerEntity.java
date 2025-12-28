@@ -94,7 +94,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
             }
             // Store the latest firepower value for radius calculation
             this.firePower = power;
-            double chargePerTick = (1.0 + power / 4.0d) / CHARGE_PER_TICK_DIVISOR;
+            double chargePerTick = (1.0 + power / 8.0d) / CHARGE_PER_TICK_DIVISOR;
             float newCharge = (float) (this.charge + chargePerTick);
             setCharge(newCharge);
         }

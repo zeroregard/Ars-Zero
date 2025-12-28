@@ -136,7 +136,8 @@
   "effect.ars_zero.zero_gravity.description": "Temporarily removes gravity from the entity",
 
   "ars_zero.glyph_name.effect_convergence": "Convergence",
-  "ars_zero.glyph_desc.effect_convergence": "Creates a convergence point that can be augmented with other effects.",
+  "ars_zero.glyph_desc.effect_convergence": "Creates a powerful convergence point that can be augmented with other effects.",
+  "ars_zero.effect_augment_desc.effect_convergence_glyph_explosion": "Composite Effect: Creates a delayed large explosion that charges over time. Fire Power affects charge rate and explosion radius.",
 
   "ars_nouveau.spell.validation.adding.phase_restriction": "%s is not usable in this phase.",
   "ars_nouveau.spell.validation.exists.phase_restriction": "%s is not usable in this phase."
