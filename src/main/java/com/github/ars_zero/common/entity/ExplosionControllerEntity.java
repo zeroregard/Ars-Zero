@@ -28,10 +28,16 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
 
 public class ExplosionControllerEntity extends AbstractConvergenceEntity {
     private static final int UPDATE_FLAGS = Block.UPDATE_CLIENTS;
     private static final EntityDataAccessor<Float> DATA_CHARGE = SynchedEntityData.defineId(ExplosionControllerEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_FIRE_POWER = SynchedEntityData.defineId(ExplosionControllerEntity.class, EntityDataSerializers.FLOAT);
     private static final double CHARGE_PER_TICK_DIVISOR = 160.0;
     private static final double LOW_CHARGE_THRESHOLD = 0.10;
 
@@ -54,6 +60,9 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
     private long[] deferredPositions;
     private int deferredSize;
 
+    private static final double CHARGING_ANIMATION_LENGTH = 4.0417;
+    private static final double IDLE_ANIMATION_LENGTH = 2.0;
+
     public ExplosionControllerEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
         this.charge = 0.0f;
@@ -61,9 +70,52 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
     }
 
     @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, "controller", 0, this::predicate));
+    }
+
+    private PlayState predicate(AnimationState<ExplosionControllerEntity> state) {
+        float charge = this.getCharge();
+        
+        if (charge >= 1.0f) {
+            if (this.level().getGameTime() % 20 == 0) {
+                ArsZero.LOGGER.debug("ExplosionControllerEntity: Switching to idle animation, charge={}", charge);
+            }
+            return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));
+        } else {
+            double chargeTimeSeconds = calculateChargeTimeSeconds();
+            double animationSpeed = CHARGING_ANIMATION_LENGTH / chargeTimeSeconds;
+            
+            if (this.level().getGameTime() % 20 == 0) {
+                ArsZero.LOGGER.debug("ExplosionControllerEntity animation: charge={}, firePower={}, chargeTimeSeconds={}, animationSpeed={}, expectedTicksToFull={}", 
+                    charge, getFirePower(), chargeTimeSeconds, animationSpeed, chargeTimeSeconds * 20.0);
+            }
+            
+            state.getController().setAnimationSpeed(animationSpeed);
+            return state.setAndContinue(RawAnimation.begin().thenPlay("charge"));
+        }
+    }
+
+    private double calculateChargeTimeSeconds() {
+        double power = getFirePower();
+        double chargePerTick = (1.0 + power / 8.0) / CHARGE_PER_TICK_DIVISOR;
+        double ticksToFullCharge = 1.0 / chargePerTick;
+        double secondsToFullCharge = ticksToFullCharge / 20.0;
+        return secondsToFullCharge;
+    }
+
+    private double getFirePower() {
+        if (this.level().isClientSide) {
+            return this.entityData.get(DATA_FIRE_POWER);
+        }
+        return this.firePower;
+    }
+
+    @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
         super.defineSynchedData(builder);
         builder.define(DATA_CHARGE, 0.0f);
+        builder.define(DATA_FIRE_POWER, 0.0f);
     }
 
     public float getCharge() {
@@ -101,6 +153,9 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
             }
             // Store the latest firepower value for radius calculation
             this.firePower = power;
+            if (!this.level().isClientSide) {
+                this.entityData.set(DATA_FIRE_POWER, (float) power);
+            }
             double chargePerTick = (1.0 + power / 8.0d) / CHARGE_PER_TICK_DIVISOR;
             float newCharge = (float) (this.charge + chargePerTick);
             setCharge(newCharge);
@@ -261,6 +316,9 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
         }
         if (compound.contains("fire_power")) {
             this.firePower = compound.getDouble("fire_power");
+            if (!this.level().isClientSide) {
+                this.entityData.set(DATA_FIRE_POWER, (float) this.firePower);
+            }
         }
         if (compound.contains("aoe_level")) {
             this.aoeLevel = compound.getInt("aoe_level");

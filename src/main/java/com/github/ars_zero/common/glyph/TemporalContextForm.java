@@ -122,7 +122,6 @@ public class TemporalContextForm extends AbstractCastMethod {
             casterPitch = playerCaster.getXRot();
             ItemStack casterTool = spellContext.getCasterTool();
             castContext = AbstractMultiPhaseCastDevice.findContextByStack(playerCaster, casterTool);
-            ArsZero.LOGGER.debug("[TemporalContextForm] Player caster, found context: {}", castContext != null);
         } else if (spellContext.getCaster() instanceof TileCaster tileCaster) {
             BlockEntity tile = tileCaster.getTile();
             ArsZero.LOGGER.debug("[TemporalContextForm] TileCaster detected, tile type: {}", tile != null ? tile.getClass().getSimpleName() : "null");
@@ -152,8 +151,6 @@ public class TemporalContextForm extends AbstractCastMethod {
                 castContext.beginResults.size(), castContext.tickResults.size(), castContext.endResults.size());
             return CastResolveType.FAILURE;
         }
-        
-        ArsZero.LOGGER.debug("[TemporalContextForm] Resolving with {} begin results", castContext.beginResults.size());
         
         for (SpellResult result : castContext.beginResults) {
             resolver.hitResult = result.hitResult;

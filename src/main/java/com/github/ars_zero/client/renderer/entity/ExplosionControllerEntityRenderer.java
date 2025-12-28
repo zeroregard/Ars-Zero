@@ -3,70 +3,52 @@ package com.github.ars_zero.client.renderer.entity;
 import com.github.ars_zero.common.entity.ExplosionControllerEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
-public class ExplosionControllerEntityRenderer extends EntityRenderer<ExplosionControllerEntity> {
+public class ExplosionControllerEntityRenderer extends GeoEntityRenderer<ExplosionControllerEntity> {
     
-    private static final float SIZE = 0.5f;
-    // White (no charge) -> Red (fully charged)
-    private static final float NO_CHARGE_RED = 1.0f;
-    private static final float NO_CHARGE_GREEN = 1.0f;
-    private static final float NO_CHARGE_BLUE = 1.0f;
-    private static final float FULL_CHARGE_RED = 1.0f;
-    private static final float FULL_CHARGE_GREEN = 0.0f;
-    private static final float FULL_CHARGE_BLUE = 0.0f;
-    private static final float ALPHA = 0.8f;
+    private static final double RENDER_DISTANCE = 256.0;
+    private static final int FULL_BRIGHTNESS = 15728880;
     
     public ExplosionControllerEntityRenderer(EntityRendererProvider.Context context) {
-        super(context);
+        super(context, new ExplosionControllerEntityModel());
         this.shadowRadius = 0.0f;
         this.shadowStrength = 0.0f;
     }
     
     @Override
-    public void render(ExplosionControllerEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        poseStack.pushPose();
-        
-        float charge = entity.getCharge();
-        
-        // Interpolate from white (no charge) to red (fully charged)
-        float red = interpolateColor(NO_CHARGE_RED, FULL_CHARGE_RED, charge);
-        float green = interpolateColor(NO_CHARGE_GREEN, FULL_CHARGE_GREEN, charge);
-        float blue = interpolateColor(NO_CHARGE_BLUE, FULL_CHARGE_BLUE, charge);
-        
-        float halfSize = SIZE / 2.0f;
-        VertexConsumer outlineConsumer = buffer.getBuffer(RenderType.lines());
-        
-        LevelRenderer.renderLineBox(
-            poseStack,
-            outlineConsumer,
-            -halfSize,
-            -halfSize,
-            -halfSize,
-            halfSize,
-            halfSize,
-            halfSize,
-            red,
-            green,
-            blue,
-            ALPHA
-        );
-        
-        poseStack.popPose();
-    }
-
-    private float interpolateColor(float start, float end, float t) {
-        return start + (end - start) * Math.min(1.0f, Math.max(0.0f, t));
+    public RenderType getRenderType(ExplosionControllerEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
+        return RenderType.entityTranslucentEmissive(texture, false);
     }
     
     @Override
-    public ResourceLocation getTextureLocation(ExplosionControllerEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath("minecraft", "textures/block/white_concrete.png");
+    public boolean shouldRender(ExplosionControllerEntity entity, Frustum frustum, double camX, double camY, double camZ) {
+        Vec3 entityPos = entity.position();
+        double dx = entityPos.x - camX;
+        double dy = entityPos.y - camY;
+        double dz = entityPos.z - camZ;
+        double distanceSq = dx * dx + dy * dy + dz * dz;
+        double maxDistanceSq = RENDER_DISTANCE * RENDER_DISTANCE;
+        if (distanceSq > maxDistanceSq) {
+            return false;
+        }
+        
+        AABB boundingBox = new AABB(entityPos.x - 1.0, entityPos.y - 1.0, entityPos.z - 1.0, 
+                                   entityPos.x + 1.0, entityPos.y + 1.0, entityPos.z + 1.0);
+        return frustum.isVisible(boundingBox);
+    }
+    
+    @Override
+    public void actuallyRender(PoseStack poseStack, ExplosionControllerEntity animatable, BakedGeoModel model, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int color) {
+        super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer, isReRender, partialTick, FULL_BRIGHTNESS, packedOverlay, color);
     }
 }
 

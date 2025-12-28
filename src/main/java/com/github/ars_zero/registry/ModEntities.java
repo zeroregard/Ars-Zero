@@ -116,7 +116,7 @@ public class ModEntities {
             "explosion_controller",
             () -> EntityType.Builder.<ExplosionControllerEntity>of(ExplosionControllerEntity::new, MobCategory.MISC)
                     .sized(0.1f, 0.1f)
-                    .clientTrackingRange(1)
+                    .clientTrackingRange(256)
                     .updateInterval(20)
                     .setShouldReceiveVelocityUpdates(false)
                     .build(ArsZero.MOD_ID + ":explosion_controller")

@@ -13,8 +13,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
-public abstract class AbstractConvergenceEntity extends Entity implements ILifespanExtendable {
+public abstract class AbstractConvergenceEntity extends Entity implements ILifespanExtendable, GeoEntity {
     private int lifespan;
     private int maxLifespan;
 
@@ -106,6 +109,13 @@ public abstract class AbstractConvergenceEntity extends Entity implements ILifes
     public void addLifespan(LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         this.lifespan++;
         this.maxLifespan = Math.max(this.maxLifespan, this.lifespan);
+    }
+
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return cache;
     }
 }
 
