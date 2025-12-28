@@ -5,6 +5,7 @@ import com.github.ars_zero.common.entity.ExplosionControllerEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.spell.SpellAugmentExtractor;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.registry.ModEntities;
@@ -17,8 +18,6 @@ import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
-import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAOE;
-import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectExplosion;
 import net.minecraft.resources.ResourceLocation;
@@ -71,19 +70,21 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
             SpellContext iterator = spellContext.clone();
             while (iterator.hasNextPart()) {
                 AbstractSpellPart next = iterator.nextPart();
-                if (next instanceof EffectExplosion) {
+                if (next instanceof EffectExplosion explosionEffect) {
+                    SpellAugmentExtractor.AugmentData augmentData = SpellAugmentExtractor.extractApplicableAugments(spellContext, explosionEffect);
+                    
                     double intensity = calculateExplosionIntensity(spellStats);
                     float baseDamage = EffectExplosion.INSTANCE.DAMAGE.get().floatValue();
                     float powerMultiplier = EffectExplosion.INSTANCE.AMP_DAMAGE.get().floatValue();
                     
-                    entity.setExplosionParams(intensity, baseDamage, powerMultiplier);
+                    entity.setExplosionParams(intensity, baseDamage, powerMultiplier, augmentData.aoeLevel, augmentData.amplifyLevel, augmentData.dampenLevel);
                     entity.setLifespan(DEFAULT_LIFESPAN);
                     
                     serverLevel.addFreshEntity(entity);
                     
                     updateTemporalContext(shooter, entity, spellContext);
                     
-                    consumeEffect(spellContext, (AbstractEffect) next);
+                    consumeEffect(spellContext, explosionEffect);
                     break;
                 }
             }
@@ -185,4 +186,3 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
         return Set.of(SpellSchools.MANIPULATION);
     }
 }
-

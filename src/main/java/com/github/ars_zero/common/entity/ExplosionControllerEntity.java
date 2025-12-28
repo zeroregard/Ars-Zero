@@ -43,6 +43,10 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
     private double firePower; // Store firepower for radius calculation
     private Vec3 explosionCenter; // Store explosion center for distance calculations
     private double explosionRadius; // Store explosion radius for distance calculations
+    
+    private int aoeLevel;
+    private int amplifyLevel;
+    private int dampenLevel;
 
     private ExplosionWorkList workList;
     private int nextWorkIndex;
@@ -76,10 +80,13 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
         }
     }
 
-    public void setExplosionParams(double radius, float baseDamage, float powerMultiplier) {
+    public void setExplosionParams(double radius, float baseDamage, float powerMultiplier, int aoeLevel, int amplifyLevel, int dampenLevel) {
         this.radius = Math.max(0.0, radius);
         this.baseDamage = Math.max(0.0f, baseDamage);
         this.powerMultiplier = Math.max(0.0f, powerMultiplier);
+        this.aoeLevel = aoeLevel;
+        this.amplifyLevel = amplifyLevel;
+        this.dampenLevel = dampenLevel;
     }
 
     @Override
@@ -122,6 +129,13 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
         float currentCharge = this.charge;
 
         double calculatedRadius = currentCharge * (14.0 + 3.0 * this.firePower);
+        
+        // Apply AOE: +1 radius per AOE level
+        calculatedRadius += this.aoeLevel;
+        
+        // Apply Dampen: reduce radius by 0.5 per dampen level
+        calculatedRadius -= 0.5 * this.dampenLevel;
+        calculatedRadius = Math.max(0.0, calculatedRadius);
 
         if (currentCharge <= LOW_CHARGE_THRESHOLD) {
             createRegularExplosion(serverLevel, center, calculatedRadius);
@@ -129,7 +143,12 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
             return;
         }
 
-        float adjustedDamage = this.baseDamage * currentCharge;
+        // Apply Amplify: +1 damage per amplify level
+        float adjustedDamage = (this.baseDamage + this.amplifyLevel) * currentCharge;
+        // Apply Dampen: reduce damage by 0.5 per dampen level
+        adjustedDamage -= 0.5f * this.dampenLevel * currentCharge;
+        adjustedDamage = Math.max(0.0f, adjustedDamage);
+        
         float adjustedPower = this.powerMultiplier * currentCharge;
         this.explosionCenter = center;
         this.explosionRadius = calculatedRadius;
@@ -243,6 +262,15 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
         if (compound.contains("fire_power")) {
             this.firePower = compound.getDouble("fire_power");
         }
+        if (compound.contains("aoe_level")) {
+            this.aoeLevel = compound.getInt("aoe_level");
+        }
+        if (compound.contains("amplify_level")) {
+            this.amplifyLevel = compound.getInt("amplify_level");
+        }
+        if (compound.contains("dampen_level")) {
+            this.dampenLevel = compound.getInt("dampen_level");
+        }
     }
 
     @Override
@@ -254,6 +282,9 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
         compound.putFloat("power_multiplier", this.powerMultiplier);
         compound.putFloat("charge", this.charge);
         compound.putDouble("fire_power", this.firePower);
+        compound.putInt("aoe_level", this.aoeLevel);
+        compound.putInt("amplify_level", this.amplifyLevel);
+        compound.putInt("dampen_level", this.dampenLevel);
     }
 
     private void defer(long packedPos) {
