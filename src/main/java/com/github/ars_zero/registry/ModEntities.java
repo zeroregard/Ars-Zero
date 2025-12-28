@@ -8,6 +8,7 @@ import com.github.ars_zero.common.entity.ExplosionControllerEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
 import com.github.ars_zero.common.entity.LightningVoxelEntity;
+import com.github.ars_zero.common.entity.BlightVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
@@ -89,6 +90,16 @@ public class ModEntities {
                     .updateInterval(1)
                     .setShouldReceiveVelocityUpdates(true)
                     .build(ArsZero.MOD_ID + ":lightning_voxel_entity")
+    );
+
+    public static final DeferredHolder<EntityType<?>, EntityType<BlightVoxelEntity>> BLIGHT_VOXEL_ENTITY = ENTITIES.register(
+            "blight_voxel_entity",
+            () -> EntityType.Builder.<BlightVoxelEntity>of(BlightVoxelEntity::new, MobCategory.MISC)
+                    .sized(BaseVoxelEntity.DEFAULT_BASE_SIZE, BaseVoxelEntity.DEFAULT_BASE_SIZE)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(ArsZero.MOD_ID + ":blight_voxel_entity")
     );
     
     public static final DeferredHolder<EntityType<?>, EntityType<BlockGroupEntity>> BLOCK_GROUP = ENTITIES.register(

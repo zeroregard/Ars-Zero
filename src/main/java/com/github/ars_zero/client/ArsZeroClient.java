@@ -2,18 +2,22 @@ package com.github.ars_zero.client;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
+import com.github.ars_zero.client.gui.GuiStaffHUD;
 import com.github.ars_zero.client.network.ClientNetworking;
 import com.github.ars_zero.client.renderer.entity.ArcaneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.BlockGroupEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.FireVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.IceVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.LightningVoxelEntityRenderer;
+import com.github.ars_zero.client.renderer.entity.BlightVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.StoneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WindVoxelEntityRenderer;
+import com.github.ars_zero.client.particle.BlightSplashParticle;
 import com.github.ars_zero.client.renderer.tile.MultiphaseTurretRenderer;
 import com.github.ars_zero.registry.ModBlockEntities;
 import com.github.ars_zero.registry.ModEntities;
+import com.github.ars_zero.registry.ModParticles;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -22,6 +26,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 
 public class ArsZeroClient {
@@ -49,6 +55,7 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.WIND_VOXEL_ENTITY.get(), WindVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.ICE_VOXEL_ENTITY.get(), IceVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.LIGHTNING_VOXEL_ENTITY.get(), LightningVoxelEntityRenderer::new);
+            EntityRenderers.register(ModEntities.BLIGHT_VOXEL_ENTITY.get(), BlightVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.BLOCK_GROUP.get(), BlockGroupEntityRenderer::new);
         });
     }
@@ -60,5 +67,14 @@ public class ArsZeroClient {
     
     @SubscribeEvent
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
+        event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("staff_hud"), GuiStaffHUD.OVERLAY);
+    }
+    
+    @EventBusSubscriber(modid = ArsZero.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    public static class ParticleRegistration {
+        @SubscribeEvent
+        public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
+            event.registerSpriteSet(ModParticles.BLIGHT_SPLASH.get(), BlightSplashParticle.Provider::new);
+        }
     }
 }
