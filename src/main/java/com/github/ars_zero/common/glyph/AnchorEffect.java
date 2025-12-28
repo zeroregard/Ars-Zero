@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
+import com.github.ars_zero.common.entity.ILifespanExtendable;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
@@ -78,9 +79,11 @@ public class AnchorEffect extends AbstractEffect {
                 continue;
             }
 
+            if (target instanceof ILifespanExtendable lifespanExtendable) {
+                lifespanExtendable.addLifespan(shooter, spellStats, spellContext, resolver);
+            }
+
             if (target instanceof BlockGroupEntity blockGroup) {
-                blockGroup.addLifespan(1);
-                
                 if (!blockGroup.isAlive()) {
                     continue;
                 }
@@ -329,4 +332,5 @@ public class AnchorEffect extends AbstractEffect {
         return Set.of(SpellSchools.MANIPULATION);
     }
 }
+
 

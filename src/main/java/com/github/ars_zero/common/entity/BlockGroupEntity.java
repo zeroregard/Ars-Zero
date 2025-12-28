@@ -5,6 +5,9 @@ import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.ANFakePlayer;
 import com.hollingsworth.arsnouveau.api.util.BlockUtil;
+import com.hollingsworth.arsnouveau.api.spell.SpellContext;
+import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
+import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -45,7 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class BlockGroupEntity extends Entity {
+public class BlockGroupEntity extends Entity implements ILifespanExtendable {
     private static final EntityDataAccessor<CompoundTag> BLOCK_DATA = SynchedEntityData.defineId(BlockGroupEntity.class, EntityDataSerializers.COMPOUND_TAG);
     
     private final List<BlockData> blocks = new ArrayList<>();
@@ -86,9 +89,17 @@ public class BlockGroupEntity extends Entity {
         return entity;
     }
 
-     public void addLifespan(int extraTicks) {
+    @Override
+    public void addLifespan(LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
+        this.lifespan++;
+        if (this.lifespan > maxLifeSpan) {
+            this.lifespan = maxLifeSpan;
+        }
+    }
+
+    public void addLifespan(int extraTicks) {
         this.lifespan += extraTicks;
-        if(this.lifespan > maxLifeSpan) {
+        if (this.lifespan > maxLifeSpan) {
             this.lifespan = maxLifeSpan;
         }
     }

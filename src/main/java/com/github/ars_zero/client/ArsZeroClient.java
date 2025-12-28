@@ -13,6 +13,7 @@ import com.github.ars_zero.client.renderer.entity.BlightVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.StoneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WindVoxelEntityRenderer;
+import com.github.ars_zero.client.renderer.entity.ExplosionControllerEntityRenderer;
 import com.github.ars_zero.client.particle.BlightSplashParticle;
 import com.github.ars_zero.client.renderer.tile.MultiphaseTurretRenderer;
 import com.github.ars_zero.registry.ModBlockEntities;
@@ -57,6 +58,7 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.LIGHTNING_VOXEL_ENTITY.get(), LightningVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.BLIGHT_VOXEL_ENTITY.get(), BlightVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.BLOCK_GROUP.get(), BlockGroupEntityRenderer::new);
+            EntityRenderers.register(ModEntities.EXPLOSION_CONTROLLER.get(), ExplosionControllerEntityRenderer::new);
         });
     }
     
