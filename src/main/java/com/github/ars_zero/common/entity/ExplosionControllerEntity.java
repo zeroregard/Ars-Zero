@@ -34,14 +34,17 @@ import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 
-public class ExplosionControllerEntity extends AbstractConvergenceEntity {
+public class ExplosionControllerEntity extends AbstractConvergenceEntity implements IAnchorLerp {
     private static final int UPDATE_FLAGS = Block.UPDATE_CLIENTS;
     private static final EntityDataAccessor<Float> DATA_CHARGE = SynchedEntityData.defineId(ExplosionControllerEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_FIRE_POWER = SynchedEntityData.defineId(ExplosionControllerEntity.class, EntityDataSerializers.FLOAT);
-    private static final double CHARGE_PER_TICK_DIVISOR = 160.0;
+    private static final EntityDataAccessor<Boolean> DATA_ACTIVE = SynchedEntityData.defineId(ExplosionControllerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final double CHARGE_PER_TICK_DIVISOR = 80.0;
     private static final double LOW_CHARGE_THRESHOLD = 0.10;
+    public static final int EXPLODE_ANIMATION_TICKS = 20;
 
     private boolean active;
+    private int explodeAnimationStartTick;
     private double radius;
     private float baseDamage;
     private float powerMultiplier;
@@ -60,13 +63,18 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
     private long[] deferredPositions;
     private int deferredSize;
 
-    private static final double CHARGING_ANIMATION_LENGTH = 4.0417;
+    private static final double CHARGING_ANIMATION_LENGTH = 4;
     private static final double IDLE_ANIMATION_LENGTH = 2.0;
 
     public ExplosionControllerEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
         this.charge = 0.0f;
         this.firePower = 0.0;
+        this.explodeAnimationStartTick = 0;
+    }
+    
+    public int getExplodeAnimationStartTick() {
+        return this.explodeAnimationStartTick;
     }
 
     @Override
@@ -75,15 +83,21 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
     }
 
     private PlayState predicate(AnimationState<ExplosionControllerEntity> state) {
-        float charge = this.getCharge();
-        
-        if (charge >= 1.0f) {
-            if (this.level().getGameTime() % 20 == 0) {
-                ArsZero.LOGGER.debug("ExplosionControllerEntity: Switching to idle animation, charge={}", charge);
+        if (isActive()) {
+            if (this.level().isClientSide && explodeAnimationStartTick == 0) {
+                explodeAnimationStartTick = this.tickCount;
             }
+            return state.setAndContinue(RawAnimation.begin().thenPlay("explode"));
+        }
+        
+        float charge = this.getCharge();
+        double chargeTimeSeconds = calculateChargeTimeSeconds();
+        
+        if (charge >= 0.99f) {
+            double idleAnimationSpeed = IDLE_ANIMATION_LENGTH / chargeTimeSeconds;
+            state.getController().setAnimationSpeed(idleAnimationSpeed);
             return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));
         } else {
-            double chargeTimeSeconds = calculateChargeTimeSeconds();
             double animationSpeed = CHARGING_ANIMATION_LENGTH / chargeTimeSeconds;
             
             if (this.level().getGameTime() % 20 == 0) {
@@ -116,6 +130,14 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
         super.defineSynchedData(builder);
         builder.define(DATA_CHARGE, 0.0f);
         builder.define(DATA_FIRE_POWER, 0.0f);
+        builder.define(DATA_ACTIVE, false);
+    }
+    
+    public boolean isActive() {
+        if (this.level().isClientSide) {
+            return this.entityData.get(DATA_ACTIVE);
+        }
+        return this.active;
     }
 
     public float getCharge() {
@@ -123,6 +145,16 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
             return this.entityData.get(DATA_CHARGE);
         }
         return this.charge;
+    }
+
+    @Override
+    public double getLerpValue() {
+        return 0.02;
+    }
+
+    @Override
+    public double getMaxDelta() {
+        return 0.001;
     }
 
     private void setCharge(float newCharge) {
@@ -175,6 +207,10 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
 
     private void startExplosion() {
         this.active = true;
+        this.explodeAnimationStartTick = this.tickCount;
+        if (!this.level().isClientSide) {
+            this.entityData.set(DATA_ACTIVE, true);
+        }
 
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
@@ -194,7 +230,6 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
 
         if (currentCharge <= LOW_CHARGE_THRESHOLD) {
             createRegularExplosion(serverLevel, center, calculatedRadius);
-            this.discard();
             return;
         }
 
@@ -214,11 +249,10 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
         this.nextWorkIndex = 0;
 
         // Even if workList is empty, we should still create a visual explosion effect
-        // The damage has already been applied above, so we can discard after a brief delay
+        // The damage has already been applied above
         if (workList == null || workList.size() == 0) {
             // Create a small visual explosion effect even if no blocks to destroy
             serverLevel.explode(this, center.x, center.y, center.z, (float) Math.max(0.5, calculatedRadius), Level.ExplosionInteraction.NONE);
-            this.discard();
         }
     }
 
@@ -229,15 +263,34 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
     @Override
     public void tick() {
         super.tick();
-
-        if (this.level().isClientSide || !active) {
+        
+        if (this.level().isClientSide) {
+            if (isActive() && explodeAnimationStartTick == 0) {
+                explodeAnimationStartTick = this.tickCount;
+            }
+            if (isActive() && explodeAnimationStartTick > 0 && this.tickCount - explodeAnimationStartTick >= EXPLODE_ANIMATION_TICKS) {
+                this.discard();
+            }
             return;
         }
+
+        if (!active) {
+            return;
+        }
+        
+        int ticksSinceExplode = this.tickCount - explodeAnimationStartTick;
+        boolean canDiscard = ticksSinceExplode >= EXPLODE_ANIMATION_TICKS;
+        
         if (!(this.level() instanceof ServerLevel serverLevel)) {
+            if (canDiscard) {
+                this.discard();
+            }
             return;
         }
         if (workList == null) {
-            this.discard();
+            if (canDiscard) {
+                this.discard();
+            }
             return;
         }
 
@@ -292,7 +345,9 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity {
                 rollDeferredIntoWork();
                 return;
             }
-            this.discard();
+            if (canDiscard) {
+                this.discard();
+            }
         }
     }
 

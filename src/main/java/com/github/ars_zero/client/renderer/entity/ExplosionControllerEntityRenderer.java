@@ -1,8 +1,10 @@
 package com.github.ars_zero.client.renderer.entity;
 
 import com.github.ars_zero.common.entity.ExplosionControllerEntity;
+import com.github.ars_zero.client.renderer.ArsZeroRenderTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -17,6 +19,7 @@ public class ExplosionControllerEntityRenderer extends GeoEntityRenderer<Explosi
     
     private static final double RENDER_DISTANCE = 256.0;
     private static final int FULL_BRIGHTNESS = 15728880;
+    private static final double ROTATION_SPEED_DEGREES_PER_SECOND = 45.0;
     
     public ExplosionControllerEntityRenderer(EntityRendererProvider.Context context) {
         super(context, new ExplosionControllerEntityModel());
@@ -26,7 +29,10 @@ public class ExplosionControllerEntityRenderer extends GeoEntityRenderer<Explosi
     
     @Override
     public RenderType getRenderType(ExplosionControllerEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-        return RenderType.entityTranslucentEmissive(texture, false);
+        if (animatable.isActive()) {
+            return ArsZeroRenderTypes.eyesOpaqueNoCull(texture);
+        }
+        return ArsZeroRenderTypes.eyesNoCull(texture);
     }
     
     @Override
@@ -44,6 +50,26 @@ public class ExplosionControllerEntityRenderer extends GeoEntityRenderer<Explosi
         AABB boundingBox = new AABB(entityPos.x - 1.0, entityPos.y - 1.0, entityPos.z - 1.0, 
                                    entityPos.x + 1.0, entityPos.y + 1.0, entityPos.z + 1.0);
         return frustum.isVisible(boundingBox);
+    }
+    
+    @Override
+    public void render(ExplosionControllerEntity entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        if (entity.isActive()) {
+            int ticksSinceExplode = entity.tickCount - entity.getExplodeAnimationStartTick();
+            if (ticksSinceExplode >= ExplosionControllerEntity.EXPLODE_ANIMATION_TICKS) {
+                return;
+            }
+            
+            float charge = entity.getCharge();
+            float scale = charge;
+            poseStack.scale(scale, scale, scale);
+        }
+        
+        double totalTimeSeconds = (entity.tickCount + partialTick) / 20.0;
+        float rotationAngle = (float) (totalTimeSeconds * ROTATION_SPEED_DEGREES_PER_SECOND);
+        poseStack.mulPose(Axis.YP.rotationDegrees(rotationAngle));
+        
+        super.render(entity, entityYaw, partialTick, poseStack, buffer, FULL_BRIGHTNESS);
     }
     
     @Override
