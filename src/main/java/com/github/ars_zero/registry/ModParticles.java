@@ -15,4 +15,14 @@ public class ModParticles {
         "blight_splash", 
         () -> new SimpleParticleType(false)
     );
+    
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> EXPLOSIVE_CHARGE = PARTICLES.register(
+        "explosive_charge",
+        () -> new SimpleParticleType(false)
+    );
+    
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> EXPLOSION_BURST = PARTICLES.register(
+        "explosion_burst",
+        () -> new SimpleParticleType(false)
+    );
 }

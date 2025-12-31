@@ -1,6 +1,6 @@
 package com.github.ars_zero.client.renderer.entity;
 
-import com.github.ars_zero.common.entity.ExplosionControllerEntity;
+import com.github.ars_zero.common.entity.explosion.ExplosionControllerEntity;
 import com.github.ars_zero.client.renderer.ArsZeroRenderTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -29,7 +29,7 @@ public class ExplosionControllerEntityRenderer extends GeoEntityRenderer<Explosi
     
     @Override
     public RenderType getRenderType(ExplosionControllerEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-        if (animatable.isActive()) {
+        if (animatable.isExploding()) {
             return ArsZeroRenderTypes.eyesOpaqueNoCull(texture);
         }
         return ArsZeroRenderTypes.eyesNoCull(texture);
@@ -37,6 +37,14 @@ public class ExplosionControllerEntityRenderer extends GeoEntityRenderer<Explosi
     
     @Override
     public boolean shouldRender(ExplosionControllerEntity entity, Frustum frustum, double camX, double camY, double camZ) {
+        if (entity.isExploding()) {
+            int ticksSinceExplode = entity.tickCount - entity.getExplodeAnimationStartTick();
+            int durationTicks = entity.getExplodeAnimationDurationTicks();
+            if (ticksSinceExplode >= durationTicks) {
+                return false;
+            }
+        }
+        
         Vec3 entityPos = entity.position();
         double dx = entityPos.x - camX;
         double dy = entityPos.y - camY;
@@ -54,19 +62,32 @@ public class ExplosionControllerEntityRenderer extends GeoEntityRenderer<Explosi
     
     @Override
     public void render(ExplosionControllerEntity entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        if (entity.isActive()) {
+        int remainingLifespan = entity.getLifespan();
+        
+        if (!entity.isExploding() && remainingLifespan < 10) {
+            float lifespanScale = Math.max(0.0f, (float) remainingLifespan / 10.0f);
+            poseStack.scale(lifespanScale, lifespanScale, lifespanScale);
+        }
+        
+        if (entity.isExploding()) {
             int ticksSinceExplode = entity.tickCount - entity.getExplodeAnimationStartTick();
-            if (ticksSinceExplode >= ExplosionControllerEntity.EXPLODE_ANIMATION_TICKS) {
+            int durationTicks = entity.getExplodeAnimationDurationTicks();
+            if (ticksSinceExplode >= durationTicks) {
                 return;
             }
             
             float charge = entity.getCharge();
-            float scale = charge;
+            double radius = entity.getRadius();
+            float scale = charge + ((float) radius / 14f);
             poseStack.scale(scale, scale, scale);
         }
         
+        int maxLifespan = entity.getMaxLifespan();
+        double lifespanSpeedMultiplier = calculateLifespanSpeedMultiplier(remainingLifespan, maxLifespan);
+        
         double totalTimeSeconds = (entity.tickCount + partialTick) / 20.0;
-        float rotationAngle = (float) (totalTimeSeconds * ROTATION_SPEED_DEGREES_PER_SECOND);
+        double rotationSpeed = ROTATION_SPEED_DEGREES_PER_SECOND * lifespanSpeedMultiplier;
+        float rotationAngle = (float) (totalTimeSeconds * rotationSpeed);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotationAngle));
         
         super.render(entity, entityYaw, partialTick, poseStack, buffer, FULL_BRIGHTNESS);
@@ -75,6 +96,21 @@ public class ExplosionControllerEntityRenderer extends GeoEntityRenderer<Explosi
     @Override
     public void actuallyRender(PoseStack poseStack, ExplosionControllerEntity animatable, BakedGeoModel model, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int color) {
         super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer, isReRender, partialTick, FULL_BRIGHTNESS, packedOverlay, color);
+    }
+    
+    private double calculateLifespanSpeedMultiplier(int remainingLifespan, int maxLifespan) {
+        if (maxLifespan <= 0) {
+            return 1.0;
+        }
+        
+        if (remainingLifespan <= 1) {
+            return maxLifespan * 10.0;
+        }
+        
+        double normalizedLifespan = (double) remainingLifespan / maxLifespan;
+        double inverseNormalized = 1.0 / Math.max(0.01, normalizedLifespan);
+        
+        return Math.max(1.0, inverseNormalized);
     }
 }
 

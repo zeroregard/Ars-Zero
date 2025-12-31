@@ -9,3 +9,5 @@ public interface ILifespanExtendable {
     void addLifespan(LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver);
 }
 
+
+

@@ -15,6 +15,8 @@ import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WindVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.ExplosionControllerEntityRenderer;
 import com.github.ars_zero.client.particle.BlightSplashParticle;
+import com.github.ars_zero.client.particle.ExplosiveChargeParticle;
+import com.github.ars_zero.client.particle.ExplosionBurstParticle;
 import com.github.ars_zero.client.renderer.tile.MultiphaseTurretRenderer;
 import com.github.ars_zero.registry.ModBlockEntities;
 import com.github.ars_zero.registry.ModEntities;
@@ -77,6 +79,8 @@ public class ArsZeroClient {
         @SubscribeEvent
         public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
             event.registerSpriteSet(ModParticles.BLIGHT_SPLASH.get(), BlightSplashParticle.Provider::new);
+            event.registerSpriteSet(ModParticles.EXPLOSIVE_CHARGE.get(), ExplosiveChargeParticle.Provider::new);
+            event.registerSpriteSet(ModParticles.EXPLOSION_BURST.get(), ExplosionBurstParticle.Provider::new);
         }
     }
 }

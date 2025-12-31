@@ -1,7 +1,7 @@
 package com.github.ars_zero.client.renderer.entity;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.entity.ExplosionControllerEntity;
+import com.github.ars_zero.common.entity.explosion.ExplosionControllerEntity;
 import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.model.GeoModel;
 
@@ -22,4 +22,6 @@ public class ExplosionControllerEntityModel extends GeoModel<ExplosionController
         return ArsZero.prefix("animations/explosion_charging.animations.json");
     }
 }
+
+
 

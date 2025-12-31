@@ -22,5 +22,29 @@
         "stream": false
       }
     ]
+  },
+  "explosion_charge": {
+    "sounds": [
+      {
+        "name": "ars_zero:explosion_charge",
+        "stream": false
+      }
+    ]
+  },
+  "explosion_idle": {
+    "sounds": [
+      {
+        "name": "ars_zero:explosion_idle",
+        "stream": false
+      }
+    ]
+  },
+  "explosion_activate": {
+    "sounds": [
+      {
+        "name": "ars_zero:explosion_activate",
+        "stream": false
+      }
+    ]
   }
 }

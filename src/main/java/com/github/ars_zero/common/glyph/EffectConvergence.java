@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.entity.ExplosionControllerEntity;
+import com.github.ars_zero.common.entity.explosion.ExplosionControllerEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
@@ -44,7 +44,7 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
         EffectExplosion.INSTANCE.getRegistryName()
     };
     
-    private static final int DEFAULT_LIFESPAN = 40;
+    private static final int DEFAULT_LIFESPAN = 20;
 
     public EffectConvergence() {
         super(ArsZero.prefix(ID), "Convergence");

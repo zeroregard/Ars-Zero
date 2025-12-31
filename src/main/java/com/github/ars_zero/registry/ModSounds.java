@@ -23,4 +23,19 @@ public class ModSounds {
         "lightning_voxel_hit", 
         () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("lightning_voxel_hit"))
     );
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXPLOSION_CHARGE = SOUNDS.register(
+        "explosion_charge", 
+        () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("explosion_charge"))
+    );
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXPLOSION_IDLE = SOUNDS.register(
+        "explosion_idle", 
+        () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("explosion_idle"))
+    );
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXPLOSION_ACTIVATE = SOUNDS.register(
+        "explosion_activate", 
+        () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("explosion_activate"))
+    );
 }

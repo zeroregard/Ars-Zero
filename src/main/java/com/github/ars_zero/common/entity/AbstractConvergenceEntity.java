@@ -5,6 +5,8 @@ import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -18,6 +20,9 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public abstract class AbstractConvergenceEntity extends Entity implements ILifespanExtendable, GeoEntity {
+    private static final EntityDataAccessor<Integer> DATA_LIFESPAN = SynchedEntityData.defineId(AbstractConvergenceEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_MAX_LIFESPAN = SynchedEntityData.defineId(AbstractConvergenceEntity.class, EntityDataSerializers.INT);
+    
     private int lifespan;
     private int maxLifespan;
 
@@ -31,13 +36,23 @@ public abstract class AbstractConvergenceEntity extends Entity implements ILifes
     public void setLifespan(int ticks) {
         this.maxLifespan = Math.max(0, ticks);
         this.lifespan = this.maxLifespan;
+        if (!this.level().isClientSide) {
+            this.entityData.set(DATA_LIFESPAN, this.lifespan);
+            this.entityData.set(DATA_MAX_LIFESPAN, this.maxLifespan);
+        }
     }
 
     public int getLifespan() {
+        if (this.level().isClientSide) {
+            return this.entityData.get(DATA_LIFESPAN);
+        }
         return this.lifespan;
     }
 
     public int getMaxLifespan() {
+        if (this.level().isClientSide) {
+            return this.entityData.get(DATA_MAX_LIFESPAN);
+        }
         return this.maxLifespan;
     }
 
@@ -52,6 +67,7 @@ public abstract class AbstractConvergenceEntity extends Entity implements ILifes
         if (!this.level().isClientSide) {
             if (this.lifespan > 0) {
                 this.lifespan--;
+                this.entityData.set(DATA_LIFESPAN, this.lifespan);
             } else if (shouldStart()) {
                 onLifespanReached();
             }
@@ -62,6 +78,8 @@ public abstract class AbstractConvergenceEntity extends Entity implements ILifes
 
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
+        builder.define(DATA_LIFESPAN, 0);
+        builder.define(DATA_MAX_LIFESPAN, 0);
     }
 
     @Override
@@ -109,6 +127,10 @@ public abstract class AbstractConvergenceEntity extends Entity implements ILifes
     public void addLifespan(LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         this.lifespan++;
         this.maxLifespan = Math.max(this.maxLifespan, this.lifespan);
+        if (!this.level().isClientSide) {
+            this.entityData.set(DATA_LIFESPAN, this.lifespan);
+            this.entityData.set(DATA_MAX_LIFESPAN, this.maxLifespan);
+        }
     }
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
