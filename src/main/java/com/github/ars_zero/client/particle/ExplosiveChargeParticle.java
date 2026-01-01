@@ -1,23 +1,23 @@
 package com.github.ars_zero.client.particle;
 
+import com.github.ars_zero.common.particle.ExplosiveChargeParticleOptions;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
-import net.minecraft.core.particles.SimpleParticleType;
 
 public class ExplosiveChargeParticle extends TextureSheetParticle {
     
-    protected ExplosiveChargeParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, SpriteSet spriteSet) {
+    protected ExplosiveChargeParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, float r, float g, float b, SpriteSet spriteSet) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.gravity = 0.0f;
         this.lifetime = 200;
         this.quadSize = 0.2f;
-        this.rCol = 1.0f;
-        this.gCol = 0.5f;
-        this.bCol = 0.0f;
+        this.rCol = r;
+        this.gCol = g;
+        this.bCol = b;
         this.alpha = 0.8f;
         this.pickSprite(spriteSet);
     }
@@ -44,7 +44,7 @@ public class ExplosiveChargeParticle extends TextureSheetParticle {
         }
     }
     
-    public static class Provider implements ParticleProvider<SimpleParticleType> {
+    public static class Provider implements ParticleProvider<ExplosiveChargeParticleOptions> {
         private final SpriteSet spriteSet;
         
         public Provider(SpriteSet spriteSet) {
@@ -52,8 +52,8 @@ public class ExplosiveChargeParticle extends TextureSheetParticle {
         }
         
         @Override
-        public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new ExplosiveChargeParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet);
+        public Particle createParticle(ExplosiveChargeParticleOptions type, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+            return new ExplosiveChargeParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, type.r, type.g, type.b, this.spriteSet);
         }
     }
 }

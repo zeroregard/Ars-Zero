@@ -38,4 +38,9 @@ public class ModSounds {
         "explosion_activate", 
         () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("explosion_activate"))
     );
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXPLOSION_PRIMING = SOUNDS.register(
+        "explosion_priming", 
+        () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("explosion_priming"))
+    );
 }

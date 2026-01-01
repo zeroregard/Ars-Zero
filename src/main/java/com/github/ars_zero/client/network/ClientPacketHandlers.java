@@ -1,5 +1,6 @@
 package com.github.ars_zero.client.network;
 
+import com.github.ars_zero.client.ScreenShakeManager;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.client.gui.MultiphaseDeviceStylesScreen;
@@ -7,6 +8,7 @@ import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.client.sound.StaffSoundManager;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
+import com.github.ars_zero.common.network.PacketExplosionShake;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.network.PacketUpdateStaffGUI;
@@ -72,6 +74,12 @@ final class ClientPacketHandlers {
             if (minecraft.screen instanceof AbstractMultiPhaseCastDeviceScreen staffGUI) {
                 staffGUI.onBookstackUpdated(updatedStack);
             }
+        });
+    }
+
+    static void handleExplosionShake(PacketExplosionShake packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            ScreenShakeManager.addShake(packet.intensity(), packet.durationTicks());
         });
     }
 }

@@ -16,6 +16,8 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -38,6 +40,9 @@ public abstract class AbstractChargerEntity extends Entity implements ILifespanE
     protected int lifespan;
     protected int maxLifespan;
     protected int tickCount = 0;
+    
+    @Nullable
+    protected SoundEvent resolveSound = null;
 
     public AbstractChargerEntity(EntityType<? extends AbstractChargerEntity> entityType, Level level) {
         super(entityType, level);
@@ -48,6 +53,10 @@ public abstract class AbstractChargerEntity extends Entity implements ILifespanE
 
     public void setCasterUUID(UUID uuid) {
         this.casterUUID = uuid;
+    }
+    
+    public void setResolveSound(@Nullable SoundEvent sound) {
+        this.resolveSound = sound;
     }
 
     public void setLifespan(int ticks) {

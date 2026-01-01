@@ -228,7 +228,7 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
     }
     
     @Nullable
-    private SoundEvent getWarningSoundFromStyle(SpellContext spellContext) {
+    private SoundEvent getResolveSoundFromStyle(SpellContext spellContext) {
         var timeline = spellContext.getParticleTimeline(ModParticleTimelines.CONVERGENCE_TIMELINE.get());
         SoundProperty resolveSound = timeline.resolveSound();
         if (resolveSound != null && resolveSound.sound != null) {
@@ -242,6 +242,11 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
         }
         return null;
     }
+    
+    @Nullable
+    private SoundEvent getWarningSoundFromStyle(SpellContext spellContext) {
+        return getResolveSoundFromStyle(spellContext);
+    }
 
     private void triggerResolveEffects(SpellContext spellContext, Level level, Vec3 position) {
         if (level == null) {
@@ -249,9 +254,7 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
         }
         var timeline = spellContext.getParticleTimeline(ModParticleTimelines.CONVERGENCE_TIMELINE.get());
         TimelineEntryData entryData = timeline.onResolvingEffect();
-        SoundProperty resolveSound = timeline.resolveSound();
         ParticleEmitter particleEmitter = createStaticEmitter(entryData, position);
         particleEmitter.tick(level);
-        resolveSound.sound.playSound(level, position.x, position.y, position.z);
     }
 }

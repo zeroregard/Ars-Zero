@@ -57,6 +57,12 @@ public class Networking {
                 PacketUpdateStaffGUI.CODEC,
                 (packet, context) -> {}
             );
+            
+            registrar.playToClient(
+                PacketExplosionShake.TYPE,
+                PacketExplosionShake.STREAM_CODEC,
+                (packet, context) -> {}
+            );
         }
     }
 

@@ -1,6 +1,8 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.particle.ExplosiveChargeParticleType;
+import com.github.ars_zero.common.particle.ExplosionBurstParticleType;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -8,26 +10,25 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class ModParticles {
-    
-    public static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(BuiltInRegistries.PARTICLE_TYPE, ArsZero.MOD_ID);
-    
+
+    public static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister
+            .create(BuiltInRegistries.PARTICLE_TYPE, ArsZero.MOD_ID);
+
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> BLIGHT_SPLASH = PARTICLES.register(
-        "blight_splash", 
-        () -> new SimpleParticleType(false)
-    );
-    
-    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> EXPLOSIVE_CHARGE = PARTICLES.register(
-        "explosive_charge",
-        () -> new SimpleParticleType(false)
-    );
-    
-    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> EXPLOSION_BURST = PARTICLES.register(
-        "explosion_burst",
-        () -> new SimpleParticleType(false)
-    );
-    
+            "blight_splash",
+            () -> new SimpleParticleType(false));
+
+    public static final DeferredHolder<ParticleType<?>, ExplosiveChargeParticleType> EXPLOSIVE_CHARGE = PARTICLES
+            .register(
+                    "explosive_charge",
+                    ExplosiveChargeParticleType::new);
+
+    public static final DeferredHolder<ParticleType<?>, ExplosionBurstParticleType> EXPLOSION_BURST = PARTICLES
+            .register(
+                    "explosion_burst",
+                    ExplosionBurstParticleType::new);
+
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SOURCE_JAR_CHARGE = PARTICLES.register(
-        "source_jar_charge",
-        () -> new SimpleParticleType(false)
-    );
+            "source_jar_charge",
+            () -> new SimpleParticleType(false));
 }

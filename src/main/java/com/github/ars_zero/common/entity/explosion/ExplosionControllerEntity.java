@@ -45,18 +45,24 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         IDLE,
         EXPLODING
     }
-    
-    private static final EntityDataAccessor<Float> DATA_CHARGE = SynchedEntityData.defineId(ExplosionControllerEntity.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Float> DATA_FIRE_POWER = SynchedEntityData.defineId(ExplosionControllerEntity.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Boolean> DATA_EXPLODING = SynchedEntityData.defineId(ExplosionControllerEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Float> DATA_RADIUS = SynchedEntityData.defineId(ExplosionControllerEntity.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Integer> DATA_ANIM_STATE = SynchedEntityData.defineId(ExplosionControllerEntity.class, EntityDataSerializers.INT);
+
+    private static final EntityDataAccessor<Float> DATA_CHARGE = SynchedEntityData
+            .defineId(ExplosionControllerEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_FIRE_POWER = SynchedEntityData
+            .defineId(ExplosionControllerEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_EXPLODING = SynchedEntityData
+            .defineId(ExplosionControllerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_RADIUS = SynchedEntityData
+            .defineId(ExplosionControllerEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Integer> DATA_ANIM_STATE = SynchedEntityData
+            .defineId(ExplosionControllerEntity.class, EntityDataSerializers.INT);
     private static final double CHARGE_PER_TICK_DIVISOR = 80.0;
     private static final double LOW_CHARGE_THRESHOLD = 0.10;
     private static final double BASE_EXPLODE_ANIMATION_SECONDS = 1.0;
     private static final double BASE_RADIUS_FOR_TIMING = 5.0;
     private static final double TARGET_RADIUS_FOR_TIMING = 27.0;
     private static final double TARGET_EXPLODE_ANIMATION_SECONDS = 30.0;
+    private static final double BASELINE_RADIUS_FOR_SPEED = 16.0;
 
     private boolean exploding;
     private int explodeAnimationStartTick;
@@ -69,21 +75,25 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
     private double firePower;
     private Vec3 explosionCenter;
     private double explosionRadius;
-    
+
     private int aoeLevel;
     private int amplifyLevel;
     private int dampenLevel;
-    
+
     @Nullable
     private AnimState lastClientAnimState = null;
-    
+
     @OnlyIn(Dist.CLIENT)
     @Nullable
     private Object idleSoundInstance = null;
-    
+
     @OnlyIn(Dist.CLIENT)
     @Nullable
     private Object chargeSoundInstance = null;
+
+    @OnlyIn(Dist.CLIENT)
+    @Nullable
+    private Object primingSoundInstance = null;
 
     private ExplosionWorkList workList;
     private int nextWorkIndex;
@@ -95,9 +105,9 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
     private static final double IDLE_ANIMATION_LENGTH = 2.0;
     private static final double DEFAULT_CHARGE_TIME_SECONDS = 4.0;
     private static final double DEFAULT_IDLE_TIME_SECONDS = 2.0;
-    
+
     private boolean activateSoundPlayed = false;
-    
+
     @Nullable
     private SoundEvent warningSound = null;
     private boolean warningSoundPlayed = false;
@@ -109,24 +119,24 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         this.explodeAnimationStartTick = 0;
         this.explodeAnimationDurationTicks = (int) (BASE_EXPLODE_ANIMATION_SECONDS * 20.0);
     }
-    
+
     @Override
     public void onAddedToLevel() {
         super.onAddedToLevel();
     }
-    
+
     public int getExplodeAnimationStartTick() {
         return this.explodeAnimationStartTick;
     }
-    
+
     public int getExplodeAnimationDurationTicks() {
         return this.explodeAnimationDurationTicks;
     }
-    
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        AnimationController<ExplosionControllerEntity> controller = new AnimationController<>(this, "controller", 0, this::predicate);
+        AnimationController<ExplosionControllerEntity> controller = new AnimationController<>(this, "controller", 0,
+                this::predicate);
         controllers.add(controller);
     }
 
@@ -136,15 +146,14 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         int remainingLifespan = this.getLifespan();
         int maxLifespan = this.getMaxLifespan();
         double lifespanSpeedMultiplier = calculateLifespanSpeedMultiplier(remainingLifespan, maxLifespan);
-        
+
         switch (anim) {
             case EXPLODING -> {
                 if (this.level().isClientSide && explodeAnimationStartTick == 0) {
                     explodeAnimationStartTick = this.tickCount;
                 }
                 double radius = getRadius();
-                int durationTicks = ExplosionProcessHelper.calculateExplodeAnimationDurationTicks(radius, BASE_RADIUS_FOR_TIMING, TARGET_RADIUS_FOR_TIMING, BASE_EXPLODE_ANIMATION_SECONDS, TARGET_EXPLODE_ANIMATION_SECONDS);
-                double animationSpeed = BASE_EXPLODE_ANIMATION_SECONDS * 20.0 / durationTicks;
+                double animationSpeed = BASELINE_RADIUS_FOR_SPEED / Math.max(0.1, radius);
                 state.getController().setAnimationSpeed(animationSpeed);
                 return state.setAndContinue(RawAnimation.begin().thenPlay("explode"));
             }
@@ -160,7 +169,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
                 return state.setAndContinue(RawAnimation.begin().thenPlay("charge"));
             }
         }
-        
+
         return PlayState.STOP;
     }
 
@@ -168,14 +177,14 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         if (maxLifespan <= 0) {
             return 1.0;
         }
-        
+
         if (remainingLifespan <= 1) {
             return maxLifespan * 10.0;
         }
-        
+
         double normalizedLifespan = (double) remainingLifespan / maxLifespan;
         double inverseNormalized = 1.0 / Math.max(0.01, normalizedLifespan);
-        
+
         return Math.max(1.0, inverseNormalized);
     }
 
@@ -196,7 +205,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         double ratio = actualChargeTime / DEFAULT_CHARGE_TIME_SECONDS;
         return DEFAULT_IDLE_TIME_SECONDS * ratio;
     }
-    
+
     @OnlyIn(Dist.CLIENT)
     private void handleClientTick() {
         AnimState current = getAnimState();
@@ -210,62 +219,84 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
                 }
             }
         }
-        
+
         if (isExploding()) {
             if (this.idleSoundInstance != null) {
-                Object[] ref = {this.idleSoundInstance};
+                Object[] ref = { this.idleSoundInstance };
                 ExplosionSoundHelper.stopIdleSound(ref);
                 this.idleSoundInstance = ref[0];
             }
             if (this.chargeSoundInstance != null) {
-                Object[] ref = {this.chargeSoundInstance};
+                Object[] ref = { this.chargeSoundInstance };
                 ExplosionSoundHelper.stopChargeSound(ref);
                 this.chargeSoundInstance = ref[0];
+            }
+            if (this.primingSoundInstance != null) {
+                Object[] ref = { this.primingSoundInstance };
+                ExplosionSoundHelper.stopPrimingSound(ref);
+                this.primingSoundInstance = ref[0];
             }
             if (explodeAnimationStartTick == 0) {
                 explodeAnimationStartTick = this.tickCount;
                 if (this.level() instanceof net.minecraft.client.multiplayer.ClientLevel clientLevel) {
-                    ExplosionParticleHelper.spawnExplosionBurstClient(clientLevel, this.position(), this.getRadius());
+                    double firePower = this.getFirePower();
+                    ExplosionParticleHelper.spawnExplosionBurstClient(clientLevel, this.position(), this.getRadius(),
+                            firePower);
+                    ExplosionParticleHelper.spawnShockwaveClient(clientLevel, this.position(), this.getRadius());
                 }
             }
             if (explodeAnimationStartTick > 0) {
                 int ticksSinceExplode = this.tickCount - explodeAnimationStartTick;
-                int durationTicks = ExplosionProcessHelper.calculateExplodeAnimationDurationTicks(getRadius(), BASE_RADIUS_FOR_TIMING, TARGET_RADIUS_FOR_TIMING, BASE_EXPLODE_ANIMATION_SECONDS, TARGET_EXPLODE_ANIMATION_SECONDS);
+                int durationTicks = ExplosionProcessHelper.calculateExplodeAnimationDurationTicks(getRadius(),
+                        BASE_RADIUS_FOR_TIMING, TARGET_RADIUS_FOR_TIMING, BASE_EXPLODE_ANIMATION_SECONDS,
+                        TARGET_EXPLODE_ANIMATION_SECONDS);
                 if (ticksSinceExplode >= durationTicks) {
                     this.discard();
                 }
             }
             return;
         }
-        
+
         float charge = this.getCharge();
         int remainingLifespan = this.getLifespan();
         boolean shouldPlayIdle = (charge >= 1.0f || (remainingLifespan < 20 && charge < 1.0f));
         boolean shouldPlayCharge = (charge < 1.0f && remainingLifespan >= 20);
-        
+        boolean shouldPlayPriming = (remainingLifespan <= 19);
+
         if (shouldPlayCharge && this.chargeSoundInstance == null) {
-            Object[] ref = {this.chargeSoundInstance};
+            Object[] ref = { this.chargeSoundInstance };
             ExplosionSoundHelper.startChargeSound(this, ref);
             this.chargeSoundInstance = ref[0];
         } else if (!shouldPlayCharge && this.chargeSoundInstance != null) {
-            Object[] ref = {this.chargeSoundInstance};
+            Object[] ref = { this.chargeSoundInstance };
             ExplosionSoundHelper.stopChargeSound(ref);
             this.chargeSoundInstance = ref[0];
         }
-        
-        if (shouldPlayIdle && this.idleSoundInstance == null) {
-            Object[] ref = {this.idleSoundInstance};
+
+        if (shouldPlayPriming && this.primingSoundInstance == null) {
+            Object[] ref = { this.primingSoundInstance };
+            ExplosionSoundHelper.startPrimingSound(this, ref);
+            this.primingSoundInstance = ref[0];
+        }
+
+        if (!shouldPlayPriming && this.primingSoundInstance != null) {
+            Object[] ref = { this.primingSoundInstance };
+            ExplosionSoundHelper.stopPrimingSound(ref);
+            this.primingSoundInstance = ref[0];
+        }
+
+        if (shouldPlayIdle && this.idleSoundInstance == null && !shouldPlayPriming) {
+            Object[] ref = { this.idleSoundInstance };
             ExplosionSoundHelper.startIdleSound(this, ref);
             this.idleSoundInstance = ref[0];
-        } else if (!shouldPlayIdle && this.idleSoundInstance != null) {
-            Object[] ref = {this.idleSoundInstance};
+        } else if (!shouldPlayIdle && this.idleSoundInstance != null && remainingLifespan > 19) {
+            Object[] ref = { this.idleSoundInstance };
             ExplosionSoundHelper.stopIdleSound(ref);
             this.idleSoundInstance = ref[0];
         }
     }
-    
 
-    private double getFirePower() {
+    public double getFirePower() {
         if (this.level().isClientSide) {
             return this.entityData.get(DATA_FIRE_POWER);
         }
@@ -281,7 +312,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         builder.define(DATA_RADIUS, 0.0f);
         builder.define(DATA_ANIM_STATE, AnimState.CHARGING.ordinal());
     }
-    
+
     private AnimState getAnimState() {
         if (this.level().isClientSide) {
             int ordinal = this.entityData.get(DATA_ANIM_STATE);
@@ -289,7 +320,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         }
         return this.animState;
     }
-    
+
     public boolean isExploding() {
         if (this.level().isClientSide) {
             return this.entityData.get(DATA_EXPLODING);
@@ -305,7 +336,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
     }
 
     public double getRadius() {
-        if(this.level().isClientSide) {
+        if (this.level().isClientSide) {
             return this.entityData.get(DATA_RADIUS);
         }
         return this.radius;
@@ -328,7 +359,8 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         }
     }
 
-    public void setExplosionParams(double radius, float baseDamage, float powerMultiplier, int aoeLevel, int amplifyLevel, int dampenLevel) {
+    public void setExplosionParams(double radius, float baseDamage, float powerMultiplier, int aoeLevel,
+            int amplifyLevel, int dampenLevel) {
         this.radius = Math.max(0.0, radius);
         if (!this.level().isClientSide) {
             this.entityData.set(DATA_RADIUS, (float) this.radius);
@@ -339,29 +371,30 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         this.amplifyLevel = amplifyLevel;
         this.dampenLevel = dampenLevel;
     }
-    
+
     public void setWarningSound(@Nullable SoundEvent sound) {
         this.warningSound = sound;
     }
 
     @Override
-    public void addLifespan(LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
+    public void addLifespan(LivingEntity shooter, SpellStats spellStats, SpellContext spellContext,
+            SpellResolver resolver) {
         super.addLifespan(shooter, spellStats, spellContext, resolver);
-        
+
         if (shooter instanceof Player player) {
             AttributeInstance firePowerAttr = player.getAttribute(ModRegistry.FIRE_POWER);
             double power = 0;
-            if(firePowerAttr != null) {
+            if (firePowerAttr != null) {
                 power = firePowerAttr.getValue();
             }
             this.firePower = power;
             if (!this.level().isClientSide) {
                 this.entityData.set(DATA_FIRE_POWER, (float) power);
             }
-            double chargePerTick = (1.0 + power / 8.0d) / CHARGE_PER_TICK_DIVISOR;
+            double chargePerTick = (1.0 + power / POWER_FACTOR) / CHARGE_PER_TICK_DIVISOR;
             float newCharge = (float) (this.charge + chargePerTick);
             setCharge(newCharge);
-            
+
             if (!this.level().isClientSide && newCharge >= 1.0f && this.animState == AnimState.CHARGING) {
                 this.animState = AnimState.IDLE;
                 this.entityData.set(DATA_ANIM_STATE, AnimState.IDLE.ordinal());
@@ -396,7 +429,8 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         Vec3 center = this.position();
         float currentCharge = this.charge;
 
-        double calculatedRadius = ExplosionProcessHelper.calculateRadius(currentCharge, this.firePower, this.aoeLevel, this.dampenLevel);
+        double calculatedRadius = ExplosionProcessHelper.calculateRadius(currentCharge, this.firePower, this.aoeLevel,
+                this.dampenLevel);
 
         if (currentCharge <= LOW_CHARGE_THRESHOLD) {
             createRegularExplosion(serverLevel, center, calculatedRadius);
@@ -408,8 +442,39 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
             activateSoundPlayed = true;
         }
 
+        ExplosionParticleHelper.spawnShockwave(serverLevel, center, calculatedRadius);
 
-        float adjustedDamage = ExplosionProcessHelper.calculateAdjustedDamage(this.baseDamage, this.amplifyLevel, this.dampenLevel, currentCharge, this.firePower);
+        double shakeRange = calculatedRadius * 2.0;
+        double shakeRangeSq = shakeRange * shakeRange;
+
+        for (var player : serverLevel.players()) {
+            double distanceSq = player.distanceToSqr(center.x, center.y, center.z);
+            if (distanceSq <= shakeRangeSq) {
+                double distance = Math.sqrt(distanceSq);
+                float intensity;
+
+                if (distance <= calculatedRadius) {
+                    double normalizedDistance = distance / calculatedRadius;
+                    intensity = (float) ((1.0 - normalizedDistance) * 0.7 + 0.15);
+                } else {
+                    double outerDistance = distance - calculatedRadius;
+                    double outerRange = calculatedRadius;
+                    double normalizedOuterDistance = Math.min(1.0, outerDistance / outerRange);
+                    intensity = (float) ((1.0 - normalizedOuterDistance) * 0.15);
+                    intensity = Math.max(0.05f, intensity);
+                }
+
+                int durationTicks = Math.max(10, (int) (calculatedRadius * 0.5));
+                durationTicks = Math.min(durationTicks, 40);
+
+                com.github.ars_zero.common.network.PacketExplosionShake packet = new com.github.ars_zero.common.network.PacketExplosionShake(
+                        intensity, durationTicks);
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, packet);
+            }
+        }
+
+        float adjustedDamage = ExplosionProcessHelper.calculateAdjustedDamage(this.baseDamage, this.amplifyLevel,
+                this.dampenLevel, currentCharge, this.firePower);
         float adjustedPower = ExplosionProcessHelper.calculateAdjustedPower(this.powerMultiplier, currentCharge);
         this.explosionCenter = center;
         this.explosionRadius = calculatedRadius;
@@ -422,11 +487,14 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         if (!this.level().isClientSide) {
             this.entityData.set(DATA_RADIUS, (float) calculatedRadius);
         }
-        
-        this.explodeAnimationDurationTicks = ExplosionProcessHelper.calculateExplodeAnimationDurationTicks(calculatedRadius, BASE_RADIUS_FOR_TIMING, TARGET_RADIUS_FOR_TIMING, BASE_EXPLODE_ANIMATION_SECONDS, TARGET_EXPLODE_ANIMATION_SECONDS);
+
+        this.explodeAnimationDurationTicks = ExplosionProcessHelper.calculateExplodeAnimationDurationTicks(
+                calculatedRadius, BASE_RADIUS_FOR_TIMING, TARGET_RADIUS_FOR_TIMING, BASE_EXPLODE_ANIMATION_SECONDS,
+                TARGET_EXPLODE_ANIMATION_SECONDS);
 
         if (workList == null || workList.size() == 0) {
-            serverLevel.explode(this, center.x, center.y, center.z, (float) Math.max(0.5, calculatedRadius), Level.ExplosionInteraction.NONE);
+            serverLevel.explode(this, center.x, center.y, center.z, (float) Math.max(0.5, calculatedRadius),
+                    Level.ExplosionInteraction.NONE);
         }
     }
 
@@ -437,7 +505,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
     @Override
     public void tick() {
         super.tick();
-        
+
         if (this.level().isClientSide) {
             handleClientTick();
             return;
@@ -446,24 +514,27 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         if (!exploding && this.level() instanceof ServerLevel serverLevel) {
             float charge = this.getCharge();
             int remainingLifespan = this.getLifespan();
-            
-            if (remainingLifespan <= 19 && charge > LOW_CHARGE_THRESHOLD && !warningSoundPlayed && warningSound != null) {
-                serverLevel.playSound(null, this.getX(), this.getY(), this.getZ(), warningSound, SoundSource.NEUTRAL, 1.0f, 1.0f);
+
+            if (remainingLifespan <= 19 && charge > LOW_CHARGE_THRESHOLD && !warningSoundPlayed
+                    && warningSound != null) {
+                serverLevel.playSound(null, this.getX(), this.getY(), this.getZ(), warningSound, SoundSource.NEUTRAL,
+                        1.0f, 1.0f);
                 warningSoundPlayed = true;
             }
 
             if (this.tickCount % 2 == 0) {
-                ExplosionParticleHelper.spawnSpiralParticles(serverLevel, this.position(), charge, this.tickCount);
+                ExplosionParticleHelper.spawnSpiralParticles(serverLevel, this.position(), charge, this.tickCount,
+                        this.firePower);
             }
         }
 
         if (!exploding) {
             return;
         }
-        
+
         int ticksSinceExplode = this.tickCount - explodeAnimationStartTick;
         boolean canDiscard = ticksSinceExplode >= this.explodeAnimationDurationTicks;
-        
+
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             if (canDiscard) {
                 this.discard();
@@ -479,14 +550,13 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
 
         int maxPerTick = Math.max(1, ServerConfig.LARGE_EXPLOSION_MAX_BLOCKS_PER_TICK.get());
         ExplosionProcessHelper.ProcessResult result = ExplosionProcessHelper.processWorkList(
-            serverLevel, this, workList, nextWorkIndex, this.explosionCenter, this.explosionRadius,
-            this.deferredPositions, this.deferredSize, maxPerTick
-        );
-        
+                serverLevel, this, workList, nextWorkIndex, this.explosionCenter, this.explosionRadius,
+                this.deferredPositions, this.deferredSize, maxPerTick, this.firePower);
+
         this.nextWorkIndex = result.nextWorkIndex;
         this.deferredSize = result.deferredSize;
         this.deferredPositions = result.deferredPositions;
-        
+
         if (result.shouldDiscard) {
             if (this.deferredSize > 0) {
                 this.workList = ExplosionProcessHelper.rollDeferredIntoWork(this.deferredPositions, this.deferredSize);
@@ -559,8 +629,4 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         compound.putInt("explodeAnimationDurationTicks", this.explodeAnimationDurationTicks);
     }
 
-
-
-
 }
-
