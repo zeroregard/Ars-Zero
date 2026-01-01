@@ -23,9 +23,11 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         addZeroGravityRecipe();
         addConjureVoxelRecipe();
         addAnchorRecipe();
+        addSustainRecipe();
         addTemporalContextRecipe();
         addNearRecipe();
         addPushRecipe();
+        addConvergenceRecipe();
 
         for (FileObj fileObj : files) {
             saveStable(pOutput, fileObj.element, fileObj.path);
@@ -113,6 +115,26 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_anchor_effect.json"), json));
     }
 
+    private void addSustainRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 55);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("minecraft:clock"));
+        inputsArray.add(item("minecraft:golden_apple"));
+        inputsArray.add(item("minecraft:redstone"));
+        inputsArray.add(item("ars_nouveau:source_gem"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:sustain_effect");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_sustain_effect.json"), json));
+    }
+
     private void addTemporalContextRecipe() {
         JsonObject json = new JsonObject();
         json.addProperty("type", "ars_nouveau:glyph");
@@ -172,9 +194,35 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_push_effect.json"), json));
     }
 
+    private void addConvergenceRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 160);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("minecraft:ender_eye"));
+        inputsArray.add(item("minecraft:nether_star"));
+        inputsArray.add(tag("c:rods/blaze"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:effect_convergence");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_effect_convergence.json"), json));
+    }
+
     private static JsonObject item(String id) {
         JsonObject o = new JsonObject();
         o.addProperty("item", id);
+        return o;
+    }
+
+    private static JsonObject tag(String id) {
+        JsonObject o = new JsonObject();
+        o.addProperty("tag", id);
         return o;
     }
 

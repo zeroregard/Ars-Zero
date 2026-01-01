@@ -14,9 +14,12 @@ import com.github.ars_zero.client.renderer.entity.StoneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WindVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.ExplosionControllerEntityRenderer;
+import com.github.ars_zero.client.renderer.entity.SourceJarChargerEntityRenderer;
+import com.github.ars_zero.client.renderer.entity.PlayerChargerEntityRenderer;
 import com.github.ars_zero.client.particle.BlightSplashParticle;
 import com.github.ars_zero.client.particle.ExplosiveChargeParticle;
 import com.github.ars_zero.client.particle.ExplosionBurstParticle;
+import com.github.ars_zero.client.particle.SourceJarChargeParticle;
 import com.github.ars_zero.client.renderer.tile.MultiphaseTurretRenderer;
 import com.github.ars_zero.registry.ModBlockEntities;
 import com.github.ars_zero.registry.ModEntities;
@@ -61,6 +64,8 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.BLIGHT_VOXEL_ENTITY.get(), BlightVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.BLOCK_GROUP.get(), BlockGroupEntityRenderer::new);
             EntityRenderers.register(ModEntities.EXPLOSION_CONTROLLER.get(), ExplosionControllerEntityRenderer::new);
+            EntityRenderers.register(ModEntities.SOURCE_JAR_CHARGER.get(), SourceJarChargerEntityRenderer::new);
+            EntityRenderers.register(ModEntities.PLAYER_CHARGER.get(), PlayerChargerEntityRenderer::new);
         });
     }
     
@@ -81,6 +86,7 @@ public class ArsZeroClient {
             event.registerSpriteSet(ModParticles.BLIGHT_SPLASH.get(), BlightSplashParticle.Provider::new);
             event.registerSpriteSet(ModParticles.EXPLOSIVE_CHARGE.get(), ExplosiveChargeParticle.Provider::new);
             event.registerSpriteSet(ModParticles.EXPLOSION_BURST.get(), ExplosionBurstParticle.Provider::new);
+            event.registerSpriteSet(ModParticles.SOURCE_JAR_CHARGE.get(), SourceJarChargeParticle.Provider::new);
         }
     }
 }

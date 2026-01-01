@@ -17,14 +17,15 @@ public class ExplosionProcessHelper {
     private static final int UPDATE_FLAGS = net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
     
     public static double calculateRadius(float charge, double firePower, int aoeLevel, int dampenLevel) {
-        double radius = charge * (14.0 + 3.0 * firePower);
+        double radius = charge * (14.0 + firePower / 2.0);
         radius += aoeLevel;
         radius -= 0.5 * dampenLevel;
         return Math.max(0.0, radius);
     }
     
-    public static float calculateAdjustedDamage(float baseDamage, int amplifyLevel, int dampenLevel, float charge) {
+    public static float calculateAdjustedDamage(float baseDamage, int amplifyLevel, int dampenLevel, float charge, double firePower) {
         float damage = (baseDamage + amplifyLevel) * charge;
+        damage += (float) firePower * charge;
         damage -= 0.5f * dampenLevel * charge;
         return Math.max(0.0f, damage);
     }

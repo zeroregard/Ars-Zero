@@ -20,6 +20,8 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -95,6 +97,10 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
     private static final double DEFAULT_IDLE_TIME_SECONDS = 2.0;
     
     private boolean activateSoundPlayed = false;
+    
+    @Nullable
+    private SoundEvent warningSound = null;
+    private boolean warningSoundPlayed = false;
 
     public ExplosionControllerEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -312,7 +318,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
 
     @Override
     public double getMaxDelta() {
-        return 0;
+        return 0.1f;
     }
 
     private void setCharge(float newCharge) {
@@ -332,6 +338,10 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         this.aoeLevel = aoeLevel;
         this.amplifyLevel = amplifyLevel;
         this.dampenLevel = dampenLevel;
+    }
+    
+    public void setWarningSound(@Nullable SoundEvent sound) {
+        this.warningSound = sound;
     }
 
     @Override
@@ -399,7 +409,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         }
 
 
-        float adjustedDamage = ExplosionProcessHelper.calculateAdjustedDamage(this.baseDamage, this.amplifyLevel, this.dampenLevel, currentCharge);
+        float adjustedDamage = ExplosionProcessHelper.calculateAdjustedDamage(this.baseDamage, this.amplifyLevel, this.dampenLevel, currentCharge, this.firePower);
         float adjustedPower = ExplosionProcessHelper.calculateAdjustedPower(this.powerMultiplier, currentCharge);
         this.explosionCenter = center;
         this.explosionRadius = calculatedRadius;
@@ -437,6 +447,10 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
             float charge = this.getCharge();
             int remainingLifespan = this.getLifespan();
             
+            if (remainingLifespan <= 19 && charge > LOW_CHARGE_THRESHOLD && !warningSoundPlayed && warningSound != null) {
+                serverLevel.playSound(null, this.getX(), this.getY(), this.getZ(), warningSound, SoundSource.NEUTRAL, 1.0f, 1.0f);
+                warningSoundPlayed = true;
+            }
 
             if (this.tickCount % 2 == 0) {
                 ExplosionParticleHelper.spawnSpiralParticles(serverLevel, this.position(), charge, this.tickCount);

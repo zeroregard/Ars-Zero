@@ -6,6 +6,8 @@ import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.entity.explosion.ExplosionControllerEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
+import com.github.ars_zero.common.entity.SourceJarChargerEntity;
+import com.github.ars_zero.common.entity.PlayerChargerEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
 import com.github.ars_zero.common.entity.LightningVoxelEntity;
 import com.github.ars_zero.common.entity.BlightVoxelEntity;
@@ -120,5 +122,25 @@ public class ModEntities {
                     .updateInterval(20)
                     .setShouldReceiveVelocityUpdates(false)
                     .build(ArsZero.MOD_ID + ":explosion_controller")
+    );
+
+    public static final DeferredHolder<EntityType<?>, EntityType<SourceJarChargerEntity>> SOURCE_JAR_CHARGER = ENTITIES.register(
+            "source_jar_charger",
+            () -> EntityType.Builder.<SourceJarChargerEntity>of(SourceJarChargerEntity::new, MobCategory.MISC)
+                    .sized(0.1f, 0.1f)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(false)
+                    .build(ArsZero.MOD_ID + ":source_jar_charger")
+    );
+
+    public static final DeferredHolder<EntityType<?>, EntityType<PlayerChargerEntity>> PLAYER_CHARGER = ENTITIES.register(
+            "player_charger",
+            () -> EntityType.Builder.<PlayerChargerEntity>of(PlayerChargerEntity::new, MobCategory.MISC)
+                    .sized(0.1f, 0.1f)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(false)
+                    .build(ArsZero.MOD_ID + ":player_charger")
     );
 }
