@@ -2,7 +2,6 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.particle.ExplosiveChargeParticleType;
-import com.github.ars_zero.common.particle.ExplosionBurstParticleType;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -22,11 +21,6 @@ public class ModParticles {
             .register(
                     "explosive_charge",
                     ExplosiveChargeParticleType::new);
-
-    public static final DeferredHolder<ParticleType<?>, ExplosionBurstParticleType> EXPLOSION_BURST = PARTICLES
-            .register(
-                    "explosion_burst",
-                    ExplosionBurstParticleType::new);
 
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SOURCE_JAR_CHARGE = PARTICLES.register(
             "source_jar_charge",

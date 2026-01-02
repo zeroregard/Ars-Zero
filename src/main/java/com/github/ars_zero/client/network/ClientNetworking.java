@@ -29,6 +29,12 @@ public final class ClientNetworking {
             PacketExplosionShake.STREAM_CODEC,
             ClientPacketHandlers::handleExplosionShake
         );
+
+        registrar.playToClient(
+            com.github.ars_zero.common.network.PacketExplosionActivateSound.TYPE,
+            com.github.ars_zero.common.network.PacketExplosionActivateSound.STREAM_CODEC,
+            ClientPacketHandlers::handleExplosionActivateSound
+        );
     }
 }
 

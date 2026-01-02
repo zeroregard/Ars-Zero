@@ -14,11 +14,11 @@ import com.github.ars_zero.client.renderer.entity.StoneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WindVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.ExplosionControllerEntityRenderer;
+import com.github.ars_zero.client.renderer.entity.ExplosionBurstProjectileRenderer;
 import com.github.ars_zero.client.renderer.entity.SourceJarChargerEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.PlayerChargerEntityRenderer;
 import com.github.ars_zero.client.particle.BlightSplashParticle;
 import com.github.ars_zero.client.particle.ExplosiveChargeParticle;
-import com.github.ars_zero.client.particle.ExplosionBurstParticle;
 import com.github.ars_zero.client.particle.SourceJarChargeParticle;
 import com.github.ars_zero.client.renderer.tile.MultiphaseTurretRenderer;
 import com.github.ars_zero.registry.ModBlockEntities;
@@ -39,19 +39,19 @@ import net.neoforged.neoforge.common.NeoForge;
 public class ArsZeroClient {
     public static void init(IEventBus modEventBus) {
         ArsZero.LOGGER.debug("Initializing Ars Zero client-side components...");
-        
+
         modEventBus.addListener(ArsZeroClient::onClientSetup);
         modEventBus.addListener(ArsZeroClient::registerGuiLayers);
         modEventBus.addListener(ArsZeroClient::registerRenderers);
         modEventBus.addListener(ClientNetworking::register);
-        
+
         NeoForge.EVENT_BUS.register(StaffScrollHandler.class);
-        
+
         StaffAnimationHandler.init();
-        
+
         ArsZero.LOGGER.debug("Ars Zero client initialization completed");
     }
-    
+
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             EntityRenderers.register(ModEntities.ARCANE_VOXEL_ENTITY.get(), ArcaneVoxelEntityRenderer::new);
@@ -64,28 +64,30 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.BLIGHT_VOXEL_ENTITY.get(), BlightVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.BLOCK_GROUP.get(), BlockGroupEntityRenderer::new);
             EntityRenderers.register(ModEntities.EXPLOSION_CONTROLLER.get(), ExplosionControllerEntityRenderer::new);
+            EntityRenderers.register(ModEntities.EXPLOSION_BURST_PROJECTILE.get(),
+                    ExplosionBurstProjectileRenderer::new);
             EntityRenderers.register(ModEntities.SOURCE_JAR_CHARGER.get(), SourceJarChargerEntityRenderer::new);
             EntityRenderers.register(ModEntities.PLAYER_CHARGER.get(), PlayerChargerEntityRenderer::new);
         });
     }
-    
+
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(ModBlockEntities.MULTIPHASE_SPELL_TURRET.get(), MultiphaseTurretRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.MULTIPHASE_SPELL_TURRET.get(),
+                MultiphaseTurretRenderer::new);
     }
-    
+
     @SubscribeEvent
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("staff_hud"), GuiStaffHUD.OVERLAY);
     }
-    
+
     @EventBusSubscriber(modid = ArsZero.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ParticleRegistration {
         @SubscribeEvent
         public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
             event.registerSpriteSet(ModParticles.BLIGHT_SPLASH.get(), BlightSplashParticle.Provider::new);
             event.registerSpriteSet(ModParticles.EXPLOSIVE_CHARGE.get(), ExplosiveChargeParticle.Provider::new);
-            event.registerSpriteSet(ModParticles.EXPLOSION_BURST.get(), ExplosionBurstParticle.Provider::new);
             event.registerSpriteSet(ModParticles.SOURCE_JAR_CHARGE.get(), SourceJarChargeParticle.Provider::new);
         }
     }

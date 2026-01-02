@@ -102,7 +102,7 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
 
         JsonArray inputsArray = new JsonArray();
         inputsArray.add(item("minecraft:compass"));
-        inputsArray.add(item("minecraft:lodestone"));
+        inputsArray.add(item("minecraft:iron_block"));
         inputsArray.add(item("minecraft:ender_pearl"));
         inputsArray.add(item("ars_nouveau:source_gem"));
         json.add("inputs", inputsArray);

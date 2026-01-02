@@ -5,6 +5,7 @@ import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.entity.explosion.ExplosionControllerEntity;
+import com.github.ars_zero.common.entity.explosion.ExplosionBurstProjectile;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.SourceJarChargerEntity;
 import com.github.ars_zero.common.entity.PlayerChargerEntity;
@@ -142,5 +143,15 @@ public class ModEntities {
                     .updateInterval(1)
                     .setShouldReceiveVelocityUpdates(false)
                     .build(ArsZero.MOD_ID + ":player_charger")
+    );
+
+    public static final DeferredHolder<EntityType<?>, EntityType<ExplosionBurstProjectile>> EXPLOSION_BURST_PROJECTILE = ENTITIES.register(
+            "explosion_burst_projectile",
+            () -> EntityType.Builder.<ExplosionBurstProjectile>of(ExplosionBurstProjectile::new, MobCategory.MISC)
+                    .sized(0.1f, 0.1f)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(ArsZero.MOD_ID + ":explosion_burst_projectile")
     );
 }

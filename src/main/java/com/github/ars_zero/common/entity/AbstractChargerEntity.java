@@ -50,6 +50,14 @@ public abstract class AbstractChargerEntity extends Entity implements ILifespanE
         this.setNoGravity(true);
         this.setBoundingBox(new AABB(0, 0, 0, 0, 0, 0));
     }
+    
+    @Override
+    public void onAddedToLevel() {
+        super.onAddedToLevel();
+        if (!this.level().isClientSide && resolveSound != null && this.level() instanceof ServerLevel serverLevel) {
+            serverLevel.playSound(null, this.getX(), this.getY(), this.getZ(), resolveSound, SoundSource.NEUTRAL, 1.0f, 1.0f);
+        }
+    }
 
     public void setCasterUUID(UUID uuid) {
         this.casterUUID = uuid;

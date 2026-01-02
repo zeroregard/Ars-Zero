@@ -17,7 +17,15 @@ public class ExplosiveChargeParticleType extends ParticleType<ExplosiveChargePar
     
     @Override
     public StreamCodec<? super RegistryFriendlyByteBuf, ExplosiveChargeParticleOptions> streamCodec() {
-        return ExplosiveChargeParticleOptions.STREAM_CODEC;
+        return StreamCodec.of(
+            ExplosiveChargeParticleOptions::toNetwork,
+            buf -> {
+                float r = buf.readFloat();
+                float g = buf.readFloat();
+                float b = buf.readFloat();
+                return new ExplosiveChargeParticleOptions(this, r, g, b);
+            }
+        );
     }
 }
 

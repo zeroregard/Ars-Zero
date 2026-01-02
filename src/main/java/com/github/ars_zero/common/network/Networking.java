@@ -63,6 +63,12 @@ public class Networking {
                 PacketExplosionShake.STREAM_CODEC,
                 (packet, context) -> {}
             );
+            
+            registrar.playToClient(
+                com.github.ars_zero.common.network.PacketExplosionActivateSound.TYPE,
+                com.github.ars_zero.common.network.PacketExplosionActivateSound.STREAM_CODEC,
+                (packet, context) -> {}
+            );
         }
     }
 

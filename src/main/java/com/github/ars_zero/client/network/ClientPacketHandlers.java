@@ -8,6 +8,8 @@ import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.client.sound.StaffSoundManager;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
+import com.github.ars_zero.client.sound.ExplosionActivateSoundInstance;
+import com.github.ars_zero.common.network.PacketExplosionActivateSound;
 import com.github.ars_zero.common.network.PacketExplosionShake;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.spell.SpellPhase;
@@ -80,6 +82,14 @@ final class ClientPacketHandlers {
     static void handleExplosionShake(PacketExplosionShake packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             ScreenShakeManager.addShake(packet.intensity(), packet.durationTicks());
+        });
+    }
+
+    static void handleExplosionActivateSound(PacketExplosionActivateSound packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            ExplosionActivateSoundInstance soundInstance = new ExplosionActivateSoundInstance(
+                packet.x(), packet.y(), packet.z());
+            Minecraft.getInstance().getSoundManager().play(soundInstance);
         });
     }
 }

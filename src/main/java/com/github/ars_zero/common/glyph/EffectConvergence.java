@@ -47,14 +47,14 @@ import java.util.Map;
 import java.util.Set;
 
 public class EffectConvergence extends AbstractEffect implements ISubsequentEffectProvider {
-    
+
     public static final String ID = "effect_convergence";
     public static final EffectConvergence INSTANCE = new EffectConvergence();
-    
-    private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[]{
-        EffectExplosion.INSTANCE.getRegistryName()
+
+    private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[] {
+            EffectExplosion.INSTANCE.getRegistryName()
     };
-    
+
     private static final int DEFAULT_LIFESPAN = 20;
 
     public EffectConvergence() {
@@ -67,37 +67,43 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
     }
 
     @Override
-    public void onResolve(HitResult rayTraceResult, Level world, @Nullable LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
+    public void onResolve(HitResult rayTraceResult, Level world, @Nullable LivingEntity shooter, SpellStats spellStats,
+            SpellContext spellContext, SpellResolver resolver) {
         if (world.isClientSide || !(world instanceof ServerLevel serverLevel)) {
             return;
         }
 
         Vec3 pos = safelyGetHitPos(rayTraceResult);
-        
+
         if (hasExplosionEffect(spellContext)) {
-            ExplosionControllerEntity entity = new ExplosionControllerEntity(ModEntities.EXPLOSION_CONTROLLER.get(), serverLevel);
+            ExplosionControllerEntity entity = new ExplosionControllerEntity(ModEntities.EXPLOSION_CONTROLLER.get(),
+                    serverLevel);
             entity.setPos(pos.x, pos.y, pos.z);
-            
+
             SpellContext iterator = spellContext.clone();
             while (iterator.hasNextPart()) {
                 AbstractSpellPart next = iterator.nextPart();
                 if (next instanceof EffectExplosion explosionEffect) {
-                    SpellAugmentExtractor.AugmentData augmentData = SpellAugmentExtractor.extractApplicableAugments(spellContext, explosionEffect);
-                    
+                    SpellAugmentExtractor.AugmentData augmentData = SpellAugmentExtractor
+                            .extractApplicableAugments(spellContext, explosionEffect);
+
                     double intensity = calculateExplosionIntensity(spellStats);
                     float baseDamage = EffectExplosion.INSTANCE.DAMAGE.get().floatValue();
                     float powerMultiplier = EffectExplosion.INSTANCE.AMP_DAMAGE.get().floatValue();
-                    
-                    entity.setExplosionParams(intensity, baseDamage, powerMultiplier, augmentData.aoeLevel, augmentData.amplifyLevel, augmentData.dampenLevel);
+
+                    entity.setExplosionParams(intensity, baseDamage, powerMultiplier, augmentData.aoeLevel,
+                            augmentData.amplifyLevel, augmentData.dampenLevel);
                     entity.setLifespan(DEFAULT_LIFESPAN);
-                    
+
                     SoundEvent warningSound = getWarningSoundFromStyle(spellContext);
                     entity.setWarningSound(warningSound);
-                    
+                    SoundEvent resolveSound = getResolveSoundFromStyle(spellContext);
+                    entity.setResolveSound(resolveSound);
+
                     serverLevel.addFreshEntity(entity);
-                    
+
                     updateTemporalContext(shooter, entity, spellContext);
-                    
+
                     consumeEffect(spellContext, explosionEffect);
                     triggerResolveEffects(spellContext, world, pos);
                     break;
@@ -105,13 +111,16 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
             }
         } else if (rayTraceResult instanceof EntityHitResult entityHitResult) {
             if (entityHitResult.getEntity() instanceof Player targetPlayer && shooter != null) {
-                PlayerChargerEntity chargerEntity = new PlayerChargerEntity(ModEntities.PLAYER_CHARGER.get(), serverLevel);
+                PlayerChargerEntity chargerEntity = new PlayerChargerEntity(ModEntities.PLAYER_CHARGER.get(),
+                        serverLevel);
                 chargerEntity.setPos(pos.x, pos.y, pos.z);
                 chargerEntity.setTargetPlayerUUID(targetPlayer.getUUID());
                 chargerEntity.setCasterUUID(shooter.getUUID());
                 chargerEntity.setLifespan(DEFAULT_LIFESPAN);
+                SoundEvent resolveSound = getResolveSoundFromStyle(spellContext);
+                chargerEntity.setResolveSound(resolveSound);
                 serverLevel.addFreshEntity(chargerEntity);
-                
+
                 updateTemporalContext(shooter, chargerEntity, spellContext);
                 triggerResolveEffects(spellContext, world, pos);
             }
@@ -119,37 +128,39 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
             BlockPos blockPos = blockHitResult.getBlockPos();
             if (serverLevel.getBlockEntity(blockPos) instanceof SourceJarTile) {
                 if (shooter != null) {
-                    SourceJarChargerEntity chargerEntity = new SourceJarChargerEntity(ModEntities.SOURCE_JAR_CHARGER.get(), serverLevel);
+                    SourceJarChargerEntity chargerEntity = new SourceJarChargerEntity(
+                            ModEntities.SOURCE_JAR_CHARGER.get(), serverLevel);
                     chargerEntity.setPos(pos.x, pos.y, pos.z);
                     chargerEntity.setJarPos(blockPos);
                     chargerEntity.setCasterUUID(shooter.getUUID());
                     chargerEntity.setLifespan(DEFAULT_LIFESPAN);
+                    SoundEvent resolveSound = getResolveSoundFromStyle(spellContext);
+                    chargerEntity.setResolveSound(resolveSound);
                     serverLevel.addFreshEntity(chargerEntity);
-                    
+
                     updateTemporalContext(shooter, chargerEntity, spellContext);
                     triggerResolveEffects(spellContext, world, pos);
                 }
             }
         }
     }
-    
+
     private void updateTemporalContext(LivingEntity shooter, Entity entity, SpellContext spellContext) {
         if (!(shooter instanceof Player player)) {
             return;
         }
-        
+
         ItemStack casterTool = spellContext.getCasterTool();
         MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
         if (context == null) {
             return;
         }
-        
+
         SpellResult entityResult = SpellResult.fromHitResultWithCaster(
-            new EntityHitResult(entity), 
-            SpellEffectType.RESOLVED, 
-            player
-        );
-        
+                new EntityHitResult(entity),
+                SpellEffectType.RESOLVED,
+                player);
+
         context.beginResults.clear();
         context.beginResults.add(entityResult);
     }
@@ -169,11 +180,11 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
         double base = EffectExplosion.INSTANCE.BASE.get();
         double ampValue = EffectExplosion.INSTANCE.AMP_VALUE.get();
         double aoeBonus = EffectExplosion.INSTANCE.AOE_BONUS.get();
-        
+
         double intensity = base + ampValue * spellStats.getAmpMultiplier() + aoeBonus * spellStats.getAoeMultiplier();
         int dampen = spellStats.getBuffCount(AugmentDampen.INSTANCE);
         intensity -= 0.5 * dampen;
-        
+
         return Math.max(0.0, intensity);
     }
 
@@ -181,7 +192,8 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
         ResourceLocation targetId = targetEffect.getRegistryName();
         while (context.hasNextPart()) {
             AbstractSpellPart consumed = context.nextPart();
-            if (consumed instanceof AbstractEffect consumedEffect && effectsMatch(consumedEffect, targetEffect, targetId)) {
+            if (consumed instanceof AbstractEffect consumedEffect
+                    && effectsMatch(consumedEffect, targetEffect, targetId)) {
                 break;
             }
         }
@@ -226,7 +238,7 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
     public Set<SpellSchool> getSchools() {
         return Set.of(SpellSchools.MANIPULATION);
     }
-    
+
     @Nullable
     private SoundEvent getResolveSoundFromStyle(SpellContext spellContext) {
         var timeline = spellContext.getParticleTimeline(ModParticleTimelines.CONVERGENCE_TIMELINE.get());
@@ -242,7 +254,7 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
         }
         return null;
     }
-    
+
     @Nullable
     private SoundEvent getWarningSoundFromStyle(SpellContext spellContext) {
         return getResolveSoundFromStyle(spellContext);

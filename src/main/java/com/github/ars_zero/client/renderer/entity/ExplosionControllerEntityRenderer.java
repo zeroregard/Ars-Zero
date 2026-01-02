@@ -15,38 +15,11 @@ import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-
 public class ExplosionControllerEntityRenderer extends GeoEntityRenderer<ExplosionControllerEntity> {
 
     private static final double RENDER_DISTANCE = 256.0;
     private static final int FULL_BRIGHTNESS = 15728880;
     private static final double ROTATION_SPEED_DEGREES_PER_SECOND = 45.0;
-    private static final double POSITION_OFFSET_MIN = -0.5;
-    private static final double POSITION_OFFSET_MAX = 0.5;
-    private static final double POSITION_OFFSET_Y = 0.5;
-    private static final double LERP_SPEED = 0.15;
-    private static final int TARGET_UPDATE_INTERVAL = 10;
-
-    private static class PositionOffset {
-        double targetX;
-        double targetZ;
-        double currentX;
-        double currentZ;
-        int lastUpdateTick;
-
-        PositionOffset(double targetX, double targetZ) {
-            this.targetX = targetX;
-            this.targetZ = targetZ;
-            this.currentX = targetX;
-            this.currentZ = targetZ;
-            this.lastUpdateTick = 0;
-        }
-    }
-
-    private final Map<Integer, PositionOffset> positionOffsets = new HashMap<>();
 
     public ExplosionControllerEntityRenderer(EntityRendererProvider.Context context) {
         super(context, new ExplosionControllerEntityModel());
@@ -67,10 +40,13 @@ public class ExplosionControllerEntityRenderer extends GeoEntityRenderer<Explosi
     public boolean shouldRender(ExplosionControllerEntity entity, Frustum frustum, double camX, double camY,
             double camZ) {
         if (entity.isExploding()) {
-            int ticksSinceExplode = entity.tickCount - entity.getExplodeAnimationStartTick();
-            int durationTicks = entity.getExplodeAnimationDurationTicks();
-            if (ticksSinceExplode >= durationTicks) {
-                return false;
+            int startTick = entity.getExplodeAnimationStartTick();
+            if (startTick > 0) {
+                int ticksSinceExplode = entity.tickCount - startTick;
+                int durationTicks = entity.getExplodeAnimationDurationTicks();
+                if (ticksSinceExplode >= durationTicks) {
+                    return false;
+                }
             }
         }
 
@@ -92,27 +68,6 @@ public class ExplosionControllerEntityRenderer extends GeoEntityRenderer<Explosi
     @Override
     public void render(ExplosionControllerEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
-        int entityId = entity.getId();
-        PositionOffset offset = positionOffsets.computeIfAbsent(entityId, id -> {
-            Random random = new Random(id);
-            double targetX = POSITION_OFFSET_MIN + random.nextDouble() * (POSITION_OFFSET_MAX - POSITION_OFFSET_MIN);
-            double targetZ = POSITION_OFFSET_MIN + random.nextDouble() * (POSITION_OFFSET_MAX - POSITION_OFFSET_MIN);
-            return new PositionOffset(targetX, targetZ);
-        });
-
-        int currentTick = entity.tickCount;
-        if (currentTick - offset.lastUpdateTick >= TARGET_UPDATE_INTERVAL) {
-            Random random = new Random(entityId + currentTick);
-            offset.targetX = POSITION_OFFSET_MIN + random.nextDouble() * (POSITION_OFFSET_MAX - POSITION_OFFSET_MIN);
-            offset.targetZ = POSITION_OFFSET_MIN + random.nextDouble() * (POSITION_OFFSET_MAX - POSITION_OFFSET_MIN);
-            offset.lastUpdateTick = currentTick;
-        }
-
-        double lerpAmount = LERP_SPEED * (1.0 + partialTick);
-        offset.currentX += (offset.targetX - offset.currentX) * lerpAmount;
-        offset.currentZ += (offset.targetZ - offset.currentZ) * lerpAmount;
-
-        poseStack.translate(offset.currentX, POSITION_OFFSET_Y, offset.currentZ);
 
         int remainingLifespan = entity.getLifespan();
 
@@ -122,10 +77,14 @@ public class ExplosionControllerEntityRenderer extends GeoEntityRenderer<Explosi
         }
 
         if (entity.isExploding()) {
-            int ticksSinceExplode = entity.tickCount - entity.getExplodeAnimationStartTick();
-            int durationTicks = entity.getExplodeAnimationDurationTicks();
-            if (ticksSinceExplode >= durationTicks) {
-                return;
+            int startTick = entity.getExplodeAnimationStartTick();
+            if (startTick > 0) {
+                int ticksSinceExplode = entity.tickCount - startTick;
+                int durationTicks = entity.getExplodeAnimationDurationTicks();
+                double timeSinceExplode = ticksSinceExplode + partialTick;
+                if (timeSinceExplode >= durationTicks) {
+                    return;
+                }
             }
 
             float charge = entity.getCharge();

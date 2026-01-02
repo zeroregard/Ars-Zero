@@ -54,5 +54,13 @@
         "stream": false
       }
     ]
+  },
+  "explosion_distant": {
+    "sounds": [
+      {
+        "name": "ars_zero:explosion_distant",
+        "stream": false
+      }
+    ]
   }
 }

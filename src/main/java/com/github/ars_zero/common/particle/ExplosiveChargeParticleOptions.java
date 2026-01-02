@@ -6,7 +6,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
 
 public class ExplosiveChargeParticleOptions implements ParticleOptions {
     
@@ -19,21 +18,10 @@ public class ExplosiveChargeParticleOptions implements ParticleOptions {
         )
         .apply(instance, (r, g, b) -> new ExplosiveChargeParticleOptions(null, r, g, b)));
     
-    public static final StreamCodec<RegistryFriendlyByteBuf, ExplosiveChargeParticleOptions> STREAM_CODEC = StreamCodec.of(
-            ExplosiveChargeParticleOptions::toNetwork, ExplosiveChargeParticleOptions::fromNetwork
-    );
-    
     public static void toNetwork(RegistryFriendlyByteBuf buf, ExplosiveChargeParticleOptions data) {
         buf.writeFloat(data.r);
         buf.writeFloat(data.g);
         buf.writeFloat(data.b);
-    }
-    
-    public static ExplosiveChargeParticleOptions fromNetwork(RegistryFriendlyByteBuf buffer) {
-        float r = buffer.readFloat();
-        float g = buffer.readFloat();
-        float b = buffer.readFloat();
-        return new ExplosiveChargeParticleOptions(null, r, g, b);
     }
     
     public float r;

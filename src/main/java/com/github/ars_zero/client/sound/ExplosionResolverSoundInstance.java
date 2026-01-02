@@ -1,16 +1,16 @@
 package com.github.ars_zero.client.sound;
 
 import com.github.ars_zero.common.entity.explosion.ExplosionControllerEntity;
-import com.github.ars_zero.registry.ModSounds;
+import net.minecraft.sounds.SoundEvent;
 
-public class ExplosionChargeSoundInstance extends AbstractExplosionSoundInstance {
+public class ExplosionResolverSoundInstance extends AbstractExplosionSoundInstance {
   private final ExplosionControllerEntity entity;
-  private static final double DEFAULT_CHARGE_TIME_SECONDS = 4.0;
 
-  public ExplosionChargeSoundInstance(ExplosionControllerEntity entity) {
-    super(entity.getX(), entity.getY(), entity.getZ(), ModSounds.EXPLOSION_CHARGE.get(), entity.level().getRandom());
+  public ExplosionResolverSoundInstance(ExplosionControllerEntity entity, SoundEvent soundEvent) {
+    super(entity.getX(), entity.getY(), entity.getZ(), soundEvent, entity.level().getRandom());
     this.entity = entity;
     this.looping = false;
+    updateVolumeFromDistance();
   }
 
   @Override
@@ -24,10 +24,6 @@ public class ExplosionChargeSoundInstance extends AbstractExplosionSoundInstance
       this.x = this.entity.getX();
       this.y = this.entity.getY();
       this.z = this.entity.getZ();
-
-      double chargeTimeSeconds = this.entity.calculateChargeTimeSeconds();
-      float chargePitch = (float) (DEFAULT_CHARGE_TIME_SECONDS / chargeTimeSeconds);
-      this.pitch = Math.max(0.5f, Math.min(2.0f, chargePitch));
     }
 
     updateVolumeFromDistance();

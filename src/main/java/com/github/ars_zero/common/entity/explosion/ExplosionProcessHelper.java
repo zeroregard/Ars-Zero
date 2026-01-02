@@ -2,23 +2,30 @@ package com.github.ars_zero.common.entity.explosion;
 
 import com.github.ars_zero.common.explosion.ExplosionWorkList;
 import com.github.ars_zero.common.util.BlockImmutabilityUtil;
+import com.github.ars_zero.registry.ModEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
 
 public class ExplosionProcessHelper {
 
     private static final int UPDATE_FLAGS = net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
-    private static final double IGNITION_MULTIPLIER = 0.3;
+    private static final double IGNITION_MULTIPLIER = 0.08;
+    private static final double BASE_RADIUS_CHARGE_MULTIPLIER = 14.0;
+    private static final double POWER_RADIUS_ADD_MULTIPLIER = 0.25;
 
     public static double calculateRadius(float charge, double firePower, int aoeLevel, int dampenLevel) {
-        double radius = charge * (14.0 + firePower / 2.0);
+        double radius = charge * (BASE_RADIUS_CHARGE_MULTIPLIER + firePower * POWER_RADIUS_ADD_MULTIPLIER);
         radius += aoeLevel;
         radius -= 0.5 * dampenLevel;
         return Math.max(0.0, radius);
@@ -53,7 +60,7 @@ public class ExplosionProcessHelper {
     }
 
     public static boolean shouldDestroyBlock(ServerLevel level, BlockPos pos, BlockState state, int distanceSquared,
-            Vec3 explosionCenter, double explosionRadius, double firePower) {
+            Vec3 explosionCenter, double explosionRadius, int amplifyLevel) {
         if (explosionCenter == null || explosionRadius <= 0) {
             return true;
         }
@@ -63,14 +70,14 @@ public class ExplosionProcessHelper {
         float hardness = state.getDestroySpeed(level, pos);
 
         if (hardness <= 3.5f) {
-            return calculateSoftBlockChance(level, normalizedDistance, hardness, firePower);
+            return calculateSoftBlockChance(level, normalizedDistance, hardness, amplifyLevel);
         }
 
-        return calculateHardBlockChance(level, normalizedDistance, hardness, firePower);
+        return calculateHardBlockChance(level, normalizedDistance, hardness, amplifyLevel);
     }
 
     private static boolean calculateSoftBlockChance(ServerLevel level, double normalizedDistance, float hardness,
-            double firePower) {
+            int amplifyLevel) {
         if (normalizedDistance <= 0.75) {
             return true;
         }
@@ -78,21 +85,21 @@ public class ExplosionProcessHelper {
         double edgeDistance = (normalizedDistance - 0.75) / 0.25;
         double minChanceAtEdge = 0.70 - ((hardness - 1.5f) / 2.0f) * 0.30;
 
-        double firePowerBonus = calculateFirePowerBonus(hardness, firePower);
-        minChanceAtEdge = Math.min(1.0, minChanceAtEdge + firePowerBonus);
+        double amplifyBonus = calculateAmplifyBonus(hardness, amplifyLevel);
+        minChanceAtEdge = Math.min(1.0, minChanceAtEdge + amplifyBonus);
 
         double finalChance = 1.0 - (edgeDistance * (1.0 - minChanceAtEdge));
         return level.getRandom().nextDouble() < finalChance;
     }
 
     private static boolean calculateHardBlockChance(ServerLevel level, double normalizedDistance, float hardness,
-            double firePower) {
+            int amplifyLevel) {
         double distanceFactor = 1.0 - normalizedDistance;
         double hardnessResistance = Math.min(0.80, hardness / 200.0);
         double baseChance = distanceFactor * (1.0 - hardnessResistance);
 
-        double firePowerBonus = calculateFirePowerBonus(hardness, firePower);
-        baseChance = Math.min(1.0, baseChance + firePowerBonus);
+        double amplifyBonus = calculateAmplifyBonus(hardness, amplifyLevel);
+        baseChance = Math.min(1.0, baseChance + amplifyBonus);
 
         double minChance = getMinimumChance(hardness);
         double finalChance = Math.max(minChance, baseChance);
@@ -100,21 +107,21 @@ public class ExplosionProcessHelper {
         return level.getRandom().nextDouble() < finalChance;
     }
 
-    private static double calculateFirePowerBonus(float hardness, double firePower) {
-        if (firePower <= 0.0) {
+    private static double calculateAmplifyBonus(float hardness, int amplifyLevel) {
+        if (amplifyLevel <= 0) {
             return 0.0;
         }
 
-        double normalizedFirePower = Math.min(1.0, firePower / 10.0);
+        double normalizedAmplify = Math.min(1.0, amplifyLevel / 3.0);
 
         if (hardness <= 3.5f) {
-            double softBlockBonus = normalizedFirePower * 0.60;
+            double softBlockBonus = normalizedAmplify * 0.60;
             if (hardness <= 2.0f) {
                 softBlockBonus *= 1.2;
             }
             return softBlockBonus;
         } else {
-            double hardBlockBonus = normalizedFirePower * 0.15;
+            double hardBlockBonus = normalizedAmplify * 0.15;
             if (hardness >= 50.0f) {
                 hardBlockBonus *= 0.3;
             } else if (hardness >= 20.0f) {
@@ -190,15 +197,22 @@ public class ExplosionProcessHelper {
                 }
 
                 boolean useSoulFire = firePower >= 10.0;
-                if (useSoulFire && hasLowHardness(serverLevel, checkPos, state)) {
-                    serverLevel.setBlock(checkPos, Blocks.SOUL_SAND.defaultBlockState(), UPDATE_FLAGS);
+                // For soulfire, use regular fire if block is too soft (hardness < 0.5)
+                // This prevents leaves and other soft blocks from being converted to soul sand
+                boolean useSoulFireForThisBlock = useSoulFire && !hasLowHardness(serverLevel, checkPos, state);
+
+                if (useSoulFireForThisBlock && !hasLowHardness(serverLevel, checkPos, state)) {
+                    float hardness = state.getDestroySpeed(serverLevel, checkPos);
+                    if (hardness >= 0.5f && hardness < 2.0f) { // Only convert medium hardness blocks
+                        serverLevel.setBlock(checkPos, Blocks.SOUL_SAND.defaultBlockState(), UPDATE_FLAGS);
+                    }
                 }
 
-                BlockState fireState = useSoulFire ? Blocks.SOUL_FIRE.defaultBlockState()
+                BlockState fireState = useSoulFireForThisBlock ? Blocks.SOUL_FIRE.defaultBlockState()
                         : Blocks.FIRE.defaultBlockState();
                 if (fireState.canSurvive(serverLevel, firePos)) {
                     serverLevel.setBlock(firePos, fireState, UPDATE_FLAGS);
-                } else if (useSoulFire) {
+                } else if (useSoulFireForThisBlock) {
                     BlockState regularFireState = Blocks.FIRE.defaultBlockState();
                     if (regularFireState.canSurvive(serverLevel, firePos)) {
                         serverLevel.setBlock(firePos, regularFireState, UPDATE_FLAGS);
@@ -213,12 +227,15 @@ public class ExplosionProcessHelper {
         public final int deferredSize;
         public final long[] deferredPositions;
         public final boolean shouldDiscard;
+        public final int highestRing;
 
-        public ProcessResult(int nextWorkIndex, int deferredSize, long[] deferredPositions, boolean shouldDiscard) {
+        public ProcessResult(int nextWorkIndex, int deferredSize, long[] deferredPositions, boolean shouldDiscard,
+                int highestRing) {
             this.nextWorkIndex = nextWorkIndex;
             this.deferredSize = deferredSize;
             this.deferredPositions = deferredPositions;
             this.shouldDiscard = shouldDiscard;
+            this.highestRing = highestRing;
         }
     }
 
@@ -232,15 +249,23 @@ public class ExplosionProcessHelper {
             long[] deferredPositions,
             int deferredSize,
             int maxPerTick,
-            double firePower) {
+            double firePower,
+            int amplifyLevel) {
 
         int remaining = workList.size() - nextWorkIndex;
         int budget = Math.min(maxPerTick, remaining);
 
+        int highestRing = -1;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        boolean useSoulFire = firePower >= 10.0;
         for (int i = 0; i < budget; i++) {
             long packedPos = workList.positionAt(nextWorkIndex);
             int distSq = workList.distanceSquaredAt(nextWorkIndex);
+            double distance = Math.sqrt(distSq);
+            int ring = (int) Math.round(distance);
+            if (ring > highestRing) {
+                highestRing = ring;
+            }
             nextWorkIndex++;
 
             pos.set(packedPos);
@@ -256,22 +281,37 @@ public class ExplosionProcessHelper {
                 continue;
             }
 
-            boolean useSoulFire = firePower >= 10.0;
-            if (useSoulFire && state.getBlock() == Blocks.WATER) {
-                serverLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), UPDATE_FLAGS);
-                continue;
+            if (useSoulFire) {
+                boolean isWater = state.is(Blocks.WATER) ||
+                        state.getFluidState().getType() == Fluids.WATER ||
+                        state.getFluidState().getType() == Fluids.FLOWING_WATER;
+
+                if (isWater) {
+                    serverLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), UPDATE_FLAGS);
+
+                    if (serverLevel.getRandom().nextDouble() < 0.02) {
+                        double x = pos.getX() + 0.5;
+                        double y = pos.getY() + 0.5;
+                        double z = pos.getZ() + 0.5;
+
+                        serverLevel.playSound(null, x, y, z, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0f,
+                                1.0f);
+                    }
+
+                    continue;
+                }
             }
 
             if (state.getDestroySpeed(serverLevel, pos) < 0.0f) {
                 continue;
             }
 
-            if (!shouldDestroyBlock(serverLevel, pos, state, distSq, explosionCenter, explosionRadius, firePower)) {
+            if (!shouldDestroyBlock(serverLevel, pos, state, distSq, explosionCenter, explosionRadius, amplifyLevel)) {
                 continue;
             }
 
             float hardness = state.getDestroySpeed(serverLevel, pos);
-            double dropChance = Math.min(1.0, hardness / 10.0);
+            double dropChance = Math.min(1.0, hardness / 75.0);
             if (serverLevel.getRandom().nextDouble() < dropChance) {
                 Block.dropResources(state, serverLevel, pos, null, entity, ItemStack.EMPTY);
             }
@@ -281,17 +321,25 @@ public class ExplosionProcessHelper {
                 double fireChance = calculateFireIgnitionChance(firePower);
                 if (fireChance > 0.0 && serverLevel.getRandom().nextDouble() < fireChance) {
                     BlockPos belowPos = pos.below();
-                    if (useSoulFire && !serverLevel.isOutsideBuildHeight(belowPos)) {
+                    // For soulfire, use regular fire if block below is too soft (hardness < 0.5)
+                    boolean useSoulFireForBelowBlock = useSoulFire && !serverLevel.isOutsideBuildHeight(belowPos);
+                    if (useSoulFireForBelowBlock) {
                         BlockState belowState = serverLevel.getBlockState(belowPos);
-                        if (hasLowHardness(serverLevel, belowPos, belowState)) {
-                            serverLevel.setBlock(belowPos, Blocks.SOUL_SAND.defaultBlockState(), UPDATE_FLAGS);
+                        if (!hasLowHardness(serverLevel, belowPos, belowState)) {
+                            float belowHardness = belowState.getDestroySpeed(serverLevel, belowPos);
+                            if (belowHardness >= 0.5f && belowHardness < 2.0f) { // Only convert medium hardness blocks
+                                serverLevel.setBlock(belowPos, Blocks.SOUL_SAND.defaultBlockState(), UPDATE_FLAGS);
+                            }
                         }
                     }
-                    BlockState fireState = useSoulFire ? Blocks.SOUL_FIRE.defaultBlockState()
+
+                    // For the fire itself, use regular fire if the destroyed block was too soft
+                    boolean useSoulFireForThisBlock = useSoulFire && !hasLowHardness(serverLevel, pos, state);
+                    BlockState fireState = useSoulFireForThisBlock ? Blocks.SOUL_FIRE.defaultBlockState()
                             : Blocks.FIRE.defaultBlockState();
                     if (fireState.canSurvive(serverLevel, pos)) {
                         serverLevel.setBlock(pos, fireState, UPDATE_FLAGS);
-                    } else if (useSoulFire) {
+                    } else if (useSoulFireForThisBlock) {
                         BlockState regularFireState = Blocks.FIRE.defaultBlockState();
                         if (regularFireState.canSurvive(serverLevel, pos)) {
                             serverLevel.setBlock(pos, regularFireState, UPDATE_FLAGS);
@@ -310,7 +358,12 @@ public class ExplosionProcessHelper {
         }
 
         boolean shouldDiscard = nextWorkIndex >= workList.size();
-        return new ProcessResult(nextWorkIndex, deferredSize, deferredPositions, shouldDiscard);
+        if (highestRing == -1 && nextWorkIndex > 0 && nextWorkIndex <= workList.size()) {
+            int lastDistSq = workList.distanceSquaredAt(nextWorkIndex - 1);
+            double lastDistance = Math.sqrt(lastDistSq);
+            highestRing = (int) Math.round(lastDistance);
+        }
+        return new ProcessResult(nextWorkIndex, deferredSize, deferredPositions, shouldDiscard, highestRing);
     }
 
     public static long[] deferPosition(long[] deferredPositions, int deferredSize, long packedPos) {
@@ -332,5 +385,70 @@ public class ExplosionProcessHelper {
             list.add(deferredPositions[i], 0);
         }
         return list;
+    }
+
+    private static final double SOULFIRE_THRESHOLD = 8.0;
+
+    /**
+     * Gets the RGB color values for explosion burst projectiles based on fire
+     * power.
+     */
+    private static float[] getExplosionBurstColor(double firePower) {
+        boolean isSoulfire = firePower >= SOULFIRE_THRESHOLD;
+        if (isSoulfire) {
+            return new float[] { 0.3f, 0.7f, 1.0f }; // Blue for soulfire
+        } else {
+            return new float[] { 1.0f, 0.6f, 0.2f }; // Orange for regular fire
+        }
+    }
+
+    /**
+     * Spawns explosion fire projectiles that ignite blocks and entities they hit.
+     */
+    public static void spawnExplosionFireProjectiles(ServerLevel level, Vec3 center, double radius, double firePower,
+            float charge) {
+        double spawnRadius = radius * 0.5f;
+
+        float[] color = getExplosionBurstColor(firePower);
+        float r = color[0];
+        float g = color[1];
+        float b = color[2];
+
+        int projectileCount = (int) (radius * 4 * charge);
+        for (int i = 0; i < projectileCount; i++) {
+            double u = level.getRandom().nextDouble();
+            double v = level.getRandom().nextDouble();
+
+            double theta = 2.0 * Math.PI * u;
+            double phi = Math.acos(2.0 * v - 1.0);
+
+            double offsetX = Math.sin(phi) * Math.cos(theta) * spawnRadius;
+            double offsetY = Math.cos(phi) * spawnRadius;
+            double offsetZ = Math.sin(phi) * Math.sin(theta) * spawnRadius;
+
+            double distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY + offsetZ * offsetZ);
+            double dirX = offsetX / distance;
+            double dirY = offsetY / distance;
+            double dirZ = offsetZ / distance;
+
+            double speed = (0.25 + level.getRandom().nextDouble() * 0.45) * 0.075f * radius;
+
+            double vx = dirX * speed;
+            double vy = dirY * speed;
+            double vz = dirZ * speed;
+
+            vx += level.getRandom().nextGaussian() * 0.02;
+            vy += level.getRandom().nextGaussian() * 0.02;
+            vz += level.getRandom().nextGaussian() * 0.02;
+
+            ExplosionBurstProjectile projectile = new ExplosionBurstProjectile(
+                    ModEntities.EXPLOSION_BURST_PROJECTILE.get(),
+                    level,
+                    center.x + offsetX, center.y + offsetY, center.z + offsetZ,
+                    vx, vy, vz,
+                    r, g, b);
+
+            level.addFreshEntity(projectile);
+        }
     }
 }

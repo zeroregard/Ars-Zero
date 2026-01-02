@@ -1,7 +1,6 @@
 package com.github.ars_zero.common.entity.explosion;
 
 import com.alexthw.sauce.registry.ModRegistry;
-import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.AbstractConvergenceEntity;
 import com.github.ars_zero.common.entity.IAnchorLerp;
@@ -9,12 +8,8 @@ import com.github.ars_zero.common.explosion.LargeExplosionDamage;
 import com.github.ars_zero.common.explosion.LargeExplosionPrecompute;
 import com.github.ars_zero.common.explosion.ExplosionWorkList;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
-import net.minecraft.core.particles.ParticleTypes;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
-import com.hollingsworth.arsnouveau.common.spell.effect.EffectExplosion;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -27,7 +22,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -95,8 +89,13 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
     @Nullable
     private Object primingSoundInstance = null;
 
+    @OnlyIn(Dist.CLIENT)
+    @Nullable
+    private Object resolverSoundInstance = null;
+
     private ExplosionWorkList workList;
     private int nextWorkIndex;
+    private int lastProcessedRing = -1;
 
     private long[] deferredPositions;
     private int deferredSize;
@@ -112,12 +111,16 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
     private SoundEvent warningSound = null;
     private boolean warningSoundPlayed = false;
 
+    @Nullable
+    private SoundEvent resolveSound = null;
+    private boolean resolveSoundPlayed = false;
+
     public ExplosionControllerEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
         this.charge = 0.0f;
         this.firePower = 0.0;
         this.explodeAnimationStartTick = 0;
-        this.explodeAnimationDurationTicks = (int) (BASE_EXPLODE_ANIMATION_SECONDS * 20.0);
+        this.explodeAnimationDurationTicks = (int) (BASE_EXPLODE_ANIMATION_SECONDS * 20.0) - 2;
     }
 
     @Override
@@ -236,14 +239,10 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
                 ExplosionSoundHelper.stopPrimingSound(ref);
                 this.primingSoundInstance = ref[0];
             }
-            if (explodeAnimationStartTick == 0) {
-                explodeAnimationStartTick = this.tickCount;
-                if (this.level() instanceof net.minecraft.client.multiplayer.ClientLevel clientLevel) {
-                    double firePower = this.getFirePower();
-                    ExplosionParticleHelper.spawnExplosionBurstClient(clientLevel, this.position(), this.getRadius(),
-                            firePower);
-                    ExplosionParticleHelper.spawnShockwaveClient(clientLevel, this.position(), this.getRadius());
-                }
+            if (this.resolverSoundInstance != null) {
+                Object[] ref = { this.resolverSoundInstance };
+                ExplosionSoundHelper.stopResolverSound(ref);
+                this.resolverSoundInstance = ref[0];
             }
             if (explodeAnimationStartTick > 0) {
                 int ticksSinceExplode = this.tickCount - explodeAnimationStartTick;
@@ -293,6 +292,12 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
             Object[] ref = { this.idleSoundInstance };
             ExplosionSoundHelper.stopIdleSound(ref);
             this.idleSoundInstance = ref[0];
+        }
+
+        if (remainingLifespan == 19 && this.resolverSoundInstance == null && this.resolveSound != null) {
+            Object[] ref = { this.resolverSoundInstance };
+            ExplosionSoundHelper.startResolverSound(this, ref);
+            this.resolverSoundInstance = ref[0];
         }
     }
 
@@ -376,6 +381,16 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         this.warningSound = sound;
     }
 
+    public void setResolveSound(@Nullable SoundEvent sound) {
+        this.resolveSound = sound;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Nullable
+    public SoundEvent getResolveSound() {
+        return this.resolveSound;
+    }
+
     @Override
     public void addLifespan(LivingEntity shooter, SpellStats spellStats, SpellContext spellContext,
             SpellResolver resolver) {
@@ -417,6 +432,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         this.exploding = true;
         this.animState = AnimState.EXPLODING;
         this.explodeAnimationStartTick = this.tickCount;
+        this.lastProcessedRing = -1;
         if (!this.level().isClientSide) {
             this.entityData.set(DATA_EXPLODING, true);
             this.entityData.set(DATA_ANIM_STATE, AnimState.EXPLODING.ordinal());
@@ -438,40 +454,17 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         }
 
         if (!activateSoundPlayed) {
-            ExplosionSoundHelper.playActivateSound(serverLevel, this.getX(), this.getY(), this.getZ());
+            ExplosionSoundHelper.playActivateSound(serverLevel, this.getX(), this.getY(), this.getZ(),
+                    calculatedRadius);
             activateSoundPlayed = true;
         }
 
-        ExplosionParticleHelper.spawnShockwave(serverLevel, center, calculatedRadius);
+        // Spawn explosion fire projectiles
+        ExplosionProcessHelper.spawnExplosionFireProjectiles(serverLevel, center, calculatedRadius, this.firePower,
+                currentCharge);
 
-        double shakeRange = calculatedRadius * 2.0;
-        double shakeRangeSq = shakeRange * shakeRange;
-
-        for (var player : serverLevel.players()) {
-            double distanceSq = player.distanceToSqr(center.x, center.y, center.z);
-            if (distanceSq <= shakeRangeSq) {
-                double distance = Math.sqrt(distanceSq);
-                float intensity;
-
-                if (distance <= calculatedRadius) {
-                    double normalizedDistance = distance / calculatedRadius;
-                    intensity = (float) ((1.0 - normalizedDistance) * 0.7 + 0.15);
-                } else {
-                    double outerDistance = distance - calculatedRadius;
-                    double outerRange = calculatedRadius;
-                    double normalizedOuterDistance = Math.min(1.0, outerDistance / outerRange);
-                    intensity = (float) ((1.0 - normalizedOuterDistance) * 0.15);
-                    intensity = Math.max(0.05f, intensity);
-                }
-
-                int durationTicks = Math.max(10, (int) (calculatedRadius * 0.5));
-                durationTicks = Math.min(durationTicks, 40);
-
-                com.github.ars_zero.common.network.PacketExplosionShake packet = new com.github.ars_zero.common.network.PacketExplosionShake(
-                        intensity, durationTicks);
-                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, packet);
-            }
-        }
+        // Shake nearby players
+        ExplosionShakeHelper.shakeNearbyPlayers(serverLevel, center, calculatedRadius);
 
         float adjustedDamage = ExplosionProcessHelper.calculateAdjustedDamage(this.baseDamage, this.amplifyLevel,
                 this.dampenLevel, currentCharge, this.firePower);
@@ -515,6 +508,10 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
             float charge = this.getCharge();
             int remainingLifespan = this.getLifespan();
 
+            if (remainingLifespan == 19 && !resolveSoundPlayed && resolveSound != null) {
+                resolveSoundPlayed = true;
+            }
+
             if (remainingLifespan <= 19 && charge > LOW_CHARGE_THRESHOLD && !warningSoundPlayed
                     && warningSound != null) {
                 serverLevel.playSound(null, this.getX(), this.getY(), this.getZ(), warningSound, SoundSource.NEUTRAL,
@@ -551,7 +548,20 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         int maxPerTick = Math.max(1, ServerConfig.LARGE_EXPLOSION_MAX_BLOCKS_PER_TICK.get());
         ExplosionProcessHelper.ProcessResult result = ExplosionProcessHelper.processWorkList(
                 serverLevel, this, workList, nextWorkIndex, this.explosionCenter, this.explosionRadius,
-                this.deferredPositions, this.deferredSize, maxPerTick, this.firePower);
+                this.deferredPositions, this.deferredSize, maxPerTick, this.firePower, this.amplifyLevel);
+
+        if (result.highestRing > 14 && result.highestRing > this.lastProcessedRing) {
+            for (int ring = this.lastProcessedRing + 1; ring <= result.highestRing; ring++) {
+                if (ring > 14) {
+                    ExplosionSoundHelper.playRingExplodeSound(serverLevel, this.explosionCenter.x,
+                            this.explosionCenter.y,
+                            this.explosionCenter.z);
+                }
+            }
+            this.lastProcessedRing = result.highestRing;
+        } else if (result.highestRing > this.lastProcessedRing) {
+            this.lastProcessedRing = result.highestRing;
+        }
 
         this.nextWorkIndex = result.nextWorkIndex;
         this.deferredSize = result.deferredSize;
