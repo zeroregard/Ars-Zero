@@ -1,4 +1,4 @@
-package com.github.ars_zero.client.gui.spell;
+package com.github.ars_zero.client.gui;
 
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;

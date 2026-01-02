@@ -1,6 +1,5 @@
 package com.github.ars_zero.client.gui;
 
-import com.github.ars_zero.client.gui.spell.SpellPhaseSlots;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
 import net.minecraft.world.InteractionHand;
@@ -34,5 +33,3 @@ public interface StaffSlotClipboardHost {
 
     SpellPhase getHostCurrentPhase();
 }
-
-

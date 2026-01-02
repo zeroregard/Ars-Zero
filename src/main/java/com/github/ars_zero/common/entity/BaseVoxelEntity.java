@@ -4,7 +4,10 @@ import com.github.ars_zero.common.entity.interaction.VoxelInteraction;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionRegistry;
 import com.github.ars_zero.common.entity.interaction.VoxelInteractionResult;
 import com.github.ars_zero.common.util.VoxelBlockInteractionHelper;
+import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
+import com.hollingsworth.arsnouveau.api.spell.SpellStats;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -33,7 +36,7 @@ import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
+public abstract class BaseVoxelEntity extends Projectile implements GeoEntity, ILifespanExtendable {
     public static final int DEFAULT_LIFETIME_TICKS = 1200;
     public static final float DEFAULT_BASE_SIZE = 3.0f / 16.0f;
     private static final EntityDataAccessor<Integer> LIFETIME = SynchedEntityData.defineId(BaseVoxelEntity.class, EntityDataSerializers.INT);
@@ -304,6 +307,20 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity {
     
     public void setLifetime(int lifetime) {
         this.entityData.set(LIFETIME, lifetime);
+    }
+    
+    @Override
+    public void addLifespan(LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
+        int currentLifetime = this.getLifetime();
+        int extensionAmount = 1;
+        
+        if (spellStats != null) {
+            int extendTimeLevel = spellStats.getBuffCount(AugmentExtendTime.INSTANCE);
+            extensionAmount += extendTimeLevel;
+        }
+        
+        int newLifetime = currentLifetime + extensionAmount;
+        this.setLifetime(newLifetime);
     }
     
     public float getSize() {

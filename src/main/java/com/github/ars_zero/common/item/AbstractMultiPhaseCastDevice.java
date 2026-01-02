@@ -165,6 +165,32 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     }
 
     @Override
+    public void onNextKeyPressed(ItemStack stack, ServerPlayer player) {
+        AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
+        if (caster != null) {
+            int currentSlot = Mth.clamp(caster.getCurrentSlot(), 0, SLOT_COUNT - 1);
+            int nextSlot = currentSlot + 1;
+            if (nextSlot >= SLOT_COUNT) {
+                nextSlot = 0;
+            }
+            caster.setCurrentSlot(nextSlot).saveToStack(stack);
+        }
+    }
+
+    @Override
+    public void onPreviousKeyPressed(ItemStack stack, ServerPlayer player) {
+        AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
+        if (caster != null) {
+            int currentSlot = Mth.clamp(caster.getCurrentSlot(), 0, SLOT_COUNT - 1);
+            int previousSlot = currentSlot - 1;
+            if (previousSlot < 0) {
+                previousSlot = SLOT_COUNT - 1;
+            }
+            caster.setCurrentSlot(previousSlot).saveToStack(stack);
+        }
+    }
+
+    @Override
     @OnlyIn(Dist.CLIENT)
     public void onRadialKeyPressed(ItemStack stack, Player player) {
         RadialMenuTracker.activate(stack);
