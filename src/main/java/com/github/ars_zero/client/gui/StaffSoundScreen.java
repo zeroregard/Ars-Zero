@@ -1,6 +1,5 @@
 package com.github.ars_zero.client.gui;
 
-import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.network.PacketSetStaffSound;
 import com.hollingsworth.arsnouveau.api.registry.SpellSoundRegistry;
 import com.hollingsworth.arsnouveau.api.sound.ConfiguredSpellSound;
@@ -10,7 +9,6 @@ import com.hollingsworth.arsnouveau.client.gui.book.BaseBook;
 import net.minecraft.client.gui.screens.Screen;
 import com.hollingsworth.arsnouveau.client.gui.buttons.GuiImageButton;
 import com.hollingsworth.arsnouveau.client.gui.buttons.SoundButton;
-import com.hollingsworth.arsnouveau.common.network.Networking;
 import com.hollingsworth.arsnouveau.setup.registry.SoundRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -59,7 +57,9 @@ public class StaffSoundScreen extends BaseBook {
     private List<LoopingSoundInfo> loopingSounds = new ArrayList<>();
     private Screen parentScreen;
 
-    public StaffSoundScreen(ConfiguredSpellSound beginSound, ConfiguredSpellSound tickSound, ConfiguredSpellSound endSound, ResourceLocation tickLoopingSound, InteractionHand stackHand, Screen parent) {
+    public StaffSoundScreen(ConfiguredSpellSound beginSound, ConfiguredSpellSound tickSound,
+            ConfiguredSpellSound endSound, ResourceLocation tickLoopingSound, InteractionHand stackHand,
+            Screen parent) {
         super();
         this.beginSound = beginSound;
         this.tickSound = tickSound;
@@ -67,9 +67,9 @@ public class StaffSoundScreen extends BaseBook {
         this.tickLoopingSoundId = tickLoopingSound;
         this.stackHand = stackHand;
         this.parentScreen = parent;
-        
+
         selectPhase(SoundPhase.BEGIN);
-        
+
         initLoopingSounds();
     }
 
@@ -83,7 +83,7 @@ public class StaffSoundScreen extends BaseBook {
 
     private void selectPhase(SoundPhase phase) {
         this.currentPhase = phase;
-        
+
         switch (phase) {
             case BEGIN -> {
                 this.selectedSound = beginSound.getSound();
@@ -105,12 +105,12 @@ public class StaffSoundScreen extends BaseBook {
                 this.pitch = endSound.getPitch() * 100;
             }
         }
-        
+
         if (volumeSlider != null) {
             volumeSlider.setValue(volume);
             pitchSlider.setValue(pitch);
         }
-        
+
         if (selectedButton != null) {
             selectedButton.sound = selectedSound != null ? selectedSound : SoundRegistry.EMPTY_SPELL_SOUND;
         }
@@ -120,29 +120,35 @@ public class StaffSoundScreen extends BaseBook {
     public void init() {
         super.init();
 
-        volumeSlider = buildSlider(bookLeft + 28, bookTop + 89, Component.translatable("ars_nouveau.sounds.volume"), Component.empty(), volume);
-        pitchSlider = buildSlider(bookLeft + 28, bookTop + 129, Component.translatable("ars_nouveau.sounds.pitch"), Component.empty(), pitch);
+        volumeSlider = buildSlider(bookLeft + 28, bookTop + 89, Component.translatable("ars_nouveau.sounds.volume"),
+                Component.empty(), volume);
+        pitchSlider = buildSlider(bookLeft + 28, bookTop + 129, Component.translatable("ars_nouveau.sounds.pitch"),
+                Component.empty(), pitch);
 
         addRenderableWidget(volumeSlider);
         addRenderableWidget(pitchSlider);
-        
+
         // Back button
-        addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 22, 0, 0, 16, 16, 16, 16, "textures/gui/clear_icon.png", (b) -> {
-            Minecraft.getInstance().setScreen(parentScreen);
-        }));
-        
+        addRenderableWidget(new GuiImageButton(bookLeft - 15, bookTop + 22, 0, 0, 16, 16, 16, 16,
+                "textures/gui/clear_icon.png", (b) -> {
+                    Minecraft.getInstance().setScreen(parentScreen);
+                }));
+
         // Save and Test buttons positioned properly
-        addRenderableWidget(new GuiImageButton(bookLeft + 25, bookBottom - 25, 0, 0, 37, 12, 37, 12, "textures/gui/save_icon.png", this::onSaveClick));
-        GuiImageButton testButton = new GuiImageButton(bookLeft + 90, bookBottom - 25, 0, 0, 37, 12, 37, 12, "textures/gui/sound_test_icon.png", this::onTestClick);
+        addRenderableWidget(new GuiImageButton(bookLeft + 25, bookBottom - 25, 0, 0, 37, 12, 37, 12,
+                "textures/gui/save_icon.png", this::onSaveClick));
+        GuiImageButton testButton = new GuiImageButton(bookLeft + 90, bookBottom - 25, 0, 0, 37, 12, 37, 12,
+                "textures/gui/sound_test_icon.png", this::onTestClick);
         testButton.soundDisabled = true;
         addRenderableWidget(testButton);
 
-        selectedButton = new SoundButton(bookLeft + 69, bookTop + 171, selectedSound != null ? selectedSound : SoundRegistry.EMPTY_SPELL_SOUND, (b) -> {
-            if (currentPhase != SoundPhase.TICK) {
-                ((SoundButton) b).sound = SoundRegistry.EMPTY_SPELL_SOUND;
-                selectedSound = SoundRegistry.EMPTY_SPELL_SOUND;
-            }
-        });
+        selectedButton = new SoundButton(bookLeft + 69, bookTop + 171,
+                selectedSound != null ? selectedSound : SoundRegistry.EMPTY_SPELL_SOUND, (b) -> {
+                    if (currentPhase != SoundPhase.TICK) {
+                        ((SoundButton) b).sound = SoundRegistry.EMPTY_SPELL_SOUND;
+                        selectedSound = SoundRegistry.EMPTY_SPELL_SOUND;
+                    }
+                });
         addRenderableWidget(selectedButton);
 
         addPhaseButtons();
@@ -231,17 +237,18 @@ public class StaffSoundScreen extends BaseBook {
         int xStart = bookLeft + 154;
         int yStart = bookTop + 52;
         List<SpellSound> sounds = SpellSoundRegistry.getSpellSounds();
-        
+
         // Limit to first 16 sounds to prevent overflow
         int maxSounds = Math.min(sounds.size(), 16);
-        
+
         for (int i = 0; i < maxSounds; i++) {
             SpellSound part = sounds.get(i);
             int row = i / PER_ROW;
             int col = i % PER_ROW;
-            
-            if (row >= MAX_ROWS) break;
-            
+
+            if (row >= MAX_ROWS)
+                break;
+
             int xOffset = col * 20;
             int yPlace = row * 18 + yStart;
 
@@ -260,17 +267,20 @@ public class StaffSoundScreen extends BaseBook {
 
     public void onTestClick(Button button) {
         LocalPlayer localPlayer = Minecraft.getInstance().player;
-        if (localPlayer == null) return;
-        
+        if (localPlayer == null)
+            return;
+
         BlockPos pos = localPlayer.getOnPos().above(2);
         float vol = (float) volumeSlider.getValue() / 100f;
         float pit = (float) pitchSlider.getValue() / 100f;
 
         if (currentPhase == SoundPhase.TICK && tickLoopingSoundId != null) {
             SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(tickLoopingSoundId);
-            localPlayer.level().playLocalSound(pos.getX(), pos.getY(), pos.getZ(), soundEvent, SoundSource.PLAYERS, vol, pit, false);
+            localPlayer.level().playLocalSound(pos.getX(), pos.getY(), pos.getZ(), soundEvent, SoundSource.PLAYERS, vol,
+                    pit, false);
         } else if (selectedSound != null && selectedSound != SoundRegistry.EMPTY_SPELL_SOUND) {
-            localPlayer.level().playLocalSound(pos.getX(), pos.getY(), pos.getZ(), selectedSound.getSoundEvent().value(), SoundSource.PLAYERS, vol, pit, false);
+            localPlayer.level().playLocalSound(pos.getX(), pos.getY(), pos.getZ(),
+                    selectedSound.getSoundEvent().value(), SoundSource.PLAYERS, vol, pit, false);
         }
     }
 
@@ -279,42 +289,43 @@ public class StaffSoundScreen extends BaseBook {
         float pit = (float) pitchSlider.getValue() / 100f;
 
         switch (currentPhase) {
-            case BEGIN -> beginSound = selectedSound == null || selectedSound == SoundRegistry.EMPTY_SPELL_SOUND 
-                ? ConfiguredSpellSound.EMPTY 
-                : new ConfiguredSpellSound(selectedSound, vol, pit);
+            case BEGIN -> beginSound = selectedSound == null || selectedSound == SoundRegistry.EMPTY_SPELL_SOUND
+                    ? ConfiguredSpellSound.EMPTY
+                    : new ConfiguredSpellSound(selectedSound, vol, pit);
             case TICK -> {
                 if (tickLoopingSoundId != null) {
                     tickSound = new ConfiguredSpellSound(SoundRegistry.EMPTY_SPELL_SOUND, vol, pit);
                 } else {
-                    tickSound = selectedSound == null || selectedSound == SoundRegistry.EMPTY_SPELL_SOUND 
-                        ? ConfiguredSpellSound.EMPTY 
-                        : new ConfiguredSpellSound(selectedSound, vol, pit);
+                    tickSound = selectedSound == null || selectedSound == SoundRegistry.EMPTY_SPELL_SOUND
+                            ? ConfiguredSpellSound.EMPTY
+                            : new ConfiguredSpellSound(selectedSound, vol, pit);
                 }
             }
-            case END -> endSound = selectedSound == null || selectedSound == SoundRegistry.EMPTY_SPELL_SOUND 
-                ? ConfiguredSpellSound.EMPTY 
-                : new ConfiguredSpellSound(selectedSound, vol, pit);
+            case END -> endSound = selectedSound == null || selectedSound == SoundRegistry.EMPTY_SPELL_SOUND
+                    ? ConfiguredSpellSound.EMPTY
+                    : new ConfiguredSpellSound(selectedSound, vol, pit);
         }
 
         com.github.ars_zero.common.network.Networking.sendToServer(
-            new PacketSetStaffSound(beginSound, tickSound, endSound, tickLoopingSoundId, stackHand == InteractionHand.MAIN_HAND)
-        );
+                new PacketSetStaffSound(beginSound, tickSound, endSound, tickLoopingSoundId,
+                        stackHand == InteractionHand.MAIN_HAND));
     }
 
     @Override
     public void drawBackgroundElements(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         super.drawBackgroundElements(graphics, mouseX, mouseY, partialTicks);
         int color = -8355712;
-        
-        graphics.drawString(font, Component.literal("Staff Sound Configuration").getString(), bookLeft + 51, bookTop + 8, color, false);
-        
+
+        graphics.drawString(font, Component.literal("Staff Sound Configuration").getString(), bookLeft + 51,
+                bookTop + 8, color, false);
+
         String phaseText = switch (currentPhase) {
             case BEGIN -> "BEGIN Phase (Single Fire)";
             case TICK -> "TICK Phase (Looping)";
             case END -> "END Phase (Single Fire)";
         };
         graphics.drawString(font, phaseText, bookLeft + 25, bookTop + 50, color, false);
-        
+
         graphics.drawString(font, "Save", bookLeft + 37, bookBottom - 18, color, false);
         graphics.drawString(font, "Test", bookLeft + 102, bookBottom - 18, color, false);
 
@@ -335,4 +346,3 @@ public class StaffSoundScreen extends BaseBook {
         }
     }
 }
-

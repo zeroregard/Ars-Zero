@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.particle.timeline.ConvergenceTimeline;
 import com.github.ars_zero.common.particle.timeline.NearTimeline;
 import com.github.ars_zero.common.particle.timeline.TemporalContextTimeline;
 import com.hollingsworth.arsnouveau.api.particle.configurations.IParticleMotionType;
@@ -25,6 +26,11 @@ public class ModParticleTimelines {
         () -> new SimpleParticleTimelineType<>(ModGlyphs.TEMPORAL_CONTEXT_FORM, TemporalContextTimeline.CODEC, TemporalContextTimeline.STREAM_CODEC, TemporalContextTimeline::new)
     );
 
+    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<ConvergenceTimeline>> CONVERGENCE_TIMELINE = TIMELINES.register(
+        "convergence",
+        () -> new SimpleParticleTimelineType<>(ModGlyphs.EFFECT_CONVERGENCE, ConvergenceTimeline.CODEC, ConvergenceTimeline.STREAM_CODEC, ConvergenceTimeline::new)
+    );
+
     public static void init(IEventBus eventBus) {
         TIMELINES.register(eventBus);
     }
@@ -36,6 +42,8 @@ public class ModParticleTimelines {
         NearTimeline.RESOLVING_OPTIONS.add(burst);
         TemporalContextTimeline.RESOLVING_OPTIONS.add(none);
         TemporalContextTimeline.RESOLVING_OPTIONS.add(burst);
+        ConvergenceTimeline.RESOLVING_OPTIONS.add(none);
+        ConvergenceTimeline.RESOLVING_OPTIONS.add(burst);
     }
 }
 

@@ -4,6 +4,8 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
+import com.github.ars_zero.common.entity.ILifespanExtendable;
+import com.github.ars_zero.common.entity.IAnchorLerp;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
@@ -78,9 +80,11 @@ public class AnchorEffect extends AbstractEffect {
                 continue;
             }
 
+            if (target instanceof ILifespanExtendable lifespanExtendable) {
+                lifespanExtendable.addLifespan(shooter, spellStats, spellContext, resolver);
+            }
+
             if (target instanceof BlockGroupEntity blockGroup) {
-                blockGroup.addLifespan(1);
-                
                 if (!blockGroup.isAlive()) {
                     continue;
                 }
@@ -118,7 +122,23 @@ public class AnchorEffect extends AbstractEffect {
                     targetPlayer.setDeltaMovement(Vec3.ZERO);
                     targetPlayer.setNoGravity(true);
                 } else {
-                    target.setPos(newPosition.x, newPosition.y, newPosition.z);
+                    if (target instanceof IAnchorLerp lerpEntity) {
+                        Vec3 currentPos = target.position();
+                        double lerpValue = lerpEntity.getLerpValue();
+                        double maxDelta = Math.max(0.0, lerpEntity.getMaxDelta());
+
+                        double moveX = (newPosition.x - currentPos.x) * lerpValue;
+                        double moveY = (newPosition.y - currentPos.y) * lerpValue;
+                        double moveZ = (newPosition.z - currentPos.z) * lerpValue;
+
+                        moveX = Math.max(-maxDelta, Math.min(maxDelta, moveX));
+                        moveY = Math.max(-maxDelta, Math.min(maxDelta, moveY));
+                        moveZ = Math.max(-maxDelta, Math.min(maxDelta, moveZ));
+
+                        target.setPos(currentPos.x + moveX, currentPos.y + moveY, currentPos.z + moveZ);
+                    } else {
+                        target.setPos(newPosition.x, newPosition.y, newPosition.z);
+                    }
                     target.setDeltaMovement(Vec3.ZERO);
                     target.setNoGravity(true);
                     
@@ -329,4 +349,5 @@ public class AnchorEffect extends AbstractEffect {
         return Set.of(SpellSchools.MANIPULATION);
     }
 }
+
 

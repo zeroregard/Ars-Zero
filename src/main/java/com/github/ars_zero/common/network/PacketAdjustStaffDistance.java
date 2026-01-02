@@ -49,21 +49,8 @@ public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPac
                 
                 double scrollSensitivity = SCROLL_SENSITIVITY;
                 
-                var targetEntity = castContext.beginResults.get(0).targetEntity;
-                float entitySize = 1.0f;
-                
-                // TODO: Replace voxel instanceof check with general entity scale attachment for any scalable entity
-                if (targetEntity instanceof BaseVoxelEntity voxel) {
-                    entitySize = voxel.getSize();
-                    scrollSensitivity *= entitySize;
-                }
-                
                 double multiplierChange = packet.scrollDelta * scrollSensitivity;
-                double oldMultiplier = castContext.distanceMultiplier;
                 castContext.distanceMultiplier += multiplierChange;
-                
-                ArsZero.LOGGER.debug("Scroll: voxelSize={}, scrollDelta={}, sensitivity={}, multiplierChange={}, distanceMultiplier: {} -> {}", 
-                    entitySize, packet.scrollDelta, scrollSensitivity, multiplierChange, oldMultiplier, castContext.distanceMultiplier);
                 
                 castContext.distanceMultiplier = Math.max(MIN_DISTANCE_MULTIPLIER, 
                                                           Math.min(MAX_DISTANCE_MULTIPLIER, castContext.distanceMultiplier));

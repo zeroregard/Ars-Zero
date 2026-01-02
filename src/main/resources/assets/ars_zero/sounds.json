@@ -22,5 +22,45 @@
         "stream": false
       }
     ]
+  },
+  "explosion_charge": {
+    "sounds": [
+      {
+        "name": "ars_zero:explosion_charge",
+        "stream": false
+      }
+    ]
+  },
+  "explosion_idle": {
+    "sounds": [
+      {
+        "name": "ars_zero:explosion_idle",
+        "stream": false
+      }
+    ]
+  },
+  "explosion_activate": {
+    "sounds": [
+      {
+        "name": "ars_zero:explosion_activate",
+        "stream": false
+      }
+    ]
+  },
+  "explosion_priming": {
+    "sounds": [
+      {
+        "name": "ars_zero:explosion_priming",
+        "stream": false
+      }
+    ]
+  },
+  "explosion_distant": {
+    "sounds": [
+      {
+        "name": "ars_zero:explosion_distant",
+        "stream": false
+      }
+    ]
   }
 }

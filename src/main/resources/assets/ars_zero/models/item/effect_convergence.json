@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ars_zero:item/glyph/convergence_effect"
+  }
+}
+
+
+
