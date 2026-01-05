@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerLevel;
 public final class WaterConvergenceParticleHelper {
 
   private static final int RAIN_PARTICLES_PER_RADIUS = 8;
-  private static final int SPLASH_PARTICLE_COUNT = 8;
+  private static final int SPLASH_PARTICLE_COUNT = 16;
 
   private WaterConvergenceParticleHelper() {
   }
@@ -42,6 +42,6 @@ public final class WaterConvergenceParticleHelper {
     double x = pos.getX() + 0.5;
     double y = pos.getY() + 0.5;
     double z = pos.getZ() + 0.5;
-    serverLevel.sendParticles(ModParticles.FAST_POOF.get(), x, y, z, SPLASH_PARTICLE_COUNT, 0.25, 0.25, 0.25, 0.01);
+    serverLevel.sendParticles(ModParticles.FAST_POOF.get(), x, y, z, SPLASH_PARTICLE_COUNT, 0.25, 0, 0.25, 0.01);
   }
 }

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class WaterConvergenceHelper {
 
-  private static final int DEFAULT_LIFESPAN = 4;
+  private static final int DEFAULT_LIFESPAN = 1;
   private static final double BASE_WATER_RADIUS = ConvergenceConstants.BASE_CONVERGENCE_RADIUS + 2.0;
 
   private WaterConvergenceHelper() {
