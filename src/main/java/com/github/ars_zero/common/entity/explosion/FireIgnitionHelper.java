@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.entity.explosion;
 
-import com.hollingsworth.arsnouveau.api.util.BlockUtil;
+import com.github.ars_zero.common.util.BlockProtectionUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -44,11 +44,9 @@ public class FireIgnitionHelper {
       return false;
     }
 
-    if (claimActor != null) {
-      if (!BlockUtil.destroyRespectsClaim(claimActor, level, hitPos) ||
-          !BlockUtil.destroyRespectsClaim(claimActor, level, firePos)) {
-        return false;
-      }
+    if (!BlockProtectionUtil.canBlockBeDestroyed(level, hitPos, claimActor) ||
+        !BlockProtectionUtil.canBlockBeDestroyed(level, firePos, claimActor)) {
+      return false;
     }
 
     // For soulfire, use regular fire if block is too soft (hardness < 0.5)

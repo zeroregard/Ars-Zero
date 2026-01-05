@@ -143,6 +143,12 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         if (casterUUID == null) {
             return null;
         }
+        if (level.getServer() != null && level.getServer().getPlayerList() != null) {
+            Player realPlayer = level.getServer().getPlayerList().getPlayer(casterUUID);
+            if (realPlayer != null) {
+                return realPlayer;
+            }
+        }
         return ANFakePlayer.getPlayer(level, casterUUID);
     }
 

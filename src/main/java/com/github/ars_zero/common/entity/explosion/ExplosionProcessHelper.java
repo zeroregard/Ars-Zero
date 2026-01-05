@@ -1,9 +1,8 @@
 package com.github.ars_zero.common.entity.explosion;
 
 import com.github.ars_zero.common.explosion.ExplosionWorkList;
-import com.github.ars_zero.common.util.BlockImmutabilityUtil;
+import com.github.ars_zero.common.util.BlockProtectionUtil;
 import com.github.ars_zero.registry.ModEntities;
-import com.hollingsworth.arsnouveau.api.util.BlockUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -176,10 +175,7 @@ public class ExplosionProcessHelper {
             }
 
             BlockState state = serverLevel.getBlockState(checkPos);
-            if (state.isAir() || BlockImmutabilityUtil.isBlockImmutable(state)) {
-                continue;
-            }
-            if (state.getDestroySpeed(serverLevel, checkPos) < 0.0f) {
+            if (state.isAir()) {
                 continue;
             }
 
@@ -187,7 +183,7 @@ public class ExplosionProcessHelper {
                 continue;
             }
 
-            if (claimActor != null && !BlockUtil.destroyRespectsClaim(claimActor, serverLevel, checkPos)) {
+            if (!BlockProtectionUtil.canBlockBeDestroyed(serverLevel, checkPos, claimActor)) {
                 continue;
             }
 
@@ -202,7 +198,7 @@ public class ExplosionProcessHelper {
                     continue;
                 }
 
-                if (claimActor != null && !BlockUtil.destroyRespectsClaim(claimActor, serverLevel, firePos)) {
+                if (!BlockProtectionUtil.canBlockBeDestroyed(serverLevel, firePos, claimActor)) {
                     continue;
                 }
 
@@ -288,9 +284,6 @@ public class ExplosionProcessHelper {
             if (state.isAir()) {
                 continue;
             }
-            if (BlockImmutabilityUtil.isBlockImmutable(state)) {
-                continue;
-            }
 
             if (useSoulFire) {
                 boolean isWater = state.is(Blocks.WATER) ||
@@ -298,7 +291,7 @@ public class ExplosionProcessHelper {
                         state.getFluidState().getType() == Fluids.FLOWING_WATER;
 
                 if (isWater) {
-                    if (claimActor != null && !BlockUtil.destroyRespectsClaim(claimActor, serverLevel, pos)) {
+                    if (!BlockProtectionUtil.canBlockBeDestroyed(serverLevel, pos, claimActor)) {
                         continue;
                     }
                     serverLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), UPDATE_FLAGS);
@@ -316,15 +309,11 @@ public class ExplosionProcessHelper {
                 }
             }
 
-            if (state.getDestroySpeed(serverLevel, pos) < 0.0f) {
+            if (!BlockProtectionUtil.canBlockBeDestroyed(serverLevel, pos, claimActor)) {
                 continue;
             }
 
             if (!shouldDestroyBlock(serverLevel, pos, state, distSq, explosionCenter, explosionRadius, amplifyLevel)) {
-                continue;
-            }
-
-            if (claimActor != null && !BlockUtil.destroyRespectsClaim(claimActor, serverLevel, pos)) {
                 continue;
             }
 
@@ -342,7 +331,7 @@ public class ExplosionProcessHelper {
                     // For soulfire, use regular fire if block below is too soft (hardness < 0.5)
                     boolean useSoulFireForBelowBlock = useSoulFire && !serverLevel.isOutsideBuildHeight(belowPos);
                     if (useSoulFireForBelowBlock) {
-                        if (claimActor == null || BlockUtil.destroyRespectsClaim(claimActor, serverLevel, belowPos)) {
+                        if (BlockProtectionUtil.canBlockBeDestroyed(serverLevel, belowPos, claimActor)) {
                             BlockState belowState = serverLevel.getBlockState(belowPos);
                             if (!hasLowHardness(serverLevel, belowPos, belowState)) {
                                 float belowHardness = belowState.getDestroySpeed(serverLevel, belowPos);
@@ -355,7 +344,7 @@ public class ExplosionProcessHelper {
                     }
 
                     // For the fire itself, use regular fire if the destroyed block was too soft
-                    if (claimActor == null || BlockUtil.destroyRespectsClaim(claimActor, serverLevel, pos)) {
+                    if (BlockProtectionUtil.canBlockBeDestroyed(serverLevel, pos, claimActor)) {
                         boolean useSoulFireForThisBlock = useSoulFire && !hasLowHardness(serverLevel, pos, state);
                         BlockState fireState = useSoulFireForThisBlock ? Blocks.SOUL_FIRE.defaultBlockState()
                                 : Blocks.FIRE.defaultBlockState();
