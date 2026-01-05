@@ -16,7 +16,7 @@ public final class WaterConvergencePattern {
         int r2 = r * r;
         List<BlockPos> positions = new ArrayList<>();
 
-        for (int dy = -r; dy <= 0; dy++) {
+        for (int dy = -r; dy <= -2; dy++) {
             int y = sphereCenter.getY() + dy;
             int dy2 = dy * dy;
             for (int dx = -r; dx <= r; dx++) {
@@ -35,9 +35,11 @@ public final class WaterConvergencePattern {
 
         positions.sort(Comparator
                 .comparingInt((BlockPos p) -> p.getY())
-                .thenComparingInt((BlockPos p) -> p.getX())
+                .thenComparingInt((BlockPos p) -> {
+                    int y = p.getY();
+                    return (y % 2 == 0) ? p.getX() : -p.getX();
+                })
                 .thenComparingInt((BlockPos p) -> p.getZ()));
         return positions;
     }
 }
-

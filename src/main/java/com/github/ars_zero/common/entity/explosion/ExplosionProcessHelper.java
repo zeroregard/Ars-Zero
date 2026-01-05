@@ -21,7 +21,7 @@ public class ExplosionProcessHelper {
 
     private static final int UPDATE_FLAGS = net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
     private static final double IGNITION_MULTIPLIER = 0.08;
-    private static final double BASE_RADIUS_CHARGE_MULTIPLIER = 14.0;
+    private static final double BASE_RADIUS_CHARGE_MULTIPLIER = com.github.ars_zero.common.glyph.convergence.ConvergenceConstants.BASE_CONVERGENCE_RADIUS;
     private static final double POWER_RADIUS_ADD_MULTIPLIER = 0.25;
 
     public static double calculateRadius(float charge, double firePower, int aoeLevel, int dampenLevel) {

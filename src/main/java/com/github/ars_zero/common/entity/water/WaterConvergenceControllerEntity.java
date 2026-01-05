@@ -25,9 +25,9 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
 
     private static final EntityDataAccessor<Integer> DATA_RADIUS = SynchedEntityData
             .defineId(WaterConvergenceControllerEntity.class, EntityDataSerializers.INT);
-    private static final int DEFAULT_RADIUS = 8;
+    private static final int DEFAULT_RADIUS = 14;
+    private static final float PLACEMENT_MULTIPLIER = 4.0f;
 
-    private boolean started;
     private int nextIndex;
     private List<BlockPos> pattern;
     private float waterPower;
@@ -76,11 +76,7 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
         if (this.level().isClientSide) {
             return;
         }
-        if (this.started) {
-            return;
-        }
-        this.started = true;
-        ensurePattern();
+        this.discard();
     }
 
     @Override
@@ -91,13 +87,11 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
             return;
         }
 
-        if (!this.started) {
-            return;
-        }
-
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
         }
+
+        WaterConvergenceParticleHelper.spawnRainParticles(serverLevel, getSphereCenterBlockPos(), getRadius());
 
         ensurePattern();
         if (this.pattern == null || this.nextIndex >= this.pattern.size()) {
@@ -122,6 +116,7 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
             }
 
             serverLevel.setBlock(target, Blocks.WATER.defaultBlockState(), 3);
+            WaterConvergenceParticleHelper.spawnSplashParticle(serverLevel, target);
             placedThisTick++;
         }
 
@@ -144,7 +139,8 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
     }
 
     protected int getMaxPlacementsPerTick(float waterPower) {
-        return 1;
+        float toPlace = PLACEMENT_MULTIPLIER * (1.0f + waterPower / 2.0f);
+        return (int) toPlace;
     }
 
     private float getWaterPower(LivingEntity caster) {
@@ -160,9 +156,6 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
     @Override
     protected void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
-        if (compound.contains("started")) {
-            this.started = compound.getBoolean("started");
-        }
         if (compound.contains("next_index")) {
             this.nextIndex = compound.getInt("next_index");
         }
@@ -183,7 +176,6 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
     @Override
     protected void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
-        compound.putBoolean("started", this.started);
         compound.putInt("next_index", this.nextIndex);
         compound.putFloat("water_power", this.waterPower);
         if (this.casterUuid != null) {
@@ -192,4 +184,3 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
         compound.putInt("radius", getRadius());
     }
 }
-
