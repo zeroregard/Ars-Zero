@@ -43,6 +43,7 @@
   "entity.ars_zero.lightning_voxel_entity": "Lightning Voxel",
   "entity.ars_zero.blight_voxel_entity": "Blight Voxel",
   "entity.ars_zero.block_group": "Block Group",
+  "entity.ars_zero.water_convergence_controller": "Water Convergence",
 
   "gui.ars_zero.staff_title": "Creative Spell Staff",
   "gui.ars_zero.phase.begin": "Begin",
@@ -149,6 +150,7 @@
   "ars_zero.glyph_desc.glyph_effect_convergence": "Creates a powerful convergence point that can be augmented with other effects.",
   "ars_nouveau.glyph_name.effect_convergence": "Convergence",
   "ars_zero.effect_augment_desc.effect_convergence_glyph_explosion": "Composite Effect: Creates an enormous explosion that charges over time. Fire Power affects charge rate, explosion radius and ignition (at 8+ turns into Extinguishing Soulfire Explosion). AOE determines radius. Amplify increases damage (to blocks/entities). Dampen decreases damage and radius.",
+  "ars_zero.effect_augment_desc.effect_convergence_glyph_conjure_water": "Composite Effect: Fills a hemispherical area with water from bottom to top. Water Power affects placement behavior.",
 
   "ars_nouveau.spell.validation.adding.phase_restriction": "%s is not usable in this phase.",
   "ars_nouveau.spell.validation.exists.phase_restriction": "%s is not usable in this phase."

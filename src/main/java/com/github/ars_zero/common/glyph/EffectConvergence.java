@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.SourceJarChargerEntity;
 import com.github.ars_zero.common.entity.PlayerChargerEntity;
 import com.github.ars_zero.common.entity.explosion.ExplosionControllerEntity;
+import com.github.ars_zero.common.entity.water.WaterConvergenceControllerEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
@@ -26,6 +27,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.block.tile.SourceJarTile;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
+import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectExplosion;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -52,7 +54,8 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
     public static final EffectConvergence INSTANCE = new EffectConvergence();
 
     private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[] {
-            EffectExplosion.INSTANCE.getRegistryName()
+            EffectExplosion.INSTANCE.getRegistryName(),
+            EffectConjureWater.INSTANCE.getRegistryName()
     };
 
     private static final int DEFAULT_LIFESPAN = 20;
@@ -109,6 +112,21 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
                     break;
                 }
             }
+        } else if (hasConjureWaterEffect(spellContext)) {
+            WaterConvergenceControllerEntity entity = new WaterConvergenceControllerEntity(
+                    ModEntities.WATER_CONVERGENCE_CONTROLLER.get(),
+                    serverLevel);
+            entity.setPos(pos.x, pos.y, pos.z);
+            if (shooter != null) {
+                entity.setCaster(shooter);
+            }
+            entity.setLifespan(DEFAULT_LIFESPAN);
+            serverLevel.addFreshEntity(entity);
+
+            updateTemporalContext(shooter, entity, spellContext);
+
+            consumeFirstConjureWaterEffect(spellContext);
+            triggerResolveEffects(spellContext, world, pos);
         } else if (rayTraceResult instanceof EntityHitResult entityHitResult) {
             if (entityHitResult.getEntity() instanceof Player targetPlayer && shooter != null) {
                 PlayerChargerEntity chargerEntity = new PlayerChargerEntity(ModEntities.PLAYER_CHARGER.get(),
@@ -174,6 +192,28 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
             }
         }
         return false;
+    }
+
+    private boolean hasConjureWaterEffect(SpellContext context) {
+        SpellContext iterator = context.clone();
+        while (iterator.hasNextPart()) {
+            AbstractSpellPart next = iterator.nextPart();
+            if (next instanceof EffectConjureWater) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void consumeFirstConjureWaterEffect(SpellContext context) {
+        SpellContext iterator = context.clone();
+        while (iterator.hasNextPart()) {
+            AbstractSpellPart next = iterator.nextPart();
+            if (next instanceof EffectConjureWater conjureWater) {
+                consumeEffect(context, conjureWater);
+                return;
+            }
+        }
     }
 
     private double calculateExplosionIntensity(SpellStats spellStats) {

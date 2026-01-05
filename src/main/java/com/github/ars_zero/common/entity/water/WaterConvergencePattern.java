@@ -34,9 +34,9 @@ public final class WaterConvergencePattern {
         }
 
         positions.sort(Comparator
-                .comparingInt(BlockPos::getY)
-                .thenComparingInt(BlockPos::getX)
-                .thenComparingInt(BlockPos::getZ));
+                .comparingInt((BlockPos p) -> p.getY())
+                .thenComparingInt((BlockPos p) -> p.getX())
+                .thenComparingInt((BlockPos p) -> p.getZ()));
         return positions;
     }
 }

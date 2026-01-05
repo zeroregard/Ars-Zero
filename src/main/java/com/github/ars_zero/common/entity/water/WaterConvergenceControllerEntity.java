@@ -16,6 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
+import software.bernie.geckolib.animation.AnimatableManager;
 
 import java.util.List;
 import java.util.UUID;
@@ -58,6 +59,10 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
     public void setCaster(@NotNull LivingEntity caster) {
         this.casterUuid = caster.getUUID();
         this.waterPower = getWaterPower(caster);
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
     }
 
     @Override
