@@ -132,6 +132,11 @@
   "ars_zero.glyph_name.push_effect": "Push",
   "ars_zero.glyph_desc.push_effect": "Pushes the target in the direction you're looking.",
 
+  "ars_zero.glyph_name.discard_effect": "Discard",
+  "ars_zero.glyph_desc.discard_effect": "Discards non-living entities.",
+  "ars_zero.glyph_name.glyph_discard_effect": "Discard",
+  "ars_zero.glyph_desc.glyph_discard_effect": "Discards non-living entities. Useful for removing Arcane Voxels.",
+
   "ars_zero.glyph_name.enlarge_effect": "Enlarge",
   "ars_zero.glyph_desc.enlarge_effect": "Increases the size of the target entity [NB: only works on Voxels so far]",
 
