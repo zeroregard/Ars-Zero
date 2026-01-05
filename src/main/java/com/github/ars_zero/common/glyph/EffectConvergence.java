@@ -79,6 +79,9 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
             ExplosionControllerEntity entity = new ExplosionControllerEntity(ModEntities.EXPLOSION_CONTROLLER.get(),
                     serverLevel);
             entity.setPos(pos.x, pos.y, pos.z);
+            if (shooter != null) {
+                entity.setCasterUUID(shooter.getUUID());
+            }
 
             SpellContext iterator = spellContext.clone();
             while (iterator.hasNextPart()) {
