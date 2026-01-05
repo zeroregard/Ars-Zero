@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -38,6 +39,11 @@ public class DiscardEffect extends AbstractEffect {
         }
 
         if (target instanceof LivingEntity) {
+            return;
+        }
+
+        if (target instanceof BaseVoxelEntity voxel) {
+            voxel.resolveAndDiscardSelf();
             return;
         }
 
