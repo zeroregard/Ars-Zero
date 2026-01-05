@@ -3,19 +3,21 @@ package com.github.ars_zero.common.entity.explosion;
 import com.github.ars_zero.common.explosion.ExplosionWorkList;
 import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
+import com.hollingsworth.arsnouveau.api.util.BlockUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 public class ExplosionProcessHelper {
 
@@ -165,7 +167,7 @@ public class ExplosionProcessHelper {
     }
 
     private static void tryIgniteExposedNearbyBlocks(ServerLevel serverLevel, BlockPos destroyedPos,
-            double explosionRadius, double firePower) {
+            double explosionRadius, double firePower, @Nullable Player claimActor) {
         for (Direction direction : Direction.values()) {
             BlockPos checkPos = destroyedPos.relative(direction);
 
@@ -185,6 +187,10 @@ public class ExplosionProcessHelper {
                 continue;
             }
 
+            if (claimActor != null && !BlockUtil.destroyRespectsClaim(claimActor, serverLevel, checkPos)) {
+                continue;
+            }
+
             double fireChance = calculateFireIgnitionChance(firePower);
             if (fireChance > 0.0 && serverLevel.getRandom().nextDouble() < fireChance) {
                 BlockPos firePos = checkPos.above();
@@ -193,6 +199,10 @@ public class ExplosionProcessHelper {
                 }
                 BlockState firePosState = serverLevel.getBlockState(firePos);
                 if (!firePosState.isAir()) {
+                    continue;
+                }
+
+                if (claimActor != null && !BlockUtil.destroyRespectsClaim(claimActor, serverLevel, firePos)) {
                     continue;
                 }
 
@@ -250,7 +260,8 @@ public class ExplosionProcessHelper {
             int deferredSize,
             int maxPerTick,
             double firePower,
-            int amplifyLevel) {
+            int amplifyLevel,
+            @Nullable Player claimActor) {
 
         int remaining = workList.size() - nextWorkIndex;
         int budget = Math.min(maxPerTick, remaining);
@@ -287,6 +298,9 @@ public class ExplosionProcessHelper {
                         state.getFluidState().getType() == Fluids.FLOWING_WATER;
 
                 if (isWater) {
+                    if (claimActor != null && !BlockUtil.destroyRespectsClaim(claimActor, serverLevel, pos)) {
+                        continue;
+                    }
                     serverLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), UPDATE_FLAGS);
 
                     if (serverLevel.getRandom().nextDouble() < 0.02) {
@@ -310,6 +324,10 @@ public class ExplosionProcessHelper {
                 continue;
             }
 
+            if (claimActor != null && !BlockUtil.destroyRespectsClaim(claimActor, serverLevel, pos)) {
+                continue;
+            }
+
             float hardness = state.getDestroySpeed(serverLevel, pos);
             double dropChance = Math.min(1.0, hardness / 75.0);
             if (serverLevel.getRandom().nextDouble() < dropChance) {
@@ -324,29 +342,34 @@ public class ExplosionProcessHelper {
                     // For soulfire, use regular fire if block below is too soft (hardness < 0.5)
                     boolean useSoulFireForBelowBlock = useSoulFire && !serverLevel.isOutsideBuildHeight(belowPos);
                     if (useSoulFireForBelowBlock) {
-                        BlockState belowState = serverLevel.getBlockState(belowPos);
-                        if (!hasLowHardness(serverLevel, belowPos, belowState)) {
-                            float belowHardness = belowState.getDestroySpeed(serverLevel, belowPos);
-                            if (belowHardness >= 0.5f && belowHardness < 2.0f) { // Only convert medium hardness blocks
-                                serverLevel.setBlock(belowPos, Blocks.SOUL_SAND.defaultBlockState(), UPDATE_FLAGS);
+                        if (claimActor == null || BlockUtil.destroyRespectsClaim(claimActor, serverLevel, belowPos)) {
+                            BlockState belowState = serverLevel.getBlockState(belowPos);
+                            if (!hasLowHardness(serverLevel, belowPos, belowState)) {
+                                float belowHardness = belowState.getDestroySpeed(serverLevel, belowPos);
+                                if (belowHardness >= 0.5f && belowHardness < 2.0f) { // Only convert medium hardness
+                                                                                     // blocks
+                                    serverLevel.setBlock(belowPos, Blocks.SOUL_SAND.defaultBlockState(), UPDATE_FLAGS);
+                                }
                             }
                         }
                     }
 
                     // For the fire itself, use regular fire if the destroyed block was too soft
-                    boolean useSoulFireForThisBlock = useSoulFire && !hasLowHardness(serverLevel, pos, state);
-                    BlockState fireState = useSoulFireForThisBlock ? Blocks.SOUL_FIRE.defaultBlockState()
-                            : Blocks.FIRE.defaultBlockState();
-                    if (fireState.canSurvive(serverLevel, pos)) {
-                        serverLevel.setBlock(pos, fireState, UPDATE_FLAGS);
-                    } else if (useSoulFireForThisBlock) {
-                        BlockState regularFireState = Blocks.FIRE.defaultBlockState();
-                        if (regularFireState.canSurvive(serverLevel, pos)) {
-                            serverLevel.setBlock(pos, regularFireState, UPDATE_FLAGS);
+                    if (claimActor == null || BlockUtil.destroyRespectsClaim(claimActor, serverLevel, pos)) {
+                        boolean useSoulFireForThisBlock = useSoulFire && !hasLowHardness(serverLevel, pos, state);
+                        BlockState fireState = useSoulFireForThisBlock ? Blocks.SOUL_FIRE.defaultBlockState()
+                                : Blocks.FIRE.defaultBlockState();
+                        if (fireState.canSurvive(serverLevel, pos)) {
+                            serverLevel.setBlock(pos, fireState, UPDATE_FLAGS);
+                        } else if (useSoulFireForThisBlock) {
+                            BlockState regularFireState = Blocks.FIRE.defaultBlockState();
+                            if (regularFireState.canSurvive(serverLevel, pos)) {
+                                serverLevel.setBlock(pos, regularFireState, UPDATE_FLAGS);
+                            }
                         }
                     }
                 }
-                tryIgniteExposedNearbyBlocks(serverLevel, pos, explosionRadius, firePower);
+                tryIgniteExposedNearbyBlocks(serverLevel, pos, explosionRadius, firePower, claimActor);
                 if (serverLevel.getRandom().nextDouble() < 0.10) {
                     ExplosionParticleHelper.spawnSmokeResidue(serverLevel, pos);
                 }
@@ -406,7 +429,7 @@ public class ExplosionProcessHelper {
      * Spawns explosion fire projectiles that ignite blocks and entities they hit.
      */
     public static void spawnExplosionFireProjectiles(ServerLevel level, Vec3 center, double radius, double firePower,
-            float charge) {
+            float charge, ExplosionControllerEntity controllerEntity) {
         double spawnRadius = radius * 0.5f;
 
         float[] color = getExplosionBurstColor(firePower);
@@ -447,6 +470,10 @@ public class ExplosionProcessHelper {
                     center.x + offsetX, center.y + offsetY, center.z + offsetZ,
                     vx, vy, vz,
                     r, g, b);
+
+            if (controllerEntity != null && controllerEntity.getCasterUUID() != null) {
+                projectile.setCasterUUID(controllerEntity.getCasterUUID());
+            }
 
             level.addFreshEntity(projectile);
         }
