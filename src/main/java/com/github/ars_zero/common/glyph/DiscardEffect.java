@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
@@ -10,12 +11,15 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 public class DiscardEffect extends AbstractEffect {
@@ -40,6 +44,15 @@ public class DiscardEffect extends AbstractEffect {
 
         if (target instanceof LivingEntity) {
             return;
+        }
+
+        ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(target.getType());
+        if (entityId != null) {
+            String entityIdString = entityId.toString();
+            List<? extends String> blacklist = ServerConfig.DISCARD_BLACKLIST.get();
+            if (blacklist.contains(entityIdString)) {
+                return;
+            }
         }
 
         if (target instanceof BaseVoxelEntity voxel) {
