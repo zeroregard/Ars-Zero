@@ -1,7 +1,5 @@
 package com.github.ars_zero.common.entity;
 
-public interface IAnchorLerp {
-    double getLerpValue();
-    double getMaxDelta();
+public interface IAnchorLerp extends ILerp {
 }
 
