@@ -111,10 +111,6 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
     private boolean activateSoundPlayed = false;
 
     @Nullable
-    private SoundEvent warningSound = null;
-    private boolean warningSoundPlayed = false;
-
-    @Nullable
     private SoundEvent resolveSound = null;
     private boolean resolveSoundPlayed = false;
 
@@ -287,7 +283,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
 
         float charge = this.getCharge();
         int remainingLifespan = this.getLifespan();
-        boolean shouldPlayIdle = (charge >= 1.0f || (remainingLifespan < 20 && charge < 1.0f));
+        boolean shouldPlayIdle = (charge >= 0.98f || (remainingLifespan < 20 && charge < 0.98f));
         boolean shouldPlayCharge = (charge < 1.0f && remainingLifespan >= 20);
         boolean shouldPlayPriming = (remainingLifespan <= 19);
 
@@ -404,10 +400,6 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         this.aoeLevel = aoeLevel;
         this.amplifyLevel = amplifyLevel;
         this.dampenLevel = dampenLevel;
-    }
-
-    public void setWarningSound(@Nullable SoundEvent sound) {
-        this.warningSound = sound;
     }
 
     public void setResolveSound(@Nullable SoundEvent sound) {
@@ -537,17 +529,11 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
             float charge = this.getCharge();
             int remainingLifespan = this.getLifespan();
 
-            if (remainingLifespan == 19 && !resolveSoundPlayed && resolveSound != null) {
+            if (remainingLifespan == 18 && !resolveSoundPlayed && resolveSound != null) {
+                serverLevel.playSound(null, this.getX(), this.getY(), this.getZ(), resolveSound, SoundSource.NEUTRAL,
+                        1.0f, 1.0f);
                 resolveSoundPlayed = true;
             }
-
-            if (remainingLifespan <= 19 && charge > LOW_CHARGE_THRESHOLD && !warningSoundPlayed
-                    && warningSound != null) {
-                serverLevel.playSound(null, this.getX(), this.getY(), this.getZ(), warningSound, SoundSource.NEUTRAL,
-                        1.0f, 1.0f);
-                warningSoundPlayed = true;
-            }
-
             if (this.tickCount % 2 == 0) {
                 ExplosionParticleHelper.spawnSpiralParticles(serverLevel, this.position(), charge, this.tickCount,
                         this.firePower);

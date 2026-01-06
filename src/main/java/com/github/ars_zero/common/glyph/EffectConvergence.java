@@ -98,8 +98,6 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
                             augmentData.amplifyLevel, augmentData.dampenLevel);
                     entity.setLifespan(DEFAULT_LIFESPAN);
 
-                    SoundEvent warningSound = getWarningSoundFromStyle(spellContext);
-                    entity.setWarningSound(warningSound);
                     SoundEvent resolveSound = getResolveSoundFromStyle(spellContext);
                     entity.setResolveSound(resolveSound);
 
@@ -256,11 +254,6 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
             }
         }
         return null;
-    }
-
-    @Nullable
-    private SoundEvent getWarningSoundFromStyle(SpellContext spellContext) {
-        return getResolveSoundFromStyle(spellContext);
     }
 
     private void triggerResolveEffects(SpellContext spellContext, Level level, Vec3 position) {
