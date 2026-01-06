@@ -125,8 +125,14 @@ public abstract class AbstractConvergenceEntity extends Entity implements ILifes
 
     @Override
     public void addLifespan(LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        this.lifespan++;
-        this.maxLifespan = Math.max(this.maxLifespan, this.lifespan);
+        int newLifespan = this.lifespan + 1;
+        if (this.maxLifespan > 0) {
+            newLifespan = Math.min(this.maxLifespan, newLifespan);
+        } else {
+            this.maxLifespan = Math.max(0, newLifespan);
+        }
+
+        this.lifespan = newLifespan;
         if (!this.level().isClientSide) {
             this.entityData.set(DATA_LIFESPAN, this.lifespan);
             this.entityData.set(DATA_MAX_LIFESPAN, this.maxLifespan);
