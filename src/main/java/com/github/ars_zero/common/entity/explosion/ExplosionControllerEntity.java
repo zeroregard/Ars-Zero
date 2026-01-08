@@ -7,6 +7,7 @@ import com.github.ars_zero.common.entity.IAnchorLerp;
 import com.github.ars_zero.common.explosion.LargeExplosionDamage;
 import com.github.ars_zero.common.explosion.LargeExplosionPrecompute;
 import com.github.ars_zero.common.explosion.ExplosionWorkList;
+import com.hollingsworth.arsnouveau.api.ANFakePlayer;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
@@ -32,6 +33,8 @@ import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.UUID;
 
 public class ExplosionControllerEntity extends AbstractConvergenceEntity implements IAnchorLerp {
     private enum AnimState {
@@ -108,12 +111,11 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
     private boolean activateSoundPlayed = false;
 
     @Nullable
-    private SoundEvent warningSound = null;
-    private boolean warningSoundPlayed = false;
-
-    @Nullable
     private SoundEvent resolveSound = null;
     private boolean resolveSoundPlayed = false;
+
+    @Nullable
+    private UUID casterUUID = null;
 
     public ExplosionControllerEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -121,6 +123,29 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         this.firePower = 0.0;
         this.explodeAnimationStartTick = 0;
         this.explodeAnimationDurationTicks = (int) (BASE_EXPLODE_ANIMATION_SECONDS * 20.0) - 2;
+    }
+
+    public void setCasterUUID(@Nullable UUID casterUUID) {
+        this.casterUUID = casterUUID;
+    }
+
+    @Nullable
+    public UUID getCasterUUID() {
+        return casterUUID;
+    }
+
+    @Nullable
+    Player getClaimActor(ServerLevel level) {
+        if (casterUUID == null) {
+            return null;
+        }
+        if (level.getServer() != null && level.getServer().getPlayerList() != null) {
+            Player realPlayer = level.getServer().getPlayerList().getPlayer(casterUUID);
+            if (realPlayer != null) {
+                return realPlayer;
+            }
+        }
+        return ANFakePlayer.getPlayer(level, casterUUID);
     }
 
     @Override
@@ -258,7 +283,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
 
         float charge = this.getCharge();
         int remainingLifespan = this.getLifespan();
-        boolean shouldPlayIdle = (charge >= 1.0f || (remainingLifespan < 20 && charge < 1.0f));
+        boolean shouldPlayIdle = (charge >= 0.98f || (remainingLifespan < 20 && charge < 0.98f));
         boolean shouldPlayCharge = (charge < 1.0f && remainingLifespan >= 20);
         boolean shouldPlayPriming = (remainingLifespan <= 19);
 
@@ -377,10 +402,6 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         this.dampenLevel = dampenLevel;
     }
 
-    public void setWarningSound(@Nullable SoundEvent sound) {
-        this.warningSound = sound;
-    }
-
     public void setResolveSound(@Nullable SoundEvent sound) {
         this.resolveSound = sound;
     }
@@ -461,7 +482,7 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
 
         // Spawn explosion fire projectiles
         ExplosionProcessHelper.spawnExplosionFireProjectiles(serverLevel, center, calculatedRadius, this.firePower,
-                currentCharge);
+                currentCharge, this);
 
         // Shake nearby players
         ExplosionShakeHelper.shakeNearbyPlayers(serverLevel, center, calculatedRadius);
@@ -508,17 +529,11 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
             float charge = this.getCharge();
             int remainingLifespan = this.getLifespan();
 
-            if (remainingLifespan == 19 && !resolveSoundPlayed && resolveSound != null) {
+            if (remainingLifespan == 18 && !resolveSoundPlayed && resolveSound != null) {
+                serverLevel.playSound(null, this.getX(), this.getY(), this.getZ(), resolveSound, SoundSource.NEUTRAL,
+                        1.0f, 1.0f);
                 resolveSoundPlayed = true;
             }
-
-            if (remainingLifespan <= 19 && charge > LOW_CHARGE_THRESHOLD && !warningSoundPlayed
-                    && warningSound != null) {
-                serverLevel.playSound(null, this.getX(), this.getY(), this.getZ(), warningSound, SoundSource.NEUTRAL,
-                        1.0f, 1.0f);
-                warningSoundPlayed = true;
-            }
-
             if (this.tickCount % 2 == 0) {
                 ExplosionParticleHelper.spawnSpiralParticles(serverLevel, this.position(), charge, this.tickCount,
                         this.firePower);
@@ -546,9 +561,10 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         }
 
         int maxPerTick = Math.max(1, ServerConfig.LARGE_EXPLOSION_MAX_BLOCKS_PER_TICK.get());
+        Player claimActor = getClaimActor(serverLevel);
         ExplosionProcessHelper.ProcessResult result = ExplosionProcessHelper.processWorkList(
                 serverLevel, this, workList, nextWorkIndex, this.explosionCenter, this.explosionRadius,
-                this.deferredPositions, this.deferredSize, maxPerTick, this.firePower, this.amplifyLevel);
+                this.deferredPositions, this.deferredSize, maxPerTick, this.firePower, this.amplifyLevel, claimActor);
 
         if (result.highestRing > 14 && result.highestRing > this.lastProcessedRing) {
             for (int ring = this.lastProcessedRing + 1; ring <= result.highestRing; ring++) {
@@ -621,6 +637,9 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         } else {
             this.explodeAnimationDurationTicks = (int) (BASE_EXPLODE_ANIMATION_SECONDS * 20.0);
         }
+        if (compound.contains("casterUUID")) {
+            this.casterUUID = compound.getUUID("casterUUID");
+        }
     }
 
     @Override
@@ -637,6 +656,9 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
         compound.putInt("dampen_level", this.dampenLevel);
         compound.putInt("explodeAnimationStartTick", this.explodeAnimationStartTick);
         compound.putInt("explodeAnimationDurationTicks", this.explodeAnimationDurationTicks);
+        if (casterUUID != null) {
+            compound.putUUID("casterUUID", casterUUID);
+        }
     }
 
 }
