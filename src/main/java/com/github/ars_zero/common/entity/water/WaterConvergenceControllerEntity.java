@@ -176,7 +176,7 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
             serverLevel.setBlock(target, Blocks.WATER.defaultBlockState(), 3);
             WaterConvergenceParticleHelper.spawnSplashParticle(serverLevel, target);
 
-            if (serverLevel.random.nextFloat() < 0.05f) {
+            if (serverLevel.random.nextFloat() < 0.03f) {
                 double x = target.getX() + 0.5;
                 double y = target.getY() + 0.5;
                 double z = target.getZ() + 0.5;
@@ -186,7 +186,7 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
                 double horizontalDist = Math.sqrt(dx * dx + dz * dz);
                 int radius = getRadius();
                 double distanceRatio = Math.min(1.0, horizontalDist / radius);
-                float pitch = 1.5f - (float) (distanceRatio * 0.5f);
+                float pitch = 1.5f - (float) (distanceRatio);
 
                 serverLevel.playSound(null, x, y, z, ModSounds.SPLASH_FAST.get(), SoundSource.BLOCKS, 1.0f, pitch);
             }
@@ -245,6 +245,9 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
             return;
         }
 
+        LivingEntity caster = serverLevel.getEntity(this.casterUuid) instanceof LivingEntity living ? living : null;
+        boolean isCreative = caster instanceof Player player && player.getAbilities().instabuild;
+
         if (this.consumedMana < FREE_MANA_AMOUNT) {
             double remainingFree = FREE_MANA_AMOUNT - this.consumedMana;
             if (MANA_COST_PER_BLOCK <= remainingFree) {
@@ -255,29 +258,30 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
                 this.consumedMana += freeAmount;
                 double remainingCost = MANA_COST_PER_BLOCK - freeAmount;
 
-                LivingEntity caster = serverLevel.getEntity(this.casterUuid) instanceof LivingEntity living ? living
-                        : null;
                 if (caster instanceof Player) {
                     IManaCap manaCap = CapabilityRegistry.getMana(caster);
                     if (manaCap != null && manaCap.getCurrentMana() >= remainingCost) {
                         manaCap.removeMana(remainingCost);
                         this.consumedMana += remainingCost;
-                    } else {
+                    } else if (!isCreative) {
                         this.discard();
+                    } else {
+                        this.consumedMana += remainingCost;
                     }
                 }
                 return;
             }
         }
 
-        LivingEntity caster = serverLevel.getEntity(this.casterUuid) instanceof LivingEntity living ? living : null;
         if (caster instanceof Player) {
             IManaCap manaCap = CapabilityRegistry.getMana(caster);
             if (manaCap != null && manaCap.getCurrentMana() >= MANA_COST_PER_BLOCK) {
                 manaCap.removeMana(MANA_COST_PER_BLOCK);
                 this.consumedMana += MANA_COST_PER_BLOCK;
-            } else {
+            } else if (!isCreative) {
                 this.discard();
+            } else {
+                this.consumedMana += MANA_COST_PER_BLOCK;
             }
         }
     }
