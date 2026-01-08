@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.common.util.BlockSnapshot;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -69,6 +70,51 @@ public class BlockProtectionUtil {
     }
 
     return level.getServer().getPlayerList().getPlayer(playerUUID);
+  }
+
+  public static boolean canBlockBePlaced(ServerLevel level, BlockPos pos, BlockState stateToPlace,
+      @Nullable Player claimActor) {
+    if (level.isOutsideBuildHeight(pos)) {
+      return false;
+    }
+
+    BlockState existingState = level.getBlockState(pos);
+
+    if (BlockImmutabilityUtil.isBlockImmutable(existingState)) {
+      return false;
+    }
+
+    if (claimActor != null && !BlockUtil.destroyRespectsClaim(claimActor, level, pos)) {
+      return false;
+    }
+
+    if (!checkBlockPlaceEvent(level, pos, existingState, stateToPlace, claimActor)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private static boolean checkBlockPlaceEvent(ServerLevel level, BlockPos pos, BlockState existingState,
+      BlockState stateToPlace, @Nullable Player claimActor) {
+    Player testPlayer = claimActor;
+    if (testPlayer == null) {
+      testPlayer = createTestPlayer(level);
+      if (testPlayer == null) {
+        return true;
+      }
+    } else if (testPlayer instanceof FakePlayer) {
+      Player realPlayer = tryGetRealPlayer(level, testPlayer.getUUID());
+      if (realPlayer != null) {
+        testPlayer = realPlayer;
+      }
+    }
+
+    BlockSnapshot snapshot = BlockSnapshot.create(level.dimension(), level, pos);
+    BlockEvent.EntityPlaceEvent placeEvent = new BlockEvent.EntityPlaceEvent(snapshot, existingState, testPlayer);
+    NeoForge.EVENT_BUS.post(placeEvent);
+
+    return !placeEvent.isCanceled();
   }
 
   @Nullable

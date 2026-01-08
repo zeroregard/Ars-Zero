@@ -16,56 +16,53 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ExplosionConvergenceHelper {
 
-    private static final int DEFAULT_LIFESPAN = 20;
+  private static final int DEFAULT_LIFESPAN = 20;
 
-    private ExplosionConvergenceHelper() {
+  private ExplosionConvergenceHelper() {
+  }
+
+  public static void handleExplosionConvergence(ServerLevel serverLevel, Vec3 pos, @Nullable LivingEntity shooter,
+      SpellStats spellStats, SpellContext spellContext, EffectConvergence convergence) {
+    ExplosionControllerEntity entity = new ExplosionControllerEntity(ModEntities.EXPLOSION_CONTROLLER.get(),
+        serverLevel);
+    entity.setPos(pos.x, pos.y, pos.z);
+
+    SpellContext iterator = spellContext.clone();
+    while (iterator.hasNextPart()) {
+      AbstractSpellPart next = iterator.nextPart();
+      if (next instanceof EffectExplosion explosionEffect) {
+        SpellAugmentExtractor.AugmentData augmentData = SpellAugmentExtractor
+            .extractApplicableAugments(spellContext, explosionEffect);
+
+        double intensity = calculateExplosionIntensity(spellStats);
+        float baseDamage = EffectExplosion.INSTANCE.DAMAGE.get().floatValue();
+        float powerMultiplier = EffectExplosion.INSTANCE.AMP_DAMAGE.get().floatValue();
+
+        entity.setExplosionParams(intensity, baseDamage, powerMultiplier, augmentData.aoeLevel,
+            augmentData.amplifyLevel, augmentData.dampenLevel);
+        entity.setLifespan(DEFAULT_LIFESPAN);
+
+        SoundEvent resolveSound = convergence.getResolveSoundFromStyle(spellContext);
+        entity.setResolveSound(resolveSound);
+
+        serverLevel.addFreshEntity(entity);
+        convergence.updateTemporalContext(shooter, entity, spellContext);
+        convergence.consumeEffect(spellContext, explosionEffect);
+        convergence.triggerResolveEffects(spellContext, serverLevel, pos);
+        break;
+      }
     }
+  }
 
-    public static void handleExplosionConvergence(ServerLevel serverLevel, Vec3 pos, @Nullable LivingEntity shooter,
-            SpellStats spellStats, SpellContext spellContext, EffectConvergence convergence) {
-        ExplosionControllerEntity entity = new ExplosionControllerEntity(ModEntities.EXPLOSION_CONTROLLER.get(),
-                serverLevel);
-        entity.setPos(pos.x, pos.y, pos.z);
+  private static double calculateExplosionIntensity(SpellStats spellStats) {
+    double base = EffectExplosion.INSTANCE.BASE.get();
+    double ampValue = EffectExplosion.INSTANCE.AMP_VALUE.get();
+    double aoeBonus = EffectExplosion.INSTANCE.AOE_BONUS.get();
 
-        SpellContext iterator = spellContext.clone();
-        while (iterator.hasNextPart()) {
-            AbstractSpellPart next = iterator.nextPart();
-            if (next instanceof EffectExplosion explosionEffect) {
-                SpellAugmentExtractor.AugmentData augmentData = SpellAugmentExtractor
-                        .extractApplicableAugments(spellContext, explosionEffect);
+    double intensity = base + ampValue * spellStats.getAmpMultiplier() + aoeBonus * spellStats.getAoeMultiplier();
+    int dampen = spellStats.getBuffCount(AugmentDampen.INSTANCE);
+    intensity -= 0.5 * dampen;
 
-                double intensity = calculateExplosionIntensity(spellStats);
-                float baseDamage = EffectExplosion.INSTANCE.DAMAGE.get().floatValue();
-                float powerMultiplier = EffectExplosion.INSTANCE.AMP_DAMAGE.get().floatValue();
-
-                entity.setExplosionParams(intensity, baseDamage, powerMultiplier, augmentData.aoeLevel,
-                        augmentData.amplifyLevel, augmentData.dampenLevel);
-                entity.setLifespan(DEFAULT_LIFESPAN);
-
-                SoundEvent warningSound = convergence.getWarningSoundFromStyle(spellContext);
-                entity.setWarningSound(warningSound);
-                SoundEvent resolveSound = convergence.getResolveSoundFromStyle(spellContext);
-                entity.setResolveSound(resolveSound);
-
-                serverLevel.addFreshEntity(entity);
-                convergence.updateTemporalContext(shooter, entity, spellContext);
-                convergence.consumeEffect(spellContext, explosionEffect);
-                convergence.triggerResolveEffects(spellContext, serverLevel, pos);
-                break;
-            }
-        }
-    }
-
-    private static double calculateExplosionIntensity(SpellStats spellStats) {
-        double base = EffectExplosion.INSTANCE.BASE.get();
-        double ampValue = EffectExplosion.INSTANCE.AMP_VALUE.get();
-        double aoeBonus = EffectExplosion.INSTANCE.AOE_BONUS.get();
-
-        double intensity = base + ampValue * spellStats.getAmpMultiplier() + aoeBonus * spellStats.getAoeMultiplier();
-        int dampen = spellStats.getBuffCount(AugmentDampen.INSTANCE);
-        intensity -= 0.5 * dampen;
-
-        return Math.max(0.0, intensity);
-    }
+    return Math.max(0.0, intensity);
+  }
 }
-

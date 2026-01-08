@@ -2,6 +2,7 @@ package com.github.ars_zero.common.entity.water;
 
 import com.alexthw.sauce.registry.ModRegistry;
 import com.github.ars_zero.common.entity.AbstractConvergenceEntity;
+import com.github.ars_zero.common.util.BlockProtectionUtil;
 import com.github.ars_zero.registry.ModSounds;
 import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
@@ -160,6 +161,9 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
         int placedThisTick = 0;
         int maxPerTick = getMaxPlacementsPerTick(this.waterPower);
 
+        LivingEntity caster = serverLevel.getEntity(this.casterUuid) instanceof LivingEntity living ? living : null;
+        Player claimActor = caster instanceof Player player ? player : null;
+
         while (placedThisTick < maxPerTick && this.nextIndex < this.currentFloorPattern.size()) {
             BlockPos target = this.currentFloorPattern.get(this.nextIndex);
             this.nextIndex++;
@@ -173,7 +177,12 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
                 continue;
             }
 
-            serverLevel.setBlock(target, Blocks.WATER.defaultBlockState(), 3);
+            BlockState waterState = Blocks.WATER.defaultBlockState();
+            if (!BlockProtectionUtil.canBlockBePlaced(serverLevel, target, waterState, claimActor)) {
+                continue;
+            }
+
+            serverLevel.setBlock(target, waterState, 3);
             WaterConvergenceParticleHelper.spawnSplashParticle(serverLevel, target);
 
             if (serverLevel.random.nextFloat() < 0.03f) {
