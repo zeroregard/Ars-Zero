@@ -2,6 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.particle.timeline.ConvergenceTimeline;
+import com.github.ars_zero.common.particle.timeline.DiscardTimeline;
 import com.github.ars_zero.common.particle.timeline.NearTimeline;
 import com.github.ars_zero.common.particle.timeline.TemporalContextTimeline;
 import com.hollingsworth.arsnouveau.api.particle.configurations.IParticleMotionType;
@@ -16,20 +17,30 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class ModParticleTimelines {
     public static final DeferredRegister<IParticleTimelineType<?>> TIMELINES = DeferredRegister.create(ParticleTimelineRegistry.PARTICLE_TIMELINE_REGISTRY, ArsZero.MOD_ID);
 
-    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<NearTimeline>> NEAR_TIMELINE = TIMELINES.register(
-        "near",
-        () -> new SimpleParticleTimelineType<>(ModGlyphs.NEAR_FORM, NearTimeline.CODEC, NearTimeline.STREAM_CODEC, NearTimeline::new)
-    );
+    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<NearTimeline>> NEAR_TIMELINE = TIMELINES
+            .register(
+                    "near",
+                    () -> new SimpleParticleTimelineType<>(ModGlyphs.NEAR_FORM, NearTimeline.CODEC,
+                            NearTimeline.STREAM_CODEC, NearTimeline::new));
 
-    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<TemporalContextTimeline>> TEMPORAL_CONTEXT_TIMELINE = TIMELINES.register(
-        "temporal_context",
-        () -> new SimpleParticleTimelineType<>(ModGlyphs.TEMPORAL_CONTEXT_FORM, TemporalContextTimeline.CODEC, TemporalContextTimeline.STREAM_CODEC, TemporalContextTimeline::new)
-    );
+    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<TemporalContextTimeline>> TEMPORAL_CONTEXT_TIMELINE = TIMELINES
+            .register(
+                    "temporal_context",
+                    () -> new SimpleParticleTimelineType<>(ModGlyphs.TEMPORAL_CONTEXT_FORM,
+                            TemporalContextTimeline.CODEC, TemporalContextTimeline.STREAM_CODEC,
+                            TemporalContextTimeline::new));
 
-    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<ConvergenceTimeline>> CONVERGENCE_TIMELINE = TIMELINES.register(
-        "convergence",
-        () -> new SimpleParticleTimelineType<>(ModGlyphs.EFFECT_CONVERGENCE, ConvergenceTimeline.CODEC, ConvergenceTimeline.STREAM_CODEC, ConvergenceTimeline::new)
-    );
+    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<ConvergenceTimeline>> CONVERGENCE_TIMELINE = TIMELINES
+            .register(
+                    "convergence",
+                    () -> new SimpleParticleTimelineType<>(ModGlyphs.EFFECT_CONVERGENCE, ConvergenceTimeline.CODEC,
+                            ConvergenceTimeline.STREAM_CODEC, ConvergenceTimeline::new));
+
+    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<DiscardTimeline>> DISCARD_TIMELINE = TIMELINES
+            .register(
+                    "discard",
+                    () -> new SimpleParticleTimelineType<>(ModGlyphs.DISCARD_EFFECT, DiscardTimeline.CODEC,
+                            DiscardTimeline.STREAM_CODEC, DiscardTimeline::new));
 
     public static void init(IEventBus eventBus) {
         TIMELINES.register(eventBus);
@@ -44,6 +55,7 @@ public class ModParticleTimelines {
         TemporalContextTimeline.RESOLVING_OPTIONS.add(burst);
         ConvergenceTimeline.RESOLVING_OPTIONS.add(none);
         ConvergenceTimeline.RESOLVING_OPTIONS.add(burst);
+        DiscardTimeline.RESOLVING_OPTIONS.add(none);
+        DiscardTimeline.RESOLVING_OPTIONS.add(burst);
     }
 }
-

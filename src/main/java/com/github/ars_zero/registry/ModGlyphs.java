@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
+import com.github.ars_zero.common.glyph.DiscardEffect;
 import com.github.ars_zero.common.glyph.NearForm;
 import com.github.ars_zero.common.glyph.PushEffect;
 import com.github.ars_zero.common.glyph.SelectEffect;
@@ -22,6 +23,7 @@ public class ModGlyphs {
     public static final PushEffect PUSH_EFFECT = new PushEffect();
     public static final ZeroGravityEffect ZERO_GRAVITY_EFFECT = new ZeroGravityEffect();
     public static final EffectConvergence EFFECT_CONVERGENCE = new EffectConvergence();
+    public static final DiscardEffect DISCARD_EFFECT = new DiscardEffect();
 
     public static void registerGlyphs() {
         GlyphRegistry.registerSpell(TEMPORAL_CONTEXT_FORM);
@@ -33,5 +35,6 @@ public class ModGlyphs {
         GlyphRegistry.registerSpell(PUSH_EFFECT);
         GlyphRegistry.registerSpell(ZERO_GRAVITY_EFFECT);
         GlyphRegistry.registerSpell(EFFECT_CONVERGENCE);
+        GlyphRegistry.registerSpell(DISCARD_EFFECT);
     }
 }

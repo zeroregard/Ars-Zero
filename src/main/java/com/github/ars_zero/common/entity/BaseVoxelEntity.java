@@ -179,6 +179,10 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity, I
         
         this.discard();
     }
+
+    public void resolveAndDiscardSelf() {
+        this.resolveAndDiscard(new EntityHitResult(this));
+    }
     
     protected void onBlockCollision(BlockHitResult blockHit) {
     }

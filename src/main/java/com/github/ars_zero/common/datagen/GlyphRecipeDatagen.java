@@ -28,6 +28,7 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         addNearRecipe();
         addPushRecipe();
         addConvergenceRecipe();
+        addDiscardRecipe();
 
         for (FileObj fileObj : files) {
             saveStable(pOutput, fileObj.element, fileObj.path);
@@ -94,7 +95,7 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_conjure_voxel_effect.json"), json));
     }
-    
+
     private void addAnchorRecipe() {
         JsonObject json = new JsonObject();
         json.addProperty("type", "ars_nouveau:glyph");
@@ -214,6 +215,26 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_effect_convergence.json"), json));
     }
 
+    private void addDiscardRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 55);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("minecraft:ender_pearl"));
+        inputsArray.add(item("minecraft:shears"));
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("ars_nouveau:source_gem"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:discard_effect");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_discard_effect.json"), json));
+    }
+
     private static JsonObject item(String id) {
         JsonObject o = new JsonObject();
         o.addProperty("item", id);
@@ -235,6 +256,6 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         return this.generator.getPackOutput().getOutputFolder().resolve(path);
     }
 
-    public record FileObj(Path path, com.google.gson.JsonElement element) { }
+    public record FileObj(Path path, com.google.gson.JsonElement element) {
+    }
 }
-
