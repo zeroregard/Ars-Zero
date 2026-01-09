@@ -95,7 +95,7 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_conjure_voxel_effect.json"), json));
     }
-    
+
     private void addAnchorRecipe() {
         JsonObject json = new JsonObject();
         json.addProperty("type", "ars_nouveau:glyph");
@@ -218,7 +218,7 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
     private void addDiscardRecipe() {
         JsonObject json = new JsonObject();
         json.addProperty("type", "ars_nouveau:glyph");
-        json.addProperty("exp", 27);
+        json.addProperty("exp", 55);
 
         JsonArray inputsArray = new JsonArray();
         inputsArray.add(item("minecraft:ender_pearl"));
@@ -256,6 +256,6 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         return this.generator.getPackOutput().getOutputFolder().resolve(path);
     }
 
-    public record FileObj(Path path, com.google.gson.JsonElement element) { }
+    public record FileObj(Path path, com.google.gson.JsonElement element) {
+    }
 }
-

@@ -2,6 +2,10 @@ package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
+import com.github.ars_zero.registry.ModParticleTimelines;
+import com.hollingsworth.arsnouveau.api.particle.ParticleEmitter;
+import com.hollingsworth.arsnouveau.api.particle.configurations.properties.SoundProperty;
+import com.hollingsworth.arsnouveau.api.particle.timelines.TimelineEntryData;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -16,6 +20,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,12 +81,27 @@ public class DiscardEffect extends AbstractEffect {
             return;
         }
 
+        Vec3 position = target.position();
+        triggerResolveEffects(spellContext, world, position);
+
         if (target instanceof BaseVoxelEntity voxel) {
             voxel.resolveAndDiscardSelf();
             return;
         }
 
         target.discard();
+    }
+
+    private void triggerResolveEffects(SpellContext spellContext, Level world, Vec3 position) {
+        if (world == null) {
+            return;
+        }
+        var timeline = spellContext.getParticleTimeline(ModParticleTimelines.DISCARD_TIMELINE.get());
+        TimelineEntryData entryData = timeline.onResolvingEffect();
+        ParticleEmitter particleEmitter = createStaticEmitter(entryData, position);
+        particleEmitter.tick(world);
+        SoundProperty resolveSound = timeline.resolveSound();
+        resolveSound.sound.playSound(world, position.x, position.y, position.z);
     }
 
     @Override
@@ -102,7 +122,7 @@ public class DiscardEffect extends AbstractEffect {
 
     @Override
     public SpellTier defaultTier() {
-        return SpellTier.ONE;
+        return SpellTier.TWO;
     }
 
     @NotNull
