@@ -25,4 +25,8 @@ public class ModParticles {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SOURCE_JAR_CHARGE = PARTICLES.register(
             "source_jar_charge",
             () -> new SimpleParticleType(false));
+
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> FAST_POOF = PARTICLES.register(
+            "fast_poof",
+            () -> new SimpleParticleType(false));
 }

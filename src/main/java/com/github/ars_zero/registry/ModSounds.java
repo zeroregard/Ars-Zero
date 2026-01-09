@@ -41,4 +41,8 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> EXPLOSION_DISTANT = SOUNDS.register(
             "explosion_distant",
             () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("explosion_distant")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> SPLASH_FAST = SOUNDS.register(
+            "splash_fast",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("splash_fast")));
 }

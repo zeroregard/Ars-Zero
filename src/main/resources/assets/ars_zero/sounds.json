@@ -62,5 +62,17 @@
         "stream": false
       }
     ]
+  },
+  "splash_fast": {
+    "sounds": [
+      {
+        "name": "ars_zero:splash_fast_1",
+        "stream": false
+      },
+      {
+        "name": "ars_zero:splash_fast_2",
+        "stream": false
+      }
+    ]
   }
 }
