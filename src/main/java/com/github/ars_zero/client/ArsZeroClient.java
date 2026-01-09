@@ -15,20 +15,19 @@ import com.github.ars_zero.client.renderer.entity.WaterVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.WindVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.ExplosionControllerEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.ExplosionBurstProjectileRenderer;
+import com.github.ars_zero.client.renderer.entity.WaterConvergenceControllerEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.SourceJarChargerEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.PlayerChargerEntityRenderer;
 import com.github.ars_zero.client.particle.BlightSplashParticle;
 import com.github.ars_zero.client.particle.ExplosiveChargeParticle;
+import com.github.ars_zero.client.particle.FastPoofParticle;
 import com.github.ars_zero.client.particle.SourceJarChargeParticle;
 import com.github.ars_zero.client.renderer.tile.MultiphaseTurretRenderer;
 import com.github.ars_zero.registry.ModBlockEntities;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModParticles;
 import net.minecraft.client.renderer.entity.EntityRenderers;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
@@ -43,6 +42,7 @@ public class ArsZeroClient {
         modEventBus.addListener(ArsZeroClient::onClientSetup);
         modEventBus.addListener(ArsZeroClient::registerGuiLayers);
         modEventBus.addListener(ArsZeroClient::registerRenderers);
+        modEventBus.addListener(ArsZeroClient::registerParticleProviders);
         modEventBus.addListener(ClientNetworking::register);
 
         NeoForge.EVENT_BUS.register(StaffScrollHandler.class);
@@ -64,6 +64,8 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.BLIGHT_VOXEL_ENTITY.get(), BlightVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.BLOCK_GROUP.get(), BlockGroupEntityRenderer::new);
             EntityRenderers.register(ModEntities.EXPLOSION_CONTROLLER.get(), ExplosionControllerEntityRenderer::new);
+            EntityRenderers.register(ModEntities.WATER_CONVERGENCE_CONTROLLER.get(),
+                    WaterConvergenceControllerEntityRenderer::new);
             EntityRenderers.register(ModEntities.EXPLOSION_BURST_PROJECTILE.get(),
                     ExplosionBurstProjectileRenderer::new);
             EntityRenderers.register(ModEntities.SOURCE_JAR_CHARGER.get(), SourceJarChargerEntityRenderer::new);
@@ -71,24 +73,19 @@ public class ArsZeroClient {
         });
     }
 
-    @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlockEntities.MULTIPHASE_SPELL_TURRET.get(),
                 MultiphaseTurretRenderer::new);
     }
 
-    @SubscribeEvent
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("staff_hud"), GuiStaffHUD.OVERLAY);
     }
 
-    @EventBusSubscriber(modid = ArsZero.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ParticleRegistration {
-        @SubscribeEvent
-        public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
-            event.registerSpriteSet(ModParticles.BLIGHT_SPLASH.get(), BlightSplashParticle.Provider::new);
-            event.registerSpriteSet(ModParticles.EXPLOSIVE_CHARGE.get(), ExplosiveChargeParticle.Provider::new);
-            event.registerSpriteSet(ModParticles.SOURCE_JAR_CHARGE.get(), SourceJarChargeParticle.Provider::new);
-        }
+    public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
+        event.registerSpriteSet(ModParticles.BLIGHT_SPLASH.get(), BlightSplashParticle.Provider::new);
+        event.registerSpriteSet(ModParticles.EXPLOSIVE_CHARGE.get(), ExplosiveChargeParticle.Provider::new);
+        event.registerSpriteSet(ModParticles.SOURCE_JAR_CHARGE.get(), SourceJarChargeParticle.Provider::new);
+        event.registerSpriteSet(ModParticles.FAST_POOF.get(), FastPoofParticle.Provider::new);
     }
 }

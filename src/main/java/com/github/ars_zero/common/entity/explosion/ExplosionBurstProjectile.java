@@ -1,12 +1,15 @@
 package com.github.ars_zero.common.entity.explosion;
 
+import com.hollingsworth.arsnouveau.api.ANFakePlayer;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
@@ -15,6 +18,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.UUID;
 
 public class ExplosionBurstProjectile extends Projectile {
 
@@ -28,6 +34,8 @@ public class ExplosionBurstProjectile extends Projectile {
   private int age = 0;
   private static final int MAX_AGE = 100; // 5 seconds max lifetime
   private static final double GRAVITY = 0.08; // Stronger gravity than default
+  @Nullable
+  private UUID casterUUID = null;
 
   public ExplosionBurstProjectile(EntityType<? extends Projectile> entityType, Level level) {
     super(entityType, level);
@@ -70,6 +78,29 @@ public class ExplosionBurstProjectile extends Projectile {
   public boolean isSoulfire() {
     // Blue color indicates soulfire (0.3, 0.7, 1.0)
     return this.getB() > 0.9f && this.getR() < 0.5f;
+  }
+
+  public void setCasterUUID(@Nullable UUID casterUUID) {
+    this.casterUUID = casterUUID;
+  }
+
+  @Nullable
+  public UUID getCasterUUID() {
+    return casterUUID;
+  }
+
+  @Nullable
+  private Player getClaimActor(ServerLevel level) {
+    if (casterUUID == null) {
+      return null;
+    }
+    if (level.getServer() != null && level.getServer().getPlayerList() != null) {
+      Player realPlayer = level.getServer().getPlayerList().getPlayer(casterUUID);
+      if (realPlayer != null) {
+        return realPlayer;
+      }
+    }
+    return ANFakePlayer.getPlayer(level, casterUUID);
   }
 
   @Override
@@ -144,8 +175,9 @@ public class ExplosionBurstProjectile extends Projectile {
   protected void onHitBlock(BlockHitResult result) {
     super.onHitBlock(result);
     if (!this.level().isClientSide && this.level() instanceof ServerLevel serverLevel) {
+      Player claimActor = getClaimActor(serverLevel);
       boolean isSoulfire = this.isSoulfire();
-      FireIgnitionHelper.igniteBlock(serverLevel, result.getBlockPos(), isSoulfire);
+      FireIgnitionHelper.igniteBlock(serverLevel, result.getBlockPos(), isSoulfire, claimActor);
     }
   }
 
@@ -164,6 +196,22 @@ public class ExplosionBurstProjectile extends Projectile {
       this.onHitBlock(blockHit);
     } else if (result instanceof EntityHitResult entityHit) {
       this.onHitEntity(entityHit);
+    }
+  }
+
+  @Override
+  protected void readAdditionalSaveData(CompoundTag compound) {
+    super.readAdditionalSaveData(compound);
+    if (compound.contains("casterUUID")) {
+      this.casterUUID = compound.getUUID("casterUUID");
+    }
+  }
+
+  @Override
+  protected void addAdditionalSaveData(CompoundTag compound) {
+    super.addAdditionalSaveData(compound);
+    if (casterUUID != null) {
+      compound.putUUID("casterUUID", casterUUID);
     }
   }
 }

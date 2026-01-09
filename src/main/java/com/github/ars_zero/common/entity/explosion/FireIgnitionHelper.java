@@ -1,10 +1,13 @@
 package com.github.ars_zero.common.entity.explosion;
 
+import com.github.ars_zero.common.util.BlockProtectionUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 public class FireIgnitionHelper {
 
@@ -21,9 +24,12 @@ public class FireIgnitionHelper {
    * @param level      The server level
    * @param hitPos     The position that was hit (usually a solid block)
    * @param isSoulfire Whether to use soulfire (blue) or regular fire (orange)
+   * @param claimActor The player to check claims for, or null to skip claim
+   *                   checks
    * @return true if fire was placed, false otherwise
    */
-  public static boolean igniteBlock(ServerLevel level, BlockPos hitPos, boolean isSoulfire) {
+  public static boolean igniteBlock(ServerLevel level, BlockPos hitPos, boolean isSoulfire,
+      @Nullable Player claimActor) {
     BlockState state = level.getBlockState(hitPos);
 
     // Try to place fire above the hit block
@@ -35,6 +41,11 @@ public class FireIgnitionHelper {
 
     BlockState firePosState = level.getBlockState(firePos);
     if (!firePosState.isAir()) {
+      return false;
+    }
+
+    if (!BlockProtectionUtil.canBlockBeDestroyed(level, hitPos, claimActor) ||
+        !BlockProtectionUtil.canBlockBeDestroyed(level, firePos, claimActor)) {
       return false;
     }
 

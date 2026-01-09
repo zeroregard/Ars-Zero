@@ -9,6 +9,7 @@ import com.github.ars_zero.common.entity.explosion.ExplosionBurstProjectile;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.SourceJarChargerEntity;
 import com.github.ars_zero.common.entity.PlayerChargerEntity;
+import com.github.ars_zero.common.entity.water.WaterConvergenceControllerEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
 import com.github.ars_zero.common.entity.LightningVoxelEntity;
 import com.github.ars_zero.common.entity.BlightVoxelEntity;
@@ -123,6 +124,16 @@ public class ModEntities {
                     .updateInterval(20)
                     .setShouldReceiveVelocityUpdates(false)
                     .build(ArsZero.MOD_ID + ":explosion_controller")
+    );
+
+    public static final DeferredHolder<EntityType<?>, EntityType<WaterConvergenceControllerEntity>> WATER_CONVERGENCE_CONTROLLER = ENTITIES.register(
+            "water_convergence_controller",
+            () -> EntityType.Builder.<WaterConvergenceControllerEntity>of(WaterConvergenceControllerEntity::new, MobCategory.MISC)
+                    .sized(0.1f, 0.1f)
+                    .clientTrackingRange(256)
+                    .updateInterval(20)
+                    .setShouldReceiveVelocityUpdates(false)
+                    .build(ArsZero.MOD_ID + ":water_convergence_controller")
     );
 
     public static final DeferredHolder<EntityType<?>, EntityType<SourceJarChargerEntity>> SOURCE_JAR_CHARGER = ENTITIES.register(

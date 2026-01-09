@@ -8,7 +8,6 @@ import com.hollingsworth.arsnouveau.api.util.ManaUtil;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import com.hollingsworth.arsnouveau.setup.config.ServerConfig;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -29,18 +28,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.UUID;
 
 public abstract class AbstractChargerEntity extends Entity implements ILifespanExtendable {
-    private static final EntityDataAccessor<Integer> DATA_LIFESPAN = SynchedEntityData.defineId(AbstractChargerEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> DATA_MAX_LIFESPAN = SynchedEntityData.defineId(AbstractChargerEntity.class, EntityDataSerializers.INT);
-    
+    private static final EntityDataAccessor<Integer> DATA_LIFESPAN = SynchedEntityData
+            .defineId(AbstractChargerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_MAX_LIFESPAN = SynchedEntityData
+            .defineId(AbstractChargerEntity.class, EntityDataSerializers.INT);
+
     private static final String TAG_CASTER_UUID = "caster_uuid";
     private static final String TAG_LIFESPAN = "lifespan";
     private static final String TAG_MAX_LIFESPAN = "max_lifespan";
-    
+
     protected UUID casterUUID;
     protected int lifespan;
     protected int maxLifespan;
     protected int tickCount = 0;
-    
+
     @Nullable
     protected SoundEvent resolveSound = null;
 
@@ -50,19 +51,20 @@ public abstract class AbstractChargerEntity extends Entity implements ILifespanE
         this.setNoGravity(true);
         this.setBoundingBox(new AABB(0, 0, 0, 0, 0, 0));
     }
-    
+
     @Override
     public void onAddedToLevel() {
         super.onAddedToLevel();
         if (!this.level().isClientSide && resolveSound != null && this.level() instanceof ServerLevel serverLevel) {
-            serverLevel.playSound(null, this.getX(), this.getY(), this.getZ(), resolveSound, SoundSource.NEUTRAL, 1.0f, 1.0f);
+            serverLevel.playSound(null, this.getX(), this.getY(), this.getZ(), resolveSound, SoundSource.NEUTRAL, 1.0f,
+                    1.0f);
         }
     }
 
     public void setCasterUUID(UUID uuid) {
         this.casterUUID = uuid;
     }
-    
+
     public void setResolveSound(@Nullable SoundEvent sound) {
         this.resolveSound = sound;
     }
@@ -93,18 +95,18 @@ public abstract class AbstractChargerEntity extends Entity implements ILifespanE
     @Override
     public void tick() {
         super.tick();
-        
+
         if (this.level().isClientSide) {
             return;
         }
-        
+
         ServerLevel serverLevel = (ServerLevel) this.level();
         tickCount++;
-        
+
         if (lifespan > 0) {
             this.lifespan--;
             this.entityData.set(DATA_LIFESPAN, this.lifespan);
-            
+
             if (casterUUID != null) {
                 LivingEntity caster = serverLevel.getEntity(casterUUID) instanceof LivingEntity living ? living : null;
                 if (caster != null && caster instanceof Player player) {
@@ -116,11 +118,11 @@ public abstract class AbstractChargerEntity extends Entity implements ILifespanE
                             double manaRegenPerTick = manaRegen / Math.max(1, regenInterval);
                             double manaToDrain = manaRegenPerTick * 1.1;
                             int manaToTransfer = (int) Math.floor(manaToDrain);
-                            
+
                             if (manaToTransfer > 0) {
                                 double actualManaToDrain = Math.min(manaToDrain, manaCap.getCurrentMana());
                                 int actualManaToTransfer = (int) Math.floor(actualManaToDrain);
-                                
+
                                 if (actualManaToTransfer > 0 && transferMana(serverLevel, actualManaToTransfer)) {
                                     manaCap.removeMana(actualManaToDrain);
                                     spawnChargeParticles(serverLevel, getParticlePosition(), tickCount, manaRegen);
@@ -136,8 +138,11 @@ public abstract class AbstractChargerEntity extends Entity implements ILifespanE
     }
 
     protected abstract boolean canTransferMana();
+
     protected abstract boolean transferMana(ServerLevel level, int manaAmount);
+
     protected abstract Vec3 getParticlePosition();
+
     protected abstract void spawnChargeParticles(ServerLevel level, Vec3 position, int tickCount, double manaRegen);
 
     @Override
@@ -194,14 +199,15 @@ public abstract class AbstractChargerEntity extends Entity implements ILifespanE
     }
 
     @Override
-    public void addLifespan(LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
+    public void addLifespan(LivingEntity shooter, SpellStats spellStats, SpellContext spellContext,
+            SpellResolver resolver) {
         int extensionAmount = 1;
-        
+
         if (spellStats != null) {
             int extendTimeLevel = spellStats.getBuffCount(AugmentExtendTime.INSTANCE);
             extensionAmount += extendTimeLevel;
         }
-        
+
         this.lifespan += extensionAmount;
         this.maxLifespan = Math.max(this.maxLifespan, this.lifespan);
         if (!this.level().isClientSide) {
@@ -210,4 +216,3 @@ public abstract class AbstractChargerEntity extends Entity implements ILifespanE
         }
     }
 }
-
