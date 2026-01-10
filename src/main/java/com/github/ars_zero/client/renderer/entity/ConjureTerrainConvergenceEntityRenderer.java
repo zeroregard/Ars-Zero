@@ -18,6 +18,9 @@ public class ConjureTerrainConvergenceEntityRenderer extends EntityRenderer<Conj
     private static final float RED = 0.2f;
     private static final float GREEN = 0.9f;
     private static final float BLUE = 0.35f;
+    private static final float MARKER_RED = 0.95f;
+    private static final float MARKER_GREEN = 0.65f;
+    private static final float MARKER_BLUE = 0.15f;
     private static final double RENDER_DISTANCE = 128.0;
 
     public ConjureTerrainConvergenceEntityRenderer(EntityRendererProvider.Context context) {
@@ -29,7 +32,11 @@ public class ConjureTerrainConvergenceEntityRenderer extends EntityRenderer<Conj
     @Override
     public void render(ConjureTerrainConvergenceEntity entity, float entityYaw, float partialTicks, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
-        if (entity.isBuilding() || entity.getLifespan() <= 0) {
+        if (entity.isBuilding()) {
+            renderMarker(poseStack, buffer, entity.isPaused());
+            return;
+        }
+        if (entity.getLifespan() <= 0) {
             return;
         }
 
@@ -102,6 +109,17 @@ public class ConjureTerrainConvergenceEntityRenderer extends EntityRenderer<Conj
                 BLUE,
                 1.0f
         );
+    }
+
+    private void renderMarker(PoseStack poseStack, MultiBufferSource buffer, boolean paused) {
+        VertexConsumer lines = buffer.getBuffer(RenderType.lines());
+        float r = paused ? 1.0f : MARKER_RED;
+        float g = paused ? 0.2f : MARKER_GREEN;
+        float b = paused ? 0.2f : MARKER_BLUE;
+        LevelRenderer.renderLineBox(poseStack, lines, -0.35, -0.35, -0.35, 0.35, 0.35, 0.35, r, g, b, 1.0f);
+        LevelRenderer.renderLineBox(poseStack, lines, -0.10, -0.55, -0.10, 0.10, 0.55, 0.10, r, g, b, 1.0f);
+        LevelRenderer.renderLineBox(poseStack, lines, -0.10, -0.10, -0.55, 0.10, 0.10, 0.55, r, g, b, 1.0f);
+        LevelRenderer.renderLineBox(poseStack, lines, -0.55, -0.10, -0.10, 0.55, 0.10, 0.10, r, g, b, 1.0f);
     }
 }
 

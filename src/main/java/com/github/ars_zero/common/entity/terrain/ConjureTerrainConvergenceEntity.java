@@ -3,13 +3,15 @@ package com.github.ars_zero.common.entity.terrain;
 import com.github.ars_zero.common.entity.AbstractConvergenceEntity;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.structure.ConvergenceStructureHelper;
-import com.github.ars_zero.common.util.BlockProtectionUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -22,6 +24,7 @@ import software.bernie.geckolib.animation.AnimatableManager;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
@@ -29,6 +32,10 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
             .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_BUILDING = SynchedEntityData
             .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_PAUSED = SynchedEntityData
+            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Optional<UUID>> DATA_CASTER_UUID = SynchedEntityData
+            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
     private static final int DEFAULT_SIZE = 3;
     private static final int MIN_SIZE = 1;
@@ -38,6 +45,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
     private UUID casterUuid = null;
 
     private boolean building = false;
+    private boolean paused = false;
     private final List<BlockPos> buildQueue = new ArrayList<>();
     private int buildIndex = 0;
 
@@ -51,6 +59,17 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
 
     public void setCasterUUID(@Nullable UUID casterUuid) {
         this.casterUuid = casterUuid;
+        if (!this.level().isClientSide) {
+            this.entityData.set(DATA_CASTER_UUID, Optional.ofNullable(casterUuid));
+        }
+    }
+
+    @Nullable
+    public UUID getCasterUUID() {
+        if (this.level().isClientSide) {
+            return this.entityData.get(DATA_CASTER_UUID).orElse(null);
+        }
+        return this.casterUuid;
     }
 
     public int getSize() {
@@ -62,6 +81,13 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
             return this.entityData.get(DATA_BUILDING);
         }
         return this.building;
+    }
+
+    public boolean isPaused() {
+        if (this.level().isClientSide) {
+            return this.entityData.get(DATA_PAUSED);
+        }
+        return this.paused;
     }
 
     public void setSize(int size) {
@@ -113,7 +139,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
         if (this.level().isClientSide) {
             return;
         }
-        if (this.building) {
+        if (this.building && !this.paused) {
             tickBuild();
         }
     }
@@ -124,10 +150,67 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
     }
 
     @Override
+    public boolean isInvisibleTo(Player player) {
+        UUID caster = getCasterUUID();
+        if (caster == null || player == null) {
+            return true;
+        }
+        return !caster.equals(player.getUUID());
+    }
+
+    @Override
+    public boolean isPickable() {
+        return isBuilding();
+    }
+
+    @Override
+    public float getPickRadius() {
+        return isBuilding() ? 0.75f : 0.0f;
+    }
+
+    @Override
+    public InteractionResult interact(Player player, InteractionHand hand) {
+        if (this.level().isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+        if (!isBuilding()) {
+            return InteractionResult.PASS;
+        }
+        UUID caster = getCasterUUID();
+        if (caster == null || !caster.equals(player.getUUID())) {
+            return InteractionResult.PASS;
+        }
+        this.paused = !this.paused;
+        this.entityData.set(DATA_PAUSED, this.paused);
+        return InteractionResult.CONSUME;
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.level().isClientSide) {
+            return true;
+        }
+        if (!isBuilding()) {
+            return false;
+        }
+        if (!(source.getEntity() instanceof Player player)) {
+            return false;
+        }
+        UUID caster = getCasterUUID();
+        if (caster == null || !caster.equals(player.getUUID())) {
+            return false;
+        }
+        this.discard();
+        return true;
+    }
+
+    @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
         super.defineSynchedData(builder);
         builder.define(DATA_SIZE, DEFAULT_SIZE);
         builder.define(DATA_BUILDING, false);
+        builder.define(DATA_PAUSED, false);
+        builder.define(DATA_CASTER_UUID, Optional.empty());
     }
 
     @Override
@@ -145,11 +228,20 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
                 this.entityData.set(DATA_BUILDING, this.building);
             }
         }
+        if (compound.contains("paused")) {
+            this.paused = compound.getBoolean("paused");
+            if (!this.level().isClientSide) {
+                this.entityData.set(DATA_PAUSED, this.paused);
+            }
+        }
         if (compound.contains("build_index")) {
             this.buildIndex = Math.max(0, compound.getInt("build_index"));
         }
         if (compound.contains("caster_uuid")) {
             this.casterUuid = compound.getUUID("caster_uuid");
+            if (!this.level().isClientSide) {
+                this.entityData.set(DATA_CASTER_UUID, Optional.ofNullable(this.casterUuid));
+            }
         }
     }
 
@@ -158,6 +250,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
         super.addAdditionalSaveData(compound);
         compound.putInt("size", getSize());
         compound.putBoolean("building", this.building);
+        compound.putBoolean("paused", this.paused);
         compound.putInt("build_index", this.buildIndex);
         if (this.casterUuid != null) {
             compound.putUUID("caster_uuid", this.casterUuid);
@@ -166,7 +259,9 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
 
     private void startBuilding() {
         this.building = true;
+        this.paused = false;
         this.entityData.set(DATA_BUILDING, true);
+        this.entityData.set(DATA_PAUSED, false);
         this.buildQueue.clear();
         this.buildIndex = 0;
 
@@ -192,13 +287,14 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
 
     @Nullable
     private Player getClaimActor(ServerLevel level) {
-        if (this.casterUuid == null) {
+        UUID caster = getCasterUUID();
+        if (caster == null) {
             return null;
         }
         if (level.getServer() == null || level.getServer().getPlayerList() == null) {
             return null;
         }
-        return level.getServer().getPlayerList().getPlayer(this.casterUuid);
+        return level.getServer().getPlayerList().getPlayer(caster);
     }
 
     private static int clampSize(int size) {
