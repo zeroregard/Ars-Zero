@@ -21,6 +21,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectExplosion;
+import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
@@ -46,7 +47,8 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
 
   private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[] {
       EffectExplosion.INSTANCE.getRegistryName(),
-      EffectConjureWater.INSTANCE.getRegistryName()
+      EffectConjureWater.INSTANCE.getRegistryName(),
+      EffectConjureTerrain.INSTANCE.getRegistryName()
   };
 
   public EffectConvergence() {
@@ -72,6 +74,8 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
           this);
     } else if (hasEffect(spellContext, EffectConjureWater.class)) {
       WaterConvergenceHelper.handleWaterConvergence(serverLevel, pos, shooter, spellContext, this);
+    } else if (hasEffect(spellContext, EffectConjureTerrain.class)) {
+      ConjureTerrainConvergenceHelper.handleConjureTerrain(serverLevel, pos, shooter, spellContext, this);
     } else if (rayTraceResult instanceof EntityHitResult entityHitResult) {
       ChargerHelper.handlePlayerCharger(serverLevel, pos, entityHitResult, shooter, spellContext, this);
     } else if (rayTraceResult instanceof BlockHitResult blockHitResult) {

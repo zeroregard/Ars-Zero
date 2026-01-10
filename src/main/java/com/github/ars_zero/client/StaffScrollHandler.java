@@ -2,7 +2,7 @@ package com.github.ars_zero.client;
 
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.network.Networking;
-import com.github.ars_zero.common.network.PacketAdjustStaffDistance;
+import com.github.ars_zero.common.network.PacketScrollMultiPhaseDevice;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -28,7 +28,7 @@ public class StaffScrollHandler {
         
         if (usingStaffInMainHand || usingStaffInOffHand) {
             event.setCanceled(true);
-            Networking.sendToServer(new PacketAdjustStaffDistance(event.getScrollDeltaY()));
+            Networking.sendToServer(new PacketScrollMultiPhaseDevice(event.getScrollDeltaY()));
         }
     }
 }
