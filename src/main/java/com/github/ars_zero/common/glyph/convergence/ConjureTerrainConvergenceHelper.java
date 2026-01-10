@@ -29,6 +29,7 @@ public final class ConjureTerrainConvergenceHelper {
         entity.setPos(center.x, center.y, center.z);
         if (shooter instanceof Player player) {
             entity.setCasterUUID(player.getUUID());
+            entity.setMarkerPos(player.blockPosition());
         }
         entity.setLifespan(DEFAULT_LIFESPAN);
 

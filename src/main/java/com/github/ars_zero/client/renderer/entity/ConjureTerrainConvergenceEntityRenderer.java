@@ -81,6 +81,12 @@ public class ConjureTerrainConvergenceEntityRenderer extends EntityRenderer<Conj
             return false;
         }
 
+        if (entity.isBuilding()) {
+            AABB box = new AABB(entityPos.x - 2.0, entityPos.y - 2.0, entityPos.z - 2.0, entityPos.x + 2.0,
+                    entityPos.y + 2.0, entityPos.z + 2.0);
+            return frustum.isVisible(box);
+        }
+
         int size = Math.max(1, entity.getSize());
         double pad = (size / 2.0) + 1.0;
         AABB box = new AABB(entityPos.x - pad, entityPos.y - pad, entityPos.z - pad, entityPos.x + pad,

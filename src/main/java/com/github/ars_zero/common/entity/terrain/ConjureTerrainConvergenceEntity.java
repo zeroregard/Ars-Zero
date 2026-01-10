@@ -36,6 +36,10 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
             .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Optional<UUID>> DATA_CASTER_UUID = SynchedEntityData
             .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Boolean> DATA_HAS_MARKER_POS = SynchedEntityData
+            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<BlockPos> DATA_MARKER_POS = SynchedEntityData
+            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BLOCK_POS);
 
     private static final int DEFAULT_SIZE = 3;
     private static final int MIN_SIZE = 1;
@@ -43,6 +47,8 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
 
     @Nullable
     private UUID casterUuid = null;
+    @Nullable
+    private BlockPos markerPos = null;
 
     private boolean building = false;
     private boolean paused = false;
@@ -70,6 +76,28 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
             return this.entityData.get(DATA_CASTER_UUID).orElse(null);
         }
         return this.casterUuid;
+    }
+
+    public void setMarkerPos(@Nullable BlockPos markerPos) {
+        this.markerPos = markerPos;
+        if (!this.level().isClientSide) {
+            boolean has = markerPos != null;
+            this.entityData.set(DATA_HAS_MARKER_POS, has);
+            if (has) {
+                this.entityData.set(DATA_MARKER_POS, markerPos);
+            }
+        }
+    }
+
+    @Nullable
+    public BlockPos getMarkerPos() {
+        if (this.level().isClientSide) {
+            if (!this.entityData.get(DATA_HAS_MARKER_POS)) {
+                return null;
+            }
+            return this.entityData.get(DATA_MARKER_POS);
+        }
+        return this.markerPos;
     }
 
     public int getSize() {
@@ -211,6 +239,8 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
         builder.define(DATA_BUILDING, false);
         builder.define(DATA_PAUSED, false);
         builder.define(DATA_CASTER_UUID, Optional.empty());
+        builder.define(DATA_HAS_MARKER_POS, false);
+        builder.define(DATA_MARKER_POS, BlockPos.ZERO);
     }
 
     @Override
@@ -243,6 +273,16 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
                 this.entityData.set(DATA_CASTER_UUID, Optional.ofNullable(this.casterUuid));
             }
         }
+        if (compound.contains("marker_x") && compound.contains("marker_y") && compound.contains("marker_z")) {
+            int x = compound.getInt("marker_x");
+            int y = compound.getInt("marker_y");
+            int z = compound.getInt("marker_z");
+            this.markerPos = new BlockPos(x, y, z);
+            if (!this.level().isClientSide) {
+                this.entityData.set(DATA_HAS_MARKER_POS, true);
+                this.entityData.set(DATA_MARKER_POS, this.markerPos);
+            }
+        }
     }
 
     @Override
@@ -254,6 +294,12 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
         compound.putInt("build_index", this.buildIndex);
         if (this.casterUuid != null) {
             compound.putUUID("caster_uuid", this.casterUuid);
+        }
+        BlockPos marker = getMarkerPos();
+        if (marker != null) {
+            compound.putInt("marker_x", marker.getX());
+            compound.putInt("marker_y", marker.getY());
+            compound.putInt("marker_z", marker.getZ());
         }
     }
 
@@ -267,6 +313,11 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
 
         BlockPos center = BlockPos.containing(this.position());
         this.buildQueue.addAll(ConvergenceStructureHelper.generate(center, getSize(), ConvergenceStructureHelper.Shape.CUBE));
+
+        BlockPos marker = getMarkerPos();
+        if (marker != null) {
+            this.setPos(marker.getX() + 0.5, marker.getY(), marker.getZ() + 0.5);
+        }
     }
 
     private void tickBuild() {
