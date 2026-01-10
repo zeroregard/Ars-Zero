@@ -34,6 +34,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -51,8 +52,28 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
       EffectConjureTerrain.INSTANCE.getRegistryName()
   };
 
+  public ModConfigSpec.IntValue TERRAIN_MAX_SIZE;
+
   public EffectConvergence() {
     super(ArsZero.prefix(ID), "Convergence");
+  }
+
+  @Override
+  public void buildConfig(ModConfigSpec.Builder builder) {
+    super.buildConfig(builder);
+    builder.comment("Convergence Effect Settings").push("convergence");
+    TERRAIN_MAX_SIZE = builder.comment(
+        "Maximum cube size for Conjure Terrain convergence.",
+        "Size is the cube edge length in blocks. Default is 32.")
+        .defineInRange("terrainMaxSize", 32, 1, 128);
+    builder.pop();
+  }
+
+  public int getTerrainMaxSize() {
+    if (TERRAIN_MAX_SIZE == null) {
+      return 32;
+    }
+    return TERRAIN_MAX_SIZE.get();
   }
 
   @Override
@@ -69,12 +90,13 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
 
     Vec3 pos = safelyGetHitPos(rayTraceResult);
 
-    if (hasEffect(spellContext, EffectExplosion.class)) {
+    AbstractEffect firstEffect = findFirstConvergenceEffect(spellContext);
+    if (firstEffect instanceof EffectExplosion) {
       ExplosionConvergenceHelper.handleExplosionConvergence(serverLevel, pos, shooter, spellStats, spellContext,
           this);
-    } else if (hasEffect(spellContext, EffectConjureWater.class)) {
+    } else if (firstEffect instanceof EffectConjureWater) {
       WaterConvergenceHelper.handleWaterConvergence(serverLevel, pos, shooter, spellContext, this);
-    } else if (hasEffect(spellContext, EffectConjureTerrain.class)) {
+    } else if (firstEffect instanceof EffectConjureTerrain) {
       ConjureTerrainConvergenceHelper.handleConjureTerrain(serverLevel, pos, shooter, spellContext, this);
     } else if (rayTraceResult instanceof EntityHitResult entityHitResult) {
       ChargerHelper.handlePlayerCharger(serverLevel, pos, entityHitResult, shooter, spellContext, this);
@@ -103,15 +125,25 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
     context.beginResults.add(entityResult);
   }
 
-  private boolean hasEffect(SpellContext context, Class<? extends AbstractEffect> effectClass) {
+  @Nullable
+  private AbstractEffect findFirstConvergenceEffect(SpellContext context) {
     SpellContext iterator = context.clone();
+
     while (iterator.hasNextPart()) {
       AbstractSpellPart next = iterator.nextPart();
-      if (effectClass.isInstance(next)) {
-        return true;
+
+      if (next instanceof AbstractEffect effect) {
+        if (effect instanceof EffectExplosion) {
+          return effect;
+        } else if (effect instanceof EffectConjureWater) {
+          return effect;
+        } else if (effect instanceof EffectConjureTerrain) {
+          return effect;
+        }
       }
     }
-    return false;
+
+    return null;
   }
 
   void consumeFirstConjureWaterEffect(SpellContext context) {

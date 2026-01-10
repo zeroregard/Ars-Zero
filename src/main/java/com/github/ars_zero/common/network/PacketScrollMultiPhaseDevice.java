@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.entity.terrain.ConjureTerrainConvergenceEntity;
+import com.github.ars_zero.common.entity.IAltScrollable;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellResult;
@@ -14,19 +14,21 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record PacketScrollMultiPhaseDevice(double scrollDelta) implements CustomPacketPayload {
+public record PacketScrollMultiPhaseDevice(double scrollDelta, boolean modifierHeld) implements CustomPacketPayload {
     private static final double SCROLL_SENSITIVITY = 0.4;
     private static final double MIN_DISTANCE_MULTIPLIER = 0.1;
     private static final double MAX_DISTANCE_MULTIPLIER = 50.0;
 
-    public static final CustomPacketPayload.Type<PacketScrollMultiPhaseDevice> TYPE =
-            new CustomPacketPayload.Type<>(ArsZero.prefix("scroll_multiphase_device"));
+    public static final CustomPacketPayload.Type<PacketScrollMultiPhaseDevice> TYPE = new CustomPacketPayload.Type<>(
+            ArsZero.prefix("scroll_multiphase_device"));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, PacketScrollMultiPhaseDevice> CODEC = StreamCodec.composite(
-            ByteBufCodecs.DOUBLE,
-            PacketScrollMultiPhaseDevice::scrollDelta,
-            PacketScrollMultiPhaseDevice::new
-    );
+    public static final StreamCodec<RegistryFriendlyByteBuf, PacketScrollMultiPhaseDevice> CODEC = StreamCodec
+            .composite(
+                    ByteBufCodecs.DOUBLE,
+                    PacketScrollMultiPhaseDevice::scrollDelta,
+                    ByteBufCodecs.BOOL,
+                    PacketScrollMultiPhaseDevice::modifierHeld,
+                    PacketScrollMultiPhaseDevice::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -49,10 +51,8 @@ public record PacketScrollMultiPhaseDevice(double scrollDelta) implements Custom
 
                 SpellResult first = castContext.beginResults.get(0);
                 Entity target = first != null ? first.targetEntity : null;
-                if (target instanceof ConjureTerrainConvergenceEntity terrain && terrain.getLifespan() > 0
-                        && !terrain.isBuilding()) {
-                    int direction = packet.scrollDelta > 0 ? 1 : (packet.scrollDelta < 0 ? -1 : 0);
-                    terrain.adjustSizeStep(direction);
+                if (packet.modifierHeld && target instanceof IAltScrollable scrollable) {
+                    scrollable.handleAltScroll(packet.scrollDelta);
                     return;
                 }
 
@@ -65,4 +65,3 @@ public record PacketScrollMultiPhaseDevice(double scrollDelta) implements Custom
         });
     }
 }
-

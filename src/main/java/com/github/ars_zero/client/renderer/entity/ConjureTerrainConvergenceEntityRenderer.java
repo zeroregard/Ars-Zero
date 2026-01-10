@@ -10,17 +10,29 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.List;
+
 public class ConjureTerrainConvergenceEntityRenderer extends EntityRenderer<ConjureTerrainConvergenceEntity> {
-    private static final float RED = 0.2f;
-    private static final float GREEN = 0.9f;
-    private static final float BLUE = 0.35f;
-    private static final float MARKER_RED = 0.95f;
-    private static final float MARKER_GREEN = 0.65f;
-    private static final float MARKER_BLUE = 0.15f;
+    // Building colors (GREEN by default)
+    private static final float BUILDING_RED = 0.2f;
+    private static final float BUILDING_GREEN = 0.9f;
+    private static final float BUILDING_BLUE = 0.35f;
+
+    // Waiting for mana colors (RED)
+    private static final float WAITING_RED = 0.9f;
+    private static final float WAITING_GREEN = 0.2f;
+    private static final float WAITING_BLUE = 0.2f;
+
+    // Paused colors (YELLOW)
+    private static final float PAUSED_RED = 0.9f;
+    private static final float PAUSED_GREEN = 0.9f;
+    private static final float PAUSED_BLUE = 0.2f;
+
     private static final double RENDER_DISTANCE = 128.0;
 
     public ConjureTerrainConvergenceEntityRenderer(EntityRendererProvider.Context context) {
@@ -33,16 +45,44 @@ public class ConjureTerrainConvergenceEntityRenderer extends EntityRenderer<Conj
     public void render(ConjureTerrainConvergenceEntity entity, float entityYaw, float partialTicks, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         if (entity.isBuilding()) {
-            renderMarker(poseStack, buffer, entity.isPaused());
+            renderMarker(poseStack, buffer, entity.isPaused(), entity.isWaitingForMana());
             return;
         }
         if (entity.getLifespan() <= 0) {
             return;
         }
 
+        Vec3 entityPos = entity.position();
+        BlockPos centerBlock = BlockPos.containing(entityPos);
+
+        List<BlockPos> blockPositions = ConvergenceStructureHelper.generate(centerBlock, entity.getSize(),
+                ConvergenceStructureHelper.Shape.CUBE);
+
+        // Determine colors based on state
+        float r, g, b;
+        if (entity.isPaused()) {
+            r = PAUSED_RED;
+            g = PAUSED_GREEN;
+            b = PAUSED_BLUE;
+        } else if (entity.isWaitingForMana()) {
+            r = WAITING_RED;
+            g = WAITING_GREEN;
+            b = WAITING_BLUE;
+        } else {
+            r = BUILDING_RED;
+            g = BUILDING_GREEN;
+            b = BUILDING_BLUE;
+        }
+
+        poseStack.pushPose();
+
         int size = Math.max(1, entity.getSize());
         if (size == 1) {
-            renderBlockBox(poseStack, buffer, 0, 0, 0);
+            double blockX = centerBlock.getX() - entityPos.x;
+            double blockY = centerBlock.getY() - entityPos.y;
+            double blockZ = centerBlock.getZ() - entityPos.z;
+            renderBlockBox(poseStack, buffer, blockX, blockY, blockZ, r, g, b);
+            poseStack.popPose();
             return;
         }
 
@@ -51,21 +91,35 @@ public class ConjureTerrainConvergenceEntityRenderer extends EntityRenderer<Conj
         int minOffset = entity.getMinOffset();
         int maxOffset = entity.getMaxOffset();
 
-        double min = minOffset - 0.5;
-        double max = maxOffset + 0.5;
-        LevelRenderer.renderLineBox(poseStack, lines, min, min, min, max, max, max, RED, GREEN, BLUE, 1.0f);
+        BlockPos minBlock = centerBlock.offset(minOffset, minOffset, minOffset);
+        BlockPos maxBlock = centerBlock.offset(maxOffset, maxOffset, maxOffset);
 
-        for (int dy = minOffset; dy <= maxOffset; dy++) {
-            for (int dx = minOffset; dx <= maxOffset; dx++) {
-                for (int dz = minOffset; dz <= maxOffset; dz++) {
-                    if (!ConvergenceStructureHelper.isSurface(dx, dy, dz, minOffset, maxOffset,
-                            ConvergenceStructureHelper.Shape.CUBE)) {
-                        continue;
-                    }
-                    renderBlockBox(poseStack, buffer, dx, dy, dz);
-                }
+        double minX = minBlock.getX() - entityPos.x;
+        double minY = minBlock.getY() - entityPos.y;
+        double minZ = minBlock.getZ() - entityPos.z;
+        double maxX = maxBlock.getX() + 1.0 - entityPos.x;
+        double maxY = maxBlock.getY() + 1.0 - entityPos.y;
+        double maxZ = maxBlock.getZ() + 1.0 - entityPos.z;
+
+        LevelRenderer.renderLineBox(poseStack, lines, minX, minY, minZ, maxX, maxY, maxZ, r, g, b, 1.0f);
+
+        for (BlockPos blockPos : blockPositions) {
+            double blockX = blockPos.getX() - entityPos.x;
+            double blockY = blockPos.getY() - entityPos.y;
+            double blockZ = blockPos.getZ() - entityPos.z;
+
+            int relativeX = blockPos.getX() - centerBlock.getX();
+            int relativeY = blockPos.getY() - centerBlock.getY();
+            int relativeZ = blockPos.getZ() - centerBlock.getZ();
+
+            if (!ConvergenceStructureHelper.isSurface(relativeX, relativeY, relativeZ, minOffset, maxOffset,
+                    ConvergenceStructureHelper.Shape.CUBE)) {
+                continue;
             }
+            renderBlockBox(poseStack, buffer, blockX, blockY, blockZ, r, g, b);
         }
+
+        poseStack.popPose();
     }
 
     @Override
@@ -99,33 +153,46 @@ public class ConjureTerrainConvergenceEntityRenderer extends EntityRenderer<Conj
         return null;
     }
 
-    private void renderBlockBox(PoseStack poseStack, MultiBufferSource buffer, int dx, int dy, int dz) {
+    private void renderBlockBox(PoseStack poseStack, MultiBufferSource buffer, double x, double y, double z,
+            float r, float g, float b) {
         VertexConsumer lines = buffer.getBuffer(RenderType.lines());
         LevelRenderer.renderLineBox(
                 poseStack,
                 lines,
-                dx - 0.5,
-                dy - 0.5,
-                dz - 0.5,
-                dx + 0.5,
-                dy + 0.5,
-                dz + 0.5,
-                RED,
-                GREEN,
-                BLUE,
-                1.0f
-        );
+                x,
+                y,
+                z,
+                x + 1.0,
+                y + 1.0,
+                z + 1.0,
+                r,
+                g,
+                b,
+                1.0f);
     }
 
-    private void renderMarker(PoseStack poseStack, MultiBufferSource buffer, boolean paused) {
+    private void renderMarker(PoseStack poseStack, MultiBufferSource buffer, boolean paused, boolean waitingForMana) {
         VertexConsumer lines = buffer.getBuffer(RenderType.lines());
-        float r = paused ? 1.0f : MARKER_RED;
-        float g = paused ? 0.2f : MARKER_GREEN;
-        float b = paused ? 0.2f : MARKER_BLUE;
+        float r, g, b;
+        if (paused) {
+            // YELLOW when paused
+            r = PAUSED_RED;
+            g = PAUSED_GREEN;
+            b = PAUSED_BLUE;
+        } else if (waitingForMana) {
+            // RED when waiting for mana
+            r = WAITING_RED;
+            g = WAITING_GREEN;
+            b = WAITING_BLUE;
+        } else {
+            // GREEN when building normally
+            r = BUILDING_RED;
+            g = BUILDING_GREEN;
+            b = BUILDING_BLUE;
+        }
         LevelRenderer.renderLineBox(poseStack, lines, -0.35, -0.35, -0.35, 0.35, 0.35, 0.35, r, g, b, 1.0f);
         LevelRenderer.renderLineBox(poseStack, lines, -0.10, -0.55, -0.10, 0.10, 0.55, 0.10, r, g, b, 1.0f);
         LevelRenderer.renderLineBox(poseStack, lines, -0.10, -0.10, -0.55, 0.10, 0.10, 0.55, r, g, b, 1.0f);
         LevelRenderer.renderLineBox(poseStack, lines, -0.55, -0.10, -0.10, 0.55, 0.10, 0.10, r, g, b, 1.0f);
     }
 }
-
