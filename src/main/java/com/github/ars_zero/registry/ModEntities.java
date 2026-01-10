@@ -16,6 +16,7 @@ import com.github.ars_zero.common.entity.BlightVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
+import com.github.ars_zero.common.entity.terrain.ConjureTerrainConvergenceEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -134,6 +135,16 @@ public class ModEntities {
                     .updateInterval(20)
                     .setShouldReceiveVelocityUpdates(false)
                     .build(ArsZero.MOD_ID + ":water_convergence_controller")
+    );
+
+    public static final DeferredHolder<EntityType<?>, EntityType<ConjureTerrainConvergenceEntity>> CONJURE_TERRAIN_CONVERGENCE_CONTROLLER = ENTITIES.register(
+            "conjure_terrain_convergence_controller",
+            () -> EntityType.Builder.<ConjureTerrainConvergenceEntity>of(ConjureTerrainConvergenceEntity::new, MobCategory.MISC)
+                    .sized(0.1f, 0.1f)
+                    .clientTrackingRange(256)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(ArsZero.MOD_ID + ":conjure_terrain_convergence_controller")
     );
 
     public static final DeferredHolder<EntityType<?>, EntityType<SourceJarChargerEntity>> SOURCE_JAR_CHARGER = ENTITIES.register(

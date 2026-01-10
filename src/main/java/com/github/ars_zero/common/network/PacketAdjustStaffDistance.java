@@ -2,9 +2,12 @@ package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
+import com.github.ars_zero.common.entity.terrain.ConjureTerrainConvergenceEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.spell.SpellResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -44,6 +47,15 @@ public record PacketAdjustStaffDistance(double scrollDelta) implements CustomPac
                 }
                 
                 if (castContext.beginResults.isEmpty()) {
+                    return;
+                }
+
+                SpellResult first = castContext.beginResults.get(0);
+                Entity target = first != null ? first.targetEntity : null;
+                if (target instanceof ConjureTerrainConvergenceEntity terrain && terrain.getLifespan() > 0
+                        && !terrain.isBuilding()) {
+                    int direction = packet.scrollDelta > 0 ? 1 : (packet.scrollDelta < 0 ? -1 : 0);
+                    terrain.adjustSizeStep(direction);
                     return;
                 }
                 
