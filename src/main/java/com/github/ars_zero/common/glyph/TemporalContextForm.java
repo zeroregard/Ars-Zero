@@ -152,9 +152,11 @@ public class TemporalContextForm extends AbstractCastMethod {
             return CastResolveType.FAILURE;
         }
         
+        SpellContext baseContext = spellContext.clone();
         for (SpellResult result : castContext.beginResults) {
-            resolver.hitResult = result.hitResult;
-            resolver.onResolveEffect(level, result.hitResult);
+            SpellResolver perTargetResolver = resolver.getNewResolver(baseContext.clone());
+            perTargetResolver.hitResult = result.hitResult;
+            perTargetResolver.onResolveEffect(level, result.hitResult);
             if (casterPos != null) {
                 triggerResolveEffects(spellContext, level, casterPos, casterYaw, casterPitch, result);
             }
