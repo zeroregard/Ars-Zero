@@ -1,6 +1,7 @@
 package com.github.ars_zero.client.renderer.entity;
 
 import com.github.ars_zero.common.entity.terrain.ConjureTerrainConvergenceEntity;
+import com.github.ars_zero.common.structure.ConvergenceStructureHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -32,22 +33,26 @@ public class ConjureTerrainConvergenceEntityRenderer extends EntityRenderer<Conj
             return;
         }
 
-        int half = entity.getHalfExtent();
-        if (half <= 0) {
+        int size = Math.max(1, entity.getSize());
+        if (size == 1) {
             renderBlockBox(poseStack, buffer, 0, 0, 0);
             return;
         }
 
         VertexConsumer lines = buffer.getBuffer(RenderType.lines());
 
-        double min = -half - 0.5;
-        double max = half + 0.5;
+        int minOffset = entity.getMinOffset();
+        int maxOffset = entity.getMaxOffset();
+
+        double min = minOffset - 0.5;
+        double max = maxOffset + 0.5;
         LevelRenderer.renderLineBox(poseStack, lines, min, min, min, max, max, max, RED, GREEN, BLUE, 1.0f);
 
-        for (int dy = -half; dy <= half; dy++) {
-            for (int dx = -half; dx <= half; dx++) {
-                for (int dz = -half; dz <= half; dz++) {
-                    if (!isSurface(dx, dy, dz, half)) {
+        for (int dy = minOffset; dy <= maxOffset; dy++) {
+            for (int dx = minOffset; dx <= maxOffset; dx++) {
+                for (int dz = minOffset; dz <= maxOffset; dz++) {
+                    if (!ConvergenceStructureHelper.isSurface(dx, dy, dz, minOffset, maxOffset,
+                            ConvergenceStructureHelper.Shape.CUBE)) {
                         continue;
                     }
                     renderBlockBox(poseStack, buffer, dx, dy, dz);
@@ -69,8 +74,8 @@ public class ConjureTerrainConvergenceEntityRenderer extends EntityRenderer<Conj
             return false;
         }
 
-        int half = Math.max(0, entity.getHalfExtent());
-        double pad = half + 1.0;
+        int size = Math.max(1, entity.getSize());
+        double pad = (size / 2.0) + 1.0;
         AABB box = new AABB(entityPos.x - pad, entityPos.y - pad, entityPos.z - pad, entityPos.x + pad,
                 entityPos.y + pad, entityPos.z + pad);
         return frustum.isVisible(box);
@@ -79,10 +84,6 @@ public class ConjureTerrainConvergenceEntityRenderer extends EntityRenderer<Conj
     @Override
     public ResourceLocation getTextureLocation(ConjureTerrainConvergenceEntity entity) {
         return null;
-    }
-
-    private static boolean isSurface(int dx, int dy, int dz, int half) {
-        return Math.abs(dx) == half || Math.abs(dy) == half || Math.abs(dz) == half;
     }
 
     private void renderBlockBox(PoseStack poseStack, MultiBufferSource buffer, int dx, int dy, int dz) {

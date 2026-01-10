@@ -2,6 +2,7 @@ package com.github.ars_zero.common.entity.terrain;
 
 import com.github.ars_zero.common.entity.AbstractConvergenceEntity;
 import com.github.ars_zero.common.config.ServerConfig;
+import com.github.ars_zero.common.structure.ConvergenceStructureHelper;
 import com.github.ars_zero.common.util.BlockProtectionUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -64,7 +65,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
     }
 
     public void setSize(int size) {
-        int clampedOdd = clampOddSize(size);
+        int clampedOdd = clampSize(size);
         if (!this.level().isClientSide) {
             this.entityData.set(DATA_SIZE, clampedOdd);
         }
@@ -78,13 +79,16 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
             return;
         }
         int current = getSize();
-        int next = current + (direction > 0 ? 2 : -2);
+        int next = current + (direction > 0 ? 1 : -1);
         setSize(next);
     }
 
-    public int getHalfExtent() {
-        int size = getSize();
-        return Math.max(0, (size - 1) / 2);
+    public int getMinOffset() {
+        return ConvergenceStructureHelper.minOffset(getSize());
+    }
+
+    public int getMaxOffset() {
+        return ConvergenceStructureHelper.maxOffset(getSize());
     }
 
     @Override
@@ -132,7 +136,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
         if (compound.contains("size")) {
             int size = compound.getInt("size");
             if (!this.level().isClientSide) {
-                this.entityData.set(DATA_SIZE, clampOddSize(size));
+                this.entityData.set(DATA_SIZE, clampSize(size));
             }
         }
         if (compound.contains("building")) {
@@ -167,14 +171,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
         this.buildIndex = 0;
 
         BlockPos center = BlockPos.containing(this.position());
-        int half = getHalfExtent();
-        for (int dy = -half; dy <= half; dy++) {
-            for (int dx = -half; dx <= half; dx++) {
-                for (int dz = -half; dz <= half; dz++) {
-                    this.buildQueue.add(center.offset(dx, dy, dz));
-                }
-            }
-        }
+        this.buildQueue.addAll(ConvergenceStructureHelper.generate(center, getSize(), ConvergenceStructureHelper.Shape.CUBE));
     }
 
     private void tickBuild() {
@@ -189,26 +186,8 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
         Player claimActor = getClaimActor(serverLevel);
         BlockState terrainState = Blocks.STONE.defaultBlockState();
 
-        int placed = 0;
-        while (placed < BLOCKS_PER_TICK && this.buildIndex < this.buildQueue.size()) {
-            BlockPos target = this.buildQueue.get(this.buildIndex);
-            this.buildIndex++;
-
-            if (!serverLevel.isLoaded(target) || serverLevel.isOutsideBuildHeight(target)) {
-                continue;
-            }
-
-            BlockState existing = serverLevel.getBlockState(target);
-            if (!existing.canBeReplaced()) {
-                continue;
-            }
-            if (!BlockProtectionUtil.canBlockBePlaced(serverLevel, target, terrainState, claimActor)) {
-                continue;
-            }
-
-            serverLevel.setBlock(target, terrainState, 3);
-            placed++;
-        }
+        this.buildIndex = ConvergenceStructureHelper.placeNext(serverLevel, this.buildQueue, this.buildIndex, BLOCKS_PER_TICK,
+                terrainState, claimActor);
     }
 
     @Nullable
@@ -222,13 +201,9 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
         return level.getServer().getPlayerList().getPlayer(this.casterUuid);
     }
 
-    private static int clampOddSize(int size) {
+    private static int clampSize(int size) {
         int maxSize = getMaxSize();
-        int clamped = Math.max(MIN_SIZE, Math.min(maxSize, size));
-        if ((clamped & 1) == 0) {
-            clamped = Math.max(MIN_SIZE, clamped - 1);
-        }
-        return clamped;
+        return Math.max(MIN_SIZE, Math.min(maxSize, size));
     }
 
     private static int getMaxSize() {
