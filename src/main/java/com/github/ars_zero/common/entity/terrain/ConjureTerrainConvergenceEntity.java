@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.entity.terrain;
 
 import com.github.ars_zero.common.entity.AbstractConvergenceEntity;
+import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.util.BlockProtectionUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -30,7 +31,6 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
 
     private static final int DEFAULT_SIZE = 3;
     private static final int MIN_SIZE = 1;
-    private static final int MAX_SIZE = 33;
     private static final int BLOCKS_PER_TICK = 1;
 
     @Nullable
@@ -223,11 +223,19 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity {
     }
 
     private static int clampOddSize(int size) {
-        int clamped = Math.max(MIN_SIZE, Math.min(MAX_SIZE, size));
+        int maxSize = getMaxSize();
+        int clamped = Math.max(MIN_SIZE, Math.min(maxSize, size));
         if ((clamped & 1) == 0) {
-            clamped += 1;
+            clamped = Math.max(MIN_SIZE, clamped - 1);
         }
-        return Math.min(MAX_SIZE, clamped);
+        return clamped;
+    }
+
+    private static int getMaxSize() {
+        if (ServerConfig.CONJURE_TERRAIN_MAX_SIZE == null) {
+            return 64;
+        }
+        return Math.max(MIN_SIZE, ServerConfig.CONJURE_TERRAIN_MAX_SIZE.get());
     }
 }
 

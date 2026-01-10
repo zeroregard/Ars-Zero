@@ -8,6 +8,7 @@ public class ServerConfig {
     public static ModConfigSpec.BooleanValue ALLOW_NON_OP_ANCHOR_ON_PLAYERS;
     public static ModConfigSpec.IntValue LARGE_EXPLOSION_MAX_BLOCKS_PER_TICK;
     public static ModConfigSpec.BooleanValue ALLOW_BLOCK_GROUP_CREATION;
+    public static ModConfigSpec.IntValue CONJURE_TERRAIN_MAX_SIZE;
 
     static {
         ModConfigSpec.Builder SERVER_BUILDER = new ModConfigSpec.Builder();
@@ -32,6 +33,13 @@ public class ServerConfig {
                 "When set to true, Select and Anchor can create block group entities for block translation.",
                 "This feature is experimental and may cause performance issues or unexpected behavior.")
                 .define("allowBlockGroupCreation", false);
+        SERVER_BUILDER.pop();
+
+        SERVER_BUILDER.comment("Conjure Terrain Convergence Settings").push("conjure_terrain_convergence");
+        CONJURE_TERRAIN_MAX_SIZE = SERVER_BUILDER.comment(
+                "Maximum cube size for Conjure Terrain convergence.",
+                "Size is the cube edge length in blocks. Default is 64.")
+                .defineInRange("maxSize", 64, 1, 4096);
         SERVER_BUILDER.pop();
 
         SERVER_CONFIG = SERVER_BUILDER.build();

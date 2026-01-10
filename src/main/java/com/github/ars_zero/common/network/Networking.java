@@ -28,9 +28,9 @@ public class Networking {
         );
 
         registrar.playToServer(
-            PacketAdjustStaffDistance.TYPE,
-            PacketAdjustStaffDistance.CODEC,
-            PacketAdjustStaffDistance::handle
+            PacketScrollMultiPhaseDevice.TYPE,
+            PacketScrollMultiPhaseDevice.CODEC,
+            PacketScrollMultiPhaseDevice::handle
         );
 
         registrar.playToServer(
@@ -90,7 +90,7 @@ public class Networking {
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
     }
 
-    public static void sendToServer(PacketAdjustStaffDistance packet) {
+    public static void sendToServer(PacketScrollMultiPhaseDevice packet) {
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(packet);
     }
 
