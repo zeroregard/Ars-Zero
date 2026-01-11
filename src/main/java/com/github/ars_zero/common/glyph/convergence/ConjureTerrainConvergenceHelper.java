@@ -4,6 +4,7 @@ import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
 import com.github.ars_zero.common.entity.terrain.ConjureTerrainConvergenceEntity;
 import com.github.ars_zero.common.spell.SpellAugmentExtractor;
 import com.github.ars_zero.registry.ModEntities;
+import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -46,6 +47,8 @@ public final class ConjureTerrainConvergenceHelper {
 
         TerrainResult result = determineTerrainBlockState(spellContext, serverLevel);
         entity.setTerrainBlockState(result.blockState);
+        int augmentCount = countConjureTerrainAugments(spellContext);
+        entity.setAugmentCount(augmentCount);
 
         SpellContext iterator = spellContext.clone();
         while (iterator.hasNextPart()) {
@@ -183,5 +186,34 @@ public final class ConjureTerrainConvergenceHelper {
         }
         ResourceLocation candidateId = candidate.getRegistryName();
         return id != null && id.equals(candidateId);
+    }
+
+    private static int countConjureTerrainAugments(SpellContext context) {
+        ResourceLocation targetId = EffectConjureTerrain.INSTANCE.getRegistryName();
+        SpellContext iterator = context.clone();
+        boolean foundTarget = false;
+        int count = 0;
+
+        while (iterator.hasNextPart()) {
+            AbstractSpellPart part = iterator.nextPart();
+
+            if (!foundTarget) {
+                if (part instanceof AbstractEffect effect
+                        && effectsMatch(effect, EffectConjureTerrain.INSTANCE, targetId)) {
+                    foundTarget = true;
+                }
+                continue;
+            }
+
+            if (part instanceof AbstractEffect) {
+                break;
+            }
+
+            if (part instanceof AbstractAugment) {
+                count++;
+            }
+        }
+
+        return count;
     }
 }

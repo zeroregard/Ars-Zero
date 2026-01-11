@@ -3,6 +3,7 @@ package com.github.ars_zero.client;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.client.gui.GuiStaffHUD;
+import com.github.ars_zero.client.renderer.ConjureTerrainSizeOverlayHelper;
 import com.github.ars_zero.client.network.ClientNetworking;
 import com.github.ars_zero.client.renderer.entity.ArcaneVoxelEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.BlockGroupEntityRenderer;
@@ -83,6 +84,8 @@ public class ArsZeroClient {
 
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("staff_hud"), GuiStaffHUD.OVERLAY);
+        event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("terrain_size_overlay"),
+                ConjureTerrainSizeOverlayHelper.OVERLAY);
     }
 
     public static void registerParticleProviders(RegisterParticleProvidersEvent event) {

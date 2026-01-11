@@ -26,8 +26,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -50,11 +55,13 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
             .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<BlockPos> DATA_MARKER_POS = SynchedEntityData
             .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BLOCK_POS);
+    private static final EntityDataAccessor<BlockPos> DATA_TARGET_BLOCK = SynchedEntityData
+            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BLOCK_POS);
 
     private static final int DEFAULT_SIZE = 5;
     private static final int MIN_SIZE = 1;
     private static final float BASE_BLOCKS_PER_TICK = 0.5f;
-    private static final double MANA_COST_PER_BLOCK = 1.0;
+    private static final double BASE_MANA_COST_PER_BLOCK = 0.1;
     private static final double FREE_MANA_AMOUNT = 32.0;
 
     @Nullable
@@ -66,12 +73,14 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
     private BlockPos markerPos = null;
     @Nullable
     private BlockState terrainBlockState = null;
+    private int augmentCount = 0;
 
     private boolean building = false;
     private boolean paused = false;
     private boolean waitingForMana = false;
     private final List<BlockPos> buildQueue = new ArrayList<>();
     private int buildIndex = 0;
+    private float clientSmoothedYaw = 0f;
 
     public ConjureTerrainConvergenceEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -79,6 +88,23 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, "main_controller", 1, state -> {
+            if (!isBuilding()) {
+                return PlayState.STOP;
+            }
+
+            state.getController().setAnimation(RawAnimation.begin().thenPlay("tending_master"));
+
+            if (isPaused()) {
+                state.getController().setAnimationSpeed(0.0);
+            } else if (isWaitingForMana()) {
+                state.getController().setAnimationSpeed(0.1);
+            } else {
+                state.getController().setAnimationSpeed(1.0);
+            }
+
+            return PlayState.CONTINUE;
+        }));
     }
 
     public void setCasterUUID(@Nullable UUID casterUuid) {
@@ -212,6 +238,36 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
         return ConvergenceStructureHelper.maxOffset(getSize());
     }
 
+    @Nullable
+    public BlockPos getTargetBlock() {
+        BlockPos target = this.entityData.get(DATA_TARGET_BLOCK);
+        if (target.equals(BlockPos.ZERO)) {
+            return null;
+        }
+        return target;
+    }
+
+    private void updateTargetBlock() {
+        if (!this.level().isClientSide && this.building && this.buildIndex < this.buildQueue.size()) {
+            BlockPos next = this.buildQueue.get(this.buildIndex);
+            this.entityData.set(DATA_TARGET_BLOCK, next);
+        }
+    }
+
+    public float getSmoothedYaw(float targetYaw) {
+        float diff = targetYaw - this.clientSmoothedYaw;
+        while (diff > 180f)
+            diff -= 360f;
+        while (diff < -180f)
+            diff += 360f;
+        this.clientSmoothedYaw += diff * 0.5f;
+        while (this.clientSmoothedYaw > 180f)
+            this.clientSmoothedYaw -= 360f;
+        while (this.clientSmoothedYaw < -180f)
+            this.clientSmoothedYaw += 360f;
+        return this.clientSmoothedYaw;
+    }
+
     public void setTerrainBlockState(BlockState blockState) {
         this.terrainBlockState = blockState;
     }
@@ -221,6 +277,35 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
             return Blocks.DIRT.defaultBlockState();
         }
         return this.terrainBlockState;
+    }
+
+    public void setAugmentCount(int count) {
+        this.augmentCount = count;
+    }
+
+    public int getAugmentCount() {
+        return this.augmentCount;
+    }
+
+    private int getBlockTypeFactor() {
+        BlockState block = getTerrainBlockState();
+        if (block.getBlock() == Blocks.DIRT || block.getBlock() == Blocks.COARSE_DIRT
+                || block.getBlock() == Blocks.PODZOL || block.getBlock() == Blocks.GRASS_BLOCK
+                || block.getBlock() == Blocks.GRAVEL || block.getBlock() == Blocks.MUD) {
+            return 1;
+        } else if (block.getBlock() == Blocks.COBBLESTONE || block.getBlock() == Blocks.COBBLED_DEEPSLATE
+                || block.getBlock() == Blocks.SAND || block.getBlock() == Blocks.RED_SAND
+                || block.getBlock() == Blocks.SANDSTONE || block.getBlock() == Blocks.RED_SANDSTONE) {
+            return 2;
+        } else {
+            return 3;
+        }
+    }
+
+    private double getManaCostPerBlock() {
+        int blockFactor = getBlockTypeFactor();
+        int augmentFactor = this.augmentCount + 1;
+        return BASE_MANA_COST_PER_BLOCK * blockFactor * augmentFactor;
     }
 
     @Override
@@ -242,11 +327,12 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
     @Override
     public void tick() {
         super.tick();
-        if (this.level().isClientSide) {
-            return;
-        }
-        if (this.building && !this.paused) {
-            tickBuild();
+        Vec3 pos = this.position();
+        this.setBoundingBox(new AABB(pos.x - 0.25, pos.y + 0.5, pos.z - 0.25, pos.x + 0.25, pos.y + 1.0, pos.z + 0.25));
+        if (!this.level().isClientSide) {
+            if (this.building && !this.paused) {
+                tickBuild();
+            }
         }
     }
 
@@ -323,6 +409,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
         builder.define(DATA_CASTER_UUID, Optional.empty());
         builder.define(DATA_HAS_MARKER_POS, false);
         builder.define(DATA_MARKER_POS, BlockPos.ZERO);
+        builder.define(DATA_TARGET_BLOCK, BlockPos.ZERO);
     }
 
     @Override
@@ -387,6 +474,9 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
         if (compound.contains("consumed_mana")) {
             this.consumedMana = compound.getDouble("consumed_mana");
         }
+        if (compound.contains("augment_count")) {
+            this.augmentCount = compound.getInt("augment_count");
+        }
     }
 
     @Override
@@ -415,6 +505,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
         compound.putFloat("earth_power", this.earthPower);
         compound.putFloat("block_accumulator", this.blockPlacementAccumulator);
         compound.putDouble("consumed_mana", this.consumedMana);
+        compound.putInt("augment_count", this.augmentCount);
     }
 
     private void startBuilding() {
@@ -441,6 +532,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
         }
+        updateTargetBlock();
         if (this.buildIndex >= this.buildQueue.size()) {
             this.discard();
             return;
@@ -506,12 +598,8 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
     }
 
     private boolean canAffordMana(ServerLevel serverLevel, Player player, int blockCount) {
-        boolean isCreative = player.getAbilities().instabuild;
-        if (isCreative) {
-            return true;
-        }
-
-        double totalCost = blockCount * MANA_COST_PER_BLOCK;
+        double costPerBlock = getManaCostPerBlock();
+        double totalCost = blockCount * costPerBlock;
         double remainingFree = Math.max(0, FREE_MANA_AMOUNT - this.consumedMana);
         double costAfterFree = Math.max(0, totalCost - remainingFree);
 
@@ -549,22 +637,17 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
     }
 
     private boolean consumeManaForBlock(ServerLevel serverLevel, Player player) {
-        boolean isCreative = player.getAbilities().instabuild;
+        double costPerBlock = getManaCostPerBlock();
 
         if (this.consumedMana < FREE_MANA_AMOUNT) {
             double remainingFree = FREE_MANA_AMOUNT - this.consumedMana;
-            if (MANA_COST_PER_BLOCK <= remainingFree) {
-                this.consumedMana += MANA_COST_PER_BLOCK;
+            if (costPerBlock <= remainingFree) {
+                this.consumedMana += costPerBlock;
                 return true;
             } else {
                 double freeAmount = remainingFree;
                 this.consumedMana += freeAmount;
-                double remainingCost = MANA_COST_PER_BLOCK - freeAmount;
-
-                if (isCreative) {
-                    this.consumedMana += remainingCost;
-                    return true;
-                }
+                double remainingCost = costPerBlock - freeAmount;
 
                 IManaCap manaCap = CapabilityRegistry.getMana(player);
                 if (manaCap != null && manaCap.getCurrentMana() >= remainingCost) {
@@ -572,21 +655,15 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
                     this.consumedMana += remainingCost;
                     return true;
                 }
-                // Not enough mana - revert the free amount we consumed
                 this.consumedMana -= freeAmount;
                 return false;
             }
         }
 
-        if (isCreative) {
-            this.consumedMana += MANA_COST_PER_BLOCK;
-            return true;
-        }
-
         IManaCap manaCap = CapabilityRegistry.getMana(player);
-        if (manaCap != null && manaCap.getCurrentMana() >= MANA_COST_PER_BLOCK) {
-            manaCap.removeMana(MANA_COST_PER_BLOCK);
-            this.consumedMana += MANA_COST_PER_BLOCK;
+        if (manaCap != null && manaCap.getCurrentMana() >= costPerBlock) {
+            manaCap.removeMana(costPerBlock);
+            this.consumedMana += costPerBlock;
             return true;
         }
 
