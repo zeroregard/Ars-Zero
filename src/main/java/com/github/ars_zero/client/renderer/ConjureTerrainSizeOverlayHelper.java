@@ -44,7 +44,7 @@ public class ConjureTerrainSizeOverlayHelper {
     int screenHeight = minecraft.getWindow().getGuiScaledHeight();
     int textWidth = minecraft.font.width(text);
     int x = (screenWidth - textWidth) / 2;
-    int y = screenHeight - 40;
+    int y = screenHeight - 104;
 
     graphics.drawString(minecraft.font, text, x, y, 0xFFFFFF);
   }

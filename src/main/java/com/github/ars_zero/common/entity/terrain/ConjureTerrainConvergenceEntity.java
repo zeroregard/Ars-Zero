@@ -61,14 +61,12 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
     private static final int DEFAULT_SIZE = 5;
     private static final int MIN_SIZE = 1;
     private static final float BASE_BLOCKS_PER_TICK = 0.5f;
-    private static final double BASE_MANA_COST_PER_BLOCK = 0.1;
-    private static final double FREE_MANA_AMOUNT = 32.0;
+    private static final double BASE_MANA_COST_PER_BLOCK = 0.3;
 
     @Nullable
     private UUID casterUuid = null;
     private float earthPower = 0.0f;
     private float blockPlacementAccumulator = 0.0f;
-    private double consumedMana = 0.0;
     @Nullable
     private BlockPos markerPos = null;
     @Nullable
@@ -260,7 +258,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
             diff -= 360f;
         while (diff < -180f)
             diff += 360f;
-        this.clientSmoothedYaw += diff * 0.5f;
+        this.clientSmoothedYaw += diff * 0.1f;
         while (this.clientSmoothedYaw > 180f)
             this.clientSmoothedYaw -= 360f;
         while (this.clientSmoothedYaw < -180f)
@@ -471,9 +469,6 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
         if (compound.contains("block_accumulator")) {
             this.blockPlacementAccumulator = compound.getFloat("block_accumulator");
         }
-        if (compound.contains("consumed_mana")) {
-            this.consumedMana = compound.getDouble("consumed_mana");
-        }
         if (compound.contains("augment_count")) {
             this.augmentCount = compound.getInt("augment_count");
         }
@@ -504,7 +499,6 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
         }
         compound.putFloat("earth_power", this.earthPower);
         compound.putFloat("block_accumulator", this.blockPlacementAccumulator);
-        compound.putDouble("consumed_mana", this.consumedMana);
         compound.putInt("augment_count", this.augmentCount);
     }
 
@@ -558,10 +552,18 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
             return;
         }
 
-        // Check if we have enough mana for all blocks we want to place before
-        // attempting
-        boolean hasMana = canAffordMana(serverLevel, claimActor, blocksToPlace);
-        if (!hasMana) {
+        double costPerBlock = getManaCostPerBlock();
+        IManaCap manaCap = CapabilityRegistry.getMana(claimActor);
+        if (manaCap == null) {
+            setWaitingForMana(true);
+            return;
+        }
+
+        double availableMana = manaCap.getCurrentMana();
+        int affordableBlocks = (int) Math.floor(availableMana / costPerBlock);
+        int blocksToPlaceThisTick = Math.min(blocksToPlace, Math.max(0, affordableBlocks));
+
+        if (blocksToPlaceThisTick <= 0) {
             setWaitingForMana(true);
             return;
         }
@@ -572,47 +574,21 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
 
         int oldIndex = this.buildIndex;
         this.buildIndex = ConvergenceStructureHelper.placeNext(serverLevel, this.buildQueue, this.buildIndex,
-                blocksToPlace,
+                blocksToPlaceThisTick,
                 terrainState, claimActor);
-
-        // Subtract from accumulator (tracks placement attempts, not successful
-        // placements)
-        this.blockPlacementAccumulator -= blocksToPlace;
 
         int blocksPlaced = this.buildIndex - oldIndex;
 
-        // Consume mana for each block that was actually placed
-        // We've already checked that we can afford blocksToPlace, so this should
-        // succeed
-        // However, if somehow we run out of mana mid-way (rare edge case), we'll wait
-        // next tick
         for (int i = 0; i < blocksPlaced; i++) {
             boolean consumed = consumeManaForBlock(serverLevel, claimActor);
             if (!consumed) {
-                // This should never happen since we checked with canAffordMana, but handle it
-                // anyway
                 setWaitingForMana(true);
+                this.blockPlacementAccumulator -= i;
                 return;
             }
         }
-    }
 
-    private boolean canAffordMana(ServerLevel serverLevel, Player player, int blockCount) {
-        double costPerBlock = getManaCostPerBlock();
-        double totalCost = blockCount * costPerBlock;
-        double remainingFree = Math.max(0, FREE_MANA_AMOUNT - this.consumedMana);
-        double costAfterFree = Math.max(0, totalCost - remainingFree);
-
-        if (costAfterFree <= 0) {
-            return true;
-        }
-
-        IManaCap manaCap = CapabilityRegistry.getMana(player);
-        if (manaCap == null) {
-            return false;
-        }
-
-        return manaCap.getCurrentMana() >= costAfterFree;
+        this.blockPlacementAccumulator -= blocksPlaced;
     }
 
     @Nullable
@@ -639,31 +615,9 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
     private boolean consumeManaForBlock(ServerLevel serverLevel, Player player) {
         double costPerBlock = getManaCostPerBlock();
 
-        if (this.consumedMana < FREE_MANA_AMOUNT) {
-            double remainingFree = FREE_MANA_AMOUNT - this.consumedMana;
-            if (costPerBlock <= remainingFree) {
-                this.consumedMana += costPerBlock;
-                return true;
-            } else {
-                double freeAmount = remainingFree;
-                this.consumedMana += freeAmount;
-                double remainingCost = costPerBlock - freeAmount;
-
-                IManaCap manaCap = CapabilityRegistry.getMana(player);
-                if (manaCap != null && manaCap.getCurrentMana() >= remainingCost) {
-                    manaCap.removeMana(remainingCost);
-                    this.consumedMana += remainingCost;
-                    return true;
-                }
-                this.consumedMana -= freeAmount;
-                return false;
-            }
-        }
-
         IManaCap manaCap = CapabilityRegistry.getMana(player);
         if (manaCap != null && manaCap.getCurrentMana() >= costPerBlock) {
             manaCap.removeMana(costPerBlock);
-            this.consumedMana += costPerBlock;
             return true;
         }
 

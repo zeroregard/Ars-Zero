@@ -5,6 +5,7 @@ import com.github.ars_zero.common.structure.ConvergenceStructureHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -13,6 +14,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
@@ -67,7 +69,13 @@ public class ConjureTerrainConvergenceEntityRenderer extends GeoEntityRenderer<C
             return;
         }
 
-        renderPreviewOutline(entity, poseStack, buffer);
+        Player clientPlayer = Minecraft.getInstance().player;
+        if (clientPlayer != null) {
+            java.util.UUID casterUuid = entity.getCasterUUID();
+            if (casterUuid != null && casterUuid.equals(clientPlayer.getUUID())) {
+                renderPreviewOutline(entity, poseStack, buffer);
+            }
+        }
     }
 
     private float calculateYawToTarget(ConjureTerrainConvergenceEntity entity) {
