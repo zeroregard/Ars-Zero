@@ -2,6 +2,7 @@ package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.config.ServerConfig;
+import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.entity.ILifespanExtendable;
@@ -122,7 +123,7 @@ public class AnchorEffect extends AbstractEffect {
                     player.getEyePosition(1.0f),
                     castContext.distanceMultiplier);
 
-            if (newPosition != null && canMoveToPosition(newPosition, world)) {
+            if (newPosition != null && canMoveToPosition(newPosition, world, target)) {
                 if (target instanceof ServerPlayer targetPlayer) {
                     targetPlayer.teleportTo(newPosition.x, newPosition.y, newPosition.z);
                     targetPlayer.setDeltaMovement(Vec3.ZERO);
@@ -217,7 +218,11 @@ public class AnchorEffect extends AbstractEffect {
         return casterChunk.equals(targetChunk);
     }
 
-    private static boolean canMoveToPosition(Vec3 targetPos, Level world) {
+    private static boolean canMoveToPosition(Vec3 targetPos, Level world, Entity target) {
+        if (target instanceof AbstractGeometryProcessEntity gpe && !gpe.isBuilding()) {
+            return true;
+        }
+
         BlockPos blockPos = BlockPos.containing(targetPos);
 
         if (BlockImmutabilityUtil.isBlockImmutable(world, blockPos)) {
@@ -313,7 +318,7 @@ public class AnchorEffect extends AbstractEffect {
                         player.getEyePosition(1.0f),
                         castContext.distanceMultiplier);
 
-                if (newPosition != null && canMoveToPosition(newPosition, world)) {
+                if (newPosition != null && canMoveToPosition(newPosition, world, blockGroup)) {
                     blockGroup.setPos(newPosition.x, newPosition.y, newPosition.z);
                     blockGroup.setDeltaMovement(Vec3.ZERO);
                     blockGroup.setNoGravity(true);

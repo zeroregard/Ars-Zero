@@ -14,6 +14,7 @@ import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
+import com.hollingsworth.arsnouveau.common.spell.effect.EffectBreak;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectExplosion;
 import net.minecraft.resources.ResourceLocation;
@@ -23,9 +24,22 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
+import java.util.Set;
 
 public final class ConvergenceCompatibilityHelper {
     private static final Logger LOGGER = LogManager.getLogger(ArsZero.MOD_ID);
+
+    private static final Set<Class<? extends AbstractEffect>> GEOMETRY_COMPATIBLE_EFFECTS = Set.of(
+            EffectConjureTerrain.class,
+            EffectBreak.class
+    );
+
+    private static final Set<Class<? extends AbstractEffect>> CONVERGENCE_EFFECTS = Set.of(
+            EffectExplosion.class,
+            EffectConjureWater.class,
+            EffectConjureTerrain.class,
+            EffectBreak.class
+    );
 
     private ConvergenceCompatibilityHelper() {
     }
@@ -78,10 +92,7 @@ public final class ConvergenceCompatibilityHelper {
     }
 
     public static boolean isCompatibleWithTerrainAugments(AbstractEffect effect) {
-        if (effect instanceof EffectConjureTerrain) {
-            return true;
-        }
-        return false;
+        return GEOMETRY_COMPATIBLE_EFFECTS.stream().anyMatch(clazz -> clazz.isInstance(effect));
     }
 
     public static boolean isIncompatibleCombination(SpellContext context) {
@@ -114,8 +125,7 @@ public final class ConvergenceCompatibilityHelper {
             }
 
             if (next instanceof AbstractEffect effect) {
-                if (effect instanceof EffectExplosion || effect instanceof EffectConjureWater
-                        || effect instanceof EffectConjureTerrain) {
+                if (CONVERGENCE_EFFECTS.stream().anyMatch(clazz -> clazz.isInstance(effect))) {
                     return effect;
                 }
             }
@@ -132,34 +142,19 @@ public final class ConvergenceCompatibilityHelper {
 
         SpellContext iterator = context.clone();
 
-        LOGGER.info("[GeometryDebug] Starting resolveGeometryDescription (context already past Convergence)");
-
         while (iterator.hasNextPart()) {
             AbstractSpellPart part = iterator.nextPart();
-            LOGGER.info("[GeometryDebug] Processing part: {} (class: {})",
-                    part.getRegistryName(), part.getClass().getSimpleName());
 
             if (part instanceof AbstractEffect) {
-                LOGGER.info("[GeometryDebug] Skipping effect: {}", part.getRegistryName());
                 continue;
             }
 
-            LOGGER.info(
-                    "[GeometryDebug] Checking augment: {}, isIShapeAugment={}, isIFillAugment={}, isIProjectionAugment={}",
-                    part.getRegistryName(),
-                    part instanceof IShapeAugment,
-                    part instanceof IFillAugment,
-                    part instanceof IProjectionAugment);
-
             if (part instanceof IShapeAugment shapeAugment) {
                 baseShape = shapeAugment.getShape();
-                LOGGER.info("[GeometryDebug] Set baseShape to: {}", baseShape);
             } else if (part instanceof IFillAugment fillAugment) {
                 fillMode = fillAugment.getFillMode();
-                LOGGER.info("[GeometryDebug] Set fillMode to: {}", fillMode);
             } else if (part instanceof IProjectionAugment projectionAugment) {
                 projectionMode = projectionAugment.getProjectionMode();
-                LOGGER.info("[GeometryDebug] Set projectionMode to: {}", projectionMode);
             }
         }
 
@@ -167,9 +162,7 @@ public final class ConvergenceCompatibilityHelper {
             orientation = caster.getLookAngle();
         }
 
-        GeometryDescription result = new GeometryDescription(baseShape, fillMode, projectionMode, orientation);
-        LOGGER.info("[GeometryDebug] Final GeometryDescription: {}", result);
-        return result;
+        return new GeometryDescription(baseShape, fillMode, projectionMode, orientation);
     }
 
     public static int countShapeAugments(SpellContext context) {

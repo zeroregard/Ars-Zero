@@ -1,138 +1,56 @@
 package com.github.ars_zero.common.entity.terrain;
 
 import com.alexthw.sauce.registry.ModRegistry;
-import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.entity.AbstractConvergenceEntity;
-import com.github.ars_zero.common.entity.IAltScrollable;
-import com.github.ars_zero.common.entity.IGeometryProcessEntity;
-import com.github.ars_zero.common.glyph.convergence.EffectConvergence;
-import com.github.ars_zero.common.shape.GeometryDescription;
-import com.github.ars_zero.common.shape.ShapePipeline;
+import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
 import com.github.ars_zero.common.structure.ConvergenceStructureHelper;
 import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity
-        implements IAltScrollable, IGeometryProcessEntity {
-    private static final Logger LOGGER = LogManager.getLogger(ArsZero.MOD_ID);
-    private static final EntityDataAccessor<Integer> DATA_SIZE = SynchedEntityData
-            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Boolean> DATA_BUILDING = SynchedEntityData
-            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_PAUSED = SynchedEntityData
-            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BOOLEAN);
+public class ConjureTerrainConvergenceEntity extends AbstractGeometryProcessEntity {
+
     private static final EntityDataAccessor<Boolean> DATA_WAITING_FOR_MANA = SynchedEntityData
             .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Optional<UUID>> DATA_CASTER_UUID = SynchedEntityData
-            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.OPTIONAL_UUID);
-    private static final EntityDataAccessor<Boolean> DATA_HAS_MARKER_POS = SynchedEntityData
-            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<BlockPos> DATA_MARKER_POS = SynchedEntityData
-            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BLOCK_POS);
-    private static final EntityDataAccessor<BlockPos> DATA_TARGET_BLOCK = SynchedEntityData
-            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BLOCK_POS);
-    private static final EntityDataAccessor<CompoundTag> DATA_GEOMETRY_DESCRIPTION = SynchedEntityData
-            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.COMPOUND_TAG);
 
-    private static final int DEFAULT_SIZE = 5;
-    private static final int MIN_SIZE = 1;
-    private static final float BASE_BLOCKS_PER_TICK = 0.5f;
     private static final double BASE_MANA_COST_PER_BLOCK = 0.3;
 
-    @Nullable
-    private UUID casterUuid = null;
     private float earthPower = 0.0f;
-    private float blockPlacementAccumulator = 0.0f;
-    @Nullable
-    private BlockPos markerPos = null;
     @Nullable
     private BlockState terrainBlockState = null;
     private int augmentCount = 0;
-    private GeometryDescription geometryDescription = GeometryDescription.DEFAULT;
-
-    private boolean building = false;
-    private boolean paused = false;
     private boolean waitingForMana = false;
-    private final List<BlockPos> buildQueue = new ArrayList<>();
-    private int buildIndex = 0;
-    private float clientSmoothedYaw = 0f;
 
     public ConjureTerrainConvergenceEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
     }
 
     @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "main_controller", 1, state -> {
-            if (!isBuilding()) {
-                return PlayState.STOP;
-            }
-
-            state.getController().setAnimation(RawAnimation.begin().thenPlay("tending_master"));
-
-            if (isPaused()) {
-                state.getController().setAnimationSpeed(0.0);
-            } else if (isWaitingForMana()) {
-                state.getController().setAnimationSpeed(0.1);
-            } else {
-                state.getController().setAnimationSpeed(1.0);
-            }
-
-            return PlayState.CONTINUE;
-        }));
-    }
-
-    public void setCasterUUID(@Nullable UUID casterUuid) {
-        this.casterUuid = casterUuid;
-        if (!this.level().isClientSide) {
-            this.entityData.set(DATA_CASTER_UUID, Optional.ofNullable(casterUuid));
-        }
-    }
-
     public void setCaster(@Nullable LivingEntity caster) {
-        if (caster == null) {
-            return;
+        super.setCaster(caster);
+        if (caster != null) {
+            this.earthPower = getEarthPower(caster);
         }
-        this.casterUuid = caster.getUUID();
-        if (!this.level().isClientSide) {
-            this.entityData.set(DATA_CASTER_UUID, Optional.of(caster.getUUID()));
-        }
-        this.earthPower = getEarthPower(caster);
     }
 
     private float getEarthPower(LivingEntity caster) {
@@ -145,52 +63,20 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity
         return 0.0f;
     }
 
-    @Nullable
-    public UUID getCasterUUID() {
-        if (this.level().isClientSide) {
-            return this.entityData.get(DATA_CASTER_UUID).orElse(null);
-        }
-        return this.casterUuid;
+    public void setTerrainBlockState(BlockState blockState) {
+        this.terrainBlockState = blockState;
     }
 
-    public void setMarkerPos(@Nullable BlockPos markerPos) {
-        this.markerPos = markerPos;
-        if (!this.level().isClientSide) {
-            boolean has = markerPos != null;
-            this.entityData.set(DATA_HAS_MARKER_POS, has);
-            if (has) {
-                this.entityData.set(DATA_MARKER_POS, markerPos);
-            }
-        }
+    public BlockState getTerrainBlockState() {
+        return this.terrainBlockState != null ? this.terrainBlockState : Blocks.DIRT.defaultBlockState();
     }
 
-    @Nullable
-    public BlockPos getMarkerPos() {
-        if (this.level().isClientSide) {
-            if (!this.entityData.get(DATA_HAS_MARKER_POS)) {
-                return null;
-            }
-            return this.entityData.get(DATA_MARKER_POS);
-        }
-        return this.markerPos;
+    public void setAugmentCount(int count) {
+        this.augmentCount = count;
     }
 
-    public int getSize() {
-        return this.entityData.get(DATA_SIZE);
-    }
-
-    public boolean isBuilding() {
-        if (this.level().isClientSide) {
-            return this.entityData.get(DATA_BUILDING);
-        }
-        return this.building;
-    }
-
-    public boolean isPaused() {
-        if (this.level().isClientSide) {
-            return this.entityData.get(DATA_PAUSED);
-        }
-        return this.paused;
+    public int getAugmentCount() {
+        return this.augmentCount;
     }
 
     public boolean isWaitingForMana() {
@@ -207,400 +93,42 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity
         }
     }
 
-    public void setSize(int size) {
-        int clampedOdd = clampSize(size);
-        if (!this.level().isClientSide) {
-            this.entityData.set(DATA_SIZE, clampedOdd);
-        }
-    }
-
-    @Override
-    public void handleAltScroll(double scrollDelta) {
-        if (getLifespan() <= 0 || isBuilding()) {
-            return;
-        }
-        int direction = scrollDelta > 0 ? 1 : (scrollDelta < 0 ? -1 : 0);
-        if (direction == 0) {
-            return;
-        }
-        int current = getSize();
-        int next = current + (direction > 0 ? 1 : -1);
-        setSize(next);
-    }
-
-    public void adjustSizeStep(int direction) {
-        if (direction == 0) {
-            return;
-        }
-        if (isBuilding() || getLifespan() <= 0) {
-            return;
-        }
-        int current = getSize();
-        int next = current + (direction > 0 ? 1 : -1);
-        setSize(next);
-    }
-
-    public int getMinOffset() {
-        return -Math.floorDiv(getSize(), 2);
-    }
-
-    public int getMaxOffset() {
-        return getMinOffset() + getSize() - 1;
-    }
-
-    @Nullable
-    public BlockPos getTargetBlock() {
-        BlockPos target = this.entityData.get(DATA_TARGET_BLOCK);
-        if (target.equals(BlockPos.ZERO)) {
-            return null;
-        }
-        return target;
-    }
-
-    private void updateTargetBlock() {
-        if (!this.level().isClientSide && this.building && this.buildIndex < this.buildQueue.size()) {
-            BlockPos next = this.buildQueue.get(this.buildIndex);
-            this.entityData.set(DATA_TARGET_BLOCK, next);
-        }
-    }
-
-    public float getSmoothedYaw(float targetYaw) {
-        float diff = targetYaw - this.clientSmoothedYaw;
-        while (diff > 180f)
-            diff -= 360f;
-        while (diff < -180f)
-            diff += 360f;
-        this.clientSmoothedYaw += diff * 0.1f;
-        while (this.clientSmoothedYaw > 180f)
-            this.clientSmoothedYaw -= 360f;
-        while (this.clientSmoothedYaw < -180f)
-            this.clientSmoothedYaw += 360f;
-        return this.clientSmoothedYaw;
-    }
-
-    public void setTerrainBlockState(BlockState blockState) {
-        this.terrainBlockState = blockState;
-    }
-
-    public BlockState getTerrainBlockState() {
-        if (this.terrainBlockState == null) {
-            return Blocks.DIRT.defaultBlockState();
-        }
-        return this.terrainBlockState;
-    }
-
-    public void setAugmentCount(int count) {
-        this.augmentCount = count;
-    }
-
-    public int getAugmentCount() {
-        return this.augmentCount;
-    }
-
-    @Override
-    public void setGeometryDescription(GeometryDescription description) {
-        LOGGER.info("[Entity] setGeometryDescription called with: {}", description);
-        GeometryDescription desc = description != null ? description : GeometryDescription.DEFAULT;
-        this.geometryDescription = desc;
-        if (!this.level().isClientSide) {
-            this.entityData.set(DATA_GEOMETRY_DESCRIPTION, desc.toTag());
-        }
-        LOGGER.info("[Entity] geometryDescription field is now: {}", this.geometryDescription);
-    }
-
-    @Override
-    public GeometryDescription getGeometryDescription() {
-        if (this.level().isClientSide) {
-            CompoundTag tag = this.entityData.get(DATA_GEOMETRY_DESCRIPTION);
-            return tag != null && !tag.isEmpty() ? GeometryDescription.fromTag(tag) : GeometryDescription.DEFAULT;
-        }
-        return this.geometryDescription;
-    }
-
-    @Override
-    public void startProcess() {
-        startBuilding();
-    }
-
-    @Override
-    public boolean isProcessing() {
-        return isBuilding();
-    }
-
-    @Override
-    public void cancelProcess() {
-        this.discard();
-    }
-
-    @Override
-    public Level getProcessLevel() {
-        return this.level();
-    }
-
     private int getBlockTypeFactor() {
         BlockState block = getTerrainBlockState();
-        if (block.getBlock() == Blocks.DIRT || block.getBlock() == Blocks.COARSE_DIRT
-                || block.getBlock() == Blocks.PODZOL || block.getBlock() == Blocks.GRASS_BLOCK
-                || block.getBlock() == Blocks.GRAVEL || block.getBlock() == Blocks.MUD) {
+        Block b = block.getBlock();
+        if (b == Blocks.DIRT || b == Blocks.COARSE_DIRT || b == Blocks.PODZOL
+                || b == Blocks.GRASS_BLOCK || b == Blocks.GRAVEL || b == Blocks.MUD) {
             return 1;
-        } else if (block.getBlock() == Blocks.COBBLESTONE || block.getBlock() == Blocks.COBBLED_DEEPSLATE
-                || block.getBlock() == Blocks.SAND || block.getBlock() == Blocks.RED_SAND
-                || block.getBlock() == Blocks.SANDSTONE || block.getBlock() == Blocks.RED_SANDSTONE) {
+        } else if (b == Blocks.COBBLESTONE || b == Blocks.COBBLED_DEEPSLATE
+                || b == Blocks.SAND || b == Blocks.RED_SAND
+                || b == Blocks.SANDSTONE || b == Blocks.RED_SANDSTONE) {
             return 2;
-        } else {
-            return 3;
         }
+        return 3;
     }
 
     private double getManaCostPerBlock() {
-        int blockFactor = getBlockTypeFactor();
-        int augmentFactor = this.augmentCount + 1;
-        return BASE_MANA_COST_PER_BLOCK * blockFactor * augmentFactor;
+        return BASE_MANA_COST_PER_BLOCK * getBlockTypeFactor() * (this.augmentCount + 1);
     }
 
     @Override
-    public boolean shouldStart() {
-        return !isBuilding() && super.shouldStart();
+    protected float getBlocksPerTick() {
+        return BASE_BLOCKS_PER_TICK * (1.0f + earthPower / 2.0f);
     }
 
     @Override
-    protected void onLifespanReached() {
-        if (this.level().isClientSide) {
+    protected void tickProcess() {
+        if (!(this.level() instanceof ServerLevel serverLevel))
             return;
-        }
-        if (this.building) {
-            return;
-        }
-        startBuilding();
-    }
 
-    @Override
-    public void tick() {
-        super.tick();
-        Vec3 pos = this.position();
-        this.setBoundingBox(new AABB(pos.x - 0.25, pos.y + 0.5, pos.z - 0.25, pos.x + 0.25, pos.y + 1.0, pos.z + 0.25));
-        if (!this.level().isClientSide) {
-            if (this.building && !this.paused) {
-                tickBuild();
-            }
-        }
-    }
-
-    @Override
-    public boolean isInvisible() {
-        return false;
-    }
-
-    @Override
-    public boolean isInvisibleTo(Player player) {
-        UUID caster = getCasterUUID();
-        if (caster == null || player == null) {
-            return true;
-        }
-        return !caster.equals(player.getUUID());
-    }
-
-    @Override
-    public boolean isPickable() {
-        return isBuilding();
-    }
-
-    @Override
-    public float getPickRadius() {
-        return isBuilding() ? 0.75f : 0.0f;
-    }
-
-    @Override
-    public InteractionResult interact(Player player, InteractionHand hand) {
-        if (this.level().isClientSide) {
-            return InteractionResult.SUCCESS;
-        }
-        if (!isBuilding()) {
-            return InteractionResult.PASS;
-        }
-        UUID caster = getCasterUUID();
-        if (caster == null || !caster.equals(player.getUUID())) {
-            return InteractionResult.PASS;
-        }
-        this.paused = !this.paused;
-        this.entityData.set(DATA_PAUSED, this.paused);
-        if (!this.paused) {
-            setWaitingForMana(false);
-        }
-        return InteractionResult.CONSUME;
-    }
-
-    @Override
-    public boolean hurt(DamageSource source, float amount) {
-        if (this.level().isClientSide) {
-            return true;
-        }
-        if (!isBuilding()) {
-            return false;
-        }
-        if (!(source.getEntity() instanceof Player player)) {
-            return false;
-        }
-        UUID caster = getCasterUUID();
-        if (caster == null || !caster.equals(player.getUUID())) {
-            return false;
-        }
-        this.discard();
-        return true;
-    }
-
-    @Override
-    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
-        super.defineSynchedData(builder);
-        builder.define(DATA_SIZE, DEFAULT_SIZE);
-        builder.define(DATA_BUILDING, false);
-        builder.define(DATA_PAUSED, false);
-        builder.define(DATA_WAITING_FOR_MANA, false);
-        builder.define(DATA_CASTER_UUID, Optional.empty());
-        builder.define(DATA_HAS_MARKER_POS, false);
-        builder.define(DATA_MARKER_POS, BlockPos.ZERO);
-        builder.define(DATA_TARGET_BLOCK, BlockPos.ZERO);
-        builder.define(DATA_GEOMETRY_DESCRIPTION, new CompoundTag());
-    }
-
-    @Override
-    protected void readAdditionalSaveData(CompoundTag compound) {
-        super.readAdditionalSaveData(compound);
-        if (compound.contains("size")) {
-            int size = compound.getInt("size");
-            if (!this.level().isClientSide) {
-                this.entityData.set(DATA_SIZE, clampSize(size));
-            }
-        }
-        if (compound.contains("building")) {
-            this.building = compound.getBoolean("building");
-            if (!this.level().isClientSide) {
-                this.entityData.set(DATA_BUILDING, this.building);
-            }
-        }
-        if (compound.contains("paused")) {
-            this.paused = compound.getBoolean("paused");
-            if (!this.level().isClientSide) {
-                this.entityData.set(DATA_PAUSED, this.paused);
-            }
-        }
-        if (compound.contains("waiting_for_mana")) {
-            this.waitingForMana = compound.getBoolean("waiting_for_mana");
-            if (!this.level().isClientSide) {
-                this.entityData.set(DATA_WAITING_FOR_MANA, this.waitingForMana);
-            }
-        }
-        if (compound.contains("build_index")) {
-            this.buildIndex = Math.max(0, compound.getInt("build_index"));
-        }
-        if (compound.contains("caster_uuid")) {
-            this.casterUuid = compound.getUUID("caster_uuid");
-            if (!this.level().isClientSide) {
-                this.entityData.set(DATA_CASTER_UUID, Optional.ofNullable(this.casterUuid));
-            }
-        }
-        if (compound.contains("marker_x") && compound.contains("marker_y") && compound.contains("marker_z")) {
-            int x = compound.getInt("marker_x");
-            int y = compound.getInt("marker_y");
-            int z = compound.getInt("marker_z");
-            this.markerPos = new BlockPos(x, y, z);
-            if (!this.level().isClientSide) {
-                this.entityData.set(DATA_HAS_MARKER_POS, true);
-                this.entityData.set(DATA_MARKER_POS, this.markerPos);
-            }
-        }
-        if (compound.contains("terrain_block")) {
-            ResourceLocation blockId = ResourceLocation.parse(compound.getString("terrain_block"));
-            Block block = BuiltInRegistries.BLOCK.get(blockId);
-            if (block != null) {
-                this.terrainBlockState = block.defaultBlockState();
-            }
-        }
-        if (compound.contains("earth_power")) {
-            this.earthPower = compound.getFloat("earth_power");
-        }
-        if (compound.contains("block_accumulator")) {
-            this.blockPlacementAccumulator = compound.getFloat("block_accumulator");
-        }
-        if (compound.contains("augment_count")) {
-            this.augmentCount = compound.getInt("augment_count");
-        }
-        if (compound.contains("shape_description")) {
-            this.geometryDescription = GeometryDescription.fromTag(compound.getCompound("shape_description"));
-        }
-    }
-
-    @Override
-    protected void addAdditionalSaveData(CompoundTag compound) {
-        super.addAdditionalSaveData(compound);
-        compound.putInt("size", getSize());
-        compound.putBoolean("building", this.building);
-        compound.putBoolean("paused", this.paused);
-        compound.putBoolean("waiting_for_mana", this.waitingForMana);
-        compound.putInt("build_index", this.buildIndex);
-        if (this.casterUuid != null) {
-            compound.putUUID("caster_uuid", this.casterUuid);
-        }
-        BlockPos marker = getMarkerPos();
-        if (marker != null) {
-            compound.putInt("marker_x", marker.getX());
-            compound.putInt("marker_y", marker.getY());
-            compound.putInt("marker_z", marker.getZ());
-        }
-        if (this.terrainBlockState != null) {
-            ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(this.terrainBlockState.getBlock());
-            if (blockId != null) {
-                compound.putString("terrain_block", blockId.toString());
-            }
-        }
-        compound.putFloat("earth_power", this.earthPower);
-        compound.putFloat("block_accumulator", this.blockPlacementAccumulator);
-        compound.putInt("augment_count", this.augmentCount);
-        compound.put("shape_description", this.geometryDescription.toTag());
-    }
-
-    private void startBuilding() {
-        this.building = true;
-        this.paused = false;
-        this.waitingForMana = false;
-        this.entityData.set(DATA_BUILDING, true);
-        this.entityData.set(DATA_PAUSED, false);
-        this.entityData.set(DATA_WAITING_FOR_MANA, false);
-        this.buildQueue.clear();
-        this.buildIndex = 0;
-
-        LOGGER.info("[Entity] startBuilding with geometryDescription: {}", geometryDescription);
-        LOGGER.info("[Entity] geometryDescription.baseShape(): {}", geometryDescription.baseShape());
-
-        BlockPos center = BlockPos.containing(this.position());
-        this.buildQueue.addAll(ShapePipeline.generate(center, getSize(), geometryDescription));
-
-        BlockPos marker = getMarkerPos();
-        if (marker != null) {
-            this.setPos(marker.getX() + 0.5, marker.getY(), marker.getZ() + 0.5);
-        }
-    }
-
-    private void tickBuild() {
-        if (!(this.level() instanceof ServerLevel serverLevel)) {
-            return;
-        }
         updateTargetBlock();
-        if (this.buildIndex >= this.buildQueue.size()) {
+
+        if (this.processIndex >= this.processQueue.size()) {
             this.discard();
             return;
         }
 
         if (this.paused) {
-            setWaitingForMana(false);
-            return;
-        }
-
-        float rate = BASE_BLOCKS_PER_TICK * (1.0f + earthPower / 2.0f);
-        this.blockPlacementAccumulator += rate;
-
-        int blocksToPlace = (int) this.blockPlacementAccumulator;
-        if (blocksToPlace <= 0) {
             setWaitingForMana(false);
             return;
         }
@@ -618,6 +146,15 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity
             return;
         }
 
+        float rate = getBlocksPerTick();
+        this.blockAccumulator += rate;
+
+        int blocksToPlace = (int) this.blockAccumulator;
+        if (blocksToPlace <= 0) {
+            setWaitingForMana(false);
+            return;
+        }
+
         double availableMana = manaCap.getCurrentMana();
         int affordableBlocks = (int) Math.floor(availableMana / costPerBlock);
         int blocksToPlaceThisTick = Math.min(blocksToPlace, Math.max(0, affordableBlocks));
@@ -629,57 +166,102 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity
 
         setWaitingForMana(false);
 
-        BlockState terrainState = getTerrainBlockState();
+        int oldIndex = this.processIndex;
+        this.processIndex = ConvergenceStructureHelper.placeNext(serverLevel, this.processQueue, this.processIndex,
+                blocksToPlaceThisTick, getTerrainBlockState(), claimActor);
 
-        int oldIndex = this.buildIndex;
-        this.buildIndex = ConvergenceStructureHelper.placeNext(serverLevel, this.buildQueue, this.buildIndex,
-                blocksToPlaceThisTick,
-                terrainState, claimActor);
+        int blocksPlaced = this.processIndex - oldIndex;
 
-        int blocksPlaced = this.buildIndex - oldIndex;
+        if (blocksPlaced > 0) {
+            playProcessSound(serverLevel, this.processQueue.get(oldIndex), blocksPlaced);
+        }
 
         for (int i = 0; i < blocksPlaced; i++) {
-            boolean consumed = consumeManaForBlock(serverLevel, claimActor);
-            if (!consumed) {
+            if (!consumeManaForBlock(claimActor, costPerBlock)) {
                 setWaitingForMana(true);
-                this.blockPlacementAccumulator -= i;
+                this.blockAccumulator -= i;
                 return;
             }
         }
 
-        this.blockPlacementAccumulator -= blocksPlaced;
+        this.blockAccumulator -= blocksPlaced;
+    }
+
+    @Override
+    protected boolean processBlock(ServerLevel level, BlockPos pos) {
+        return false;
+    }
+
+    @Override
+    protected SoundEvent getProcessSound(SoundType soundType) {
+        return soundType.getPlaceSound();
     }
 
     @Nullable
     private Player getClaimActor(ServerLevel level) {
         UUID caster = getCasterUUID();
-        if (caster == null) {
+        if (caster == null)
             return null;
-        }
-        if (level.getServer() == null || level.getServer().getPlayerList() == null) {
+        if (level.getServer() == null || level.getServer().getPlayerList() == null)
             return null;
-        }
         return level.getServer().getPlayerList().getPlayer(caster);
     }
 
-    private static int clampSize(int size) {
-        int maxSize = getMaxSize();
-        return Math.max(MIN_SIZE, Math.min(maxSize, size));
-    }
-
-    private static int getMaxSize() {
-        return Math.max(MIN_SIZE, EffectConvergence.INSTANCE.getTerrainMaxSize());
-    }
-
-    private boolean consumeManaForBlock(ServerLevel serverLevel, Player player) {
-        double costPerBlock = getManaCostPerBlock();
-
+    private boolean consumeManaForBlock(Player player, double costPerBlock) {
         IManaCap manaCap = CapabilityRegistry.getMana(player);
         if (manaCap != null && manaCap.getCurrentMana() >= costPerBlock) {
             manaCap.removeMana(costPerBlock);
             return true;
         }
-
         return false;
+    }
+
+    @Override
+    protected void onPauseToggled(boolean paused) {
+        if (!paused) {
+            setWaitingForMana(false);
+        }
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_WAITING_FOR_MANA, false);
+    }
+
+    @Override
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("waiting_for_mana")) {
+            this.waitingForMana = compound.getBoolean("waiting_for_mana");
+            this.entityData.set(DATA_WAITING_FOR_MANA, this.waitingForMana);
+        }
+        if (compound.contains("terrain_block")) {
+            ResourceLocation blockId = ResourceLocation.parse(compound.getString("terrain_block"));
+            Block block = BuiltInRegistries.BLOCK.get(blockId);
+            if (block != null) {
+                this.terrainBlockState = block.defaultBlockState();
+            }
+        }
+        if (compound.contains("earth_power")) {
+            this.earthPower = compound.getFloat("earth_power");
+        }
+        if (compound.contains("augment_count")) {
+            this.augmentCount = compound.getInt("augment_count");
+        }
+    }
+
+    @Override
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putBoolean("waiting_for_mana", this.waitingForMana);
+        if (this.terrainBlockState != null) {
+            ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(this.terrainBlockState.getBlock());
+            if (blockId != null) {
+                compound.putString("terrain_block", blockId.toString());
+            }
+        }
+        compound.putFloat("earth_power", this.earthPower);
+        compound.putInt("augment_count", this.augmentCount);
     }
 }

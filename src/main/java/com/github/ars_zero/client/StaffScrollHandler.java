@@ -32,16 +32,34 @@ public class StaffScrollHandler {
 
         if (usingStaffInMainHand || usingStaffInOffHand) {
             event.setCanceled(true);
-            boolean modifierHeld = isModifierKeyDown(mc);
-            Networking.sendToServer(new PacketScrollMultiPhaseDevice(event.getScrollDeltaY(), modifierHeld));
+            boolean modifierHeld = isSizeModifierKeyDown(mc);
+            boolean depthModifierHeld = isDepthModifierKeyDown(mc);
+            Networking.sendToServer(
+                    new PacketScrollMultiPhaseDevice(event.getScrollDeltaY(), modifierHeld, depthModifierHeld));
         }
     }
 
-    private static boolean isModifierKeyDown(Minecraft mc) {
+    private static boolean isSizeModifierKeyDown(Minecraft mc) {
         long window = mc.getWindow().getWindow();
-        return InputConstants.isKeyDown(window, GLFW.GLFW_KEY_LEFT_ALT) ||
-                InputConstants.isKeyDown(window, GLFW.GLFW_KEY_RIGHT_ALT) ||
-                InputConstants.isKeyDown(window, GLFW.GLFW_KEY_LEFT_SUPER) ||
-                InputConstants.isKeyDown(window, GLFW.GLFW_KEY_RIGHT_SUPER);
+
+        if (Minecraft.ON_OSX) {
+            return InputConstants.isKeyDown(window, GLFW.GLFW_KEY_LEFT_SUPER) ||
+                    InputConstants.isKeyDown(window, GLFW.GLFW_KEY_RIGHT_SUPER);
+        } else {
+            return InputConstants.isKeyDown(window, GLFW.GLFW_KEY_LEFT_ALT) ||
+                    InputConstants.isKeyDown(window, GLFW.GLFW_KEY_RIGHT_ALT);
+        }
+    }
+
+    private static boolean isDepthModifierKeyDown(Minecraft mc) {
+        long window = mc.getWindow().getWindow();
+
+        if (Minecraft.ON_OSX) {
+            return InputConstants.isKeyDown(window, GLFW.GLFW_KEY_LEFT_ALT) ||
+                    InputConstants.isKeyDown(window, GLFW.GLFW_KEY_RIGHT_ALT);
+        } else {
+            return InputConstants.isKeyDown(window, GLFW.GLFW_KEY_LEFT_CONTROL) ||
+                    InputConstants.isKeyDown(window, GLFW.GLFW_KEY_RIGHT_CONTROL);
+        }
     }
 }

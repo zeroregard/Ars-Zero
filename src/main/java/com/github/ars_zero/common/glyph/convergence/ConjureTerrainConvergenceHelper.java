@@ -1,12 +1,10 @@
 package com.github.ars_zero.common.glyph.convergence;
 
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
-import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.terrain.ConjureTerrainConvergenceEntity;
 import com.github.ars_zero.common.shape.GeometryDescription;
 import com.github.ars_zero.common.spell.SpellAugmentExtractor;
 import com.github.ars_zero.registry.ModEntities;
-import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -21,45 +19,46 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 
 public final class ConjureTerrainConvergenceHelper {
-    private static final Logger LOGGER = LogManager.getLogger(ArsZero.MOD_ID);
-    private static final int DEFAULT_LIFESPAN = 20;
 
     private ConjureTerrainConvergenceHelper() {
     }
 
     public static void handleConjureTerrain(ServerLevel serverLevel, Vec3 pos, @Nullable LivingEntity shooter,
-            SpellContext spellContext, EffectConvergence convergence) {
+            SpellContext spellContext, EffectConvergence convergence, HitResult rayTraceResult) {
         BlockPos centerBlock = BlockPos.containing(pos);
         Vec3 center = Vec3.atCenterOf(centerBlock);
 
+        GeometryDescription geometryDescription = ConvergenceCompatibilityHelper.resolveGeometryDescription(
+                spellContext, shooter);
+        int augmentCount = GeometryConvergenceUtils.countAugmentsAfterEffect(spellContext, EffectConjureTerrain.class);
+        int size = GeometryConvergenceUtils.calculateSize(augmentCount);
+
+        Vec3 offsetCenter = GeometryConvergenceUtils.calculateOffsetPosition(center, rayTraceResult, size,
+                geometryDescription);
+
         ConjureTerrainConvergenceEntity entity = new ConjureTerrainConvergenceEntity(
                 ModEntities.CONJURE_TERRAIN_CONVERGENCE_CONTROLLER.get(), serverLevel);
-        entity.setPos(center.x, center.y, center.z);
+        entity.setPos(offsetCenter.x, offsetCenter.y, offsetCenter.z);
         if (shooter != null) {
             entity.setCaster(shooter);
             if (shooter instanceof Player player) {
                 entity.setMarkerPos(player.blockPosition());
             }
         }
-        entity.setLifespan(DEFAULT_LIFESPAN);
+        entity.setLifespan(GeometryConvergenceUtils.DEFAULT_LIFESPAN);
 
         TerrainResult result = determineTerrainBlockState(spellContext, serverLevel);
         entity.setTerrainBlockState(result.blockState);
-        int augmentCount = countConjureTerrainAugments(spellContext);
         entity.setAugmentCount(augmentCount);
-
-        GeometryDescription geometryDescription = ConvergenceCompatibilityHelper.resolveGeometryDescription(
-                spellContext,
-                shooter);
-        LOGGER.info("[TerrainHelper] Setting geometry on entity: {}", geometryDescription);
         entity.setGeometryDescription(geometryDescription);
+        entity.setSize(size);
+        entity.setBasePosition(offsetCenter);
 
         SpellContext iterator = spellContext.clone();
         while (iterator.hasNextPart()) {
@@ -94,7 +93,7 @@ public final class ConjureTerrainConvergenceHelper {
                 .extractApplicableAugments(spellContext, EffectConjureTerrain.INSTANCE);
         int amps = augmentData.amplifyLevel;
 
-        boolean isRandomized = hasRandomizeAugment(spellContext, EffectConjureTerrain.INSTANCE);
+        boolean isRandomized = hasRandomizeAugment(spellContext);
 
         BlockState toPlace = switch (amps) {
             case 1 -> Blocks.COBBLESTONE.defaultBlockState();
@@ -164,8 +163,8 @@ public final class ConjureTerrainConvergenceHelper {
         return new TerrainResult(toPlace, modifierEffect);
     }
 
-    private static boolean hasRandomizeAugment(SpellContext context, AbstractEffect targetEffect) {
-        ResourceLocation targetId = targetEffect.getRegistryName();
+    private static boolean hasRandomizeAugment(SpellContext context) {
+        ResourceLocation targetId = EffectConjureTerrain.INSTANCE.getRegistryName();
         SpellContext iterator = context.clone();
         boolean foundTarget = false;
 
@@ -173,7 +172,8 @@ public final class ConjureTerrainConvergenceHelper {
             AbstractSpellPart part = iterator.nextPart();
 
             if (!foundTarget) {
-                if (part instanceof AbstractEffect effect && effectsMatch(effect, targetEffect, targetId)) {
+                if (part instanceof AbstractEffect effect
+                        && effectsMatch(effect, EffectConjureTerrain.INSTANCE, targetId)) {
                     foundTarget = true;
                 }
                 continue;
@@ -197,34 +197,5 @@ public final class ConjureTerrainConvergenceHelper {
         }
         ResourceLocation candidateId = candidate.getRegistryName();
         return id != null && id.equals(candidateId);
-    }
-
-    private static int countConjureTerrainAugments(SpellContext context) {
-        ResourceLocation targetId = EffectConjureTerrain.INSTANCE.getRegistryName();
-        SpellContext iterator = context.clone();
-        boolean foundTarget = false;
-        int count = 0;
-
-        while (iterator.hasNextPart()) {
-            AbstractSpellPart part = iterator.nextPart();
-
-            if (!foundTarget) {
-                if (part instanceof AbstractEffect effect
-                        && effectsMatch(effect, EffectConjureTerrain.INSTANCE, targetId)) {
-                    foundTarget = true;
-                }
-                continue;
-            }
-
-            if (part instanceof AbstractEffect) {
-                break;
-            }
-
-            if (part instanceof AbstractAugment) {
-                count++;
-            }
-        }
-
-        return count;
     }
 }

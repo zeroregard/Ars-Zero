@@ -20,7 +20,7 @@ public final class FlattenModifier implements ShapeModifier {
         };
     }
 
-    private Axis determineFlatAxis(@Nullable Vec3 orientation) {
+    public static Axis determineFlatAxis(@Nullable Vec3 orientation) {
         if (orientation == null) {
             return Axis.Y;
         }
@@ -38,7 +38,7 @@ public final class FlattenModifier implements ShapeModifier {
         }
     }
 
-    private enum Axis {
+    public enum Axis {
         X, Y, Z
     }
 }

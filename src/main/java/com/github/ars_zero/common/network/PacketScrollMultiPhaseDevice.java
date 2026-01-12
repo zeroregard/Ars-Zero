@@ -1,7 +1,9 @@
 package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
 import com.github.ars_zero.common.entity.IAltScrollable;
+import com.github.ars_zero.common.entity.IDepthScrollable;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellResult;
@@ -14,7 +16,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record PacketScrollMultiPhaseDevice(double scrollDelta, boolean modifierHeld) implements CustomPacketPayload {
+public record PacketScrollMultiPhaseDevice(double scrollDelta, boolean modifierHeld, boolean depthModifierHeld) implements CustomPacketPayload {
     private static final double SCROLL_SENSITIVITY = 0.4;
     private static final double MIN_DISTANCE_MULTIPLIER = 0.1;
     private static final double MAX_DISTANCE_MULTIPLIER = 50.0;
@@ -28,6 +30,8 @@ public record PacketScrollMultiPhaseDevice(double scrollDelta, boolean modifierH
                     PacketScrollMultiPhaseDevice::scrollDelta,
                     ByteBufCodecs.BOOL,
                     PacketScrollMultiPhaseDevice::modifierHeld,
+                    ByteBufCodecs.BOOL,
+                    PacketScrollMultiPhaseDevice::depthModifierHeld,
                     PacketScrollMultiPhaseDevice::new);
 
     @Override
@@ -51,16 +55,31 @@ public record PacketScrollMultiPhaseDevice(double scrollDelta, boolean modifierH
 
                 SpellResult first = castContext.beginResults.get(0);
                 Entity target = first != null ? first.targetEntity : null;
+                
+                if (packet.depthModifierHeld && target instanceof IDepthScrollable depthScrollable) {
+                    depthScrollable.handleDepthScroll(packet.scrollDelta);
+                    if (target instanceof AbstractGeometryProcessEntity geometryEntity) {
+                        first.depth = geometryEntity.getDepth();
+                    }
+                    return;
+                }
+                
                 if (packet.modifierHeld && target instanceof IAltScrollable scrollable) {
                     scrollable.handleAltScroll(packet.scrollDelta);
                     return;
                 }
 
-                double multiplierChange = packet.scrollDelta * SCROLL_SENSITIVITY;
-                castContext.distanceMultiplier += multiplierChange;
-
-                castContext.distanceMultiplier = Math.max(MIN_DISTANCE_MULTIPLIER,
-                        Math.min(MAX_DISTANCE_MULTIPLIER, castContext.distanceMultiplier));
+                if (target instanceof AbstractGeometryProcessEntity) {
+                    int direction = packet.scrollDelta > 0 ? 1 : -1;
+                    castContext.distanceMultiplier += direction;
+                    castContext.distanceMultiplier = Math.max(1.0,
+                            Math.min(MAX_DISTANCE_MULTIPLIER, castContext.distanceMultiplier));
+                } else {
+                    double multiplierChange = packet.scrollDelta * SCROLL_SENSITIVITY;
+                    castContext.distanceMultiplier += multiplierChange;
+                    castContext.distanceMultiplier = Math.max(MIN_DISTANCE_MULTIPLIER,
+                            Math.min(MAX_DISTANCE_MULTIPLIER, castContext.distanceMultiplier));
+                }
             }
         });
     }

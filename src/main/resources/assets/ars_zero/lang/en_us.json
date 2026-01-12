@@ -156,22 +156,24 @@
   "ars_nouveau.glyph_name.effect_convergence": "Convergence",
   "ars_zero.effect_augment_desc.effect_convergence_glyph_explosion": "Megasplosion: Creates an enormous explosion that charges over time. Fire Power affects charge rate, explosion radius and ignition (at 8+ turns into Extinguishing Soulfire Explosion). AOE determines radius. Amplify increases damage (to blocks/entities). Dampen decreases damage and radius.",
   "ars_zero.effect_augment_desc.effect_convergence_glyph_conjure_water": "Sacred Conjure Water: Fills a large area with water from bottom to top. Water Power affects placement speed. AOE determines radius. Drains mana per block placed.",
+  "ars_zero.effect_augment_desc.effect_convergence_glyph_conjure_terrain": "Terrain Structure: Creates a terrain convergence that can be augmented with other effects. Drains mana per block placed.",
+  "ars_zero.effect_augment_desc.effect_convergence_glyph_break": "Structural Break: Breaks blocks in a large area. Drains mana per block broken.",
 
-  "ars_zero.glyph_name.augment_cube": "Cube",
-  "ars_zero.glyph_desc.augment_cube": "Used with Convergence to generate cube shapes. This is the default shape. When flattened, produces squares.",
-  "ars_nouveau.augment_desc.effect_convergence_augment_cube": "Generates cube shapes (default). When flattened, produces squares. Only valid with Conjure Terrain.",
+  "ars_zero.glyph_name.augment_cube": "Geometry - Cube",
+  "ars_zero.glyph_desc.augment_cube": "Shapes geometry into a cube.",
+  "ars_nouveau.augment_desc.effect_convergence_augment_cube": "Generates cube shapes (default). When flattened, produces squares.",
 
-  "ars_zero.glyph_name.augment_hollow": "Hollow",
-  "ars_zero.glyph_desc.augment_hollow": "Used with Convergence to generate hollow shapes, only placing the outer shell.",
-  "ars_nouveau.augment_desc.effect_convergence_augment_hollow": "Generates hollow shapes, placing only the outer shell. Only valid with Conjure Terrain.",
+  "ars_zero.glyph_name.augment_hollow": "Geometry - Hollow",
+  "ars_zero.glyph_desc.augment_hollow": "Hollows out the geometry, only creating the outer shell.",
+  "ars_nouveau.augment_desc.effect_convergence_augment_hollow": "Hollows out the geometry, only creating the outer shell.",
 
-  "ars_zero.glyph_name.augment_sphere": "Sphere",
-  "ars_zero.glyph_desc.augment_sphere": "Used with Convergence to generate spherical shapes. When flattened, produces circles.",
-  "ars_nouveau.augment_desc.effect_convergence_augment_sphere": "Generates spherical shapes. When flattened, produces circles. Only valid with Conjure Terrain.",
+  "ars_zero.glyph_name.augment_sphere": "Geometry - Sphere",
+  "ars_zero.glyph_desc.augment_sphere": "Shapes geometry into a sphere.",
+  "ars_nouveau.augment_desc.effect_convergence_augment_sphere": "Generates spherical shapes. When flattened, produces circles.",
 
-  "ars_zero.glyph_name.augment_flatten": "Flatten",
-  "ars_zero.glyph_desc.augment_flatten": "Projects a 3D shape into 2D based on the caster's look direction at resolve time. Spheres become circles, cubes become squares.",
-  "ars_nouveau.augment_desc.effect_convergence_augment_flatten": "Projects 3D shapes into 2D based on the caster's look direction. Only valid with Conjure Terrain.",
+  "ars_zero.glyph_name.augment_flatten": "Geometry - Flatten",
+  "ars_zero.glyph_desc.augment_flatten": "Projects a 3D shape into 2D based on the caster's look direction at resolve time.",
+  "ars_nouveau.augment_desc.effect_convergence_augment_flatten": "Projects 3D shapes into 2D based on the caster's look direction. ",
 
   "ars_nouveau.spell.validation.adding.phase_restriction": "%s is not usable in this phase.",
   "ars_nouveau.spell.validation.exists.phase_restriction": "%s is not usable in this phase."

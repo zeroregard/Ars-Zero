@@ -17,23 +17,27 @@ public class SpellResult {
     public final HitResult hitResult;
     public final SpellEffectType effectType;
     public final long timestamp;
-    
+
     public final Vec3 relativeOffset;
     public final float casterYaw;
     public final float casterPitch;
     public final Vec3 casterPosition;
-    
+
     public final BlockGroupEntity blockGroup;
     public final List<BlockPos> blockPositions;
-    
+
+    public BlockPos userOffset;
+    public int depth;
+
     public SpellResult(Entity targetEntity, BlockPos targetPosition, HitResult hitResult, SpellEffectType effectType,
-                      Vec3 relativeOffset, float casterYaw, float casterPitch, Vec3 casterPosition) {
-        this(targetEntity, targetPosition, hitResult, effectType, relativeOffset, casterYaw, casterPitch, casterPosition, null, null);
+            Vec3 relativeOffset, float casterYaw, float casterPitch, Vec3 casterPosition) {
+        this(targetEntity, targetPosition, hitResult, effectType, relativeOffset, casterYaw, casterPitch,
+                casterPosition, null, null);
     }
-    
+
     public SpellResult(Entity targetEntity, BlockPos targetPosition, HitResult hitResult, SpellEffectType effectType,
-                      Vec3 relativeOffset, float casterYaw, float casterPitch, Vec3 casterPosition,
-                      BlockGroupEntity blockGroup, List<BlockPos> blockPositions) {
+            Vec3 relativeOffset, float casterYaw, float casterPitch, Vec3 casterPosition,
+            BlockGroupEntity blockGroup, List<BlockPos> blockPositions) {
         this.targetEntity = targetEntity;
         this.targetPosition = targetPosition;
         this.hitResult = hitResult;
@@ -45,12 +49,14 @@ public class SpellResult {
         this.casterPosition = casterPosition;
         this.blockGroup = blockGroup;
         this.blockPositions = blockPositions;
+        this.userOffset = BlockPos.ZERO;
+        this.depth = 1;
     }
-    
+
     public static SpellResult fromHitResult(HitResult hitResult, SpellEffectType effectType) {
         return fromHitResultWithCaster(hitResult, effectType, null);
     }
-    
+
     public static SpellResult fromHitResultWithCaster(HitResult hitResult, SpellEffectType effectType, Player caster) {
         Entity entity = null;
         BlockPos blockPos = null;
@@ -58,107 +64,107 @@ public class SpellResult {
         float casterYaw = 0;
         float casterPitch = 0;
         Vec3 casterPosition = null;
-        
+
         if (hitResult instanceof EntityHitResult entityHit) {
             entity = entityHit.getEntity();
-            
+
             if (caster != null && entity != null) {
                 Vec3 entityPos = entity.position();
                 casterPosition = caster.getEyePosition(1.0f);
                 casterYaw = caster.getYRot();
                 casterPitch = caster.getXRot();
-                
+
                 relativeOffset = calculateRelativeOffsetInLocalSpace(
-                    casterPosition, entityPos, casterYaw, casterPitch
-                );
+                        casterPosition, entityPos, casterYaw, casterPitch);
             }
         } else if (hitResult instanceof BlockHitResult blockHit) {
             blockPos = blockHit.getBlockPos();
-            
+
             if (caster != null) {
                 casterPosition = caster.getEyePosition(1.0f);
                 casterYaw = caster.getYRot();
                 casterPitch = caster.getXRot();
-                
+
                 Vec3 blockCenter = Vec3.atCenterOf(blockPos);
                 relativeOffset = calculateRelativeOffsetInLocalSpace(
-                    casterPosition, blockCenter, casterYaw, casterPitch
-                );
+                        casterPosition, blockCenter, casterYaw, casterPitch);
             }
         }
-        
-        return new SpellResult(entity, blockPos, hitResult, effectType, 
-                             relativeOffset, casterYaw, casterPitch, casterPosition);
+
+        return new SpellResult(entity, blockPos, hitResult, effectType,
+                relativeOffset, casterYaw, casterPitch, casterPosition);
     }
-    
-    public static SpellResult fromBlockGroup(BlockGroupEntity blockGroup, List<BlockPos> blockPositions, Player caster) {
+
+    public static SpellResult fromBlockGroup(BlockGroupEntity blockGroup, List<BlockPos> blockPositions,
+            Player caster) {
         Vec3 relativeOffset = null;
         float casterYaw = 0;
         float casterPitch = 0;
         Vec3 casterPosition = null;
-        
+
         if (caster != null) {
             casterPosition = caster.getEyePosition(1.0f);
             casterYaw = caster.getYRot();
             casterPitch = caster.getXRot();
-            
+
             Vec3 groupCenter = blockGroup.position();
             relativeOffset = calculateRelativeOffsetInLocalSpace(
-                casterPosition, groupCenter, casterYaw, casterPitch
-            );
+                    casterPosition, groupCenter, casterYaw, casterPitch);
         }
-        
+
         EntityHitResult fakeHit = new EntityHitResult(blockGroup);
         return new SpellResult(blockGroup, null, fakeHit, SpellEffectType.RESOLVED,
-                             relativeOffset, casterYaw, casterPitch, casterPosition,
-                             blockGroup, blockPositions);
+                relativeOffset, casterYaw, casterPitch, casterPosition,
+                blockGroup, blockPositions);
     }
-    
+
     private static Vec3 calculateRelativeOffsetInLocalSpace(Vec3 casterPos, Vec3 targetPos, float yaw, float pitch) {
         Vec3 worldOffset = targetPos.subtract(casterPos);
-        
+
         double yawRad = Math.toRadians(yaw);
         double pitchRad = Math.toRadians(pitch);
-        
+
         double cosYaw = Math.cos(yawRad);
         double sinYaw = Math.sin(yawRad);
         double cosPitch = Math.cos(pitchRad);
         double sinPitch = Math.sin(pitchRad);
-        
+
         double rotatedX = worldOffset.x * cosYaw + worldOffset.z * sinYaw;
         double rotatedZ = -worldOffset.x * sinYaw + worldOffset.z * cosYaw;
-        
+
         double localX = rotatedX;
         double localY = rotatedZ * sinPitch + worldOffset.y * cosPitch;
         double localZ = rotatedZ * cosPitch - worldOffset.y * sinPitch;
-        
+
         Vec3 result = new Vec3(localX, localY, localZ);
         return result;
     }
-    
+
     public Vec3 transformLocalToWorld(float currentYaw, float currentPitch, Vec3 currentCasterPos) {
         return transformLocalToWorld(currentYaw, currentPitch, currentCasterPos, 1.0);
     }
-    
-    public Vec3 transformLocalToWorld(float currentYaw, float currentPitch, Vec3 currentCasterPos, double distanceMultiplier) {
-        if (relativeOffset == null) return null;
-        
+
+    public Vec3 transformLocalToWorld(float currentYaw, float currentPitch, Vec3 currentCasterPos,
+            double distanceMultiplier) {
+        if (relativeOffset == null)
+            return null;
+
         Vec3 scaledOffset = relativeOffset.scale(distanceMultiplier);
-        
+
         double yawRad = Math.toRadians(currentYaw);
         double pitchRad = Math.toRadians(currentPitch);
-        
+
         double cosYaw = Math.cos(yawRad);
         double sinYaw = Math.sin(yawRad);
         double cosPitch = Math.cos(pitchRad);
         double sinPitch = Math.sin(pitchRad);
-        
+
         double rotatedZ = scaledOffset.z * cosPitch + scaledOffset.y * sinPitch;
         double rotatedY = scaledOffset.y * cosPitch - scaledOffset.z * sinPitch;
-        
+
         double worldX = scaledOffset.x * cosYaw - rotatedZ * sinYaw;
         double worldZ = scaledOffset.x * sinYaw + rotatedZ * cosYaw;
-        
+
         Vec3 worldOffset = new Vec3(worldX, rotatedY, worldZ);
         Vec3 result = currentCasterPos.add(worldOffset);
         return result;

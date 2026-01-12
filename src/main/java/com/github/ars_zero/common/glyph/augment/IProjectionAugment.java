@@ -7,3 +7,4 @@ public interface IProjectionAugment extends IGeometryAugment {
   ProjectionMode getProjectionMode();
 }
 
+

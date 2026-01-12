@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph.convergence;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
 import com.github.ars_zero.common.glyph.augment.AugmentCube;
 import com.github.ars_zero.common.glyph.augment.AugmentFlatten;
 import com.github.ars_zero.common.glyph.augment.AugmentHollow;
@@ -26,6 +27,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectExplosion;
+import com.hollingsworth.arsnouveau.common.spell.effect.EffectBreak;
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -54,7 +56,8 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
   private static final ResourceLocation[] SUBSEQUENT_GLYPHS = new ResourceLocation[] {
       EffectExplosion.INSTANCE.getRegistryName(),
       EffectConjureWater.INSTANCE.getRegistryName(),
-      EffectConjureTerrain.INSTANCE.getRegistryName()
+      EffectConjureTerrain.INSTANCE.getRegistryName(),
+      EffectBreak.INSTANCE.getRegistryName()
   };
 
   public ModConfigSpec.IntValue TERRAIN_MAX_SIZE;
@@ -96,13 +99,18 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
     Vec3 pos = safelyGetHitPos(rayTraceResult);
 
     AbstractEffect firstEffect = findFirstConvergenceEffect(spellContext);
+    ArsZero.LOGGER.debug("Convergence found firstEffect: {}",
+        firstEffect != null ? firstEffect.getClass().getSimpleName() : "null");
     if (firstEffect instanceof EffectExplosion) {
       ExplosionConvergenceHelper.handleExplosionConvergence(serverLevel, pos, shooter, spellStats, spellContext,
           this);
     } else if (firstEffect instanceof EffectConjureWater) {
       WaterConvergenceHelper.handleWaterConvergence(serverLevel, pos, shooter, spellContext, this);
     } else if (firstEffect instanceof EffectConjureTerrain) {
-      ConjureTerrainConvergenceHelper.handleConjureTerrain(serverLevel, pos, shooter, spellContext, this);
+      ConjureTerrainConvergenceHelper.handleConjureTerrain(serverLevel, pos, shooter, spellContext, this,
+          rayTraceResult);
+    } else if (firstEffect instanceof EffectBreak breakEffect) {
+      BreakConvergenceHelper.handleBreak(serverLevel, pos, shooter, spellContext, this, rayTraceResult, breakEffect, spellStats);
     } else if (rayTraceResult instanceof EntityHitResult entityHitResult) {
       ChargerHelper.handlePlayerCharger(serverLevel, pos, entityHitResult, shooter, spellContext, this);
     } else if (rayTraceResult instanceof BlockHitResult blockHitResult) {
@@ -126,6 +134,11 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
         SpellEffectType.RESOLVED,
         player);
 
+    if (entity instanceof AbstractGeometryProcessEntity geometryEntity) {
+      entityResult.userOffset = geometryEntity.getUserOffset();
+      entityResult.depth = geometryEntity.getDepth();
+    }
+
     context.beginResults.clear();
     context.beginResults.add(entityResult);
   }
@@ -143,6 +156,8 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
         } else if (effect instanceof EffectConjureWater) {
           return effect;
         } else if (effect instanceof EffectConjureTerrain) {
+          return effect;
+        } else if (effect instanceof EffectBreak) {
           return effect;
         }
       }
