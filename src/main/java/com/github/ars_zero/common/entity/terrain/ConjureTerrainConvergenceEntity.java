@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.entity.terrain;
 
 import com.alexthw.sauce.registry.ModRegistry;
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.AbstractConvergenceEntity;
 import com.github.ars_zero.common.entity.IAltScrollable;
 import com.github.ars_zero.common.entity.IGeometryProcessEntity;
@@ -12,9 +13,12 @@ import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -45,6 +49,7 @@ import java.util.UUID;
 
 public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity
         implements IAltScrollable, IGeometryProcessEntity {
+    private static final Logger LOGGER = LogManager.getLogger(ArsZero.MOD_ID);
     private static final EntityDataAccessor<Integer> DATA_SIZE = SynchedEntityData
             .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_BUILDING = SynchedEntityData
@@ -61,6 +66,8 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity
             .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BLOCK_POS);
     private static final EntityDataAccessor<BlockPos> DATA_TARGET_BLOCK = SynchedEntityData
             .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BLOCK_POS);
+    private static final EntityDataAccessor<CompoundTag> DATA_GEOMETRY_DESCRIPTION = SynchedEntityData
+            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.COMPOUND_TAG);
 
     private static final int DEFAULT_SIZE = 5;
     private static final int MIN_SIZE = 1;
@@ -292,11 +299,21 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity
 
     @Override
     public void setGeometryDescription(GeometryDescription description) {
-        this.geometryDescription = description != null ? description : GeometryDescription.DEFAULT;
+        LOGGER.info("[Entity] setGeometryDescription called with: {}", description);
+        GeometryDescription desc = description != null ? description : GeometryDescription.DEFAULT;
+        this.geometryDescription = desc;
+        if (!this.level().isClientSide) {
+            this.entityData.set(DATA_GEOMETRY_DESCRIPTION, desc.toTag());
+        }
+        LOGGER.info("[Entity] geometryDescription field is now: {}", this.geometryDescription);
     }
 
     @Override
     public GeometryDescription getGeometryDescription() {
+        if (this.level().isClientSide) {
+            CompoundTag tag = this.entityData.get(DATA_GEOMETRY_DESCRIPTION);
+            return tag != null && !tag.isEmpty() ? GeometryDescription.fromTag(tag) : GeometryDescription.DEFAULT;
+        }
         return this.geometryDescription;
     }
 
@@ -443,6 +460,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity
         builder.define(DATA_HAS_MARKER_POS, false);
         builder.define(DATA_MARKER_POS, BlockPos.ZERO);
         builder.define(DATA_TARGET_BLOCK, BlockPos.ZERO);
+        builder.define(DATA_GEOMETRY_DESCRIPTION, new CompoundTag());
     }
 
     @Override
@@ -550,6 +568,9 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity
         this.entityData.set(DATA_WAITING_FOR_MANA, false);
         this.buildQueue.clear();
         this.buildIndex = 0;
+
+        LOGGER.info("[Entity] startBuilding with geometryDescription: {}", geometryDescription);
+        LOGGER.info("[Entity] geometryDescription.baseShape(): {}", geometryDescription.baseShape());
 
         BlockPos center = BlockPos.containing(this.position());
         this.buildQueue.addAll(ShapePipeline.generate(center, getSize(), geometryDescription));

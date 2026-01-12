@@ -1,7 +1,6 @@
 package com.github.ars_zero.client.renderer.entity;
 
 import com.github.ars_zero.common.entity.terrain.ConjureTerrainConvergenceEntity;
-import com.github.ars_zero.common.structure.ConvergenceStructureHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -18,8 +17,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
-
-import java.util.List;
 
 public class ConjureTerrainConvergenceEntityRenderer extends GeoEntityRenderer<ConjureTerrainConvergenceEntity> {
     private static final float BUILDING_RED = 0.2f;
@@ -96,8 +93,7 @@ public class ConjureTerrainConvergenceEntityRenderer extends GeoEntityRenderer<C
         Vec3 entityPos = entity.position();
         BlockPos centerBlock = BlockPos.containing(entityPos);
 
-        List<BlockPos> blockPositions = ConvergenceStructureHelper.generate(centerBlock, entity.getSize(),
-                ConvergenceStructureHelper.Shape.CUBE);
+        java.util.List<BlockPos> blockPositions = entity.generatePositions(centerBlock);
 
         float r, g, b;
         if (entity.isPaused()) {
@@ -116,46 +112,10 @@ public class ConjureTerrainConvergenceEntityRenderer extends GeoEntityRenderer<C
 
         poseStack.pushPose();
 
-        int size = Math.max(1, entity.getSize());
-        if (size == 1) {
-            double blockX = centerBlock.getX() - entityPos.x;
-            double blockY = centerBlock.getY() - entityPos.y;
-            double blockZ = centerBlock.getZ() - entityPos.z;
-            renderBlockBox(poseStack, buffer, blockX, blockY, blockZ, r, g, b);
-            poseStack.popPose();
-            return;
-        }
-
-        VertexConsumer lines = buffer.getBuffer(RenderType.lines());
-
-        int minOffset = entity.getMinOffset();
-        int maxOffset = entity.getMaxOffset();
-
-        BlockPos minBlock = centerBlock.offset(minOffset, minOffset, minOffset);
-        BlockPos maxBlock = centerBlock.offset(maxOffset, maxOffset, maxOffset);
-
-        double minX = minBlock.getX() - entityPos.x;
-        double minY = minBlock.getY() - entityPos.y;
-        double minZ = minBlock.getZ() - entityPos.z;
-        double maxX = maxBlock.getX() + 1.0 - entityPos.x;
-        double maxY = maxBlock.getY() + 1.0 - entityPos.y;
-        double maxZ = maxBlock.getZ() + 1.0 - entityPos.z;
-
-        LevelRenderer.renderLineBox(poseStack, lines, minX, minY, minZ, maxX, maxY, maxZ, r, g, b, 1.0f);
-
         for (BlockPos blockPos : blockPositions) {
             double blockX = blockPos.getX() - entityPos.x;
             double blockY = blockPos.getY() - entityPos.y;
             double blockZ = blockPos.getZ() - entityPos.z;
-
-            int relativeX = blockPos.getX() - centerBlock.getX();
-            int relativeY = blockPos.getY() - centerBlock.getY();
-            int relativeZ = blockPos.getZ() - centerBlock.getZ();
-
-            if (!ConvergenceStructureHelper.isSurface(relativeX, relativeY, relativeZ, minOffset, maxOffset,
-                    ConvergenceStructureHelper.Shape.CUBE)) {
-                continue;
-            }
             renderBlockBox(poseStack, buffer, blockX, blockY, blockZ, r, g, b);
         }
 

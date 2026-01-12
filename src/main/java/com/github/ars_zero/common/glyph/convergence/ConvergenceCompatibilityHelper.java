@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph.convergence;
 
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.glyph.augment.IGeometryAugment;
 import com.github.ars_zero.common.glyph.augment.IFillAugment;
 import com.github.ars_zero.common.glyph.augment.IProjectionAugment;
@@ -18,10 +19,13 @@ import com.hollingsworth.arsnouveau.common.spell.effect.EffectExplosion;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 
 public final class ConvergenceCompatibilityHelper {
+    private static final Logger LOGGER = LogManager.getLogger(ArsZero.MOD_ID);
 
     private ConvergenceCompatibilityHelper() {
     }
@@ -127,31 +131,35 @@ public final class ConvergenceCompatibilityHelper {
         Vec3 orientation = null;
 
         SpellContext iterator = context.clone();
-        ResourceLocation convergenceId = EffectConvergence.INSTANCE.getRegistryName();
-        boolean foundConvergence = false;
+
+        LOGGER.info("[GeometryDebug] Starting resolveGeometryDescription (context already past Convergence)");
 
         while (iterator.hasNextPart()) {
             AbstractSpellPart part = iterator.nextPart();
-
-            if (!foundConvergence) {
-                if (part instanceof AbstractEffect effect && convergenceId.equals(effect.getRegistryName())) {
-                    foundConvergence = true;
-                }
-                continue;
-            }
+            LOGGER.info("[GeometryDebug] Processing part: {} (class: {})",
+                    part.getRegistryName(), part.getClass().getSimpleName());
 
             if (part instanceof AbstractEffect) {
+                LOGGER.info("[GeometryDebug] Skipping effect: {}", part.getRegistryName());
                 continue;
             }
 
-            if (part instanceof AbstractAugment) {
-                if (part instanceof IShapeAugment shapeAugment) {
-                    baseShape = shapeAugment.getShape();
-                } else if (part instanceof IFillAugment fillAugment) {
-                    fillMode = fillAugment.getFillMode();
-                } else if (part instanceof IProjectionAugment projectionAugment) {
-                    projectionMode = projectionAugment.getProjectionMode();
-                }
+            LOGGER.info(
+                    "[GeometryDebug] Checking augment: {}, isIShapeAugment={}, isIFillAugment={}, isIProjectionAugment={}",
+                    part.getRegistryName(),
+                    part instanceof IShapeAugment,
+                    part instanceof IFillAugment,
+                    part instanceof IProjectionAugment);
+
+            if (part instanceof IShapeAugment shapeAugment) {
+                baseShape = shapeAugment.getShape();
+                LOGGER.info("[GeometryDebug] Set baseShape to: {}", baseShape);
+            } else if (part instanceof IFillAugment fillAugment) {
+                fillMode = fillAugment.getFillMode();
+                LOGGER.info("[GeometryDebug] Set fillMode to: {}", fillMode);
+            } else if (part instanceof IProjectionAugment projectionAugment) {
+                projectionMode = projectionAugment.getProjectionMode();
+                LOGGER.info("[GeometryDebug] Set projectionMode to: {}", projectionMode);
             }
         }
 
@@ -159,7 +167,9 @@ public final class ConvergenceCompatibilityHelper {
             orientation = caster.getLookAngle();
         }
 
-        return new GeometryDescription(baseShape, fillMode, projectionMode, orientation);
+        GeometryDescription result = new GeometryDescription(baseShape, fillMode, projectionMode, orientation);
+        LOGGER.info("[GeometryDebug] Final GeometryDescription: {}", result);
+        return result;
     }
 
     public static int countShapeAugments(SpellContext context) {
@@ -202,4 +212,3 @@ public final class ConvergenceCompatibilityHelper {
         return count;
     }
 }
-

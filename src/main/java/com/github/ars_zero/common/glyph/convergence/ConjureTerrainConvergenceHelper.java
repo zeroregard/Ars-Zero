@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph.convergence;
 
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.terrain.ConjureTerrainConvergenceEntity;
 import com.github.ars_zero.common.shape.GeometryDescription;
 import com.github.ars_zero.common.spell.SpellAugmentExtractor;
@@ -21,10 +22,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 
 public final class ConjureTerrainConvergenceHelper {
+    private static final Logger LOGGER = LogManager.getLogger(ArsZero.MOD_ID);
     private static final int DEFAULT_LIFESPAN = 20;
 
     private ConjureTerrainConvergenceHelper() {
@@ -54,6 +58,7 @@ public final class ConjureTerrainConvergenceHelper {
         GeometryDescription geometryDescription = ConvergenceCompatibilityHelper.resolveGeometryDescription(
                 spellContext,
                 shooter);
+        LOGGER.info("[TerrainHelper] Setting geometry on entity: {}", geometryDescription);
         entity.setGeometryDescription(geometryDescription);
 
         SpellContext iterator = spellContext.clone();

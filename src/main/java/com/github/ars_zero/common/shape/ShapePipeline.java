@@ -1,21 +1,29 @@
 package com.github.ars_zero.common.shape;
 
+import com.github.ars_zero.ArsZero;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class ShapePipeline {
-
+    private static final Logger LOGGER = LogManager.getLogger(ArsZero.MOD_ID);
     private static final double SHELL_THICKNESS = 1.0;
 
     private ShapePipeline() {
     }
 
     public static List<BlockPos> generate(BlockPos center, int size, GeometryDescription description) {
+        LOGGER.info("[ShapePipeline] Generating shape - description: {}, baseShape enum: {}, size: {}", 
+            description, description.baseShape(), size);
+        
         BaseShapeVolume baseShape = resolveBaseShape(description.baseShape());
+        LOGGER.info("[ShapePipeline] Resolved baseShape class: {}", baseShape.getClass().getSimpleName());
+        
         ShapeModifier modifier = description.isFlattened() ? FlattenModifier.INSTANCE : null;
         Vec3 orientation = description.orientation();
         boolean hollow = description.isHollow();
@@ -35,6 +43,7 @@ public final class ShapePipeline {
             }
         }
 
+        LOGGER.info("[ShapePipeline] Generated {} block positions", result.size());
         return result;
     }
 
