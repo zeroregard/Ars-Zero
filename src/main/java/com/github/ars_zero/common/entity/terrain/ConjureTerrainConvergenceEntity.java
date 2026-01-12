@@ -3,12 +3,15 @@ package com.github.ars_zero.common.entity.terrain;
 import com.alexthw.sauce.registry.ModRegistry;
 import com.github.ars_zero.common.entity.AbstractConvergenceEntity;
 import com.github.ars_zero.common.entity.IAltScrollable;
+import com.github.ars_zero.common.entity.IGeometryProcessEntity;
 import com.github.ars_zero.common.glyph.convergence.EffectConvergence;
+import com.github.ars_zero.common.shape.GeometryDescription;
+import com.github.ars_zero.common.shape.ShapePipeline;
+import com.github.ars_zero.common.structure.ConvergenceStructureHelper;
 import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import com.github.ars_zero.common.structure.ConvergenceStructureHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -40,7 +43,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity implements IAltScrollable {
+public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity
+        implements IAltScrollable, IGeometryProcessEntity {
     private static final EntityDataAccessor<Integer> DATA_SIZE = SynchedEntityData
             .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_BUILDING = SynchedEntityData
@@ -72,6 +76,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
     @Nullable
     private BlockState terrainBlockState = null;
     private int augmentCount = 0;
+    private GeometryDescription geometryDescription = GeometryDescription.DEFAULT;
 
     private boolean building = false;
     private boolean paused = false;
@@ -229,11 +234,11 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
     }
 
     public int getMinOffset() {
-        return ConvergenceStructureHelper.minOffset(getSize());
+        return -Math.floorDiv(getSize(), 2);
     }
 
     public int getMaxOffset() {
-        return ConvergenceStructureHelper.maxOffset(getSize());
+        return getMinOffset() + getSize() - 1;
     }
 
     @Nullable
@@ -283,6 +288,36 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
 
     public int getAugmentCount() {
         return this.augmentCount;
+    }
+
+    @Override
+    public void setGeometryDescription(GeometryDescription description) {
+        this.geometryDescription = description != null ? description : GeometryDescription.DEFAULT;
+    }
+
+    @Override
+    public GeometryDescription getGeometryDescription() {
+        return this.geometryDescription;
+    }
+
+    @Override
+    public void startProcess() {
+        startBuilding();
+    }
+
+    @Override
+    public boolean isProcessing() {
+        return isBuilding();
+    }
+
+    @Override
+    public void cancelProcess() {
+        this.discard();
+    }
+
+    @Override
+    public Level getProcessLevel() {
+        return this.level();
     }
 
     private int getBlockTypeFactor() {
@@ -472,6 +507,9 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
         if (compound.contains("augment_count")) {
             this.augmentCount = compound.getInt("augment_count");
         }
+        if (compound.contains("shape_description")) {
+            this.geometryDescription = GeometryDescription.fromTag(compound.getCompound("shape_description"));
+        }
     }
 
     @Override
@@ -500,6 +538,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
         compound.putFloat("earth_power", this.earthPower);
         compound.putFloat("block_accumulator", this.blockPlacementAccumulator);
         compound.putInt("augment_count", this.augmentCount);
+        compound.put("shape_description", this.geometryDescription.toTag());
     }
 
     private void startBuilding() {
@@ -513,8 +552,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractConvergenceEntity i
         this.buildIndex = 0;
 
         BlockPos center = BlockPos.containing(this.position());
-        this.buildQueue
-                .addAll(ConvergenceStructureHelper.generate(center, getSize(), ConvergenceStructureHelper.Shape.CUBE));
+        this.buildQueue.addAll(ShapePipeline.generate(center, getSize(), geometryDescription));
 
         BlockPos marker = getMarkerPos();
         if (marker != null) {

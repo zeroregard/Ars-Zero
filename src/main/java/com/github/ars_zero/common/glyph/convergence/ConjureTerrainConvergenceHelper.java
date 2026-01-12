@@ -2,6 +2,7 @@ package com.github.ars_zero.common.glyph.convergence;
 
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
 import com.github.ars_zero.common.entity.terrain.ConjureTerrainConvergenceEntity;
+import com.github.ars_zero.common.shape.GeometryDescription;
 import com.github.ars_zero.common.spell.SpellAugmentExtractor;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
@@ -49,6 +50,11 @@ public final class ConjureTerrainConvergenceHelper {
         entity.setTerrainBlockState(result.blockState);
         int augmentCount = countConjureTerrainAugments(spellContext);
         entity.setAugmentCount(augmentCount);
+
+        GeometryDescription geometryDescription = ConvergenceCompatibilityHelper.resolveGeometryDescription(
+                spellContext,
+                shooter);
+        entity.setGeometryDescription(geometryDescription);
 
         SpellContext iterator = spellContext.clone();
         while (iterator.hasNextPart()) {

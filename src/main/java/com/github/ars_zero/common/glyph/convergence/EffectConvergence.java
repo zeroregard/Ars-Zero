@@ -1,7 +1,12 @@
 package com.github.ars_zero.common.glyph.convergence;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.glyph.augment.AugmentCube;
+import com.github.ars_zero.common.glyph.augment.AugmentFlatten;
+import com.github.ars_zero.common.glyph.augment.AugmentHollow;
+import com.github.ars_zero.common.glyph.augment.AugmentSphere;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.shape.GeometryDescription;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellEffectType;
@@ -189,12 +194,37 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
   @NotNull
   @Override
   public Set<AbstractAugment> getCompatibleAugments() {
-    return Set.of();
+    return augmentSetOf(
+        AugmentHollow.INSTANCE,
+        AugmentSphere.INSTANCE,
+        AugmentCube.INSTANCE,
+        AugmentFlatten.INSTANCE);
+  }
+
+  @Override
+  protected void addDefaultAugmentLimits(Map<ResourceLocation, Integer> defaults) {
+    super.addDefaultAugmentLimits(defaults);
+    defaults.put(AugmentHollow.INSTANCE.getRegistryName(), 1);
+    defaults.put(AugmentSphere.INSTANCE.getRegistryName(), 1);
+    defaults.put(AugmentCube.INSTANCE.getRegistryName(), 1);
+    defaults.put(AugmentFlatten.INSTANCE.getRegistryName(), 1);
   }
 
   @Override
   public void addAugmentDescriptions(Map<AbstractAugment, String> map) {
     super.addAugmentDescriptions(map);
+    map.put(AugmentHollow.INSTANCE,
+        "Generates hollow shapes, placing only the outer shell. Only valid with Conjure Terrain.");
+    map.put(AugmentSphere.INSTANCE,
+        "Generates spherical shapes. When flattened, produces circles. Only valid with Conjure Terrain.");
+    map.put(AugmentCube.INSTANCE,
+        "Generates cube shapes (default). When flattened, produces squares. Only valid with Conjure Terrain.");
+    map.put(AugmentFlatten.INSTANCE,
+        "Projects 3D shapes into 2D based on the caster's look direction. Only valid with Conjure Terrain.");
+  }
+
+  public GeometryDescription resolveGeometryDescription(SpellContext context, @Nullable LivingEntity caster) {
+    return ConvergenceCompatibilityHelper.resolveGeometryDescription(context, caster);
   }
 
   @Override
