@@ -40,6 +40,8 @@ import com.hollingsworth.arsnouveau.common.spell.validation.StartingCastMethodSp
 import com.hollingsworth.arsnouveau.api.registry.FamiliarRegistry;
 import com.hollingsworth.arsnouveau.client.gui.GuiUtils;
 import com.hollingsworth.arsnouveau.client.gui.book.GuiFamiliarScreen;
+import com.hollingsworth.arsnouveau.client.gui.utils.RenderUtils;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -52,6 +54,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -84,6 +87,8 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     private List<AbstractSpellPart> displayedGlyphs;
     private int page = 0;
     private int glyphsPerPage = 70;
+    @Nullable
+    private AbstractSpellPart liftedGlyph;
 
     // Category tracking for glyph organization
     public int formTextRow = 0;
@@ -1057,14 +1062,190 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         if (slotClipboardSupport != null) {
             slotClipboardSupport.render(graphics, mouseX, mouseY, partialTicks);
         }
+        renderLiftedGlyph(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (liftedGlyph != null) {
+            return handleClickWhileLifting(mouseX, mouseY, button);
+        }
+        if (button == 1) {
+            if (tryStartLiftingFromGlyphPalette(mouseX, mouseY)) {
+                return true;
+            }
+            if (tryStartLiftingFromPhaseRow(mouseX, mouseY)) {
+                return true;
+            }
+        }
         if (slotClipboardSupport != null && slotClipboardSupport.mouseClicked(mouseX, mouseY, button, spellSlots)) {
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private void renderLiftedGlyph(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (liftedGlyph == null) {
+            return;
+        }
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderUtils.drawSpellPart(liftedGlyph, graphics, mouseX - 8, mouseY - 8, 16, false, 0);
+    }
+
+    private boolean tryStartLiftingFromGlyphPalette(double mouseX, double mouseY) {
+        GlyphButton glyphButton = getGlyphButtonAt(mouseX, mouseY);
+        if (glyphButton == null || glyphButton.abstractSpellPart == null) {
+            return false;
+        }
+        AbstractSpellPart canonical = glyphButton.abstractSpellPart.getRegistryName() == null ? null
+                : GlyphRegistry.getSpellpartMap().get(glyphButton.abstractSpellPart.getRegistryName());
+        liftedGlyph = canonical != null ? canonical : glyphButton.abstractSpellPart;
+        return true;
+    }
+
+    private boolean tryStartLiftingFromPhaseRow(double mouseX, double mouseY) {
+        CraftingButton cell = getCraftingCellAt(mouseX, mouseY);
+        if (cell == null || cell.getAbstractSpellPart() == null) {
+            return false;
+        }
+        PhaseSlot phaseSlot = getPhaseSlotForCraftingCell(cell);
+        if (phaseSlot == null) {
+            return false;
+        }
+        AbstractSpellPart removed = phaseSpells.removeGlyphAndShiftLeft(phaseSlot.phase, phaseSlot.slot);
+        if (removed == null) {
+            return false;
+        }
+        liftedGlyph = removed;
+        syncPhaseRowButtons(phaseSlot.phase);
+        validate();
+        return true;
+    }
+
+    private boolean handleClickWhileLifting(double mouseX, double mouseY, int button) {
+        if (button != 0) {
+            liftedGlyph = null;
+            return true;
+        }
+        if (tryInsertLiftedBetween(mouseX, mouseY)) {
+            return true;
+        }
+        CraftingButton cell = getCraftingCellAt(mouseX, mouseY);
+        if (cell != null) {
+            PhaseSlot phaseSlot = getPhaseSlotForCraftingCell(cell);
+            if (phaseSlot != null) {
+                AbstractSpellPart current = cell.getAbstractSpellPart();
+                if (current != null) {
+                    phaseSpells.trySetGlyph(phaseSlot.phase, phaseSlot.slot, liftedGlyph);
+                    cell.setAbstractSpellPart(liftedGlyph);
+                    validate();
+                    liftedGlyph = null;
+                    return true;
+                }
+                int count = phaseSpells.getContiguousGlyphCount(phaseSlot.phase);
+                if (phaseSlot.slot == count && phaseSpells.trySetGlyph(phaseSlot.phase, phaseSlot.slot, liftedGlyph)) {
+                    cell.setAbstractSpellPart(liftedGlyph);
+                    validate();
+                    liftedGlyph = null;
+                    return true;
+                }
+            }
+        }
+        liftedGlyph = null;
+        return true;
+    }
+
+    private boolean tryInsertLiftedBetween(double mouseX, double mouseY) {
+        if (liftedGlyph == null) {
+            return false;
+        }
+        for (SpellPhase phase : SpellPhase.values()) {
+            int count = phaseSpells.getContiguousGlyphCount(phase);
+            if (count < 2 || !phaseSpells.canInsertGlyph(phase)) {
+                continue;
+            }
+            int baseIndex = phase.ordinal() * 10;
+            for (int leftSlot = 0; leftSlot < count - 1; leftSlot++) {
+                CraftingButton left = craftingCells.get(baseIndex + leftSlot);
+                CraftingButton right = craftingCells.get(baseIndex + leftSlot + 1);
+                if (left.getAbstractSpellPart() == null || right.getAbstractSpellPart() == null) {
+                    continue;
+                }
+                int leftCenterX = left.getX() + left.getWidth() / 2;
+                int rightCenterX = right.getX() + right.getWidth() / 2;
+                int midX = (leftCenterX + rightCenterX) / 2;
+                int y1 = left.getY();
+                int y2 = left.getY() + left.getHeight();
+                int x1 = midX - 5;
+                int x2 = midX + 5;
+                if (mouseX >= x1 && mouseX < x2 && mouseY >= y1 && mouseY < y2) {
+                    int insertSlot = leftSlot + 1;
+                    if (phaseSpells.tryInsertGlyph(phase, insertSlot, liftedGlyph)) {
+                        syncPhaseRowButtons(phase);
+                        validate();
+                        liftedGlyph = null;
+                        return true;
+                    }
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Nullable
+    private GlyphButton getGlyphButtonAt(double mouseX, double mouseY) {
+        for (GlyphButton glyphButton : glyphButtons) {
+            if (glyphButton.visible && glyphButton.isMouseOver(mouseX, mouseY)) {
+                return glyphButton;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private CraftingButton getCraftingCellAt(double mouseX, double mouseY) {
+        for (CraftingButton cell : craftingCells) {
+            if (cell.visible && cell.isMouseOver(mouseX, mouseY)) {
+                return cell;
+            }
+        }
+        return null;
+    }
+
+    private void syncPhaseRowButtons(SpellPhase phase) {
+        int baseIndex = phase.ordinal() * 10;
+        List<AbstractSpellPart> phaseList = phaseSpells.getPhaseList(phase);
+        for (int slot = 0; slot < 10; slot++) {
+            AbstractSpellPart part = slot < phaseList.size() ? phaseList.get(slot) : null;
+            CraftingButton cell = craftingCells.get(baseIndex + slot);
+            cell.setAbstractSpellPart(part);
+        }
+    }
+
+    @Nullable
+    private PhaseSlot getPhaseSlotForCraftingCell(CraftingButton cell) {
+        int cellIndex = craftingCells.indexOf(cell);
+        if (cellIndex < 0) {
+            return null;
+        }
+        int phaseIndex = cellIndex / 10;
+        int slot = cellIndex % 10;
+        if (phaseIndex < 0 || phaseIndex >= SpellPhase.values().length) {
+            return null;
+        }
+        SpellPhase phase = SpellPhase.values()[phaseIndex];
+        return new PhaseSlot(phase, slot);
+    }
+
+    private static class PhaseSlot {
+        public final SpellPhase phase;
+        public final int slot;
+
+        private PhaseSlot(SpellPhase phase, int slot) {
+            this.phase = phase;
+            this.slot = slot;
+        }
     }
 
     @Override
