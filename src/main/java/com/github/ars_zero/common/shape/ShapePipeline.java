@@ -23,8 +23,11 @@ public final class ShapePipeline {
         Vec3 orientation = description.orientation();
         boolean hollow = description.isHollow();
 
+        boolean isEvenSize = (size % 2) == 0;
+        double evenOffset = isEvenSize ? 0.5 : 0.0;
         double radius = size / 2.0;
-        int halfSize = (int) Math.ceil(radius);
+
+        int halfSize = (int) Math.ceil(size / 2.0);
 
         List<BlockPos> result = new ArrayList<>();
 
@@ -76,7 +79,11 @@ public final class ShapePipeline {
                         }
                     }
 
-                    if (shouldInclude(dx, dy, dz, radius, baseShape, modifier, orientation, hollow)) {
+                    double sampleX = dx + evenOffset;
+                    double sampleY = dy + evenOffset;
+                    double sampleZ = dz + evenOffset;
+
+                    if (shouldInclude(sampleX, sampleY, sampleZ, radius, baseShape, modifier, orientation, hollow)) {
                         result.add(center.offset(dx, dy, dz));
                     }
                 }
@@ -86,7 +93,7 @@ public final class ShapePipeline {
         return result;
     }
 
-    private static boolean shouldInclude(int dx, int dy, int dz, double radius,
+    private static boolean shouldInclude(double dx, double dy, double dz, double radius,
             BaseShapeVolume baseShape, @Nullable ShapeModifier modifier,
             @Nullable Vec3 orientation, boolean hollow) {
 

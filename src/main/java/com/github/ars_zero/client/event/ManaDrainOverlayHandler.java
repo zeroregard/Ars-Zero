@@ -9,9 +9,8 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 @EventBusSubscriber(modid = "ars_zero", value = Dist.CLIENT)
 public class ManaDrainOverlayHandler {
 
-    @SubscribeEvent
-    public static void onClientTick(ClientTickEvent.Post event) {
-        GuiManaDrainOverlay.tick();
-    }
+  @SubscribeEvent
+  public static void onClientTick(ClientTickEvent.Post event) {
+    GuiManaDrainOverlay.tick();
+  }
 }
-

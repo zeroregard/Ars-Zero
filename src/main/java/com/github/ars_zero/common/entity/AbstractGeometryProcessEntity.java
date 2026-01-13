@@ -768,7 +768,7 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
 
     @Override
     public boolean isPickable() {
-        return !isBuilding();
+        return true;
     }
 
     @Override

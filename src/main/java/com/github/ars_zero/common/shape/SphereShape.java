@@ -3,19 +3,13 @@ package com.github.ars_zero.common.shape;
 public final class SphereShape implements BaseShapeVolume {
     public static final SphereShape INSTANCE = new SphereShape();
 
-    private static final double HALF_BLOCK = 0.5;
-
     private SphereShape() {
     }
 
     @Override
     public boolean contains(double x, double y, double z, double radius) {
-        double closestX = x > 0 ? Math.max(0, x - HALF_BLOCK) : Math.min(0, x + HALF_BLOCK);
-        double closestY = y > 0 ? Math.max(0, y - HALF_BLOCK) : Math.min(0, y + HALF_BLOCK);
-        double closestZ = z > 0 ? Math.max(0, z - HALF_BLOCK) : Math.min(0, z + HALF_BLOCK);
-
-        double distSq = closestX * closestX + closestY * closestY + closestZ * closestZ;
-        return distSq <= radius * radius;
+        double distSq = x * x + y * y + z * z;
+        return distSq < radius * radius;
     }
 
     @Override

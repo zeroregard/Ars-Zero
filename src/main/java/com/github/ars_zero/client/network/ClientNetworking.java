@@ -14,35 +14,28 @@ public final class ClientNetworking {
         var registrar = event.registrar("1");
 
         registrar.playToClient(
-            PacketStaffSpellFired.TYPE,
-            PacketStaffSpellFired.STREAM_CODEC,
-            ClientPacketHandlers::handleStaffSpellFired
-        );
+                PacketStaffSpellFired.TYPE,
+                PacketStaffSpellFired.STREAM_CODEC,
+                ClientPacketHandlers::handleStaffSpellFired);
 
         registrar.playToClient(
-            PacketUpdateStaffGUI.TYPE,
-            PacketUpdateStaffGUI.CODEC,
-            ClientPacketHandlers::handleStaffGuiUpdate
-        );
+                PacketUpdateStaffGUI.TYPE,
+                PacketUpdateStaffGUI.CODEC,
+                ClientPacketHandlers::handleStaffGuiUpdate);
 
         registrar.playToClient(
-            PacketExplosionShake.TYPE,
-            PacketExplosionShake.STREAM_CODEC,
-            ClientPacketHandlers::handleExplosionShake
-        );
+                PacketExplosionShake.TYPE,
+                PacketExplosionShake.STREAM_CODEC,
+                ClientPacketHandlers::handleExplosionShake);
 
         registrar.playToClient(
-            com.github.ars_zero.common.network.PacketExplosionActivateSound.TYPE,
-            com.github.ars_zero.common.network.PacketExplosionActivateSound.STREAM_CODEC,
-            ClientPacketHandlers::handleExplosionActivateSound
-        );
+                com.github.ars_zero.common.network.PacketExplosionActivateSound.TYPE,
+                com.github.ars_zero.common.network.PacketExplosionActivateSound.STREAM_CODEC,
+                ClientPacketHandlers::handleExplosionActivateSound);
 
         registrar.playToClient(
-            PacketManaDrain.TYPE,
-            PacketManaDrain.STREAM_CODEC,
-            ClientPacketHandlers::handleManaDrain
-        );
+                PacketManaDrain.TYPE,
+                PacketManaDrain.STREAM_CODEC,
+                ClientPacketHandlers::handleManaDrain);
     }
 }
-
-
