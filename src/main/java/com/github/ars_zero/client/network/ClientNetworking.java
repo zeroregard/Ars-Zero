@@ -1,6 +1,7 @@
 package com.github.ars_zero.client.network;
 
 import com.github.ars_zero.common.network.PacketExplosionShake;
+import com.github.ars_zero.common.network.PacketManaDrain;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.network.PacketUpdateStaffGUI;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -34,6 +35,12 @@ public final class ClientNetworking {
             com.github.ars_zero.common.network.PacketExplosionActivateSound.TYPE,
             com.github.ars_zero.common.network.PacketExplosionActivateSound.STREAM_CODEC,
             ClientPacketHandlers::handleExplosionActivateSound
+        );
+
+        registrar.playToClient(
+            PacketManaDrain.TYPE,
+            PacketManaDrain.STREAM_CODEC,
+            ClientPacketHandlers::handleManaDrain
         );
     }
 }

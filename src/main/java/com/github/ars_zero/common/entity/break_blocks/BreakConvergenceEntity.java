@@ -30,8 +30,11 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
 
   private static final double BASE_MANA_COST_PER_BLOCK = 0.4;
   private static final float BLOCK_BREAKING_SPEED_MULTIPLIER = 2.0f;
+  private static final int DRAIN_SYNC_INTERVAL = 20;
 
   private float earthPower = 0.0f;
+  private double accumulatedDrain = 0.0;
+  private int ticksSinceLastDrainSync = 0;
   private int harvestLevel = 3;
   private int fortuneCount = 0;
   private int extractCount = 0;
@@ -76,6 +79,30 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
   @Override
   protected boolean shouldReverseProcessOrder() {
     return true;
+  }
+
+  @Override
+  protected void tickProcess() {
+    super.tickProcess();
+    ticksSinceLastDrainSync++;
+    if (ticksSinceLastDrainSync >= DRAIN_SYNC_INTERVAL && accumulatedDrain > 0) {
+      sendDrainPacket();
+      accumulatedDrain = 0;
+      ticksSinceLastDrainSync = 0;
+    }
+  }
+
+  private void sendDrainPacket() {
+    if (!(this.level() instanceof ServerLevel serverLevel)) {
+      return;
+    }
+    Player player = getClaimActor(serverLevel);
+    if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+      net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+          serverPlayer,
+          new com.github.ars_zero.common.network.PacketManaDrain(accumulatedDrain)
+      );
+    }
   }
 
   @Override
@@ -146,8 +173,13 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
 
   private boolean consumeManaForBlock(Player player) {
     IManaCap manaCap = CapabilityRegistry.getMana(player);
-    if (manaCap != null && manaCap.getCurrentMana() >= BASE_MANA_COST_PER_BLOCK) {
-      manaCap.removeMana(BASE_MANA_COST_PER_BLOCK);
+    double manaCost = BASE_MANA_COST_PER_BLOCK;
+    manaCost *= 1.0 + (fortuneCount * 0.1);
+    manaCost *= 1.0 + (extractCount * 0.3);
+    
+    if (manaCap != null && manaCap.getCurrentMana() >= manaCost) {
+      manaCap.removeMana(manaCost);
+      accumulatedDrain += manaCost;
       return true;
     }
     return false;

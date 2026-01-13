@@ -3,6 +3,8 @@ package com.github.ars_zero.common.glyph.convergence;
 import com.github.ars_zero.common.entity.break_blocks.BreakConvergenceEntity;
 import com.github.ars_zero.common.shape.GeometryDescription;
 import com.github.ars_zero.registry.ModEntities;
+import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
+import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
@@ -21,6 +23,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class BreakConvergenceHelper {
 
@@ -78,13 +82,10 @@ public final class BreakConvergenceHelper {
 
   private static SpellStats computeBreakSpellStats(SpellContext spellContext, @Nullable LivingEntity shooter,
       ServerLevel level) {
-    int breakIndex = findEffectIndex(spellContext, EffectBreak.class);
-    if (breakIndex < 0) {
-      return new SpellStats.Builder().build(EffectBreak.INSTANCE, null, level, shooter, spellContext);
-    }
+    List<AbstractAugment> augments = collectAugmentsAfterEffect(spellContext, EffectBreak.class);
 
     SpellStats stats = new SpellStats.Builder()
-        .setAugments(spellContext.getSpell().getAugments(breakIndex, shooter))
+        .setAugments(augments)
         .addItemsFromEntity(shooter)
         .build(EffectBreak.INSTANCE, null, level, shooter, spellContext);
 
@@ -98,13 +99,29 @@ public final class BreakConvergenceHelper {
     return stats;
   }
 
-  private static int findEffectIndex(SpellContext spellContext, Class<? extends AbstractSpellPart> effectClass) {
-    var recipe = spellContext.getSpell().unsafeList();
-    for (int i = 0; i < recipe.size(); i++) {
-      if (effectClass.isInstance(recipe.get(i))) {
-        return i;
+  private static List<AbstractAugment> collectAugmentsAfterEffect(SpellContext context,
+      Class<? extends AbstractSpellPart> effectClass) {
+    List<AbstractAugment> augments = new ArrayList<>();
+    var recipe = context.getSpell().unsafeList();
+    boolean foundEffect = false;
+
+    for (AbstractSpellPart part : recipe) {
+      if (!foundEffect) {
+        if (effectClass.isInstance(part)) {
+          foundEffect = true;
+        }
+        continue;
+      }
+
+      if (part instanceof AbstractEffect) {
+        break;
+      }
+
+      if (part instanceof AbstractAugment augment) {
+        augments.add(augment);
       }
     }
-    return -1;
+
+    return augments;
   }
 }

@@ -91,6 +91,8 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
     protected final List<BlockPos> processQueue = new ArrayList<>();
     protected int processIndex = 0;
     protected float blockAccumulator = 0.0f;
+    private int soundCooldown = 0;
+    private static final int SOUND_COOLDOWN_TICKS = 4;
 
     private float clientSmoothedYaw = 0f;
 
@@ -475,11 +477,6 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
             updateBoundingBox();
         }
 
-        boolean shouldHaveNoGravity = !isBuilding();
-        if (this.isNoGravity() != shouldHaveNoGravity) {
-            this.setNoGravity(shouldHaveNoGravity);
-        }
-
         super.tick();
 
         if (this.level().isClientSide && FMLEnvironment.dist == Dist.CLIENT) {
@@ -525,9 +522,13 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
         int oldIndex = this.processIndex;
         int processed = processBlocks(serverLevel, blocksToProcess);
 
-        if (processed > 0) {
+        if (processed > 0 && soundCooldown <= 0) {
             BlockPos firstPos = this.processQueue.get(oldIndex);
             playProcessSound(serverLevel, firstPos, processed);
+            soundCooldown = SOUND_COOLDOWN_TICKS;
+        }
+        if (soundCooldown > 0) {
+            soundCooldown--;
         }
 
         this.blockAccumulator -= processed;
@@ -583,7 +584,8 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
             double halfSize = 0.375;
             double height = 0.75;
             double yOffset = 0.5;
-            this.setBoundingBox(new AABB(pos.x - halfSize, pos.y + yOffset, pos.z - halfSize, pos.x + halfSize, pos.y + yOffset + height, pos.z + halfSize));
+            this.setBoundingBox(new AABB(pos.x - halfSize, pos.y + yOffset, pos.z - halfSize, pos.x + halfSize,
+                    pos.y + yOffset + height, pos.z + halfSize));
         } else {
             this.setBoundingBox(new AABB(pos.x - 0.25, pos.y, pos.z - 0.25, pos.x + 0.25, pos.y + 0.5, pos.z + 0.25));
         }
@@ -743,12 +745,16 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
 
     @Override
     public void push(double x, double y, double z) {
-        // Don't allow being pushed
+        if (isBuilding()) {
+            super.push(x, y, z);
+        }
     }
 
     @Override
     public void push(net.minecraft.world.entity.Entity entity) {
-        // Don't allow being pushed by entities
+        if (isBuilding()) {
+            super.push(entity);
+        }
     }
 
     @Override
@@ -775,10 +781,11 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
         if (isBuilding()) {
             double halfSize = 0.375;
             double height = 0.75;
-            double yOffset = 0.5;
-            return new AABB(pos.x - halfSize, pos.y + yOffset, pos.z - halfSize, pos.x + halfSize, pos.y + yOffset + height, pos.z + halfSize);
+            double yOffset = 0.7;
+            return new AABB(pos.x - halfSize, pos.y + yOffset, pos.z - halfSize, pos.x + halfSize,
+                    pos.y + yOffset + height, pos.z + halfSize);
         }
-        return new AABB(pos.x - 0.25, pos.y, pos.z - 0.25, pos.x + 0.25, pos.y + 0.5, pos.z + 0.25);
+        return new AABB(pos.x - 0.25, pos.y + 0.2, pos.z - 0.25, pos.x + 0.25, pos.y + 0.7, pos.z + 0.25);
     }
 
     @Override

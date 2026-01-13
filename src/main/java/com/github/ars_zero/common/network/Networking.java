@@ -79,6 +79,12 @@ public class Networking {
                     com.github.ars_zero.common.network.PacketExplosionActivateSound.STREAM_CODEC,
                     (packet, context) -> {
                     });
+
+            registrar.playToClient(
+                    PacketManaDrain.TYPE,
+                    PacketManaDrain.STREAM_CODEC,
+                    (packet, context) -> {
+                    });
         }
     }
 

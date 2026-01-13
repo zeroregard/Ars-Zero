@@ -6,20 +6,20 @@ import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.client.gui.MultiphaseDeviceStylesScreen;
 import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.client.sound.StaffSoundManager;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.client.sound.ExplosionActivateSoundInstance;
 import com.github.ars_zero.common.network.PacketExplosionActivateSound;
 import com.github.ars_zero.common.network.PacketExplosionShake;
+import com.github.ars_zero.common.network.PacketManaDrain;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.network.PacketUpdateStaffGUI;
+import com.github.ars_zero.client.gui.GuiManaDrainOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import top.theillusivec4.curios.api.CuriosApi;
 
 final class ClientPacketHandlers {
     private ClientPacketHandlers() {
@@ -34,7 +34,8 @@ final class ClientPacketHandlers {
             if (player instanceof AbstractClientPlayer clientPlayer) {
                 String phaseName = phase.name();
                 if (!packet.isCurio()) {
-                    StaffAnimationHandler.onStaffPhase(clientPlayer, packet.isMainHand(), phaseName, packet.tickCount());
+                    StaffAnimationHandler.onStaffPhase(clientPlayer, packet.isMainHand(), phaseName,
+                            packet.tickCount());
                 }
 
                 if (phase == SpellPhase.BEGIN) {
@@ -88,10 +89,14 @@ final class ClientPacketHandlers {
     static void handleExplosionActivateSound(PacketExplosionActivateSound packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             ExplosionActivateSoundInstance soundInstance = new ExplosionActivateSoundInstance(
-                packet.x(), packet.y(), packet.z());
+                    packet.x(), packet.y(), packet.z());
             Minecraft.getInstance().getSoundManager().play(soundInstance);
         });
     }
+
+    static void handleManaDrain(PacketManaDrain packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            GuiManaDrainOverlay.onManaDrain(packet.amount());
+        });
+    }
 }
-
-

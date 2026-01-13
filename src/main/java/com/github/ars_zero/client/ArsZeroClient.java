@@ -2,6 +2,7 @@ package com.github.ars_zero.client;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.animation.StaffAnimationHandler;
+import com.github.ars_zero.client.gui.GuiManaDrainOverlay;
 import com.github.ars_zero.client.gui.GuiStaffHUD;
 import com.github.ars_zero.client.renderer.GeometryEntityOverlayHelper;
 import com.github.ars_zero.client.network.ClientNetworking;
@@ -89,6 +90,8 @@ public class ArsZeroClient {
         event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("staff_hud"), GuiStaffHUD.OVERLAY);
         event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("geometry_entity_overlay"),
                 GeometryEntityOverlayHelper.OVERLAY);
+        event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("mana_drain_overlay"),
+                GuiManaDrainOverlay.OVERLAY);
     }
 
     public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
