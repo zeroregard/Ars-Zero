@@ -8,6 +8,7 @@ import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
+import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentRandomize;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectCrush;
@@ -30,7 +31,8 @@ public final class ConjureTerrainConvergenceHelper {
     }
 
     public static void handleConjureTerrain(ServerLevel serverLevel, Vec3 pos, @Nullable LivingEntity shooter,
-            SpellContext spellContext, EffectConvergence convergence, HitResult rayTraceResult) {
+            SpellContext spellContext, EffectConvergence convergence, HitResult rayTraceResult,
+            SpellResolver resolver) {
         BlockPos centerBlock = BlockPos.containing(pos);
         Vec3 center = Vec3.atCenterOf(centerBlock);
 
@@ -61,6 +63,7 @@ public final class ConjureTerrainConvergenceHelper {
         entity.setSize(size);
         entity.setDepth(depth);
         entity.setBasePosition(offsetCenter);
+        entity.setSpellContext(spellContext, resolver);
 
         SpellContext iterator = spellContext.clone();
         while (iterator.hasNextPart()) {

@@ -38,6 +38,9 @@ import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 
+import com.hollingsworth.arsnouveau.api.spell.SpellContext;
+import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -85,6 +88,11 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
     private Vec3 basePosition = Vec3.ZERO;
     private Vec3 lastAppliedPosition = Vec3.ZERO;
     private int depth = 1;
+
+    @Nullable
+    protected SpellContext spellContext = null;
+    @Nullable
+    protected SpellResolver spellResolver = null;
 
     protected boolean building = false;
     protected boolean paused = false;
@@ -285,6 +293,21 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
         setDepth(next);
     }
 
+    public void setSpellContext(@Nullable SpellContext context, @Nullable SpellResolver resolver) {
+        this.spellContext = context;
+        this.spellResolver = resolver;
+    }
+
+    @Nullable
+    public SpellContext getSpellContext() {
+        return this.spellContext;
+    }
+
+    @Nullable
+    public SpellResolver getSpellResolver() {
+        return this.spellResolver;
+    }
+
     protected int getMaxSize() {
         return Math.max(MIN_SIZE, EffectConvergence.INSTANCE.getTerrainMaxSize());
     }
@@ -469,6 +492,9 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
         startProcess();
     }
 
+    private static final double FOLLOW_DISTANCE = 2;
+    private static final double LERP_SPEED = 0.03;
+
     @Override
     public void tick() {
         boolean shouldHaveNoPhysics = !isBuilding();
@@ -479,6 +505,10 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
 
         super.tick();
 
+        if (this.building && this.casterUuid != null) {
+            lerpTowardsCaster();
+        }
+
         if (this.level().isClientSide && FMLEnvironment.dist == Dist.CLIENT) {
             checkForCancelInput();
             checkForMovementInput();
@@ -487,6 +517,24 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
 
         if (!this.level().isClientSide && this.building && !this.paused) {
             tickProcess();
+        }
+    }
+
+    private void lerpTowardsCaster() {
+        if (this.level() instanceof ServerLevel serverLevel && this.casterUuid != null) {
+            Player caster = serverLevel.getServer().getPlayerList().getPlayer(this.casterUuid);
+            if (caster != null) {
+                Vec3 casterPos = caster.position().add(0, 1.0, 0);
+                Vec3 entityPos = this.position();
+                Vec3 toEntity = entityPos.subtract(casterPos);
+                double distance = toEntity.length();
+
+                if (distance > FOLLOW_DISTANCE) {
+                    Vec3 targetPos = casterPos.add(toEntity.normalize().scale(FOLLOW_DISTANCE));
+                    Vec3 newPos = entityPos.add(targetPos.subtract(entityPos).scale(LERP_SPEED));
+                    this.setPos(newPos.x, newPos.y, newPos.z);
+                }
+            }
         }
     }
 
@@ -720,7 +768,7 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
 
     @Override
     public boolean isPickable() {
-        return true;
+        return !isBuilding();
     }
 
     @Override
@@ -730,17 +778,20 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
 
     @Override
     public boolean canCollideWith(net.minecraft.world.entity.Entity entity) {
+        if (isBuilding()) {
+            return false;
+        }
         return super.canCollideWith(entity);
     }
 
     @Override
     public boolean isPushable() {
-        return isBuilding();
+        return false;
     }
 
     @Override
     public boolean canBeCollidedWith() {
-        return true;
+        return !isBuilding();
     }
 
     @Override

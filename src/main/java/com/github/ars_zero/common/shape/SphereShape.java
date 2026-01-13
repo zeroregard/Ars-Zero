@@ -20,22 +20,17 @@ public final class SphereShape implements BaseShapeVolume {
 
     @Override
     public boolean containsSurface(double x, double y, double z, double radius, double thickness) {
-        double closestX = x > 0 ? Math.max(0, x - HALF_BLOCK) : Math.min(0, x + HALF_BLOCK);
-        double closestY = y > 0 ? Math.max(0, y - HALF_BLOCK) : Math.min(0, y + HALF_BLOCK);
-        double closestZ = z > 0 ? Math.max(0, z - HALF_BLOCK) : Math.min(0, z + HALF_BLOCK);
+        if (!contains(x, y, z, radius)) {
+            return false;
+        }
 
-        double closestDistSq = closestX * closestX + closestY * closestY + closestZ * closestZ;
+        boolean xPlusOutside = !contains(x + 1, y, z, radius);
+        boolean xMinusOutside = !contains(x - 1, y, z, radius);
+        boolean yPlusOutside = !contains(x, y + 1, z, radius);
+        boolean yMinusOutside = !contains(x, y - 1, z, radius);
+        boolean zPlusOutside = !contains(x, y, z + 1, radius);
+        boolean zMinusOutside = !contains(x, y, z - 1, radius);
 
-        double farthestX = x < 0 ? x - HALF_BLOCK : x + HALF_BLOCK;
-        double farthestY = y < 0 ? y - HALF_BLOCK : y + HALF_BLOCK;
-        double farthestZ = z < 0 ? z - HALF_BLOCK : z + HALF_BLOCK;
-
-        double farthestDistSq = farthestX * farthestX + farthestY * farthestY + farthestZ * farthestZ;
-
-        double radiusSq = radius * radius;
-        double innerRadius = Math.max(0, radius - thickness);
-        double innerRadiusSq = innerRadius * innerRadius;
-
-        return farthestDistSq >= innerRadiusSq && closestDistSq <= radiusSq;
+        return xPlusOutside || xMinusOutside || yPlusOutside || yMinusOutside || zPlusOutside || zMinusOutside;
     }
 }

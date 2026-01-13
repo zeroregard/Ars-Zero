@@ -7,6 +7,7 @@ import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
+import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.util.BlockUtil;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtract;
@@ -33,7 +34,7 @@ public final class BreakConvergenceHelper {
 
   public static void handleBreak(ServerLevel serverLevel, Vec3 pos, @Nullable LivingEntity shooter,
       SpellContext spellContext, EffectConvergence convergence, HitResult rayTraceResult,
-      EffectBreak breakEffect) {
+      EffectBreak breakEffect, SpellResolver resolver) {
     BlockPos centerBlock = BlockPos.containing(pos);
     Vec3 center = Vec3.atCenterOf(centerBlock);
 
@@ -63,6 +64,7 @@ public final class BreakConvergenceHelper {
     entity.setSize(size);
     entity.setDepth(depth);
     entity.setBasePosition(offsetCenter);
+    entity.setSpellContext(spellContext, resolver);
 
     SpellStats breakStats = computeBreakSpellStats(spellContext, shooter, serverLevel);
 

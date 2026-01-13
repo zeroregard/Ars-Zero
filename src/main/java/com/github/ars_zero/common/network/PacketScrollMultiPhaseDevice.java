@@ -101,9 +101,15 @@ public record PacketScrollMultiPhaseDevice(double scrollDelta, boolean modifierH
 
     private static BlockPos calculateDepthOffset(int direction, Vec3 playerLookDirection) {
         double absX = Math.abs(playerLookDirection.x);
+        double absY = Math.abs(playerLookDirection.y);
         double absZ = Math.abs(playerLookDirection.z);
 
-        if (absX >= absZ) {
+        boolean lookingMostlyVertical = absY > Math.max(absX, absZ);
+
+        if (lookingMostlyVertical) {
+            int sign = playerLookDirection.y >= 0 ? 1 : -1;
+            return new BlockPos(0, sign * direction, 0);
+        } else if (absX >= absZ) {
             int sign = playerLookDirection.x >= 0 ? 1 : -1;
             return new BlockPos(sign * direction, 0, 0);
         } else {

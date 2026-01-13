@@ -18,11 +18,15 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import com.hollingsworth.arsnouveau.common.items.curios.ShapersFocus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -174,6 +178,15 @@ public class ConjureTerrainConvergenceEntity extends AbstractGeometryProcessEnti
 
         if (blocksPlaced > 0) {
             playProcessSound(serverLevel, this.processQueue.get(oldIndex), blocksPlaced);
+
+            if (spellContext != null && spellResolver != null) {
+                for (int i = oldIndex; i < this.processIndex && i < this.processQueue.size(); i++) {
+                    BlockPos placedPos = this.processQueue.get(i);
+                    ShapersFocus.tryPropagateBlockSpell(
+                            new BlockHitResult(Vec3.atCenterOf(placedPos), Direction.UP, placedPos, false),
+                            serverLevel, claimActor, spellContext, spellResolver);
+                }
+            }
         }
 
         for (int i = 0; i < blocksPlaced; i++) {

@@ -108,9 +108,10 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
       WaterConvergenceHelper.handleWaterConvergence(serverLevel, pos, shooter, spellContext, this);
     } else if (firstEffect instanceof EffectConjureTerrain) {
       ConjureTerrainConvergenceHelper.handleConjureTerrain(serverLevel, pos, shooter, spellContext, this,
-          rayTraceResult);
+          rayTraceResult, resolver);
     } else if (firstEffect instanceof EffectBreak breakEffect) {
-      BreakConvergenceHelper.handleBreak(serverLevel, pos, shooter, spellContext, this, rayTraceResult, breakEffect);
+      BreakConvergenceHelper.handleBreak(serverLevel, pos, shooter, spellContext, this, rayTraceResult, breakEffect,
+          resolver);
     } else if (rayTraceResult instanceof EntityHitResult entityHitResult) {
       ChargerHelper.handlePlayerCharger(serverLevel, pos, entityHitResult, shooter, spellContext, this);
     } else if (rayTraceResult instanceof BlockHitResult blockHitResult) {

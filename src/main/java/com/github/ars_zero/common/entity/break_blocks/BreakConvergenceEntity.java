@@ -19,9 +19,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import com.hollingsworth.arsnouveau.common.items.curios.ShapersFocus;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -100,8 +104,7 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
     if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
       net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
           serverPlayer,
-          new com.github.ars_zero.common.network.PacketManaDrain(accumulatedDrain)
-      );
+          new com.github.ars_zero.common.network.PacketManaDrain(accumulatedDrain));
     }
   }
 
@@ -139,6 +142,13 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
 
     ItemStack toolStack = buildToolStack(level, pos, state);
     BlockUtil.breakExtraBlock(level, pos, toolStack, getCasterUUID(), true);
+
+    if (spellContext != null && spellResolver != null) {
+      ShapersFocus.tryPropagateBlockSpell(
+          new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false),
+          level, player, spellContext, spellResolver);
+    }
+
     return ProcessResult.PROCESSED;
   }
 
@@ -154,10 +164,12 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
     boolean usePick = state.is(BlockTagProvider.BREAK_WITH_PICKAXE);
     ItemStack stack = usePick ? new ItemStack(Items.DIAMOND_PICKAXE) : new ItemStack(Items.DIAMOND_PICKAXE);
 
-    if (fortuneCount > 0 && stack.getEnchantmentLevel(HolderHelper.unwrap(level, Enchantments.FORTUNE)) < fortuneCount) {
+    if (fortuneCount > 0
+        && stack.getEnchantmentLevel(HolderHelper.unwrap(level, Enchantments.FORTUNE)) < fortuneCount) {
       stack.enchant(HolderHelper.unwrap(level, Enchantments.FORTUNE), fortuneCount);
     }
-    if (extractCount > 0 && stack.getEnchantmentLevel(HolderHelper.unwrap(level, Enchantments.SILK_TOUCH)) < extractCount) {
+    if (extractCount > 0
+        && stack.getEnchantmentLevel(HolderHelper.unwrap(level, Enchantments.SILK_TOUCH)) < extractCount) {
       stack.enchant(HolderHelper.unwrap(level, Enchantments.SILK_TOUCH), extractCount);
     }
 
@@ -176,7 +188,7 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
     double manaCost = BASE_MANA_COST_PER_BLOCK;
     manaCost *= 1.0 + (fortuneCount * 0.1);
     manaCost *= 1.0 + (extractCount * 0.3);
-    
+
     if (manaCap != null && manaCap.getCurrentMana() >= manaCost) {
       manaCap.removeMana(manaCost);
       accumulatedDrain += manaCost;

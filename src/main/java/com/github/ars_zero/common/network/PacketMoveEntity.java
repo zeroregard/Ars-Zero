@@ -86,26 +86,34 @@ public record PacketMoveEntity(int entityId, MoveDirection direction, Vec3 playe
   }
 
   private static Vec3 calculateOffset(MoveDirection direction, Vec3 playerLookDirection) {
-    return switch (direction) {
-      case UP -> new Vec3(0, 1, 0);
-      case DOWN -> new Vec3(0, -1, 0);
-      case LEFT, RIGHT -> {
-        // Round to nearest axis - if looking more along X, left/right moves along Z and
-        // vice versa
-        double absX = Math.abs(playerLookDirection.x);
-        double absZ = Math.abs(playerLookDirection.z);
+    double absX = Math.abs(playerLookDirection.x);
+    double absY = Math.abs(playerLookDirection.y);
+    double absZ = Math.abs(playerLookDirection.z);
 
+    boolean lookingMostlyVertical = absY > Math.max(absX, absZ);
+
+    return switch (direction) {
+      case UP, DOWN -> {
+        int sign = direction == MoveDirection.UP ? 1 : -1;
+
+        if (lookingMostlyVertical) {
+          if (absX >= absZ) {
+            int horizontalSign = playerLookDirection.x >= 0 ? 1 : -1;
+            yield new Vec3(horizontalSign * sign, 0, 0);
+          } else {
+            int horizontalSign = playerLookDirection.z >= 0 ? 1 : -1;
+            yield new Vec3(0, 0, horizontalSign * sign);
+          }
+        } else {
+          yield new Vec3(0, sign, 0);
+        }
+      }
+      case LEFT, RIGHT -> {
         if (absX >= absZ) {
-          // Looking more along X axis, so left/right is along Z
-          // If looking +X, left is -Z, right is +Z
-          // If looking -X, left is +Z, right is -Z
           int sign = playerLookDirection.x >= 0 ? 1 : -1;
           int leftRightSign = direction == MoveDirection.LEFT ? -1 : 1;
           yield new Vec3(0, 0, sign * leftRightSign);
         } else {
-          // Looking more along Z axis, so left/right is along X
-          // If looking +Z, left is +X, right is -X
-          // If looking -Z, left is -X, right is +X
           int sign = playerLookDirection.z >= 0 ? 1 : -1;
           int leftRightSign = direction == MoveDirection.LEFT ? 1 : -1;
           yield new Vec3(sign * leftRightSign, 0, 0);

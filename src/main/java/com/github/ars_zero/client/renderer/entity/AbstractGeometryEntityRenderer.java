@@ -2,6 +2,8 @@ package com.github.ars_zero.client.renderer.entity;
 
 import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
 import com.github.ars_zero.common.entity.IGeometryProcessEntity.BlockStatus;
+import com.hollingsworth.arsnouveau.ArsNouveau;
+import com.hollingsworth.arsnouveau.client.registry.ShaderRegistry;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -19,6 +21,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
@@ -49,23 +52,24 @@ public class AbstractGeometryEntityRenderer<T extends AbstractGeometryProcessEnt
 
     protected static final double RENDER_DISTANCE = 128.0;
     protected static final float LINE_ALPHA = 0.9f;
-    
+
+    protected static final ResourceLocation BUBBLE_TEXTURE = ArsNouveau.prefix("textures/entity/bubble.png");
+
     protected static final RenderType LINES_SEE_THROUGH = RenderType.create(
-        "geometry_lines_see_through",
-        DefaultVertexFormat.POSITION_COLOR_NORMAL,
-        VertexFormat.Mode.LINES,
-        1536,
-        RenderType.CompositeState.builder()
-            .setShaderState(RenderStateShard.RENDERTYPE_LINES_SHADER)
-            .setLineState(new RenderStateShard.LineStateShard(OptionalDouble.of(2.0)))
-            .setLayeringState(RenderStateShard.VIEW_OFFSET_Z_LAYERING)
-            .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
-            .setOutputState(RenderStateShard.ITEM_ENTITY_TARGET)
-            .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-            .setCullState(RenderStateShard.NO_CULL)
-            .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
-            .createCompositeState(false)
-    );
+            "geometry_lines_see_through",
+            DefaultVertexFormat.POSITION_COLOR_NORMAL,
+            VertexFormat.Mode.LINES,
+            1536,
+            RenderType.CompositeState.builder()
+                    .setShaderState(RenderStateShard.RENDERTYPE_LINES_SHADER)
+                    .setLineState(new RenderStateShard.LineStateShard(OptionalDouble.of(2.0)))
+                    .setLayeringState(RenderStateShard.VIEW_OFFSET_Z_LAYERING)
+                    .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                    .setOutputState(RenderStateShard.ITEM_ENTITY_TARGET)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
+                    .createCompositeState(false));
 
     public AbstractGeometryEntityRenderer(EntityRendererProvider.Context context, GeoModel<T> model) {
         super(context, model);
@@ -92,6 +96,8 @@ public class AbstractGeometryEntityRenderer<T extends AbstractGeometryProcessEnt
 
             super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
             poseStack.popPose();
+
+            renderBubble(poseStack, buffer);
             return;
         }
 
@@ -117,24 +123,41 @@ public class AbstractGeometryEntityRenderer<T extends AbstractGeometryProcessEnt
         return (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90f;
     }
 
+    protected void renderBubble(PoseStack poseStack, MultiBufferSource buffer) {
+        poseStack.pushPose();
+        poseStack.translate(0, 1.1, 0);
+        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+        poseStack.scale(0.025F, -0.025F, 0.025F);
+        poseStack.scale(7.0f, 7.0f, 7.0f);
+
+        Matrix4f pose = poseStack.last().pose();
+        VertexConsumer vertexConsumer = buffer.getBuffer(ShaderRegistry.worldEntityIcon(BUBBLE_TEXTURE));
+        vertexConsumer.addVertex(pose, -8, -8, 0).setUv(0, 0);
+        vertexConsumer.addVertex(pose, -8, 8, 0).setUv(0, 1);
+        vertexConsumer.addVertex(pose, 8, 8, 0).setUv(1, 1);
+        vertexConsumer.addVertex(pose, 8, -8, 0).setUv(1, 0);
+
+        poseStack.popPose();
+    }
+
     protected void renderPreviewOutline(T entity, PoseStack poseStack,
             MultiBufferSource buffer, float partialTicks) {
         BlockPos effectiveCenter = entity.getEffectiveCenter();
         Vec3 effectiveCenterVec = Vec3.atCenterOf(effectiveCenter);
         Vec3 entityRenderPos = entity.getPosition(partialTicks);
         Vec3 offsetToEffective = effectiveCenterVec.subtract(entityRenderPos);
-        
+
         Map<BlockPos, BlockStatus> blockStatuses = entity.getBlockStatuses();
-        
+
         if (blockStatuses.isEmpty()) {
             return;
         }
 
         Set<BlockPos> allPositions = new HashSet<>(blockStatuses.keySet());
-        
+
         int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
-        
+
         for (BlockPos blockPos : allPositions) {
             minX = Math.min(minX, blockPos.getX());
             minY = Math.min(minY, blockPos.getY());
@@ -149,11 +172,11 @@ public class AbstractGeometryEntityRenderer<T extends AbstractGeometryProcessEnt
 
         for (Map.Entry<BlockPos, BlockStatus> entry : blockStatuses.entrySet()) {
             BlockPos blockPos = entry.getKey();
-            
+
             if (!isOnShell(blockPos, allPositions)) {
                 continue;
             }
-            
+
             BlockStatus status = entry.getValue();
 
             float r, g, b;
@@ -178,52 +201,52 @@ public class AbstractGeometryEntityRenderer<T extends AbstractGeometryProcessEnt
             double blockX = blockPos.getX() - effectiveCenterVec.x;
             double blockY = blockPos.getY() - effectiveCenterVec.y;
             double blockZ = blockPos.getZ() - effectiveCenterVec.z;
-            
+
             renderBlockBox(poseStack, buffer, blockX, blockY, blockZ, r, g, b);
         }
-        
+
         renderCenterCrosshair(poseStack, buffer, effectiveCenterVec, minX, minY, minZ, maxX, maxY, maxZ);
 
         poseStack.popPose();
     }
-    
+
     private boolean isOnShell(BlockPos pos, Set<BlockPos> allPositions) {
         return !allPositions.contains(pos.above()) ||
-               !allPositions.contains(pos.below()) ||
-               !allPositions.contains(pos.north()) ||
-               !allPositions.contains(pos.south()) ||
-               !allPositions.contains(pos.east()) ||
-               !allPositions.contains(pos.west());
+                !allPositions.contains(pos.below()) ||
+                !allPositions.contains(pos.north()) ||
+                !allPositions.contains(pos.south()) ||
+                !allPositions.contains(pos.east()) ||
+                !allPositions.contains(pos.west());
     }
-    
+
     protected void renderCenterCrosshair(PoseStack poseStack, MultiBufferSource buffer, Vec3 effectiveCenter,
             int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
         VertexConsumer lines = buffer.getBuffer(LINES_SEE_THROUGH);
         PoseStack.Pose pose = poseStack.last();
-        
+
         double trueCenterX = (minX + maxX + 1) / 2.0;
         double trueCenterY = (minY + maxY + 1) / 2.0;
         double trueCenterZ = (minZ + maxZ + 1) / 2.0;
-        
+
         double cx = trueCenterX - effectiveCenter.x;
         double cy = trueCenterY - effectiveCenter.y;
         double cz = trueCenterZ - effectiveCenter.z;
-        
+
         double x0 = minX - effectiveCenter.x;
         double x1 = maxX + 1 - effectiveCenter.x;
         double y0 = minY - effectiveCenter.y;
         double y1 = maxY + 1 - effectiveCenter.y;
         double z0 = minZ - effectiveCenter.z;
         double z1 = maxZ + 1 - effectiveCenter.z;
-        
+
         float r = 1.0f, g = 1.0f, b = 1.0f, a = 0.9f;
-        
+
         lines.addVertex(pose, (float) x0, (float) cy, (float) cz).setColor(r, g, b, a).setNormal(pose, 1, 0, 0);
         lines.addVertex(pose, (float) x1, (float) cy, (float) cz).setColor(r, g, b, a).setNormal(pose, 1, 0, 0);
-        
+
         lines.addVertex(pose, (float) cx, (float) y0, (float) cz).setColor(r, g, b, a).setNormal(pose, 0, 1, 0);
         lines.addVertex(pose, (float) cx, (float) y1, (float) cz).setColor(r, g, b, a).setNormal(pose, 0, 1, 0);
-        
+
         lines.addVertex(pose, (float) cx, (float) cy, (float) z0).setColor(r, g, b, a).setNormal(pose, 0, 0, 1);
         lines.addVertex(pose, (float) cx, (float) cy, (float) z1).setColor(r, g, b, a).setNormal(pose, 0, 0, 1);
     }
@@ -258,7 +281,7 @@ public class AbstractGeometryEntityRenderer<T extends AbstractGeometryProcessEnt
         VertexConsumer lines = buffer.getBuffer(LINES_SEE_THROUGH);
         renderLineBox(poseStack, lines, x, y, z, x + 1.0, y + 1.0, z + 1.0, r, g, b, LINE_ALPHA);
     }
-    
+
     private static void renderLineBox(PoseStack poseStack, VertexConsumer consumer,
             double minX, double minY, double minZ, double maxX, double maxY, double maxZ,
             float r, float g, float b, float a) {
@@ -296,4 +319,3 @@ public class AbstractGeometryEntityRenderer<T extends AbstractGeometryProcessEnt
         consumer.addVertex(pose, x1, y1, z1).setColor(r, g, b, a).setNormal(pose, 1, 0, 0);
     }
 }
-

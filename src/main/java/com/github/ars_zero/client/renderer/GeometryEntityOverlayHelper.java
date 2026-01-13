@@ -14,6 +14,11 @@ public class GeometryEntityOverlayHelper {
 
     private static final boolean IS_MAC = Minecraft.ON_OSX;
     private static final Minecraft minecraft = Minecraft.getInstance();
+    private static final long HINT_DISPLAY_DURATION_MS = 3000;
+    private static final String HINT_TEXT = "(Use Arrows and Scroll to position)";
+
+    private static int lastTrackedEntityId = -1;
+    private static long hintStartTime = 0;
 
     public static void renderOverlay(GuiGraphics graphics, DeltaTracker deltaTracker) {
         if (minecraft.options.hideGui) {
@@ -40,6 +45,14 @@ public class GeometryEntityOverlayHelper {
             return;
         }
 
+        int entityId = entity.getId();
+        long currentTime = System.currentTimeMillis();
+
+        if (entityId != lastTrackedEntityId) {
+            lastTrackedEntityId = entityId;
+            hintStartTime = currentTime;
+        }
+
         int size = entity.getSize();
         int depth = entity.getDepth();
         boolean isFlattened = entity.getGeometryDescription().isFlattened();
@@ -61,6 +74,14 @@ public class GeometryEntityOverlayHelper {
         int y = screenHeight - 104;
 
         graphics.drawString(minecraft.font, text, x, y, 0xFFFFFF);
+
+        long elapsed = currentTime - hintStartTime;
+        if (elapsed < HINT_DISPLAY_DURATION_MS) {
+            int hintWidth = minecraft.font.width(HINT_TEXT);
+            int hintX = (screenWidth - hintWidth) / 2;
+            int hintY = y + 12;
+            graphics.drawString(minecraft.font, HINT_TEXT, hintX, hintY, 0x888888);
+        }
     }
 
     private static AbstractGeometryProcessEntity findPlayerGeometryEntity(Player player) {
