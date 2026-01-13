@@ -10,12 +10,15 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import org.joml.Vector3f;
 
 public class ArcaneVoxelEntity extends BaseVoxelEntity {
     
     private static final int COLOR = 0x8A2BE2;
+    private boolean hasResolvedSpell = false;
     
     public ArcaneVoxelEntity(EntityType<? extends ArcaneVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -92,6 +95,20 @@ public class ArcaneVoxelEntity extends BaseVoxelEntity {
                 );
             }
         }
+    }
+    
+    @Override
+    protected void onRemovalResolve(HitResult hitResult) {
+        if (hasResolvedSpell || this.level().isClientSide) {
+            return;
+        }
+        SpellResolver resolver = getResolver();
+        if (resolver == null) {
+            return;
+        }
+        hasResolvedSpell = true;
+        HitResult resolveHit = hitResult != null ? hitResult : new EntityHitResult(this);
+        resolver.onResolveEffect(this.level(), resolveHit);
     }
 }
 
