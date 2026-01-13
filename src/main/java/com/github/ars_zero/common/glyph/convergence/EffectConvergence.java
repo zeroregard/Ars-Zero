@@ -19,8 +19,10 @@ import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectExplosion;
+import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
@@ -84,8 +86,14 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
       return;
     }
 
-    ItemStack casterTool = spellContext.getCasterTool();
-    MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+    MultiPhaseCastContext context = null;
+    if (spellContext.getCaster() instanceof TileCaster tileCaster && tileCaster.getTile() instanceof MultiphaseSpellTurretTile turretTile) {
+      context = turretTile.getCastContext();
+    }
+    if (context == null) {
+      ItemStack casterTool = spellContext.getCasterTool();
+      context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+    }
     if (context == null) {
       return;
     }

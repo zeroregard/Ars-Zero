@@ -33,6 +33,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -252,6 +253,13 @@ public class ArsZeroResolverEvents {
         
         switch (wrapped.getPhase()) {
             case BEGIN -> {
+                if (result != null && result.hitResult instanceof BlockHitResult && !context.beginResults.isEmpty()) {
+                    for (SpellResult existing : context.beginResults) {
+                        if (existing != null && existing.hitResult instanceof EntityHitResult) {
+                            return;
+                        }
+                    }
+                }
                 if (result != null && result.blockGroup != null) {
                     context.beginResults.clear();
                     context.beginResults.add(result);

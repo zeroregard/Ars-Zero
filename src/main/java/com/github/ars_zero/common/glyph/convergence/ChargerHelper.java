@@ -47,6 +47,7 @@ public final class ChargerHelper {
             chargerEntity.setPos(pos.x, pos.y, pos.z);
             chargerEntity.setJarPos(blockPos);
             chargerEntity.setCasterUUID(shooter.getUUID());
+            chargerEntity.setSourceOriginPos(shooter.blockPosition());
             chargerEntity.setLifespan(DEFAULT_LIFESPAN);
             SoundEvent resolveSound = convergence.getResolveSoundFromStyle(spellContext);
             chargerEntity.setResolveSound(resolveSound);
