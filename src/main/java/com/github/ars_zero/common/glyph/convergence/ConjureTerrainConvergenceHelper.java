@@ -37,7 +37,8 @@ public final class ConjureTerrainConvergenceHelper {
         GeometryDescription geometryDescription = ConvergenceCompatibilityHelper.resolveGeometryDescription(
                 spellContext, shooter);
         int augmentCount = GeometryConvergenceUtils.countAugmentsAfterEffect(spellContext, EffectConjureTerrain.class);
-        int size = GeometryConvergenceUtils.calculateSize(augmentCount);
+        int size = GeometryConvergenceUtils.getPreferredSize(shooter, augmentCount);
+        int depth = GeometryConvergenceUtils.getPreferredDepth(shooter);
 
         Vec3 offsetCenter = GeometryConvergenceUtils.calculateOffsetPosition(center, rayTraceResult, size,
                 geometryDescription);
@@ -58,6 +59,7 @@ public final class ConjureTerrainConvergenceHelper {
         entity.setAugmentCount(augmentCount);
         entity.setGeometryDescription(geometryDescription);
         entity.setSize(size);
+        entity.setDepth(depth);
         entity.setBasePosition(offsetCenter);
 
         SpellContext iterator = spellContext.clone();

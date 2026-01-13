@@ -7,6 +7,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import org.lwjgl.glfw.GLFW;
@@ -34,8 +35,9 @@ public class StaffScrollHandler {
             event.setCanceled(true);
             boolean modifierHeld = isSizeModifierKeyDown(mc);
             boolean depthModifierHeld = isDepthModifierKeyDown(mc);
+            Vec3 lookDirection = player.getLookAngle();
             Networking.sendToServer(
-                    new PacketScrollMultiPhaseDevice(event.getScrollDeltaY(), modifierHeld, depthModifierHeld));
+                    new PacketScrollMultiPhaseDevice(event.getScrollDeltaY(), modifierHeld, depthModifierHeld, lookDirection));
         }
     }
 

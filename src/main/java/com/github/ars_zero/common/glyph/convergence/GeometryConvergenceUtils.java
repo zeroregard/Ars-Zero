@@ -1,17 +1,23 @@
 package com.github.ars_zero.common.glyph.convergence;
 
 import com.github.ars_zero.common.shape.GeometryDescription;
+import com.github.ars_zero.common.util.GeometryPlayerPreferences;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import javax.annotation.Nullable;
+
 /**
- * Shared utility methods for geometry-based convergence effects (Terrain, Break, etc.)
+ * Shared utility methods for geometry-based convergence effects (Terrain,
+ * Break, etc.)
  */
 public final class GeometryConvergenceUtils {
 
@@ -22,8 +28,10 @@ public final class GeometryConvergenceUtils {
     }
 
     /**
-     * Calculate the offset position based on hit result, size, and geometry description.
-     * Places the structure on top of/adjacent to the hit surface rather than inside it.
+     * Calculate the offset position based on hit result, size, and geometry
+     * description.
+     * Places the structure on top of/adjacent to the hit surface rather than inside
+     * it.
      */
     public static Vec3 calculateOffsetPosition(Vec3 hitPos, HitResult rayTraceResult, int size,
             GeometryDescription geometryDescription) {
@@ -81,6 +89,24 @@ public final class GeometryConvergenceUtils {
     public static int calculateSize(int augmentCount) {
         return BASE_SIZE + augmentCount;
     }
+
+    /**
+     * Get the player's preferred size, or calculate from augments if no preference.
+     */
+    public static int getPreferredSize(@Nullable LivingEntity caster, int augmentCount) {
+        if (caster instanceof Player player) {
+            return GeometryPlayerPreferences.getPreferredSize(player);
+        }
+        return calculateSize(augmentCount);
+    }
+
+    /**
+     * Get the player's preferred depth, or default if no preference.
+     */
+    public static int getPreferredDepth(@Nullable LivingEntity caster) {
+        if (caster instanceof Player player) {
+            return GeometryPlayerPreferences.getPreferredDepth(player);
+        }
+        return 1;
+    }
 }
-
-

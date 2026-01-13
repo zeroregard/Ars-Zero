@@ -110,7 +110,7 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
       ConjureTerrainConvergenceHelper.handleConjureTerrain(serverLevel, pos, shooter, spellContext, this,
           rayTraceResult);
     } else if (firstEffect instanceof EffectBreak breakEffect) {
-      BreakConvergenceHelper.handleBreak(serverLevel, pos, shooter, spellContext, this, rayTraceResult, breakEffect, spellStats);
+      BreakConvergenceHelper.handleBreak(serverLevel, pos, shooter, spellContext, this, rayTraceResult, breakEffect);
     } else if (rayTraceResult instanceof EntityHitResult entityHitResult) {
       ChargerHelper.handlePlayerCharger(serverLevel, pos, entityHitResult, shooter, spellContext, this);
     } else if (rayTraceResult instanceof BlockHitResult blockHitResult) {

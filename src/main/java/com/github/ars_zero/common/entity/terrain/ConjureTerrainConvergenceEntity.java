@@ -188,8 +188,8 @@ public class ConjureTerrainConvergenceEntity extends AbstractGeometryProcessEnti
     }
 
     @Override
-    protected boolean processBlock(ServerLevel level, BlockPos pos) {
-        return false;
+    protected ProcessResult processBlock(ServerLevel level, BlockPos pos) {
+        return ProcessResult.SKIPPED;
     }
 
     @Override

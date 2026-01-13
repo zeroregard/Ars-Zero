@@ -32,8 +32,7 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
   private static final float BLOCK_BREAKING_SPEED_MULTIPLIER = 2.0f;
 
   private float earthPower = 0.0f;
-  private int amplifyCount = 0;
-  private int dampenCount = 0;
+  private int harvestLevel = 3;
   private int fortuneCount = 0;
   private int extractCount = 0;
   private int randomizeCount = 0;
@@ -51,9 +50,8 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
     }
   }
 
-  public void setSpellStats(int amplify, int dampen, int fortune, int extract, int randomize, boolean sensitive) {
-    this.amplifyCount = amplify;
-    this.dampenCount = dampen;
+  public void setSpellStats(int harvestLevel, int fortune, int extract, int randomize, boolean sensitive) {
+    this.harvestLevel = harvestLevel;
     this.fortuneCount = fortune;
     this.extractCount = extract;
     this.randomizeCount = randomize;
@@ -81,41 +79,40 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
   }
 
   @Override
-  protected boolean processBlock(ServerLevel level, BlockPos pos) {
+  protected ProcessResult processBlock(ServerLevel level, BlockPos pos) {
     BlockState state = level.getBlockState(pos);
     if (state.isAir() || state.liquid()) {
-      return false;
+      return ProcessResult.SKIPPED;
     }
 
     if (state.is(BlockTagProvider.BREAK_BLACKLIST)) {
-      return false;
+      return ProcessResult.SKIPPED;
     }
 
     if (randomizeCount > 0 && level.random.nextFloat() < randomizeCount * 0.25F) {
-      return false;
+      return ProcessResult.SKIPPED;
     }
 
     Player player = getClaimActor(level);
     if (player == null) {
-      return false;
+      return ProcessResult.SKIPPED;
     }
 
-    int harvestLevel = 3 + amplifyCount - dampenCount;
-    if (!canBlockBeHarvested(level, pos, state, harvestLevel)) {
-      return false;
+    if (!canBlockBeHarvested(level, pos, state, this.harvestLevel)) {
+      return ProcessResult.SKIPPED;
     }
 
     if (!BlockUtil.destroyRespectsClaim(player, level, pos)) {
-      return false;
+      return ProcessResult.SKIPPED;
     }
 
     if (!consumeManaForBlock(player)) {
-      return false;
+      return ProcessResult.WAITING_FOR_MANA;
     }
 
     ItemStack toolStack = buildToolStack(level, pos, state);
     BlockUtil.breakExtraBlock(level, pos, toolStack, getCasterUUID(), true);
-    return true;
+    return ProcessResult.PROCESSED;
   }
 
   private boolean canBlockBeHarvested(ServerLevel level, BlockPos pos, BlockState state, int harvestLevel) {
@@ -167,11 +164,8 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
     if (compound.contains("earth_power")) {
       this.earthPower = compound.getFloat("earth_power");
     }
-    if (compound.contains("amplify_count")) {
-      this.amplifyCount = compound.getInt("amplify_count");
-    }
-    if (compound.contains("dampen_count")) {
-      this.dampenCount = compound.getInt("dampen_count");
+    if (compound.contains("harvest_level")) {
+      this.harvestLevel = compound.getInt("harvest_level");
     }
     if (compound.contains("fortune_count")) {
       this.fortuneCount = compound.getInt("fortune_count");
@@ -191,8 +185,7 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
   protected void addAdditionalSaveData(CompoundTag compound) {
     super.addAdditionalSaveData(compound);
     compound.putFloat("earth_power", this.earthPower);
-    compound.putInt("amplify_count", this.amplifyCount);
-    compound.putInt("dampen_count", this.dampenCount);
+    compound.putInt("harvest_level", this.harvestLevel);
     compound.putInt("fortune_count", this.fortuneCount);
     compound.putInt("extract_count", this.extractCount);
     compound.putInt("randomize_count", this.randomizeCount);

@@ -156,8 +156,8 @@
   "ars_nouveau.glyph_name.effect_convergence": "Convergence",
   "ars_zero.effect_augment_desc.effect_convergence_glyph_explosion": "Megasplosion: Creates an enormous explosion that charges over time. Fire Power affects charge rate, explosion radius and ignition (at 8+ turns into Extinguishing Soulfire Explosion). AOE determines radius. Amplify increases damage (to blocks/entities). Dampen decreases damage and radius.",
   "ars_zero.effect_augment_desc.effect_convergence_glyph_conjure_water": "Sacred Conjure Water: Fills a large area with water from bottom to top. Water Power affects placement speed. AOE determines radius. Drains mana per block placed.",
-  "ars_zero.effect_augment_desc.effect_convergence_glyph_conjure_terrain": "Terrain Structure: Creates a terrain convergence that can be augmented with other effects. Drains mana per block placed.",
-  "ars_zero.effect_augment_desc.effect_convergence_glyph_break": "Structural Break: Breaks blocks in a large area. Drains mana per block broken.",
+  "ars_zero.effect_augment_desc.effect_convergence_glyph_conjure_terrain": "Geometry - Place Structure: Creates a structure with blocks defined by regular Conjure Terrain augments/effects. Drains mana per block placed.",
+  "ars_zero.effect_augment_desc.effect_convergence_glyph_break": "Geometry - Break Structure: Breaks blocks in a large area. Drains mana per block broken.",
 
   "ars_zero.glyph_name.augment_cube": "Geometry - Cube",
   "ars_zero.glyph_desc.augment_cube": "Shapes geometry into a cube.",

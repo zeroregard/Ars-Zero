@@ -7,6 +7,7 @@ import com.github.ars_zero.common.network.PacketCancelEntity;
 import com.github.ars_zero.common.network.PacketMoveEntity;
 import com.github.ars_zero.common.shape.GeometryDescription;
 import com.github.ars_zero.common.shape.ShapePipeline;
+import com.github.ars_zero.common.util.GeometryPlayerPreferences;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -234,6 +235,16 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
         int newSize = Math.max(MIN_SIZE, Math.min(size, maxSize));
         if (!this.level().isClientSide) {
             this.entityData.set(DATA_SIZE, newSize);
+            savePreferredSize(newSize);
+        }
+    }
+
+    private void savePreferredSize(int size) {
+        if (this.level() instanceof ServerLevel serverLevel && this.casterUuid != null) {
+            Player player = serverLevel.getServer().getPlayerList().getPlayer(this.casterUuid);
+            if (player != null) {
+                GeometryPlayerPreferences.setPreferredSize(player, size);
+            }
         }
     }
 
@@ -251,6 +262,16 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
         this.depth = clampedDepth;
         if (!this.level().isClientSide) {
             this.entityData.set(DATA_DEPTH, clampedDepth);
+            savePreferredDepth(clampedDepth);
+        }
+    }
+
+    private void savePreferredDepth(int depth) {
+        if (this.level() instanceof ServerLevel serverLevel && this.casterUuid != null) {
+            Player player = serverLevel.getServer().getPlayerList().getPlayer(this.casterUuid);
+            if (player != null) {
+                GeometryPlayerPreferences.setPreferredDepth(player, depth);
+            }
         }
     }
 
@@ -520,23 +541,30 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
         int count = 0;
         while (this.processIndex < this.processQueue.size() && count < maxCount) {
             BlockPos pos = this.processQueue.get(this.processIndex);
-            boolean processed = processBlock(level, pos);
-            if (processed) {
-                count++;
-                this.processIndex++;
-            } else {
-                BlockState state = level.getBlockState(pos);
-                if (state.isAir() || state.liquid()) {
+            ProcessResult result = processBlock(level, pos);
+            switch (result) {
+                case PROCESSED -> {
+                    count++;
                     this.processIndex++;
-                } else {
-                    break;
+                }
+                case SKIPPED -> {
+                    this.processIndex++;
+                }
+                case WAITING_FOR_MANA -> {
+                    return count;
                 }
             }
         }
         return count;
     }
 
-    protected abstract boolean processBlock(ServerLevel level, BlockPos pos);
+    public enum ProcessResult {
+        PROCESSED,
+        SKIPPED,
+        WAITING_FOR_MANA
+    }
+
+    protected abstract ProcessResult processBlock(ServerLevel level, BlockPos pos);
 
     protected void playProcessSound(ServerLevel level, BlockPos pos, int blocksProcessed) {
         BlockState state = level.getBlockState(pos);
@@ -551,7 +579,14 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
 
     private void updateBoundingBox() {
         Vec3 pos = this.position();
-        this.setBoundingBox(new AABB(pos.x - 0.25, pos.y, pos.z - 0.25, pos.x + 0.25, pos.y + 0.5, pos.z + 0.25));
+        if (isBuilding()) {
+            double halfSize = 0.375;
+            double height = 0.75;
+            double yOffset = 0.5;
+            this.setBoundingBox(new AABB(pos.x - halfSize, pos.y + yOffset, pos.z - halfSize, pos.x + halfSize, pos.y + yOffset + height, pos.z + halfSize));
+        } else {
+            this.setBoundingBox(new AABB(pos.x - 0.25, pos.y, pos.z - 0.25, pos.x + 0.25, pos.y + 0.5, pos.z + 0.25));
+        }
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -737,11 +772,20 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
     @Override
     protected AABB makeBoundingBox() {
         Vec3 pos = this.position();
+        if (isBuilding()) {
+            double halfSize = 0.375;
+            double height = 0.75;
+            double yOffset = 0.5;
+            return new AABB(pos.x - halfSize, pos.y + yOffset, pos.z - halfSize, pos.x + halfSize, pos.y + yOffset + height, pos.z + halfSize);
+        }
         return new AABB(pos.x - 0.25, pos.y, pos.z - 0.25, pos.x + 0.25, pos.y + 0.5, pos.z + 0.25);
     }
 
     @Override
     public net.minecraft.world.entity.EntityDimensions getDimensions(net.minecraft.world.entity.Pose pose) {
+        if (isBuilding()) {
+            return net.minecraft.world.entity.EntityDimensions.fixed(0.75f, 0.75f);
+        }
         return net.minecraft.world.entity.EntityDimensions.fixed(0.5f, 0.5f);
     }
 
