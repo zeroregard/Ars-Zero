@@ -84,6 +84,9 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
     public void tick() {
         super.tick();
         if (!this.level().isClientSide && this.isAlive()) {
+            if (handleLavaContact()) {
+                return;
+            }
             BlockPos currentPos = this.blockPosition();
             BlockState currentState = this.level().getBlockState(currentPos);
             if (currentState.getBlock() == Blocks.WATER || currentState.getFluidState().is(FluidTags.WATER)) {
@@ -184,6 +187,12 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
         if (!this.level().isClientSide) {
             BlockPos hitPos = blockHit.getBlockPos();
             BlockState hitState = this.level().getBlockState(hitPos);
+            
+            if (hitState.getFluidState().is(FluidTags.LAVA)) {
+                spawnVaporizationEffects(blockHit.getLocation());
+                this.discard();
+                return;
+            }
             
             if (hitState.getBlock() == Blocks.WATER || hitState.getFluidState().is(FluidTags.WATER)) {
                 spawnVaporizationEffects(blockHit.getLocation());
@@ -373,6 +382,26 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
             double oz = (this.random.nextDouble() - 0.5D) * 0.45;
             serverLevel.sendParticles(ModParticles.BLIGHT_SPLASH.get(), location.x + ox, location.y + oy, location.z + oz, 1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
+    }
+    
+    private boolean handleLavaContact() {
+        BlockPos currentPos = this.blockPosition();
+        BlockState state = this.level().getBlockState(currentPos);
+        if (state.getFluidState().is(FluidTags.LAVA)) {
+            spawnVaporizationEffects(this.position());
+            this.discard();
+            return true;
+        }
+        for (Direction dir : Direction.values()) {
+            BlockPos adjacentPos = currentPos.relative(dir);
+            BlockState adjacentState = this.level().getBlockState(adjacentPos);
+            if (adjacentState.getFluidState().is(FluidTags.LAVA)) {
+                spawnVaporizationEffects(this.position());
+                this.discard();
+                return true;
+            }
+        }
+        return false;
     }
     
     private void spawnVaporizationEffects(Vec3 location) {

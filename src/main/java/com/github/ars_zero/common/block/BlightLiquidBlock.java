@@ -97,6 +97,9 @@ public class BlightLiquidBlock extends LiquidBlock {
             level.setBlock(pos, ModBlocks.FROZEN_BLIGHT.get().defaultBlockState(), 3);
             return;
         }
+        if (checkAndRemoveLavaContact(level, pos)) {
+            return;
+        }
         super.tick(state, level, pos, random);
         
         if (random.nextInt(8) == 0) {
@@ -122,6 +125,9 @@ public class BlightLiquidBlock extends LiquidBlock {
         if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
             if (level.getFluidState(pos).isSource() && hasAdjacentIce(level, pos)) {
                 level.setBlock(pos, ModBlocks.FROZEN_BLIGHT.get().defaultBlockState(), 3);
+                return;
+            }
+            if (checkAndRemoveLavaContact(serverLevel, pos)) {
                 return;
             }
             BlockPos belowPos = pos.below();
@@ -170,6 +176,23 @@ public class BlightLiquidBlock extends LiquidBlock {
             if (level.getBlockState(pos.relative(direction)).is(BlockTags.ICE)) {
                 return true;
             }
+        }
+        return false;
+    }
+    
+    private boolean checkAndRemoveLavaContact(ServerLevel level, BlockPos pos) {
+        for (Direction direction : Direction.values()) {
+            BlockPos adjacentPos = pos.relative(direction);
+            if (level.getFluidState(adjacentPos).is(FluidTags.LAVA)) {
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                playInteractionEffects(level, pos);
+                return true;
+            }
+        }
+        if (level.getFluidState(pos.below()).is(FluidTags.LAVA)) {
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            playInteractionEffects(level, pos);
+            return true;
         }
         return false;
     }
