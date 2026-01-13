@@ -1,12 +1,10 @@
 package com.github.ars_zero.client.network;
 
 import com.github.ars_zero.client.ScreenShakeManager;
-import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.client.gui.MultiphaseDeviceStylesScreen;
 import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.client.sound.StaffSoundManager;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.client.sound.ExplosionActivateSoundInstance;
 import com.github.ars_zero.common.network.PacketExplosionActivateSound;
@@ -19,7 +17,6 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import top.theillusivec4.curios.api.CuriosApi;
 
 final class ClientPacketHandlers {
     private ClientPacketHandlers() {
@@ -31,12 +28,7 @@ final class ClientPacketHandlers {
             StaffDebugHUD.onSpellFired(phase);
 
             var player = Minecraft.getInstance().player;
-            if (player instanceof AbstractClientPlayer clientPlayer) {
-                String phaseName = phase.name();
-                if (!packet.isCurio()) {
-                    StaffAnimationHandler.onStaffPhase(clientPlayer, packet.isMainHand(), phaseName, packet.tickCount());
-                }
-
+            if (player instanceof AbstractClientPlayer) {
                 if (phase == SpellPhase.BEGIN) {
                     StaffSoundManager.startLoopingSound(player);
                 } else if (phase == SpellPhase.END) {
@@ -88,10 +80,8 @@ final class ClientPacketHandlers {
     static void handleExplosionActivateSound(PacketExplosionActivateSound packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             ExplosionActivateSoundInstance soundInstance = new ExplosionActivateSoundInstance(
-                packet.x(), packet.y(), packet.z());
+                    packet.x(), packet.y(), packet.z());
             Minecraft.getInstance().getSoundManager().play(soundInstance);
         });
     }
 }
-
-
