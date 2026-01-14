@@ -160,7 +160,7 @@
   "ars_zero.effect_augment_desc.effect_convergence_glyph_conjure_water": "Sacred Conjure Water: Fills a large area with water from bottom to top. Water Power affects placement speed. AOE determines radius. Drains mana per block placed.",
 
   "ars_zero.glyph_name.effect_geometrize": "Geometrize",
-  "ars_zero.glyph_desc.effect_geometrize": "Creates geometric structures using Conjure Terrain or Break.",
+  "ars_zero.glyph_desc.effect_geometrize": "Conjure geometric structures, by default mageblocks.",
   "ars_zero.glyph_name.glyph_effect_geometrize": "Geometrize",
   "ars_zero.glyph_desc.glyph_effect_geometrize": "Creates geometric structures. Combine with Conjure Terrain to build, or Break to demolish. Use geometry augments to control the shape.",
   "ars_nouveau.glyph_name.effect_geometrize": "Geometrize",

@@ -97,6 +97,7 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
 
     protected boolean building = false;
     protected boolean paused = false;
+    private int buildingStartTick = -1;
     protected final List<BlockPos> processQueue = new ArrayList<>();
     protected int processIndex = 0;
     protected float blockAccumulator = 0.0f;
@@ -420,6 +421,7 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
 
         setBuilding(true);
         setPaused(false);
+        this.buildingStartTick = this.tickCount;
         this.processQueue.clear();
         this.processIndex = 0;
         this.blockAccumulator = 0.0f;
@@ -534,6 +536,7 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
 
     private static final double FOLLOW_DISTANCE = 2;
     private static final double LERP_SPEED = 0.03;
+    private static final int MAX_BUILDING_TIME_TICKS = 20 * 60 * 10;
 
     @Override
     public void tick() {
@@ -555,8 +558,16 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
             applyClientPositionOffset();
         }
 
-        if (!this.level().isClientSide && this.building && !this.paused) {
-            tickProcess();
+        if (!this.level().isClientSide && this.building) {
+            if (this.buildingStartTick >= 0 && this.tickCount - this.buildingStartTick > MAX_BUILDING_TIME_TICKS) {
+                ArsZero.LOGGER.warn("[Geometry] {} Building timeout reached ({} ticks), discarding entity",
+                        this.getClass().getSimpleName(), this.tickCount - this.buildingStartTick);
+                this.discard();
+                return;
+            }
+            if (!this.paused) {
+                tickProcess();
+            }
         }
     }
 
