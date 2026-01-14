@@ -1,7 +1,7 @@
-package com.github.ars_zero.common.glyph.convergence;
+package com.github.ars_zero.common.glyph.geometrize;
 
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
-import com.github.ars_zero.common.entity.terrain.ConjureTerrainConvergenceEntity;
+import com.github.ars_zero.common.entity.terrain.GeometryTerrainEntity;
 import com.github.ars_zero.common.shape.GeometryDescription;
 import com.github.ars_zero.common.spell.SpellAugmentExtractor;
 import com.github.ars_zero.registry.ModEntities;
@@ -25,28 +25,28 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 
-public final class ConjureTerrainConvergenceHelper {
+public final class GeometrizeTerrainHelper {
 
-    private ConjureTerrainConvergenceHelper() {
+    private GeometrizeTerrainHelper() {
     }
 
     public static void handleConjureTerrain(ServerLevel serverLevel, Vec3 pos, @Nullable LivingEntity shooter,
-            SpellContext spellContext, EffectConvergence convergence, HitResult rayTraceResult,
-            SpellResolver resolver) {
+                                            SpellContext spellContext, EffectGeometrize geometrize, HitResult rayTraceResult,
+                                            SpellResolver resolver) {
         BlockPos centerBlock = BlockPos.containing(pos);
         Vec3 center = Vec3.atCenterOf(centerBlock);
 
-        GeometryDescription geometryDescription = ConvergenceCompatibilityHelper.resolveGeometryDescription(
+        GeometryDescription geometryDescription = GeometrizeCompatibilityHelper.resolveGeometryDescription(
                 spellContext, shooter);
-        int augmentCount = GeometryConvergenceUtils.countAugmentsAfterEffect(spellContext, EffectConjureTerrain.class);
-        int size = GeometryConvergenceUtils.getPreferredSize(shooter, augmentCount);
-        int depth = GeometryConvergenceUtils.getPreferredDepth(shooter);
+        int augmentCount = GeometrizeUtils.countAugmentsAfterEffect(spellContext, EffectConjureTerrain.class);
+        int size = GeometrizeUtils.getPreferredSize(shooter, augmentCount);
+        int depth = GeometrizeUtils.getPreferredDepth(shooter);
 
-        Vec3 offsetCenter = GeometryConvergenceUtils.calculateOffsetPosition(center, rayTraceResult, size,
+        Vec3 offsetCenter = GeometrizeUtils.calculateOffsetPosition(center, rayTraceResult, size,
                 geometryDescription);
 
-        ConjureTerrainConvergenceEntity entity = new ConjureTerrainConvergenceEntity(
-                ModEntities.CONJURE_TERRAIN_CONVERGENCE_CONTROLLER.get(), serverLevel);
+        GeometryTerrainEntity entity = new GeometryTerrainEntity(
+                ModEntities.GEOMETRY_TERRAIN_CONTROLLER.get(), serverLevel);
         entity.setPos(offsetCenter.x, offsetCenter.y, offsetCenter.z);
         if (shooter != null) {
             entity.setCaster(shooter);
@@ -54,7 +54,7 @@ public final class ConjureTerrainConvergenceHelper {
                 entity.setMarkerPos(player.blockPosition());
             }
         }
-        entity.setLifespan(GeometryConvergenceUtils.DEFAULT_LIFESPAN);
+        entity.setLifespan(GeometrizeUtils.DEFAULT_LIFESPAN);
 
         TerrainResult result = determineTerrainBlockState(spellContext, serverLevel);
         entity.setTerrainBlockState(result.blockState);
@@ -70,13 +70,13 @@ public final class ConjureTerrainConvergenceHelper {
             AbstractSpellPart next = iterator.nextPart();
             if (next instanceof EffectConjureTerrain conjureTerrainEffect) {
                 serverLevel.addFreshEntity(entity);
-                convergence.updateTemporalContext(shooter, entity, spellContext);
-                convergence.consumeEffect(spellContext, conjureTerrainEffect);
+                geometrize.updateTemporalContext(shooter, entity, spellContext);
+                geometrize.consumeEffect(spellContext, conjureTerrainEffect);
                 if (result.modifierEffect != null) {
-                    convergence.consumeEffect(spellContext, result.modifierEffect);
+                    geometrize.consumeEffect(spellContext, result.modifierEffect);
                 }
                 spellContext.setCanceled(true);
-                convergence.triggerResolveEffects(spellContext, serverLevel, center);
+                geometrize.triggerResolveEffects(spellContext, serverLevel, center);
                 break;
             }
         }
@@ -204,3 +204,4 @@ public final class ConjureTerrainConvergenceHelper {
         return id != null && id.equals(candidateId);
     }
 }
+

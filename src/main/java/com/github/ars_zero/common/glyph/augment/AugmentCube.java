@@ -30,6 +30,6 @@ public class AugmentCube extends AbstractAugment implements IShapeAugment {
 
   @Override
   public String getBookDescription() {
-    return "Used with Convergence to generate cube shapes. This is the default shape. When flattened, produces squares.";
+    return "Used with Geometrize to generate cube shapes. This is the default shape. When flattened, produces squares.";
   }
 }

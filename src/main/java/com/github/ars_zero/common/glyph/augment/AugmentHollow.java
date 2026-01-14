@@ -30,7 +30,7 @@ public class AugmentHollow extends AbstractAugment implements IFillAugment {
 
     @Override
     public String getBookDescription() {
-        return "Used with Convergence to generate hollow shapes, only placing the outer shell.";
+        return "Used with Geometrize to generate hollow shapes, only placing the outer shell.";
     }
 }
 

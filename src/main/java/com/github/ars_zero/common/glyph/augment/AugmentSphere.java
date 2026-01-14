@@ -30,7 +30,7 @@ public class AugmentSphere extends AbstractAugment implements IShapeAugment {
 
     @Override
     public String getBookDescription() {
-        return "Used with Convergence to generate spherical shapes. When flattened, produces circles.";
+        return "Used with Geometrize to generate spherical shapes. When flattened, produces circles.";
     }
 }
 

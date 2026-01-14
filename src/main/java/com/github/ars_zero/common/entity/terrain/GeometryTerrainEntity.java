@@ -32,10 +32,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public class ConjureTerrainConvergenceEntity extends AbstractGeometryProcessEntity {
+public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
 
     private static final EntityDataAccessor<Boolean> DATA_WAITING_FOR_MANA = SynchedEntityData
-            .defineId(ConjureTerrainConvergenceEntity.class, EntityDataSerializers.BOOLEAN);
+            .defineId(GeometryTerrainEntity.class, EntityDataSerializers.BOOLEAN);
 
     private static final double BASE_MANA_COST_PER_BLOCK = 0.3;
 
@@ -45,7 +45,7 @@ public class ConjureTerrainConvergenceEntity extends AbstractGeometryProcessEnti
     private int augmentCount = 0;
     private boolean waitingForMana = false;
 
-    public ConjureTerrainConvergenceEntity(EntityType<?> entityType, Level level) {
+    public GeometryTerrainEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
     }
 

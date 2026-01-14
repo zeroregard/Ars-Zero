@@ -28,6 +28,7 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         addNearRecipe();
         addPushRecipe();
         addConvergenceRecipe();
+        addGeometrizeRecipe();
         addDiscardRecipe();
 
         for (FileObj fileObj : files) {
@@ -213,6 +214,27 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         json.add("output", outputObj);
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_effect_convergence.json"), json));
+    }
+
+    private void addGeometrizeRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 160);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("ars_nouveau:earth_essence"));
+        inputsArray.add(item("ars_nouveau:earth_essence"));
+        inputsArray.add(item("minecraft:compass"));
+        inputsArray.add(item("minecraft:diamond_pickaxe"));
+        inputsArray.add(item("ars_nouveau:source_gem"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:effect_geometrize");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_effect_geometrize.json"), json));
     }
 
     private void addDiscardRecipe() {

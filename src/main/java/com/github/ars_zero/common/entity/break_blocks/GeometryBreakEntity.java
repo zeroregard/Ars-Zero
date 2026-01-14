@@ -30,7 +30,7 @@ import com.hollingsworth.arsnouveau.common.items.curios.ShapersFocus;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
+public class GeometryBreakEntity extends AbstractGeometryProcessEntity {
 
   private static final double BASE_MANA_COST_PER_BLOCK = 0.4;
   private static final float BLOCK_BREAKING_SPEED_MULTIPLIER = 2.0f;
@@ -45,7 +45,7 @@ public class BreakConvergenceEntity extends AbstractGeometryProcessEntity {
   private int randomizeCount = 0;
   private boolean sensitive = false;
 
-  public BreakConvergenceEntity(EntityType<?> entityType, Level level) {
+  public GeometryBreakEntity(EntityType<?> entityType, Level level) {
     super(entityType, level);
   }
 

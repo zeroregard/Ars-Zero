@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.entity;
 
+import com.github.ars_zero.ArsZero;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
@@ -40,6 +41,7 @@ public abstract class AbstractConvergenceEntity extends Entity implements ILifes
         if (!this.level().isClientSide) {
             this.entityData.set(DATA_LIFESPAN, this.lifespan);
             this.entityData.set(DATA_MAX_LIFESPAN, this.maxLifespan);
+            ArsZero.LOGGER.info("[Lifespan] {} setLifespan: {} ticks (max: {})", this.getClass().getSimpleName(), this.lifespan, this.maxLifespan);
         }
     }
 
@@ -69,7 +71,13 @@ public abstract class AbstractConvergenceEntity extends Entity implements ILifes
             if (this.lifespan > 0) {
                 this.lifespan--;
                 this.entityData.set(DATA_LIFESPAN, this.lifespan);
-            } else if (shouldStart()) {
+                if (this.lifespan % 100 == 0 || this.lifespan < 10) {
+                    ArsZero.LOGGER.info("[Lifespan] {} tick: lifespan={}", this.getClass().getSimpleName(), this.lifespan);
+                }
+            }
+            boolean shouldStart = shouldStart();
+            if (shouldStart) {
+                ArsZero.LOGGER.info("[Lifespan] {} shouldStart() returned true, calling onLifespanReached()", this.getClass().getSimpleName());
                 onLifespanReached();
             }
         }

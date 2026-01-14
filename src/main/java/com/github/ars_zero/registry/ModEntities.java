@@ -16,8 +16,8 @@ import com.github.ars_zero.common.entity.BlightVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
-import com.github.ars_zero.common.entity.terrain.ConjureTerrainConvergenceEntity;
-import com.github.ars_zero.common.entity.break_blocks.BreakConvergenceEntity;
+import com.github.ars_zero.common.entity.terrain.GeometryTerrainEntity;
+import com.github.ars_zero.common.entity.break_blocks.GeometryBreakEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -160,31 +160,31 @@ public class ModEntities {
                                                         .setShouldReceiveVelocityUpdates(false)
                                                         .build(ArsZero.MOD_ID + ":water_convergence_controller"));
 
-        public static final DeferredHolder<EntityType<?>, EntityType<ConjureTerrainConvergenceEntity>> CONJURE_TERRAIN_CONVERGENCE_CONTROLLER = ENTITIES
+        public static final DeferredHolder<EntityType<?>, EntityType<GeometryTerrainEntity>> GEOMETRY_TERRAIN_CONTROLLER = ENTITIES
                         .register(
-                                        "conjure_terrain_convergence_controller",
+                                        "geometry_terrain_controller",
                                         () -> EntityType.Builder
-                                                        .<ConjureTerrainConvergenceEntity>of(
-                                                                        ConjureTerrainConvergenceEntity::new,
+                                                        .<GeometryTerrainEntity>of(
+                                                                        GeometryTerrainEntity::new,
                                                                         MobCategory.MISC)
                                                         .sized(0.1f, 0.1f)
                                                         .clientTrackingRange(256)
                                                         .updateInterval(1)
                                                         .setShouldReceiveVelocityUpdates(true)
                                                         .build(ArsZero.MOD_ID
-                                                                        + ":conjure_terrain_convergence_controller"));
+                                                                        + ":geometry_terrain_controller"));
 
-        public static final DeferredHolder<EntityType<?>, EntityType<BreakConvergenceEntity>> BREAK_CONVERGENCE_CONTROLLER = ENTITIES
+        public static final DeferredHolder<EntityType<?>, EntityType<GeometryBreakEntity>> GEOMETRY_BREAK_CONTROLLER = ENTITIES
                         .register(
-                                        "break_convergence_controller",
-                                        () -> EntityType.Builder.<BreakConvergenceEntity>of(
-                                                        BreakConvergenceEntity::new,
+                                        "geometry_break_controller",
+                                        () -> EntityType.Builder.<GeometryBreakEntity>of(
+                                                        GeometryBreakEntity::new,
                                                         MobCategory.MISC)
                                                         .sized(0.1f, 0.1f)
                                                         .clientTrackingRange(256)
                                                         .updateInterval(1)
                                                         .setShouldReceiveVelocityUpdates(true)
-                                                        .build(ArsZero.MOD_ID + ":break_convergence_controller"));
+                                                        .build(ArsZero.MOD_ID + ":geometry_break_controller"));
 
         public static final DeferredHolder<EntityType<?>, EntityType<SourceJarChargerEntity>> SOURCE_JAR_CHARGER = ENTITIES
                         .register(

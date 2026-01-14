@@ -14,6 +14,7 @@ import com.github.ars_zero.common.glyph.augment.AugmentFlatten;
 import com.github.ars_zero.common.glyph.augment.AugmentHollow;
 import com.github.ars_zero.common.glyph.augment.AugmentSphere;
 import com.github.ars_zero.common.glyph.convergence.EffectConvergence;
+import com.github.ars_zero.common.glyph.geometrize.EffectGeometrize;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 
 public class ModGlyphs {
@@ -27,6 +28,7 @@ public class ModGlyphs {
     public static final PushEffect PUSH_EFFECT = new PushEffect();
     public static final ZeroGravityEffect ZERO_GRAVITY_EFFECT = new ZeroGravityEffect();
     public static final EffectConvergence EFFECT_CONVERGENCE = new EffectConvergence();
+    public static final EffectGeometrize EFFECT_GEOMETRIZE = EffectGeometrize.INSTANCE;
     public static final DiscardEffect DISCARD_EFFECT = new DiscardEffect();
     public static final AugmentHollow AUGMENT_HOLLOW = AugmentHollow.INSTANCE;
     public static final AugmentSphere AUGMENT_SPHERE = AugmentSphere.INSTANCE;
@@ -43,6 +45,7 @@ public class ModGlyphs {
         GlyphRegistry.registerSpell(PUSH_EFFECT);
         GlyphRegistry.registerSpell(ZERO_GRAVITY_EFFECT);
         GlyphRegistry.registerSpell(EFFECT_CONVERGENCE);
+        GlyphRegistry.registerSpell(EFFECT_GEOMETRIZE);
         GlyphRegistry.registerSpell(DISCARD_EFFECT);
         GlyphRegistry.registerSpell(AUGMENT_HOLLOW);
         GlyphRegistry.registerSpell(AUGMENT_SPHERE);
