@@ -2,8 +2,6 @@ package com.github.ars_zero.client.renderer.entity;
 
 import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
 import com.github.ars_zero.common.entity.IGeometryProcessEntity.BlockStatus;
-import com.hollingsworth.arsnouveau.ArsNouveau;
-import com.hollingsworth.arsnouveau.client.registry.ShaderRegistry;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -53,8 +51,6 @@ public class AbstractGeometryEntityRenderer<T extends AbstractGeometryProcessEnt
     protected static final double RENDER_DISTANCE = 128.0;
     protected static final float LINE_ALPHA = 0.9f;
 
-    protected static final ResourceLocation BUBBLE_TEXTURE = ArsNouveau.prefix("textures/entity/bubble.png");
-
     protected static final RenderType LINES_SEE_THROUGH = RenderType.create(
             "geometry_lines_see_through",
             DefaultVertexFormat.POSITION_COLOR_NORMAL,
@@ -96,8 +92,6 @@ public class AbstractGeometryEntityRenderer<T extends AbstractGeometryProcessEnt
 
             super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
             poseStack.popPose();
-
-            renderBubble(poseStack, buffer);
             return;
         }
 
@@ -121,23 +115,6 @@ public class AbstractGeometryEntityRenderer<T extends AbstractGeometryProcessEnt
         double dz = (center.getZ() + 0.5) - entityPos.z;
 
         return (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90f;
-    }
-
-    protected void renderBubble(PoseStack poseStack, MultiBufferSource buffer) {
-        poseStack.pushPose();
-        poseStack.translate(0, 1.1, 0);
-        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
-        poseStack.scale(0.025F, -0.025F, 0.025F);
-        poseStack.scale(7.0f, 7.0f, 7.0f);
-
-        Matrix4f pose = poseStack.last().pose();
-        VertexConsumer vertexConsumer = buffer.getBuffer(ShaderRegistry.worldEntityIcon(BUBBLE_TEXTURE));
-        vertexConsumer.addVertex(pose, -8, -8, 0).setUv(0, 0);
-        vertexConsumer.addVertex(pose, -8, 8, 0).setUv(0, 1);
-        vertexConsumer.addVertex(pose, 8, 8, 0).setUv(1, 1);
-        vertexConsumer.addVertex(pose, 8, -8, 0).setUv(1, 0);
-
-        poseStack.popPose();
     }
 
     protected void renderPreviewOutline(T entity, PoseStack poseStack,

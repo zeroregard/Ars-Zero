@@ -12,8 +12,8 @@ import software.bernie.geckolib.model.GeoModel;
  * Shared golem model used by geometry convergence entities (terrain/break).
  */
 public class GeometryConvergenceEntityModel<T extends Entity & GeoAnimatable> extends GeoModel<T> {
-    private static final ResourceLocation MODEL = ArsNouveau.prefix("geo/amethyst_golem.geo.json");
-    private static final ResourceLocation TEXTURE = ArsZero.prefix("textures/entity/terrain_golem.png");
+    private static final ResourceLocation MODEL = ArsZero.prefix("geo/golem.json");
+    private static final ResourceLocation TEXTURE = ArsZero.prefix("textures/entity/earth_golem.png");
     private static final ResourceLocation ANIMATION = ArsNouveau.prefix("animations/amethyst_golem_animations.json");
 
     @Override

@@ -1,63 +1,60 @@
-package com.github.ars_zero.common.entity.terrain;
+package com.github.ars_zero.common.entity.mageblock;
 
 import com.alexthw.sauce.registry.ModRegistry;
 import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
-import com.github.ars_zero.common.structure.ConvergenceStructureHelper;
 import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.api.registry.ParticleTimelineRegistry;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.client.particle.ParticleColor;
 import com.hollingsworth.arsnouveau.common.block.MageBlock;
 import com.hollingsworth.arsnouveau.common.block.tile.MageBlockTile;
+import com.hollingsworth.arsnouveau.common.items.curios.ShapersFocus;
 import com.hollingsworth.arsnouveau.setup.registry.BlockRegistry;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import com.hollingsworth.arsnouveau.common.items.curios.ShapersFocus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
+public class GeometryMageBlockEntity extends AbstractGeometryProcessEntity {
 
     private static final EntityDataAccessor<Boolean> DATA_WAITING_FOR_MANA = SynchedEntityData
-            .defineId(GeometryTerrainEntity.class, EntityDataSerializers.BOOLEAN);
+            .defineId(GeometryMageBlockEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_COLOR_R = SynchedEntityData
+            .defineId(GeometryMageBlockEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_COLOR_G = SynchedEntityData
+            .defineId(GeometryMageBlockEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_COLOR_B = SynchedEntityData
+            .defineId(GeometryMageBlockEntity.class, EntityDataSerializers.FLOAT);
 
     private static final double BASE_MANA_COST_PER_BLOCK = 0.3;
 
-    private float earthPower = 0.0f;
-    @Nullable
-    private BlockState terrainBlockState = null;
+    private float conjurationPower = 0.0f;
     private int augmentCount = 0;
     private boolean waitingForMana = false;
-    
-    private boolean isMageBlock = false;
     private boolean mageBlockPermanent = false;
     private double mageBlockDurationMultiplier = 1.0;
     @Nullable
     private SpellContext mageBlockSpellContext = null;
 
-    public GeometryTerrainEntity(EntityType<?> entityType, Level level) {
+    public GeometryMageBlockEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
     }
 
@@ -65,26 +62,18 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
     public void setCaster(@Nullable LivingEntity caster) {
         super.setCaster(caster);
         if (caster != null) {
-            this.earthPower = getEarthPower(caster);
+            this.conjurationPower = getConjurationPower(caster);
         }
     }
 
-    private float getEarthPower(LivingEntity caster) {
+    private float getConjurationPower(LivingEntity caster) {
         if (caster instanceof Player player) {
-            AttributeInstance instance = player.getAttribute(ModRegistry.EARTH_POWER);
+            AttributeInstance instance = player.getAttribute(ModRegistry.SUMMON_POWER);
             if (instance != null) {
                 return (float) instance.getValue();
             }
         }
         return 0.0f;
-    }
-
-    public void setTerrainBlockState(BlockState blockState) {
-        this.terrainBlockState = blockState;
-    }
-
-    public BlockState getTerrainBlockState() {
-        return this.terrainBlockState != null ? this.terrainBlockState : Blocks.DIRT.defaultBlockState();
     }
 
     public void setAugmentCount(int count) {
@@ -96,10 +85,39 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
     }
 
     public void setMageBlockProperties(boolean isPermanent, double durationMultiplier, @Nullable SpellContext spellContext) {
-        this.isMageBlock = true;
         this.mageBlockPermanent = isPermanent;
         this.mageBlockDurationMultiplier = durationMultiplier;
         this.mageBlockSpellContext = spellContext;
+        
+        float r = 1.0f, g = 1.0f, b = 1.0f;
+        if (spellContext != null) {
+            var timeline = spellContext.getParticleTimeline(
+                    ParticleTimelineRegistry.MAGEBLOCK_TIMELINE.get());
+            ParticleColor color = timeline.getColor();
+            if (color != null) {
+                r = color.getRed();
+                g = color.getGreen();
+                b = color.getBlue();
+            }
+        }
+        
+        if (!this.level().isClientSide) {
+            this.entityData.set(DATA_COLOR_R, r);
+            this.entityData.set(DATA_COLOR_G, g);
+            this.entityData.set(DATA_COLOR_B, b);
+        }
+    }
+    
+    public float getColorR() {
+        return this.entityData.get(DATA_COLOR_R);
+    }
+    
+    public float getColorG() {
+        return this.entityData.get(DATA_COLOR_G);
+    }
+    
+    public float getColorB() {
+        return this.entityData.get(DATA_COLOR_B);
     }
 
     public boolean isWaitingForMana() {
@@ -116,27 +134,13 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
         }
     }
 
-    private int getBlockTypeFactor() {
-        BlockState block = getTerrainBlockState();
-        Block b = block.getBlock();
-        if (b == Blocks.DIRT || b == Blocks.COARSE_DIRT || b == Blocks.PODZOL
-                || b == Blocks.GRASS_BLOCK || b == Blocks.GRAVEL || b == Blocks.MUD) {
-            return 1;
-        } else if (b == Blocks.COBBLESTONE || b == Blocks.COBBLED_DEEPSLATE
-                || b == Blocks.SAND || b == Blocks.RED_SAND
-                || b == Blocks.SANDSTONE || b == Blocks.RED_SANDSTONE) {
-            return 2;
-        }
-        return 3;
-    }
-
     private double getManaCostPerBlock() {
-        return BASE_MANA_COST_PER_BLOCK * getBlockTypeFactor() * (this.augmentCount + 1);
+        return BASE_MANA_COST_PER_BLOCK * (this.augmentCount + 1);
     }
 
     @Override
     protected float getBlocksPerTick() {
-        return BASE_BLOCKS_PER_TICK * (1.0f + earthPower / 2.0f);
+        return BASE_BLOCKS_PER_TICK * (1.0f + conjurationPower / 2.0f);
     }
 
     @Override
@@ -189,15 +193,12 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
 
         setWaitingForMana(false);
 
+        BlockState mageBlockState = BlockRegistry.MAGE_BLOCK.get().defaultBlockState()
+                .setValue(MageBlock.TEMPORARY, !mageBlockPermanent);
+
         int oldIndex = this.processIndex;
-        
-        if (isMageBlock) {
-            this.processIndex = placeMageBlocks(serverLevel, this.processQueue, this.processIndex,
-                    blocksToPlaceThisTick, getTerrainBlockState(), claimActor);
-        } else {
-            this.processIndex = ConvergenceStructureHelper.placeNext(serverLevel, this.processQueue, this.processIndex,
-                    blocksToPlaceThisTick, getTerrainBlockState(), claimActor);
-        }
+        this.processIndex = placeMageBlocks(serverLevel, this.processQueue, this.processIndex,
+                blocksToPlaceThisTick, mageBlockState, claimActor);
 
         int blocksPlaced = this.processIndex - oldIndex;
 
@@ -314,6 +315,9 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
         super.defineSynchedData(builder);
         builder.define(DATA_WAITING_FOR_MANA, false);
+        builder.define(DATA_COLOR_R, 1.0f);
+        builder.define(DATA_COLOR_G, 1.0f);
+        builder.define(DATA_COLOR_B, 1.0f);
     }
 
     @Override
@@ -323,18 +327,14 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
             this.waitingForMana = compound.getBoolean("waiting_for_mana");
             this.entityData.set(DATA_WAITING_FOR_MANA, this.waitingForMana);
         }
-        if (compound.contains("terrain_block")) {
-            ResourceLocation blockId = ResourceLocation.parse(compound.getString("terrain_block"));
-            Block block = BuiltInRegistries.BLOCK.get(blockId);
-            if (block != null) {
-                this.terrainBlockState = block.defaultBlockState();
-            }
-        }
-        if (compound.contains("earth_power")) {
-            this.earthPower = compound.getFloat("earth_power");
-        }
         if (compound.contains("augment_count")) {
             this.augmentCount = compound.getInt("augment_count");
+        }
+        if (compound.contains("mage_block_permanent")) {
+            this.mageBlockPermanent = compound.getBoolean("mage_block_permanent");
+        }
+        if (compound.contains("mage_block_duration_multiplier")) {
+            this.mageBlockDurationMultiplier = compound.getDouble("mage_block_duration_multiplier");
         }
     }
 
@@ -342,13 +342,9 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
     protected void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
         compound.putBoolean("waiting_for_mana", this.waitingForMana);
-        if (this.terrainBlockState != null) {
-            ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(this.terrainBlockState.getBlock());
-            if (blockId != null) {
-                compound.putString("terrain_block", blockId.toString());
-            }
-        }
-        compound.putFloat("earth_power", this.earthPower);
         compound.putInt("augment_count", this.augmentCount);
+        compound.putBoolean("mage_block_permanent", this.mageBlockPermanent);
+        compound.putDouble("mage_block_duration_multiplier", this.mageBlockDurationMultiplier);
     }
 }
+

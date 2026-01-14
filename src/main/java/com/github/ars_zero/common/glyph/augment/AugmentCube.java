@@ -25,7 +25,7 @@ public class AugmentCube extends AbstractAugment implements IShapeAugment {
 
   @Override
   public SpellTier defaultTier() {
-    return SpellTier.TWO;
+    return SpellTier.THREE;
   }
 
   @Override

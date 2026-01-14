@@ -25,7 +25,7 @@ public class AugmentHollow extends AbstractAugment implements IFillAugment {
 
     @Override
     public SpellTier defaultTier() {
-        return SpellTier.TWO;
+        return SpellTier.THREE;
     }
 
     @Override

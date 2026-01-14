@@ -25,7 +25,7 @@ public class AugmentFlatten extends AbstractAugment implements IProjectionAugmen
 
     @Override
     public SpellTier defaultTier() {
-        return SpellTier.TWO;
+        return SpellTier.THREE;
     }
 
     @Override

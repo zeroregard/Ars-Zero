@@ -333,10 +333,6 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
         this.building = building;
         if (!this.level().isClientSide) {
             this.entityData.set(DATA_BUILDING, building);
-            if (wasBuilding != building) {
-                ArsZero.LOGGER.info("[Geometry] {} setBuilding: {} -> {}", this.getClass().getSimpleName(), wasBuilding,
-                        building);
-            }
         }
     }
 
@@ -408,16 +404,9 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
 
     @Override
     public void startProcess() {
-        ArsZero.LOGGER.info("[Geometry] {} startProcess() called. building={}", this.getClass().getSimpleName(),
-                this.building);
         if (this.building) {
-            ArsZero.LOGGER.warn("[Geometry] {} startProcess() called but already building, returning",
-                    this.getClass().getSimpleName());
             return;
         }
-
-        ArsZero.LOGGER.info("[Geometry] {} Starting process. Size={}, Depth={}, Queue size will be generated",
-                this.getClass().getSimpleName(), getSize(), getDepth());
 
         setBuilding(true);
         setPaused(false);
@@ -431,12 +420,8 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
         BlockPos center = getEffectiveCenter();
         this.processQueue.addAll(ShapePipeline.generate(center, getSize(), geometryDescription, getDepth()));
 
-        ArsZero.LOGGER.info("[Geometry] {} Generated {} blocks to process", this.getClass().getSimpleName(),
-                this.processQueue.size());
-
         if (shouldReverseProcessOrder()) {
             java.util.Collections.reverse(this.processQueue);
-            ArsZero.LOGGER.info("[Geometry] {} Reversed process order", this.getClass().getSimpleName());
         }
 
         if (this.level() instanceof ServerLevel serverLevel && this.casterUuid != null) {
@@ -446,21 +431,11 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
                 double offsetX = Math.cos(angle);
                 double offsetZ = Math.sin(angle);
                 this.setPos(caster.position().x + offsetX, caster.position().y, caster.position().z + offsetZ);
-                ArsZero.LOGGER.info("[Geometry] {} Moved to caster position with offset",
-                        this.getClass().getSimpleName());
-            } else {
-                ArsZero.LOGGER.warn("[Geometry] {} Caster UUID set but player not found: {}",
-                        this.getClass().getSimpleName(), this.casterUuid);
             }
-        } else {
-            ArsZero.LOGGER.warn("[Geometry] {} No caster UUID or not ServerLevel", this.getClass().getSimpleName());
         }
 
         this.noPhysics = false;
         updateBoundingBox();
-
-        ArsZero.LOGGER.info("[Geometry] {} Process started successfully. Building={}, Paused={}",
-                this.getClass().getSimpleName(), this.building, this.paused);
 
         onProcessStarted();
     }
@@ -518,19 +493,13 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
     public boolean shouldStart() {
         boolean superResult = super.shouldStart();
         boolean notBuilding = !isBuilding();
-        boolean result = notBuilding && superResult;
-        ArsZero.LOGGER.info("[Geometry] {} shouldStart(): super={}, notBuilding={}, result={}",
-                this.getClass().getSimpleName(), superResult, notBuilding, result);
-        return result;
+        return notBuilding && superResult;
     }
 
     @Override
     protected void onLifespanReached() {
-        ArsZero.LOGGER.info("[Geometry] {} onLifespanReached() called. isClientSide={}, building={}",
-                this.getClass().getSimpleName(), this.level().isClientSide, this.building);
         if (this.level().isClientSide || this.building)
             return;
-        ArsZero.LOGGER.info("[Geometry] {} calling startProcess()", this.getClass().getSimpleName());
         startProcess();
     }
 
@@ -560,8 +529,6 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
 
         if (!this.level().isClientSide && this.building) {
             if (this.buildingStartTick >= 0 && this.tickCount - this.buildingStartTick > MAX_BUILDING_TIME_TICKS) {
-                ArsZero.LOGGER.warn("[Geometry] {} Building timeout reached ({} ticks), discarding entity",
-                        this.getClass().getSimpleName(), this.tickCount - this.buildingStartTick);
                 this.discard();
                 return;
             }

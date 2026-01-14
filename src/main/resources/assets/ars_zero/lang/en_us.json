@@ -46,6 +46,7 @@
   "entity.ars_zero.water_convergence_controller": "Water Convergence",
   "entity.ars_zero.geometry_break_controller": "Earth Golem",
   "entity.ars_zero.geometry_terrain_controller": "Earth Golem",
+  "entity.ars_zero.geometry_mageblock_controller": "Arcane Golem",
 
   "gui.ars_zero.staff_title": "Creative Spell Staff",
   "gui.ars_zero.phase.begin": "Begin",

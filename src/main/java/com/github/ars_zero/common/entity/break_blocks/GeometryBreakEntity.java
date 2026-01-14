@@ -26,6 +26,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import com.hollingsworth.arsnouveau.common.items.curios.ShapersFocus;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -47,6 +51,22 @@ public class GeometryBreakEntity extends AbstractGeometryProcessEntity {
 
   public GeometryBreakEntity(EntityType<?> entityType, Level level) {
     super(entityType, level);
+  }
+
+  @Override
+  public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+    controllers.add(new AnimationController<>(this, "main_controller", 1, state -> {
+      if (!isBuilding()) {
+        return PlayState.STOP;
+      }
+      state.getController().setAnimation(RawAnimation.begin().thenPlay("harvest2"));
+      if (isPaused()) {
+        state.getController().setAnimationSpeed(0.0);
+      } else {
+        state.getController().setAnimationSpeed(1.0);
+      }
+      return PlayState.CONTINUE;
+    }));
   }
 
   @Override
