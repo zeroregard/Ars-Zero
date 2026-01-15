@@ -53,6 +53,7 @@ public final class WaterConvergenceHelper {
     serverLevel.addFreshEntity(entity);
     convergence.updateTemporalContext(shooter, entity, spellContext);
     convergence.consumeFirstConjureWaterEffect(spellContext);
+    spellContext.setCanceled(true);
     convergence.triggerResolveEffects(spellContext, serverLevel, airPos);
   }
 

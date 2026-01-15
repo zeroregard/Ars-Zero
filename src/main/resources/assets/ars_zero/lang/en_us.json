@@ -46,7 +46,7 @@
   "entity.ars_zero.water_convergence_controller": "Water Convergence",
   "entity.ars_zero.geometry_break_controller": "Earth Golem",
   "entity.ars_zero.geometry_terrain_controller": "Earth Golem",
-  "entity.ars_zero.geometry_mageblock_controller": "Arcane Golem",
+  "entity.ars_zero.geometry_controller": "Arcane Golem",
 
   "gui.ars_zero.staff_title": "Creative Spell Staff",
   "gui.ars_zero.phase.begin": "Begin",
@@ -99,6 +99,7 @@
 
   "ars_nouveau.augment_desc.anchor_effect_glyph_amplify": "Increases the distance from the player",
   "ars_nouveau.augment_desc.anchor_effect_glyph_dampen": "Decreases the distance from the player",
+  "ars_nouveau.augment_desc.anchor_effect_glyph_sensitive": "Freezes target in initial relative position",
 
   "item.ars_zero.sustain_effect": "Sustain",
   "ars_zero.glyph_name.sustain_effect": "Sustain",
@@ -161,9 +162,9 @@
   "ars_zero.effect_augment_desc.effect_convergence_glyph_conjure_water": "Sacred Conjure Water: Fills a large area with water from bottom to top. Water Power affects placement speed. AOE determines radius. Drains mana per block placed.",
 
   "ars_zero.glyph_name.effect_geometrize": "Geometrize",
-  "ars_zero.glyph_desc.effect_geometrize": "Conjure geometric structures, by default mageblocks.",
+  "ars_zero.glyph_desc.effect_geometrize": "Resolve forwarded spell in a geometric structure pattern. Needs to be combined with other glyphs",
   "ars_zero.glyph_name.glyph_effect_geometrize": "Geometrize",
-  "ars_zero.glyph_desc.glyph_effect_geometrize": "Creates geometric structures. Combine with Conjure Terrain to build, or Break to demolish. Use geometry augments to control the shape.",
+  "ars_zero.glyph_desc.glyph_effect_geometrize": "Resolve forwarded spell in a geometric structure pattern. Needs to be combined with other glyphs",
   "ars_nouveau.glyph_name.effect_geometrize": "Geometrize",
   "ars_zero.effect_augment_desc.effect_geometrize_glyph_conjure_terrain": "Place Terrain: Creates a structure with blocks defined by regular Conjure Terrain augments/effects. Drains mana per block placed.",
   "ars_zero.effect_augment_desc.effect_geometrize_glyph_break": "Break Structure: Breaks blocks in a geometric pattern. Drains mana per block broken.",

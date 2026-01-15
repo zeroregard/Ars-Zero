@@ -18,7 +18,7 @@ import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
 import com.github.ars_zero.common.entity.terrain.GeometryTerrainEntity;
 import com.github.ars_zero.common.entity.break_blocks.GeometryBreakEntity;
-import com.github.ars_zero.common.entity.mageblock.GeometryMageBlockEntity;
+import com.github.ars_zero.common.entity.GeometryEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -187,17 +187,17 @@ public class ModEntities {
                                                         .setShouldReceiveVelocityUpdates(true)
                                                         .build(ArsZero.MOD_ID + ":geometry_break_controller"));
 
-        public static final DeferredHolder<EntityType<?>, EntityType<GeometryMageBlockEntity>> GEOMETRY_MAGEBLOCK_CONTROLLER = ENTITIES
+        public static final DeferredHolder<EntityType<?>, EntityType<GeometryEntity>> GEOMETRY_CONTROLLER = ENTITIES
                         .register(
-                                        "geometry_mageblock_controller",
-                                        () -> EntityType.Builder.<GeometryMageBlockEntity>of(
-                                                        GeometryMageBlockEntity::new,
+                                        "geometry_controller",
+                                        () -> EntityType.Builder.<GeometryEntity>of(
+                                                        GeometryEntity::new,
                                                         MobCategory.MISC)
                                                         .sized(0.1f, 0.1f)
                                                         .clientTrackingRange(256)
                                                         .updateInterval(1)
                                                         .setShouldReceiveVelocityUpdates(true)
-                                                        .build(ArsZero.MOD_ID + ":geometry_mageblock_controller"));
+                                                        .build(ArsZero.MOD_ID + ":geometry_controller"));
 
         public static final DeferredHolder<EntityType<?>, EntityType<SourceJarChargerEntity>> SOURCE_JAR_CHARGER = ENTITIES
                         .register(

@@ -26,8 +26,6 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
-import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDurationDown;
-import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectBreak;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -57,6 +55,7 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
   };
 
   public ModConfigSpec.IntValue MAX_SIZE;
+  public ModConfigSpec.DoubleValue GEOMETRY_ENTITY_GENERIC_RESOLVER_MANA_COST_MULTIPLIER;
 
   public EffectGeometrize() {
     super(ArsZero.prefix(ID), "Geometrize");
@@ -70,6 +69,11 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
         "Maximum size for geometry structures.",
         "Size is the structure edge length in blocks. Default is 32.")
         .defineInRange("maxSize", 32, 1, 128);
+    GEOMETRY_ENTITY_GENERIC_RESOLVER_MANA_COST_MULTIPLIER = builder.comment(
+        "Mana cost multiplier for generic geometry entity resolver.",
+        "Each block resolved by the generic geometry entity costs this percentage of the forwarded spell's total mana cost.",
+        "Default is 0.05 (5%).")
+        .defineInRange("geometryEntityGenericResolverManaCostMultiplier", 0.05, 0.0, 1.0);
     builder.pop();
   }
 
@@ -78,6 +82,13 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
       return 32;
     }
     return MAX_SIZE.get();
+  }
+
+  public double getGenericResolverManaCostMultiplier() {
+    if (GEOMETRY_ENTITY_GENERIC_RESOLVER_MANA_COST_MULTIPLIER == null) {
+      return 0.05;
+    }
+    return GEOMETRY_ENTITY_GENERIC_RESOLVER_MANA_COST_MULTIPLIER.get();
   }
 
   @Override
@@ -172,7 +183,7 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
 
   @Override
   public int getDefaultManaCost() {
-    return 150;
+    return 100;
   }
 
   @Override
@@ -187,9 +198,7 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
         AugmentHollow.INSTANCE,
         AugmentSphere.INSTANCE,
         AugmentCube.INSTANCE,
-        AugmentFlatten.INSTANCE,
-        AugmentExtendTime.INSTANCE,
-        AugmentDurationDown.INSTANCE);
+        AugmentFlatten.INSTANCE);
   }
 
   @Override
@@ -212,10 +221,6 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
         "Generates cube shapes (default). When flattened, produces squares.");
     map.put(AugmentFlatten.INSTANCE,
         "Projects 3D shapes into 2D based on the caster's look direction.");
-    map.put(AugmentExtendTime.INSTANCE,
-        "Increases the duration of temporary mage blocks. Only applies when no subsequent effect is used.");
-    map.put(AugmentDurationDown.INSTANCE,
-        "Decreases the duration of temporary mage blocks. Only applies when no subsequent effect is used.");
   }
 
   public GeometryDescription resolveGeometryDescription(SpellContext context, @Nullable LivingEntity caster) {
@@ -235,7 +240,10 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
 
   @Nullable
   SoundEvent getResolveSoundFromStyle(SpellContext spellContext) {
-    var timeline = spellContext.getParticleTimeline(ModParticleTimelines.CONVERGENCE_TIMELINE.get());
+    var timeline = spellContext.getParticleTimeline(ModParticleTimelines.GEOMETRIZE_TIMELINE.get());
+    if (timeline == null) {
+      return null;
+    }
     SoundProperty resolveSound = timeline.resolveSound();
     if (resolveSound != null && resolveSound.sound != null) {
       var spellSound = resolveSound.sound.getSound();
@@ -253,7 +261,10 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
     if (level == null) {
       return;
     }
-    var timeline = spellContext.getParticleTimeline(ModParticleTimelines.CONVERGENCE_TIMELINE.get());
+    var timeline = spellContext.getParticleTimeline(ModParticleTimelines.GEOMETRIZE_TIMELINE.get());
+    if (timeline == null) {
+      return;
+    }
     TimelineEntryData entryData = timeline.onResolvingEffect();
     ParticleEmitter particleEmitter = createStaticEmitter(entryData, position);
     particleEmitter.tick(level);

@@ -8,12 +8,10 @@ import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.entity.ILifespanExtendable;
 import com.github.ars_zero.common.entity.IAnchorLerp;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.util.BlockImmutabilityUtil;
-import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -24,6 +22,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -37,7 +36,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,10 +115,17 @@ public class AnchorEffect extends AbstractEffect {
                 }
             }
 
+            boolean isSensitive = spellStats.hasBuff(AugmentSensitive.INSTANCE);
+            float yaw = isSensitive ? beginResult.casterYaw : player.getYRot();
+            float pitch = isSensitive ? beginResult.casterPitch : player.getXRot();
+            Vec3 casterPos = isSensitive && beginResult.casterPosition != null
+                    ? beginResult.casterPosition
+                    : player.getEyePosition(1.0f);
+
             Vec3 newPosition = beginResult.transformLocalToWorld(
-                    player.getYRot(),
-                    player.getXRot(),
-                    player.getEyePosition(1.0f),
+                    yaw,
+                    pitch,
+                    casterPos,
                     castContext.distanceMultiplier);
 
             if (newPosition != null && canMoveToPosition(newPosition, world, target)) {
@@ -312,10 +317,17 @@ public class AnchorEffect extends AbstractEffect {
             if (beginResult.blockGroup != null && beginResult.relativeOffset != null) {
                 BlockGroupEntity blockGroup = beginResult.blockGroup;
 
+                boolean isSensitive = spellStats.hasBuff(AugmentSensitive.INSTANCE);
+                float yaw = isSensitive ? beginResult.casterYaw : player.getYRot();
+                float pitch = isSensitive ? beginResult.casterPitch : player.getXRot();
+                Vec3 casterPos = isSensitive && beginResult.casterPosition != null
+                        ? beginResult.casterPosition
+                        : player.getEyePosition(1.0f);
+
                 Vec3 newPosition = beginResult.transformLocalToWorld(
-                        player.getYRot(),
-                        player.getXRot(),
-                        player.getEyePosition(1.0f),
+                        yaw,
+                        pitch,
+                        casterPos,
                         castContext.distanceMultiplier);
 
                 if (newPosition != null && canMoveToPosition(newPosition, world, blockGroup)) {
@@ -335,7 +347,7 @@ public class AnchorEffect extends AbstractEffect {
     @NotNull
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
-        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE);
+        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE, AugmentSensitive.INSTANCE);
     }
 
     @Override
@@ -343,6 +355,7 @@ public class AnchorEffect extends AbstractEffect {
         super.addAugmentDescriptions(map);
         map.put(AugmentAmplify.INSTANCE, "Increases the distance from the player");
         map.put(AugmentDampen.INSTANCE, "Decreases the distance from the player");
+        map.put(AugmentSensitive.INSTANCE, "Freezes target in initial relative position");
     }
 
     @Override
