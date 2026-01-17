@@ -3,6 +3,7 @@ package com.github.ars_zero.registry;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.particle.timeline.ConvergenceTimeline;
 import com.github.ars_zero.common.particle.timeline.DiscardTimeline;
+import com.github.ars_zero.common.particle.timeline.GeometrizeTimeline;
 import com.github.ars_zero.common.particle.timeline.NearTimeline;
 import com.github.ars_zero.common.particle.timeline.TemporalContextTimeline;
 import com.hollingsworth.arsnouveau.api.particle.configurations.IParticleMotionType;
@@ -42,6 +43,12 @@ public class ModParticleTimelines {
                     () -> new SimpleParticleTimelineType<>(ModGlyphs.DISCARD_EFFECT, DiscardTimeline.CODEC,
                             DiscardTimeline.STREAM_CODEC, DiscardTimeline::new));
 
+    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<GeometrizeTimeline>> GEOMETRIZE_TIMELINE = TIMELINES
+            .register(
+                    "geometrize",
+                    () -> new SimpleParticleTimelineType<>(ModGlyphs.EFFECT_GEOMETRIZE, GeometrizeTimeline.CODEC,
+                            GeometrizeTimeline.STREAM_CODEC, GeometrizeTimeline::new));
+
     public static void init(IEventBus eventBus) {
         TIMELINES.register(eventBus);
     }
@@ -57,5 +64,7 @@ public class ModParticleTimelines {
         ConvergenceTimeline.RESOLVING_OPTIONS.add(burst);
         DiscardTimeline.RESOLVING_OPTIONS.add(none);
         DiscardTimeline.RESOLVING_OPTIONS.add(burst);
+        GeometrizeTimeline.RESOLVING_OPTIONS.add(none);
+        GeometrizeTimeline.RESOLVING_OPTIONS.add(burst);
     }
 }

@@ -2,10 +2,10 @@ package com.github.ars_zero.common.entity.water;
 
 import com.alexthw.sauce.registry.ModRegistry;
 import com.github.ars_zero.common.entity.AbstractConvergenceEntity;
+import com.github.ars_zero.common.entity.IManaDrainable;
 import com.github.ars_zero.common.util.BlockProtectionUtil;
 import com.github.ars_zero.registry.ModSounds;
-import com.hollingsworth.arsnouveau.api.mana.IManaCap;
-import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -27,7 +27,7 @@ import software.bernie.geckolib.animation.AnimatableManager;
 import java.util.List;
 import java.util.UUID;
 
-public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity {
+public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity implements IManaDrainable {
 
     private static final EntityDataAccessor<Integer> DATA_RADIUS = SynchedEntityData
             .defineId(WaterConvergenceControllerEntity.class, EntityDataSerializers.INT);
@@ -45,6 +45,10 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
     private int ticksOnCurrentY;
     private BlockPos centerPos;
     private double consumedMana;
+    private double accumulatedDrain = 0.0;
+    private int ticksSinceLastDrainSync = 0;
+    @Nullable
+    private Player casterPlayer = null;
 
     public WaterConvergenceControllerEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -71,6 +75,11 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
 
     public void setCaster(@NotNull LivingEntity caster) {
         this.casterUuid = caster.getUUID();
+        if (caster instanceof Player player) {
+            this.casterPlayer = player;
+        } else {
+            this.casterPlayer = null;
+        }
         this.waterPower = getWaterPower(caster);
     }
 
@@ -93,6 +102,46 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
     }
 
     @Override
+    public double getManaCostPerBlock() {
+        return MANA_COST_PER_BLOCK;
+    }
+
+    @Override
+    public UUID getCasterUUID() {
+        return this.casterUuid;
+    }
+
+    @Override
+    public double getAccumulatedDrain() {
+        return accumulatedDrain;
+    }
+
+    @Override
+    public void setAccumulatedDrain(double value) {
+        this.accumulatedDrain = value;
+    }
+
+    @Override
+    public int getTicksSinceLastDrainSync() {
+        return ticksSinceLastDrainSync;
+    }
+
+    @Override
+    public void setTicksSinceLastDrainSync(int value) {
+        this.ticksSinceLastDrainSync = value;
+    }
+
+    @Override
+    public Player getCasterPlayer() {
+        return casterPlayer;
+    }
+
+    @Override
+    public void setCasterPlayer(Player player) {
+        this.casterPlayer = player;
+    }
+
+    @Override
     public void tick() {
         super.tick();
 
@@ -103,6 +152,8 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
         }
+
+        tickAndSyncDrain(serverLevel);
 
         ensureInitialized();
         if (this.centerPos == null) {
@@ -256,6 +307,7 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
 
         LivingEntity caster = serverLevel.getEntity(this.casterUuid) instanceof LivingEntity living ? living : null;
         boolean isCreative = caster instanceof Player player && player.getAbilities().instabuild;
+        double actualCost = MANA_COST_PER_BLOCK;
 
         if (this.consumedMana < FREE_MANA_AMOUNT) {
             double remainingFree = FREE_MANA_AMOUNT - this.consumedMana;
@@ -265,32 +317,17 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
             } else {
                 double freeAmount = remainingFree;
                 this.consumedMana += freeAmount;
-                double remainingCost = MANA_COST_PER_BLOCK - freeAmount;
-
-                if (caster instanceof Player) {
-                    IManaCap manaCap = CapabilityRegistry.getMana(caster);
-                    if (manaCap != null && manaCap.getCurrentMana() >= remainingCost) {
-                        manaCap.removeMana(remainingCost);
-                        this.consumedMana += remainingCost;
-                    } else if (!isCreative) {
-                        this.discard();
-                    } else {
-                        this.consumedMana += remainingCost;
-                    }
-                }
-                return;
+                actualCost = MANA_COST_PER_BLOCK - freeAmount;
             }
         }
 
         if (caster instanceof Player) {
-            IManaCap manaCap = CapabilityRegistry.getMana(caster);
-            if (manaCap != null && manaCap.getCurrentMana() >= MANA_COST_PER_BLOCK) {
-                manaCap.removeMana(MANA_COST_PER_BLOCK);
-                this.consumedMana += MANA_COST_PER_BLOCK;
+            if (consumeManaAndAccumulate(serverLevel, actualCost)) {
+                this.consumedMana += actualCost;
             } else if (!isCreative) {
                 this.discard();
             } else {
-                this.consumedMana += MANA_COST_PER_BLOCK;
+                this.consumedMana += actualCost;
             }
         }
     }
