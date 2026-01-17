@@ -25,3 +25,4 @@ public record PacketExplosionShake(float intensity, int durationTicks) implement
     }
 }
 
+

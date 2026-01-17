@@ -9,9 +9,11 @@ import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.client.sound.ExplosionActivateSoundInstance;
 import com.github.ars_zero.common.network.PacketExplosionActivateSound;
 import com.github.ars_zero.common.network.PacketExplosionShake;
+import com.github.ars_zero.common.network.PacketManaDrain;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.network.PacketUpdateStaffGUI;
+import com.github.ars_zero.client.gui.GuiManaDrainOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.InteractionHand;
@@ -82,6 +84,12 @@ final class ClientPacketHandlers {
             ExplosionActivateSoundInstance soundInstance = new ExplosionActivateSoundInstance(
                     packet.x(), packet.y(), packet.z());
             Minecraft.getInstance().getSoundManager().play(soundInstance);
+        });
+    }
+
+    static void handleManaDrain(PacketManaDrain packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            GuiManaDrainOverlay.onManaDrain(packet.amount());
         });
     }
 }

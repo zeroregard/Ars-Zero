@@ -28,7 +28,12 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         addNearRecipe();
         addPushRecipe();
         addConvergenceRecipe();
+        addGeometrizeRecipe();
         addDiscardRecipe();
+        addAugmentCubeRecipe();
+        addAugmentSphereRecipe();
+        addAugmentHollowRecipe();
+        addAugmentFlattenRecipe();
 
         for (FileObj fileObj : files) {
             saveStable(pOutput, fileObj.element, fileObj.path);
@@ -215,6 +220,29 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_effect_convergence.json"), json));
     }
 
+    private void addGeometrizeRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 250);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("ars_nouveau:source_gem_block"));
+        inputsArray.add(item("ars_nouveau:earth_essence"));
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("ars_nouveau:conjuration_essence"));
+        inputsArray.add(item("ars_nouveau:conjuration_essence"));
+        inputsArray.add(item("ars_nouveau:conjuration_essence"));
+        inputsArray.add(item("minecraft:diamond_pickaxe"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:effect_geometrize");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_effect_geometrize.json"), json));
+    }
+
     private void addDiscardRecipe() {
         JsonObject json = new JsonObject();
         json.addProperty("type", "ars_nouveau:glyph");
@@ -233,6 +261,90 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         json.add("output", outputObj);
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_discard_effect.json"), json));
+    }
+
+    private void addAugmentCubeRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 60);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("ars_nouveau:source_gem_block"));
+        inputsArray.add(item("ars_nouveau:earth_essence"));
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("ars_nouveau:conjuration_essence"));
+        inputsArray.add(item("minecraft:quartz_block"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:augment_cube");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_augment_cube.json"), json));
+    }
+
+    private void addAugmentSphereRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 60);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("ars_nouveau:source_gem_block"));
+        inputsArray.add(item("ars_nouveau:earth_essence"));
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("ars_nouveau:conjuration_essence"));
+        inputsArray.add(item("minecraft:ender_pearl"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:augment_sphere");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_augment_sphere.json"), json));
+    }
+
+    private void addAugmentHollowRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 60);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("ars_nouveau:source_gem_block"));
+        inputsArray.add(item("ars_nouveau:earth_essence"));
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("ars_nouveau:conjuration_essence"));
+        inputsArray.add(item("minecraft:bucket"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:augment_hollow");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_augment_hollow.json"), json));
+    }
+
+    private void addAugmentFlattenRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 60);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("ars_nouveau:source_gem_block"));
+        inputsArray.add(item("ars_nouveau:earth_essence"));
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("ars_nouveau:conjuration_essence"));
+        inputsArray.add(item("minecraft:stone_pressure_plate"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:augment_flatten");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_augment_flatten.json"), json));
     }
 
     private static JsonObject item(String id) {

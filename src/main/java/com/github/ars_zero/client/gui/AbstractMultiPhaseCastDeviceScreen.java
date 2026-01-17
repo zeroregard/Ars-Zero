@@ -38,7 +38,7 @@ import com.hollingsworth.arsnouveau.common.spell.validation.ActionAugmentationPo
 import com.github.ars_zero.client.gui.validators.SpellPhaseValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.StartingCastMethodSpellValidator;
 import com.hollingsworth.arsnouveau.api.registry.FamiliarRegistry;
-import com.hollingsworth.arsnouveau.client.gui.GuiUtils;
+import com.hollingsworth.arsnouveau.api.documentation.DocClientUtils;
 import com.hollingsworth.arsnouveau.client.gui.book.GuiFamiliarScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
@@ -403,7 +403,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
                 }).withTooltip(Component.translatable("ars_nouveau.gui.familiar")));
 
         addRenderableWidget(new GuiImageButton(bookLeft + 54, bookTop + 93, 16, 16, StaffGuiTextures.ICON_DOCS, (b) -> {
-            GuiUtils.openWiki(player);
+            DocClientUtils.openBook();
         }).withTooltip(Component.translatable("ars_nouveau.gui.notebook")));
 
         addAffinityButton();

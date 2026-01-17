@@ -191,6 +191,9 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity, I
     }
 
     protected void onRemovalResolve(HitResult hitResult) {
+        if (!this.level().isClientSide && resolver != null && hitResult != null) {
+            resolver.onResolveEffect(this.level(), hitResult);
+        }
     }
 
     @Override
