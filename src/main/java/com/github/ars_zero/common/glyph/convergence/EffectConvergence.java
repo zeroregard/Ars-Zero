@@ -66,13 +66,10 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
 
         Vec3 pos = safelyGetHitPos(rayTraceResult);
 
-        AbstractEffect firstEffect = findFirstConvergenceEffect(spellContext);
-        ArsZero.LOGGER.debug("Convergence found firstEffect: {}",
-                firstEffect != null ? firstEffect.getClass().getSimpleName() : "null");
-        if (firstEffect instanceof EffectExplosion) {
+        if (hasEffect(spellContext, EffectExplosion.class)) {
             ExplosionConvergenceHelper.handleExplosionConvergence(serverLevel, pos, shooter, spellStats, spellContext,
                     this);
-        } else if (firstEffect instanceof EffectConjureWater) {
+        } else if (hasEffect(spellContext, EffectConjureWater.class)) {
             WaterConvergenceHelper.handleWaterConvergence(serverLevel, pos, shooter, spellContext, this);
         } else if (rayTraceResult instanceof EntityHitResult entityHitResult) {
             ChargerHelper.handlePlayerCharger(serverLevel, pos, entityHitResult, shooter, spellContext, this);
@@ -101,23 +98,15 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
         context.beginResults.add(entityResult);
     }
 
-    @Nullable
-    private AbstractEffect findFirstConvergenceEffect(SpellContext context) {
+    private boolean hasEffect(SpellContext context, Class<? extends AbstractEffect> effectClass) {
         SpellContext iterator = context.clone();
-
         while (iterator.hasNextPart()) {
             AbstractSpellPart next = iterator.nextPart();
-
-            if (next instanceof AbstractEffect effect) {
-                if (effect instanceof EffectExplosion) {
-                    return effect;
-                } else if (effect instanceof EffectConjureWater) {
-                    return effect;
-                }
+            if (effectClass.isInstance(next)) {
+                return true;
             }
         }
-
-        return null;
+        return false;
     }
 
     void consumeFirstConjureWaterEffect(SpellContext context) {

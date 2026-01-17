@@ -70,9 +70,7 @@ public abstract class AbstractConvergenceEntity extends Entity implements ILifes
             if (this.lifespan > 0) {
                 this.lifespan--;
                 this.entityData.set(DATA_LIFESPAN, this.lifespan);
-            }
-            boolean shouldStart = shouldStart();
-            if (shouldStart) {
+            } else if (shouldStart()) {
                 onLifespanReached();
             }
         }
