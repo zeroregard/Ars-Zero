@@ -2,14 +2,13 @@ package com.github.ars_zero.common.entity.terrain;
 
 import com.alexthw.sauce.registry.ModRegistry;
 import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
+import com.github.ars_zero.common.entity.IManaDrainable;
 import com.github.ars_zero.common.structure.ConvergenceStructureHelper;
 import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.api.registry.ParticleTimelineRegistry;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.client.particle.ParticleColor;
-import com.hollingsworth.arsnouveau.common.block.MageBlock;
 import com.hollingsworth.arsnouveau.common.block.tile.MageBlockTile;
-import com.hollingsworth.arsnouveau.setup.registry.BlockRegistry;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -38,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
+public class GeometryTerrainEntity extends AbstractGeometryProcessEntity implements IManaDrainable {
 
     private static final EntityDataAccessor<Boolean> DATA_WAITING_FOR_MANA = SynchedEntityData
             .defineId(GeometryTerrainEntity.class, EntityDataSerializers.BOOLEAN);
@@ -46,11 +45,15 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
     private static final double BASE_MANA_COST_PER_BLOCK = 0.3;
 
     private float earthPower = 0.0f;
+    private double accumulatedDrain = 0.0;
+    private int ticksSinceLastDrainSync = 0;
+    @Nullable
+    private Player casterPlayer = null;
     @Nullable
     private BlockState terrainBlockState = null;
     private int augmentCount = 0;
     private boolean waitingForMana = false;
-    
+
     private boolean isMageBlock = false;
     private boolean mageBlockPermanent = false;
     private double mageBlockDurationMultiplier = 1.0;
@@ -64,8 +67,11 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
     @Override
     public void setCaster(@Nullable LivingEntity caster) {
         super.setCaster(caster);
-        if (caster != null) {
+        if (caster instanceof Player player) {
+            this.casterPlayer = player;
             this.earthPower = getEarthPower(caster);
+        } else {
+            this.casterPlayer = null;
         }
     }
 
@@ -95,7 +101,8 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
         return this.augmentCount;
     }
 
-    public void setMageBlockProperties(boolean isPermanent, double durationMultiplier, @Nullable SpellContext spellContext) {
+    public void setMageBlockProperties(boolean isPermanent, double durationMultiplier,
+            @Nullable SpellContext spellContext) {
         this.isMageBlock = true;
         this.mageBlockPermanent = isPermanent;
         this.mageBlockDurationMultiplier = durationMultiplier;
@@ -130,13 +137,48 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
         return 3;
     }
 
-    private double getManaCostPerBlock() {
-        return BASE_MANA_COST_PER_BLOCK * getBlockTypeFactor() * (this.augmentCount + 1);
-    }
-
     @Override
     protected float getBlocksPerTick() {
         return BASE_BLOCKS_PER_TICK * (1.0f + earthPower / 2.0f);
+    }
+
+    @Override
+    public double getManaCostPerBlock() {
+        return calculateManaCostPerBlock();
+    }
+
+    @Override
+    public double getAccumulatedDrain() {
+        return accumulatedDrain;
+    }
+
+    @Override
+    public void setAccumulatedDrain(double value) {
+        this.accumulatedDrain = value;
+    }
+
+    @Override
+    public int getTicksSinceLastDrainSync() {
+        return ticksSinceLastDrainSync;
+    }
+
+    @Override
+    public void setTicksSinceLastDrainSync(int value) {
+        this.ticksSinceLastDrainSync = value;
+    }
+
+    @Override
+    public Player getCasterPlayer() {
+        return casterPlayer;
+    }
+
+    @Override
+    public void setCasterPlayer(Player player) {
+        this.casterPlayer = player;
+    }
+
+    private double calculateManaCostPerBlock() {
+        return BASE_MANA_COST_PER_BLOCK * getBlockTypeFactor() * (this.augmentCount + 1);
     }
 
     @Override
@@ -144,9 +186,13 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
         if (!(this.level() instanceof ServerLevel serverLevel))
             return;
 
+        tickAndSyncDrain(serverLevel);
+
         updateTargetBlock();
 
-        if (this.processIndex >= this.processQueue.size()) {
+        if (this.processIndex >= this.processQueue.size())
+
+        {
             this.discard();
             return;
         }
@@ -162,7 +208,7 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
             return;
         }
 
-        double costPerBlock = getManaCostPerBlock();
+        double costPerBlock = calculateManaCostPerBlock();
         IManaCap manaCap = CapabilityRegistry.getMana(claimActor);
         if (manaCap == null) {
             setWaitingForMana(true);
@@ -190,7 +236,7 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
         setWaitingForMana(false);
 
         int oldIndex = this.processIndex;
-        
+
         if (isMageBlock) {
             this.processIndex = placeMageBlocks(serverLevel, this.processQueue, this.processIndex,
                     blocksToPlaceThisTick, getTerrainBlockState(), claimActor);
@@ -215,7 +261,7 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
         }
 
         for (int i = 0; i < blocksPlaced; i++) {
-            if (!consumeManaForBlock(claimActor, costPerBlock)) {
+            if (!consumeManaAndAccumulate(serverLevel, costPerBlock)) {
                 setWaitingForMana(true);
                 this.blockAccumulator -= i;
                 return;
@@ -236,7 +282,7 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
     }
 
     private int placeMageBlocks(ServerLevel level, java.util.List<BlockPos> queue, int startIndex, int blocksPerTick,
-                                 BlockState stateToPlace, @Nullable Player claimActor) {
+            BlockState stateToPlace, @Nullable Player claimActor) {
         if (queue == null || queue.isEmpty()) {
             return startIndex;
         }
@@ -258,12 +304,13 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
                 continue;
             }
 
-            if (!com.github.ars_zero.common.util.BlockProtectionUtil.canBlockBePlaced(level, target, stateToPlace, claimActor)) {
+            if (!com.github.ars_zero.common.util.BlockProtectionUtil.canBlockBePlaced(level, target, stateToPlace,
+                    claimActor)) {
                 continue;
             }
 
             level.setBlock(target, stateToPlace, 3);
-            
+
             if (level.getBlockEntity(target) instanceof MageBlockTile tile) {
                 if (mageBlockSpellContext != null) {
                     var timeline = mageBlockSpellContext.getParticleTimeline(
@@ -277,7 +324,7 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
                 tile.isPermanent = mageBlockPermanent;
                 tile.updateBlock();
             }
-            
+
             placed++;
         }
 
@@ -292,15 +339,6 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity {
         if (level.getServer() == null || level.getServer().getPlayerList() == null)
             return null;
         return level.getServer().getPlayerList().getPlayer(caster);
-    }
-
-    private boolean consumeManaForBlock(Player player, double costPerBlock) {
-        IManaCap manaCap = CapabilityRegistry.getMana(player);
-        if (manaCap != null && manaCap.getCurrentMana() >= costPerBlock) {
-            manaCap.removeMana(costPerBlock);
-            return true;
-        }
-        return false;
     }
 
     @Override

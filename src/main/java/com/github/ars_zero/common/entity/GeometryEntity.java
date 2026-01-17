@@ -3,7 +3,6 @@ package com.github.ars_zero.common.entity;
 import com.github.ars_zero.common.glyph.geometrize.EffectGeometrize;
 import com.github.ars_zero.common.particle.timeline.GeometrizeTimeline;
 import com.github.ars_zero.registry.ModParticleTimelines;
-import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.api.particle.ParticleEmitter;
 import com.hollingsworth.arsnouveau.api.particle.configurations.properties.SoundProperty;
 import com.hollingsworth.arsnouveau.api.particle.timelines.TimelineEntryData;
@@ -13,7 +12,6 @@ import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.client.particle.ParticleColor;
-import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -23,6 +21,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
@@ -34,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public class GeometryEntity extends AbstractGeometryProcessEntity {
+public class GeometryEntity extends AbstractGeometryProcessEntity implements IManaDrainable {
 
     private static final EntityDataAccessor<Float> DATA_COLOR_R = SynchedEntityData
             .defineId(GeometryEntity.class, EntityDataSerializers.FLOAT);
@@ -44,6 +43,10 @@ public class GeometryEntity extends AbstractGeometryProcessEntity {
             .defineId(GeometryEntity.class, EntityDataSerializers.FLOAT);
 
     private double forwardedSpellManaCost = 0.0;
+    private double accumulatedDrain = 0.0;
+    private int ticksSinceLastDrainSync = 0;
+    @Nullable
+    private Player casterPlayer = null;
 
     public GeometryEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -123,9 +126,21 @@ public class GeometryEntity extends AbstractGeometryProcessEntity {
     }
 
     @Override
+    public void setCaster(@Nullable LivingEntity caster) {
+        super.setCaster(caster);
+        if (caster instanceof Player player) {
+            this.casterPlayer = player;
+        } else {
+            this.casterPlayer = null;
+        }
+    }
+
+    @Override
     protected void tickProcess() {
         if (!(this.level() instanceof ServerLevel serverLevel))
             return;
+
+        tickAndSyncDrain(serverLevel);
 
         updateTargetBlock();
 
@@ -174,12 +189,11 @@ public class GeometryEntity extends AbstractGeometryProcessEntity {
             return true;
         }
 
-        IManaCap manaCap = CapabilityRegistry.getMana(player);
-        if (manaCap != null && manaCap.getCurrentMana() >= forwardedSpellManaCost) {
-            manaCap.removeMana(forwardedSpellManaCost);
-            return true;
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return false;
         }
-        return false;
+
+        return consumeManaAndAccumulate(serverLevel, forwardedSpellManaCost);
     }
 
     private void applyTimelineEffects(ServerLevel serverLevel, Vec3 position) {
@@ -238,5 +252,40 @@ public class GeometryEntity extends AbstractGeometryProcessEntity {
         if (level.getServer() == null || level.getServer().getPlayerList() == null)
             return null;
         return level.getServer().getPlayerList().getPlayer(caster);
+    }
+
+    @Override
+    public double getManaCostPerBlock() {
+        return forwardedSpellManaCost;
+    }
+
+    @Override
+    public double getAccumulatedDrain() {
+        return accumulatedDrain;
+    }
+
+    @Override
+    public void setAccumulatedDrain(double value) {
+        this.accumulatedDrain = value;
+    }
+
+    @Override
+    public int getTicksSinceLastDrainSync() {
+        return ticksSinceLastDrainSync;
+    }
+
+    @Override
+    public void setTicksSinceLastDrainSync(int value) {
+        this.ticksSinceLastDrainSync = value;
+    }
+
+    @Override
+    public Player getCasterPlayer() {
+        return casterPlayer;
+    }
+
+    @Override
+    public void setCasterPlayer(Player player) {
+        this.casterPlayer = player;
     }
 }

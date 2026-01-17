@@ -7,6 +7,7 @@ import com.github.ars_zero.common.glyph.augment.AugmentCube;
 import com.github.ars_zero.common.glyph.augment.AugmentFlatten;
 import com.github.ars_zero.common.glyph.augment.AugmentHollow;
 import com.github.ars_zero.common.glyph.augment.AugmentSphere;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.shape.GeometryDescription;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
@@ -198,7 +199,8 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
         AugmentHollow.INSTANCE,
         AugmentSphere.INSTANCE,
         AugmentCube.INSTANCE,
-        AugmentFlatten.INSTANCE);
+        AugmentFlatten.INSTANCE,
+        AugmentSensitive.INSTANCE);
   }
 
   @Override
@@ -221,6 +223,8 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
         "Generates cube shapes (default). When flattened, produces squares.");
     map.put(AugmentFlatten.INSTANCE,
         "Projects 3D shapes into 2D based on the caster's look direction.");
+    map.put(AugmentSensitive.INSTANCE,
+        "Processes blocks from bottom to top instead of top to bottom.");
   }
 
   public GeometryDescription resolveGeometryDescription(SpellContext context, @Nullable LivingEntity caster) {

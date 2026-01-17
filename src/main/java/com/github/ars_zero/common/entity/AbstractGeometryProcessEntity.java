@@ -39,6 +39,8 @@ import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 
+import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
+import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 
@@ -94,6 +96,8 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
     protected SpellContext spellContext = null;
     @Nullable
     protected SpellResolver spellResolver = null;
+
+    protected boolean sensitive = false;
 
     protected boolean building = false;
     protected boolean paused = false;
@@ -298,6 +302,35 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
     public void setSpellContext(@Nullable SpellContext context, @Nullable SpellResolver resolver) {
         this.spellContext = context;
         this.spellResolver = resolver;
+        this.sensitive = hasSensitiveAugment(context);
+    }
+
+    private boolean hasSensitiveAugment(@Nullable SpellContext context) {
+        if (context == null || context.getSpell() == null) {
+            return false;
+        }
+
+        var recipe = context.getSpell().unsafeList();
+        boolean foundGeometrize = false;
+
+        for (AbstractSpellPart part : recipe) {
+            if (!foundGeometrize) {
+                if (part instanceof AbstractEffect effect && effect == EffectGeometrize.INSTANCE) {
+                    foundGeometrize = true;
+                }
+                continue;
+            }
+
+            if (part instanceof AbstractEffect) {
+                break;
+            }
+
+            if (part == com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive.INSTANCE) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Nullable
@@ -420,6 +453,8 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
         BlockPos center = getEffectiveCenter();
         this.processQueue.addAll(ShapePipeline.generate(center, getSize(), geometryDescription, getDepth()));
 
+        this.processQueue.sort((a, b) -> Integer.compare(b.getY(), a.getY()));
+
         if (shouldReverseProcessOrder()) {
             java.util.Collections.reverse(this.processQueue);
         }
@@ -441,7 +476,7 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
     }
 
     protected boolean shouldReverseProcessOrder() {
-        return false;
+        return sensitive;
     }
 
     protected void onProcessStarted() {

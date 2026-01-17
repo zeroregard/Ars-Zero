@@ -2,12 +2,11 @@ package com.github.ars_zero.common.entity.break_blocks;
 
 import com.alexthw.sauce.registry.ModRegistry;
 import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
-import com.hollingsworth.arsnouveau.api.mana.IManaCap;
+import com.github.ars_zero.common.entity.IManaDrainable;
 import com.hollingsworth.arsnouveau.api.util.BlockUtil;
 import com.hollingsworth.arsnouveau.api.util.SpellUtil;
 import com.hollingsworth.arsnouveau.common.datagen.BlockTagProvider;
 import com.hollingsworth.arsnouveau.common.util.HolderHelper;
-import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -34,15 +33,16 @@ import software.bernie.geckolib.animation.RawAnimation;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public class GeometryBreakEntity extends AbstractGeometryProcessEntity {
+public class GeometryBreakEntity extends AbstractGeometryProcessEntity implements IManaDrainable {
 
-  private static final double BASE_MANA_COST_PER_BLOCK = 0.4;
+  private static final double BASE_MANA_COST_PER_BLOCK = 0.5;
   private static final float BLOCK_BREAKING_SPEED_MULTIPLIER = 2.0f;
-  private static final int DRAIN_SYNC_INTERVAL = 20;
 
   private float earthPower = 0.0f;
   private double accumulatedDrain = 0.0;
   private int ticksSinceLastDrainSync = 0;
+  @Nullable
+  private Player casterPlayer = null;
   private int harvestLevel = 3;
   private int fortuneCount = 0;
   private int extractCount = 0;
@@ -72,8 +72,11 @@ public class GeometryBreakEntity extends AbstractGeometryProcessEntity {
   @Override
   public void setCaster(@Nullable LivingEntity caster) {
     super.setCaster(caster);
-    if (caster != null) {
+    if (caster instanceof Player player) {
+      this.casterPlayer = player;
       this.earthPower = getEarthPower(caster);
+    } else {
+      this.casterPlayer = null;
     }
   }
 
@@ -102,30 +105,53 @@ public class GeometryBreakEntity extends AbstractGeometryProcessEntity {
 
   @Override
   protected boolean shouldReverseProcessOrder() {
-    return true;
+    return super.shouldReverseProcessOrder();
   }
 
   @Override
   protected void tickProcess() {
     super.tickProcess();
-    ticksSinceLastDrainSync++;
-    if (ticksSinceLastDrainSync >= DRAIN_SYNC_INTERVAL && accumulatedDrain > 0) {
-      sendDrainPacket();
-      accumulatedDrain = 0;
-      ticksSinceLastDrainSync = 0;
+    if (this.level() instanceof ServerLevel serverLevel) {
+      tickAndSyncDrain(serverLevel);
     }
   }
 
-  private void sendDrainPacket() {
-    if (!(this.level() instanceof ServerLevel serverLevel)) {
-      return;
-    }
-    Player player = getClaimActor(serverLevel);
-    if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-      net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
-          serverPlayer,
-          new com.github.ars_zero.common.network.PacketManaDrain(accumulatedDrain));
-    }
+  @Override
+  public double getManaCostPerBlock() {
+    double manaCost = BASE_MANA_COST_PER_BLOCK;
+    manaCost *= 1.0 + (fortuneCount * 0.1);
+    manaCost *= 1.0 + (extractCount * 0.3);
+    return manaCost;
+  }
+
+  @Override
+  public double getAccumulatedDrain() {
+    return accumulatedDrain;
+  }
+
+  @Override
+  public void setAccumulatedDrain(double value) {
+    this.accumulatedDrain = value;
+  }
+
+  @Override
+  public int getTicksSinceLastDrainSync() {
+    return ticksSinceLastDrainSync;
+  }
+
+  @Override
+  public void setTicksSinceLastDrainSync(int value) {
+    this.ticksSinceLastDrainSync = value;
+  }
+
+  @Override
+  public Player getCasterPlayer() {
+    return casterPlayer;
+  }
+
+  @Override
+  public void setCasterPlayer(Player player) {
+    this.casterPlayer = player;
   }
 
   @Override
@@ -156,12 +182,22 @@ public class GeometryBreakEntity extends AbstractGeometryProcessEntity {
       return ProcessResult.SKIPPED;
     }
 
-    if (!consumeManaForBlock(player)) {
-      return ProcessResult.WAITING_FOR_MANA;
+    if (!(this.level() instanceof ServerLevel serverLevel)) {
+      return ProcessResult.SKIPPED;
     }
 
     ItemStack toolStack = buildToolStack(level, pos, state);
+    BlockState stateBefore = level.getBlockState(pos);
     BlockUtil.breakExtraBlock(level, pos, toolStack, getCasterUUID(), true);
+    BlockState stateAfter = level.getBlockState(pos);
+
+    if (stateBefore == stateAfter || !stateAfter.isAir()) {
+      return ProcessResult.SKIPPED;
+    }
+
+    if (!consumeManaAndAccumulate(serverLevel, getManaCostPerBlock())) {
+      return ProcessResult.WAITING_FOR_MANA;
+    }
 
     if (spellContext != null && spellResolver != null) {
       ShapersFocus.tryPropagateBlockSpell(
@@ -201,20 +237,6 @@ public class GeometryBreakEntity extends AbstractGeometryProcessEntity {
     if (caster == null || level.getServer() == null)
       return null;
     return level.getServer().getPlayerList().getPlayer(caster);
-  }
-
-  private boolean consumeManaForBlock(Player player) {
-    IManaCap manaCap = CapabilityRegistry.getMana(player);
-    double manaCost = BASE_MANA_COST_PER_BLOCK;
-    manaCost *= 1.0 + (fortuneCount * 0.1);
-    manaCost *= 1.0 + (extractCount * 0.3);
-
-    if (manaCap != null && manaCap.getCurrentMana() >= manaCost) {
-      manaCap.removeMana(manaCost);
-      accumulatedDrain += manaCost;
-      return true;
-    }
-    return false;
   }
 
   @Override
