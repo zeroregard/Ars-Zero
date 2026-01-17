@@ -33,4 +33,3 @@ public class AugmentHollow extends AbstractAugment implements IFillAugment {
         return "Used with Geometrize to generate hollow shapes, only placing the outer shell.";
     }
 }
-

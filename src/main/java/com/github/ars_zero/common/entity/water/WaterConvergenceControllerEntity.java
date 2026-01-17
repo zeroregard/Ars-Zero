@@ -86,6 +86,10 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
 
     @Override
     protected void onLifespanReached() {
+        if (this.level().isClientSide) {
+            return;
+        }
+        this.discard();
     }
 
     @Override
@@ -97,10 +101,6 @@ public class WaterConvergenceControllerEntity extends AbstractConvergenceEntity 
         }
 
         if (!(this.level() instanceof ServerLevel serverLevel)) {
-            return;
-        }
-
-        if (getLifespan() > 0) {
             return;
         }
 

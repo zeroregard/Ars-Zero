@@ -177,9 +177,7 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity, I
     }
 
     protected void resolveAndDiscard(HitResult hitResult) {
-        if (!this.level().isClientSide && resolver != null && hitResult != null) {
-            resolver.onResolveEffect(this.level(), hitResult);
-        }
+        onRemovalResolve(hitResult);
 
         if (!this.level().isClientSide && hitResult instanceof BlockHitResult blockHit) {
             onBlockCollision(blockHit);
@@ -190,6 +188,18 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity, I
 
     public void resolveAndDiscardSelf() {
         this.resolveAndDiscard(new EntityHitResult(this));
+    }
+
+    protected void onRemovalResolve(HitResult hitResult) {
+        if (!this.level().isClientSide && resolver != null && hitResult != null) {
+            resolver.onResolveEffect(this.level(), hitResult);
+        }
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        onRemovalResolve(null);
+        super.remove(reason);
     }
 
     protected void onBlockCollision(BlockHitResult blockHit) {

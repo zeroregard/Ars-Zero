@@ -1,7 +1,6 @@
 package com.github.ars_zero.client.network;
 
 import com.github.ars_zero.client.ScreenShakeManager;
-import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.client.gui.MultiphaseDeviceStylesScreen;
 import com.github.ars_zero.client.renderer.StaffDebugHUD;
@@ -31,13 +30,7 @@ final class ClientPacketHandlers {
             StaffDebugHUD.onSpellFired(phase);
 
             var player = Minecraft.getInstance().player;
-            if (player instanceof AbstractClientPlayer clientPlayer) {
-                String phaseName = phase.name();
-                if (!packet.isCurio()) {
-                    StaffAnimationHandler.onStaffPhase(clientPlayer, packet.isMainHand(), phaseName,
-                            packet.tickCount());
-                }
-
+            if (player instanceof AbstractClientPlayer) {
                 if (phase == SpellPhase.BEGIN) {
                     StaffSoundManager.startLoopingSound(player);
                 } else if (phase == SpellPhase.END) {

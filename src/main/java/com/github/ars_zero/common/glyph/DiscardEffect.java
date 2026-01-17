@@ -1,7 +1,6 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.registry.ModParticleTimelines;
 import com.hollingsworth.arsnouveau.api.particle.ParticleEmitter;
 import com.hollingsworth.arsnouveau.api.particle.configurations.properties.SoundProperty;
@@ -83,11 +82,6 @@ public class DiscardEffect extends AbstractEffect {
 
         Vec3 position = target.position();
         triggerResolveEffects(spellContext, world, position);
-
-        if (target instanceof BaseVoxelEntity voxel) {
-            voxel.resolveAndDiscardSelf();
-            return;
-        }
 
         target.discard();
     }

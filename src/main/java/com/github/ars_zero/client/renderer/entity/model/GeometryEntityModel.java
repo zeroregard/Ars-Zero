@@ -4,7 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.GeometryEntity;
 import net.minecraft.resources.ResourceLocation;
 
-public class GeometryEntityModel extends GeometryConvergenceEntityModel<GeometryEntity> {
+public class GeometryEntityModel extends GeometryProcessEntityModel<GeometryEntity> {
     private static final ResourceLocation TEXTURE = ArsZero.prefix("textures/entity/arcane_golem.png");
 
     @Override

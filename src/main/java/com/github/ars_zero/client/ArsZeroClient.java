@@ -1,7 +1,6 @@
 package com.github.ars_zero.client;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.client.animation.StaffAnimationHandler;
 import com.github.ars_zero.client.gui.GuiManaDrainOverlay;
 import com.github.ars_zero.client.gui.GuiStaffHUD;
 import com.github.ars_zero.client.renderer.GeometryEntityOverlayHelper;
@@ -51,8 +50,6 @@ public class ArsZeroClient {
         modEventBus.addListener(ClientNetworking::register);
 
         NeoForge.EVENT_BUS.register(StaffScrollHandler.class);
-
-        StaffAnimationHandler.init();
 
         ArsZero.LOGGER.debug("Ars Zero client initialization completed");
     }

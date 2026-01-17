@@ -22,10 +22,10 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Common renderer for geometry convergence entities (terrain/break).
+ * Common renderer for geometry process entities (terrain/break).
  * Renders the same golem when building and the preview outline when idle.
  */
-public class GeometryConvergenceEntityRenderer<T extends Entity & IGeometryProcessEntity & GeoAnimatable> extends GeoEntityRenderer<T> {
+public class GeometryProcessEntityRenderer<T extends Entity & IGeometryProcessEntity & GeoAnimatable> extends GeoEntityRenderer<T> {
 
     protected record Palette(float clearR, float clearG, float clearB,
                              float adjacentR, float adjacentG, float adjacentB,
@@ -33,7 +33,7 @@ public class GeometryConvergenceEntityRenderer<T extends Entity & IGeometryProce
 
     private final Palette palette;
 
-    public GeometryConvergenceEntityRenderer(EntityRendererProvider.Context context, GeoModel<T> model, Palette palette) {
+    public GeometryProcessEntityRenderer(EntityRendererProvider.Context context, GeoModel<T> model, Palette palette) {
         super(context, model);
         this.palette = palette;
         this.shadowRadius = 0.0f;

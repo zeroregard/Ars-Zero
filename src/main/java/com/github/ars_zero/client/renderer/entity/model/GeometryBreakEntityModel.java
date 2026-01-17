@@ -5,5 +5,5 @@ import com.github.ars_zero.common.entity.break_blocks.GeometryBreakEntity;
 /**
  * Break geometry uses the shared golem model.
  */
-public class GeometryBreakEntityModel extends GeometryConvergenceEntityModel<GeometryBreakEntity> {
+public class GeometryBreakEntityModel extends GeometryProcessEntityModel<GeometryBreakEntity> {
 }

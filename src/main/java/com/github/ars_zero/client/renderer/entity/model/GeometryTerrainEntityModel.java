@@ -5,6 +5,6 @@ import com.github.ars_zero.common.entity.terrain.GeometryTerrainEntity;
 /**
  * Terrain geometry uses the shared golem model.
  */
-public class GeometryTerrainEntityModel extends GeometryConvergenceEntityModel<GeometryTerrainEntity> {
+public class GeometryTerrainEntityModel extends GeometryProcessEntityModel<GeometryTerrainEntity> {
 }
 
