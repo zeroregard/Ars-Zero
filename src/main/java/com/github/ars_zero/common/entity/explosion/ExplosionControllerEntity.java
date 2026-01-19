@@ -77,24 +77,25 @@ public class ExplosionControllerEntity extends AbstractConvergenceEntity impleme
     private int amplifyLevel;
     private int dampenLevel;
 
+    @OnlyIn(Dist.CLIENT)
     @Nullable
-    private AnimState lastClientAnimState = null;
+    private AnimState lastClientAnimState;
 
     @OnlyIn(Dist.CLIENT)
     @Nullable
-    private Object idleSoundInstance = null;
+    private Object idleSoundInstance;
 
     @OnlyIn(Dist.CLIENT)
     @Nullable
-    private Object chargeSoundInstance = null;
+    private Object chargeSoundInstance;
 
     @OnlyIn(Dist.CLIENT)
     @Nullable
-    private Object primingSoundInstance = null;
+    private Object primingSoundInstance;
 
     @OnlyIn(Dist.CLIENT)
     @Nullable
-    private Object resolverSoundInstance = null;
+    private Object resolverSoundInstance;
 
     private ExplosionWorkList workList;
     private int nextWorkIndex;
