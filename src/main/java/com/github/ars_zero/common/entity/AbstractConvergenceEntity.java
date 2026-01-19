@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.entity;
 
+import com.github.ars_zero.ArsZero;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;

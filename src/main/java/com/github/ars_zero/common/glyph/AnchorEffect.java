@@ -2,17 +2,16 @@ package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.config.ServerConfig;
+import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.entity.ILifespanExtendable;
 import com.github.ars_zero.common.entity.IAnchorLerp;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.util.BlockImmutabilityUtil;
-import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -23,6 +22,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -36,7 +36,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,13 +45,16 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * AnchorEffect - Works with Temporal Context Form to maintain relative position of entities.
+ * AnchorEffect - Works with Temporal Context Form to maintain relative position
+ * of entities.
  * 
- * When used with Temporal Context Form in the TICK phase, this effect keeps the entity
- * locked to the same position on the player's screen, following their look direction.
+ * When used with Temporal Context Form in the TICK phase, this effect keeps the
+ * entity
+ * locked to the same position on the player's screen, following their look
+ * direction.
  */
 public class AnchorEffect extends AbstractEffect {
-    
+
     public static final String ID = "anchor_effect";
     public static final AnchorEffect INSTANCE = new AnchorEffect();
 
@@ -61,18 +63,22 @@ public class AnchorEffect extends AbstractEffect {
     }
 
     @Override
-    public void onResolveEntity(EntityHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        if (world.isClientSide) return;
-        if (!(shooter instanceof Player player)) return;
-        if (!(world instanceof ServerLevel serverLevel)) return;
-        
+    public void onResolveEntity(EntityHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter,
+            SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
+        if (world.isClientSide)
+            return;
+        if (!(shooter instanceof Player player))
+            return;
+        if (!(world instanceof ServerLevel serverLevel))
+            return;
+
         ItemStack casterTool = spellContext.getCasterTool();
         MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
-        
+
         if (castContext == null || castContext.beginResults.isEmpty()) {
             return;
         }
-        
+
         for (SpellResult beginResult : castContext.beginResults) {
             Entity target = beginResult.targetEntity;
 
@@ -89,34 +95,40 @@ public class AnchorEffect extends AbstractEffect {
                     continue;
                 }
             }
-            
+
             if (!target.isAlive()) {
                 continue;
             }
-            
+
             if (beginResult.relativeOffset == null) {
                 continue;
             }
-            
+
             if (target instanceof Player targetPlayer) {
                 if (!canAnchorPlayer(player, targetPlayer, serverLevel)) {
                     continue;
                 }
-                
+
                 if (!areInSameChunk(player, targetPlayer)) {
                     restoreEntityPhysics(castContext);
                     continue;
                 }
             }
-            
+
+            boolean isSensitive = spellStats.hasBuff(AugmentSensitive.INSTANCE);
+            float yaw = isSensitive ? beginResult.casterYaw : player.getYRot();
+            float pitch = isSensitive ? beginResult.casterPitch : player.getXRot();
+            Vec3 casterPos = isSensitive && beginResult.casterPosition != null
+                    ? beginResult.casterPosition
+                    : player.getEyePosition(1.0f);
+
             Vec3 newPosition = beginResult.transformLocalToWorld(
-                player.getYRot(), 
-                player.getXRot(), 
-                player.getEyePosition(1.0f),
-                castContext.distanceMultiplier
-            );
-            
-            if (newPosition != null && canMoveToPosition(newPosition, world)) {
+                    yaw,
+                    pitch,
+                    casterPos,
+                    castContext.distanceMultiplier);
+
+            if (newPosition != null && canMoveToPosition(newPosition, world, target)) {
                 if (target instanceof ServerPlayer targetPlayer) {
                     targetPlayer.teleportTo(newPosition.x, newPosition.y, newPosition.z);
                     targetPlayer.setDeltaMovement(Vec3.ZERO);
@@ -141,7 +153,7 @@ public class AnchorEffect extends AbstractEffect {
                     }
                     target.setDeltaMovement(Vec3.ZERO);
                     target.setNoGravity(true);
-                    
+
                     if (target instanceof BaseVoxelEntity voxel) {
                         voxel.freezePhysics();
                     }
@@ -149,35 +161,35 @@ public class AnchorEffect extends AbstractEffect {
             }
         }
     }
-    
+
     private static boolean canAnchorPlayer(Player caster, Player target, ServerLevel level) {
         if (caster == target) {
             return true;
         }
-        
+
         if (ServerConfig.ALLOW_NON_OP_ANCHOR_ON_PLAYERS.get()) {
             return canInteractWithPlayer(caster, target, level);
         }
-        
+
         if (caster instanceof ServerPlayer serverCaster) {
             return serverCaster.hasPermissions(2);
         }
-        
+
         return false;
     }
-    
+
     private static boolean canInteractWithPlayer(Player caster, Player target, ServerLevel level) {
         if (!(caster instanceof ServerPlayer serverCaster) || !(target instanceof ServerPlayer serverTarget)) {
             return true;
         }
-        
+
         try {
             Class<?> ftbChunksClass = Class.forName("dev.ftb.mods.ftbchunks.api.FTBChunksAPI");
             Object api = ftbChunksClass.getMethod("api").invoke(null);
             Object manager = api.getClass().getMethod("getManager").invoke(api);
             Object claimedChunk = manager.getClass().getMethod("getChunk", ServerLevel.class, int.class, int.class)
                     .invoke(manager, level, target.chunkPosition().x, target.chunkPosition().z);
-            
+
             if (claimedChunk != null) {
                 Object team = claimedChunk.getClass().getMethod("getTeam").invoke(claimedChunk);
                 if (team != null) {
@@ -192,82 +204,85 @@ public class AnchorEffect extends AbstractEffect {
             }
         } catch (Exception e) {
         }
-        
+
         return true;
     }
-    
+
     private static boolean areInSameChunk(Player caster, Player target) {
         if (!(caster.level() instanceof ServerLevel) || !(target.level() instanceof ServerLevel)) {
             return true;
         }
-        
+
         if (caster.level() != target.level()) {
             return false;
         }
-        
+
         ChunkPos casterChunk = caster.chunkPosition();
         ChunkPos targetChunk = target.chunkPosition();
-        
+
         return casterChunk.equals(targetChunk);
     }
-    
-    private static boolean canMoveToPosition(Vec3 targetPos, Level world) {
+
+    private static boolean canMoveToPosition(Vec3 targetPos, Level world, Entity target) {
+        if (target instanceof AbstractGeometryProcessEntity gpe && !gpe.isBuilding()) {
+            return true;
+        }
+
         BlockPos blockPos = BlockPos.containing(targetPos);
-        
+
         if (BlockImmutabilityUtil.isBlockImmutable(world, blockPos)) {
             return false;
         }
-        
+
         return !world.getBlockState(blockPos).blocksMotion();
     }
-    
+
     public static void restoreEntityPhysics(MultiPhaseCastContext context) {
         if (context == null || context.beginResults.isEmpty()) {
             return;
         }
-        
+
         Player player = null;
         if (context.playerId != null && context.beginResults.get(0).casterPosition != null) {
-            if (context.beginResults.get(0).targetEntity != null && context.beginResults.get(0).targetEntity.level() instanceof ServerLevel serverLevel) {
+            if (context.beginResults.get(0).targetEntity != null
+                    && context.beginResults.get(0).targetEntity.level() instanceof ServerLevel serverLevel) {
                 player = serverLevel.getPlayerByUUID(context.playerId);
             }
         }
-        
+
         float playerYaw = 0.0f;
         if (player != null) {
             playerYaw = player.getYRot();
         } else if (!context.beginResults.isEmpty() && context.beginResults.get(0).casterYaw != 0.0f) {
             playerYaw = context.beginResults.get(0).casterYaw;
         }
-        
+
         List<SpellResult> newResults = new ArrayList<>();
-        
+
         for (SpellResult beginResult : context.beginResults) {
             Entity target = beginResult.targetEntity;
-            
+
             if (target != null && target.isAlive()) {
                 if (target instanceof BlockGroupEntity blockGroup) {
                     float nearestRotation = blockGroup.getNearest90DegreeRotation(playerYaw);
                     List<BlockPos> placedPositions = blockGroup.placeBlocks(nearestRotation);
                     blockGroup.clearBlocks();
-                    
+
                     if (player != null && !placedPositions.isEmpty()) {
                         for (BlockPos placedPos : placedPositions) {
                             BlockHitResult blockHit = new BlockHitResult(
-                                Vec3.atCenterOf(placedPos),
-                                Direction.UP,
-                                placedPos,
-                                false
-                            );
+                                    Vec3.atCenterOf(placedPos),
+                                    Direction.UP,
+                                    placedPos,
+                                    false);
                             SpellResult placedBlockResult = SpellResult.fromHitResultWithCaster(
-                                blockHit,
-                                SpellEffectType.RESOLVED,
-                                player
-                            );
+                                    blockHit,
+                                    SpellEffectType.RESOLVED,
+                                    player);
                             newResults.add(placedBlockResult);
                         }
                     }
-                    
+
                     blockGroup.discard();
                 } else {
                     target.noPhysics = false;
@@ -278,35 +293,44 @@ public class AnchorEffect extends AbstractEffect {
                 newResults.add(beginResult);
             }
         }
-        
+
         context.beginResults.clear();
         context.beginResults.addAll(newResults);
     }
 
     @Override
-    public void onResolveBlock(BlockHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        if (world.isClientSide) return;
-        if (!(shooter instanceof Player player)) return;
-        
+    public void onResolveBlock(BlockHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter,
+            SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
+        if (world.isClientSide)
+            return;
+        if (!(shooter instanceof Player player))
+            return;
+
         ItemStack casterTool = spellContext.getCasterTool();
         MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
-        
+
         if (castContext == null || castContext.beginResults.isEmpty()) {
             return;
         }
-        
+
         for (SpellResult beginResult : castContext.beginResults) {
             if (beginResult.blockGroup != null && beginResult.relativeOffset != null) {
                 BlockGroupEntity blockGroup = beginResult.blockGroup;
-                
+
+                boolean isSensitive = spellStats.hasBuff(AugmentSensitive.INSTANCE);
+                float yaw = isSensitive ? beginResult.casterYaw : player.getYRot();
+                float pitch = isSensitive ? beginResult.casterPitch : player.getXRot();
+                Vec3 casterPos = isSensitive && beginResult.casterPosition != null
+                        ? beginResult.casterPosition
+                        : player.getEyePosition(1.0f);
+
                 Vec3 newPosition = beginResult.transformLocalToWorld(
-                    player.getYRot(), 
-                    player.getXRot(), 
-                    player.getEyePosition(1.0f),
-                    castContext.distanceMultiplier
-                );
-                
-                if (newPosition != null && canMoveToPosition(newPosition, world)) {
+                        yaw,
+                        pitch,
+                        casterPos,
+                        castContext.distanceMultiplier);
+
+                if (newPosition != null && canMoveToPosition(newPosition, world, blockGroup)) {
                     blockGroup.setPos(newPosition.x, newPosition.y, newPosition.z);
                     blockGroup.setDeltaMovement(Vec3.ZERO);
                     blockGroup.setNoGravity(true);
@@ -323,7 +347,7 @@ public class AnchorEffect extends AbstractEffect {
     @NotNull
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
-        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE);
+        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE, AugmentSensitive.INSTANCE);
     }
 
     @Override
@@ -331,6 +355,7 @@ public class AnchorEffect extends AbstractEffect {
         super.addAugmentDescriptions(map);
         map.put(AugmentAmplify.INSTANCE, "Increases the distance from the player");
         map.put(AugmentDampen.INSTANCE, "Decreases the distance from the player");
+        map.put(AugmentSensitive.INSTANCE, "Freezes target in initial relative position");
     }
 
     @Override
@@ -349,5 +374,3 @@ public class AnchorEffect extends AbstractEffect {
         return Set.of(SpellSchools.MANIPULATION);
     }
 }
-
-
