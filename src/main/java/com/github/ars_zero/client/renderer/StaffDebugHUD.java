@@ -2,6 +2,7 @@ package com.github.ars_zero.client.renderer;
 
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellPhase;
 import net.minecraft.client.Minecraft;
@@ -66,7 +67,8 @@ public class StaffDebugHUD {
         debugInfo.add(String.format("Session Time: %.1fs", sessionStartTime > 0 ? (currentTime - sessionStartTime) / 1000.0 : 0));
         debugInfo.add("");
         
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, mainHandItem);
+        IMultiPhaseCaster caster = AbstractMultiPhaseCastDevice.asMultiPhaseCaster(player, mainHandItem);
+        MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;
         
         debugInfo.add("Current State:");
         debugInfo.add(String.format("  Phase: %s", context != null ? context.currentPhase : "NONE"));

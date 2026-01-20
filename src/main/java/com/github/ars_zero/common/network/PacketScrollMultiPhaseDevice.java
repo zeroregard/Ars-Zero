@@ -5,11 +5,11 @@ import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
 import com.github.ars_zero.common.entity.IAltScrollable;
 import com.github.ars_zero.common.entity.IDepthScrollable;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
@@ -58,8 +58,12 @@ public record PacketScrollMultiPhaseDevice(double scrollDelta, boolean modifierH
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
                 ItemStack heldItem = player.getMainHandItem();
-                MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, heldItem);
-
+                IMultiPhaseCaster caster = AbstractMultiPhaseCastDevice.asMultiPhaseCaster(player, heldItem);
+                if (caster == null) {
+                    return;
+                }
+                
+                MultiPhaseCastContext castContext = caster.getCastContext();
                 if (castContext == null || !castContext.isCasting) {
                     return;
                 }

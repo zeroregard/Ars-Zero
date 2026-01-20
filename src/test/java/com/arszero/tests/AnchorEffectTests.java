@@ -64,7 +64,7 @@ public final class AnchorEffectTests {
             SpellResult result = SpellResult.fromHitResultWithCaster(
                 new EntityHitResult(target),
                 SpellEffectType.RESOLVED,
-                caster
+                com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster.from(caster)
             );
             context.beginResults.add(result);
             
@@ -119,7 +119,7 @@ public final class AnchorEffectTests {
             SpellResult result = SpellResult.fromHitResultWithCaster(
                 new EntityHitResult(target),
                 SpellEffectType.RESOLVED,
-                caster
+                com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster.from(caster)
             );
             context.beginResults.add(result);
             
@@ -173,7 +173,7 @@ public final class AnchorEffectTests {
         SpellResult result = SpellResult.fromHitResultWithCaster(
             new EntityHitResult(target),
             SpellEffectType.RESOLVED,
-            caster
+            com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster.from(caster)
         );
         context.beginResults.add(result);
         
@@ -244,7 +244,7 @@ public final class AnchorEffectTests {
         SpellResult result = SpellResult.fromHitResultWithCaster(
             new EntityHitResult(target),
             SpellEffectType.RESOLVED,
-            caster
+            com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster.from(caster)
         );
         context.beginResults.add(result);
         

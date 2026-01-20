@@ -2,11 +2,10 @@ package com.github.ars_zero.event;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.config.ServerConfig;
-import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
@@ -14,7 +13,6 @@ import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
 import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
-import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import com.hollingsworth.arsnouveau.api.event.EffectResolveEvent;
@@ -33,6 +31,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -130,24 +129,15 @@ public class ArsZeroResolverEvents {
         MultiPhaseCastContext context = null;
         Player player = null;
         
-        if (event.resolver.spellContext.getCaster() instanceof TileCaster tileCaster) {
-            if (tileCaster.getTile() instanceof MultiphaseSpellTurretTile turretTile) {
-                context = turretTile.getCastContext();
-                ArsZero.LOGGER.debug("[ArsZeroResolverEvents] Turret detected, context: {}, phase: {}", 
-                    context != null, wrapped.getPhase());
-                if (context == null) {
-                    ArsZero.LOGGER.warn("[ArsZeroResolverEvents] Turret tile has no cast context!");
-                    if (dimensionKey != null) {
-                        capturedBlockStates.remove(dimensionKey);
-                        blockGroupCreated.remove(dimensionKey);
-                    }
-                    return;
-                }
+        IMultiPhaseCaster multiPhaseCaster = IMultiPhaseCaster.from(event.resolver.spellContext, null);
+        if (multiPhaseCaster != null) {
+            context = multiPhaseCaster.getCastContext();
+            if (context != null) {
                 if (serverLevel != null) {
                     player = serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
                 }
             } else {
-                ArsZero.LOGGER.debug("[ArsZeroResolverEvents] TileCaster is not MultiphaseSpellTurretTile");
+                ArsZero.LOGGER.warn("[ArsZeroResolverEvents] IMultiPhaseCaster has no cast context!");
                 if (dimensionKey != null) {
                     capturedBlockStates.remove(dimensionKey);
                     blockGroupCreated.remove(dimensionKey);
@@ -165,8 +155,16 @@ public class ArsZeroResolverEvents {
                 return;
             }
             
-            ItemStack casterTool = event.resolver.spellContext.getCasterTool();
-            context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+            IMultiPhaseCaster caster = IMultiPhaseCaster.from(event.resolver.spellContext, player);
+            if (caster == null) {
+                ArsZero.LOGGER.debug("[ArsZeroResolverEvents] No IMultiPhaseCaster found");
+                if (dimensionKey != null) {
+                    capturedBlockStates.remove(dimensionKey);
+                    blockGroupCreated.remove(dimensionKey);
+                }
+                return;
+            }
+            context = caster.getCastContext();
             if (context == null) {
                 ArsZero.LOGGER.debug("[ArsZeroResolverEvents] No context found for player");
                 if (dimensionKey != null) {
@@ -220,11 +218,11 @@ public class ArsZeroResolverEvents {
                         
                         serverLevel.addFreshEntity(blockGroup);
                         
-                        result = SpellResult.fromBlockGroup(blockGroup, validBlocks, player);
+                        result = SpellResult.fromBlockGroup(blockGroup, validBlocks, event.resolver.spellContext.getCaster());
                         
                         blockGroupCreated.put(dimensionKey, true);
                     } else {
-                        result = SpellResult.fromHitResultWithCaster(hitResult, SpellEffectType.RESOLVED, player);
+                        result = SpellResult.fromHitResultWithCaster(hitResult, SpellEffectType.RESOLVED, event.resolver.spellContext.getCaster());
                     }
                     
                     capturedBlockStates.remove(dimensionKey);
@@ -247,23 +245,39 @@ public class ArsZeroResolverEvents {
         }
         
         if (result == null) {
-            result = SpellResult.fromHitResultWithCaster(hitResult, SpellEffectType.RESOLVED, player);
+            result = SpellResult.fromHitResultWithCaster(hitResult, SpellEffectType.RESOLVED, event.resolver.spellContext.getCaster());
         }
         
         switch (wrapped.getPhase()) {
             case BEGIN -> {
+                if (result != null && result.hitResult instanceof BlockHitResult && !context.beginResults.isEmpty()) {
+                    for (SpellResult existing : context.beginResults) {
+                        if (existing != null && existing.hitResult instanceof EntityHitResult) {
+                            ArsZero.LOGGER.debug("[ArsZeroResolverEvents] BEGIN: Skipping block result, entity result already exists");
+                            return;
+                        }
+                    }
+                }
                 if (result != null && result.blockGroup != null) {
                     context.beginResults.clear();
                     context.beginResults.add(result);
+                    ArsZero.LOGGER.info("[ArsZeroResolverEvents] BEGIN: Added blockGroup result, beginResults.size={}", 
+                        context.beginResults.size());
                 } else {
                     context.beginResults.add(result);
+                    ArsZero.LOGGER.info("[ArsZeroResolverEvents] BEGIN: Added result, beginResults.size={}, result={}", 
+                        context.beginResults.size(), result != null ? result.getClass().getSimpleName() : "null");
                 }
             }
             case TICK -> {
                 context.tickResults.add(result);
+                ArsZero.LOGGER.info("[ArsZeroResolverEvents] TICK: Added result, tickResults.size={}", 
+                    context.tickResults.size());
             }
             case END -> {
                 context.endResults.add(result);
+                ArsZero.LOGGER.info("[ArsZeroResolverEvents] END: Added result, endResults.size={}", 
+                    context.endResults.size());
             }
         }
     }
@@ -366,8 +380,16 @@ public class ArsZeroResolverEvents {
             return;
         }
         
-        ItemStack casterTool = event.resolver.spellContext.getCasterTool();
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        IMultiPhaseCaster caster = IMultiPhaseCaster.from(event.resolver.spellContext, player);
+        if (caster == null) {
+            if (dimensionKey != null) {
+                capturedBlockStates.remove(dimensionKey);
+                blockGroupCreated.remove(dimensionKey);
+            }
+            return;
+        }
+        
+        MultiPhaseCastContext context = caster.getCastContext();
         if (context == null) {
             if (dimensionKey != null) {
                 capturedBlockStates.remove(dimensionKey);

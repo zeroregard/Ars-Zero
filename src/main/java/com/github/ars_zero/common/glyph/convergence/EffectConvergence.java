@@ -1,11 +1,13 @@
 package com.github.ars_zero.common.glyph.convergence;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellEffectType;
+import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.SpellResult;
+import com.github.ars_zero.common.spell.WrappedSpellResolver;
 import com.github.ars_zero.registry.ModParticleTimelines;
 import com.hollingsworth.arsnouveau.api.particle.ParticleEmitter;
 import com.hollingsworth.arsnouveau.api.particle.configurations.properties.SoundProperty;
@@ -26,8 +28,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -68,34 +68,48 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
 
         if (hasEffect(spellContext, EffectExplosion.class)) {
             ExplosionConvergenceHelper.handleExplosionConvergence(serverLevel, pos, shooter, spellStats, spellContext,
-                    this);
+                    resolver, this);
         } else if (hasEffect(spellContext, EffectConjureWater.class)) {
-            WaterConvergenceHelper.handleWaterConvergence(serverLevel, pos, shooter, spellContext, this);
+            WaterConvergenceHelper.handleWaterConvergence(serverLevel, pos, shooter, spellContext, resolver, this);
         } else if (rayTraceResult instanceof EntityHitResult entityHitResult) {
-            ChargerHelper.handlePlayerCharger(serverLevel, pos, entityHitResult, shooter, spellContext, this);
+            ChargerHelper.handlePlayerCharger(serverLevel, pos, entityHitResult, shooter, spellContext, resolver, this);
         } else if (rayTraceResult instanceof BlockHitResult blockHitResult) {
-            ChargerHelper.handleBlockCharger(serverLevel, pos, blockHitResult, shooter, spellContext, this);
+            ChargerHelper.handleBlockCharger(serverLevel, pos, blockHitResult, shooter, spellContext, resolver, this);
         }
     }
 
-    void updateTemporalContext(LivingEntity shooter, Entity entity, SpellContext spellContext) {
-        if (!(shooter instanceof Player player)) {
+    void updateTemporalContext(LivingEntity shooter, Entity entity, SpellContext spellContext, SpellResolver resolver) {
+        IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
+        if (caster == null) {
+            return;
+        }
+        
+        MultiPhaseCastContext context = caster.getCastContext();
+        if (context == null) {
+            ArsZero.LOGGER.warn("[EffectConvergence] updateTemporalContext: No MultiPhaseCastContext found - caster={}, shooter={}", 
+                spellContext.getCaster() != null ? spellContext.getCaster().getClass().getSimpleName() : "null",
+                shooter != null ? shooter.getClass().getSimpleName() : "null");
             return;
         }
 
-        ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
-        if (context == null) {
-            return;
+        SpellPhase phase = WrappedSpellResolver.extractPhase(resolver, context);
+        if (phase == null) {
+            phase = context.currentPhase;
         }
 
         SpellResult entityResult = SpellResult.fromHitResultWithCaster(
                 new EntityHitResult(entity),
                 SpellEffectType.RESOLVED,
-                player);
+                spellContext.getCaster());
 
-        context.beginResults.clear();
-        context.beginResults.add(entityResult);
+        switch (phase) {
+            case BEGIN -> {
+                context.beginResults.clear();
+                context.beginResults.add(entityResult);
+            }
+            case TICK -> context.tickResults.add(entityResult);
+            case END -> context.endResults.add(entityResult);
+        }
     }
 
     private boolean hasEffect(SpellContext context, Class<? extends AbstractEffect> effectClass) {

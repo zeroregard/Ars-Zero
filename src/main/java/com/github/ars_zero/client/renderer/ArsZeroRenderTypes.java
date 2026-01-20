@@ -1,6 +1,5 @@
 package com.github.ars_zero.client.renderer;
 
-import com.github.ars_zero.ArsZero;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderStateShard;

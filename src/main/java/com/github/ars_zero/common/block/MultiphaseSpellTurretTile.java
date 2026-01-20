@@ -1,24 +1,37 @@
 package com.github.ars_zero.common.block;
 
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
-import com.github.ars_zero.common.spell.WrappedSpellResolver;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.registry.ModBlockEntities;
+import com.hollingsworth.arsnouveau.api.ANFakePlayer;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.api.spell.SpellCaster;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
+import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
+import com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
+import com.hollingsworth.arsnouveau.api.util.SourceUtil;
+import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
 import com.hollingsworth.arsnouveau.common.block.tile.BasicSpellTurretTile;
+import com.hollingsworth.arsnouveau.common.network.Networking;
+import com.hollingsworth.arsnouveau.common.network.PacketOneShotAnimation;
 import com.hollingsworth.arsnouveau.common.util.ANCodecs;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.Position;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,10 +43,9 @@ import software.bernie.geckolib.animation.RawAnimation;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
 import java.util.UUID;
 
-public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
+public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements IMultiPhaseCaster {
 
     private static final String BEGIN_TAG = "begin_spell";
     private static final String TICK_TAG = "tick_spell";
@@ -52,6 +64,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
 
     private MultiPhaseCastContext castContext;
     private UUID ownerUUID;
+    private SpellPhase currentCastingPhase = SpellPhase.BEGIN;
 
     private final Deque<PhaseExecution> phaseHistory = new ArrayDeque<>();
 
@@ -124,6 +137,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         tickCooldown = calculateTickCooldown(tickSpell) + tickDelayOffset;
         phaseHistory.clear();
         clearCastContext();
+        currentCastingPhase = SpellPhase.BEGIN;
         ownerUUID = owner;
         setPlayer(owner);
         currentAnimationState = AnimationState.IDLE;
@@ -171,6 +185,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         tickCooldown = calculateTickCooldown(tickSpell) + tickDelayOffset;
         phaseHistory.clear();
         clearCastContext();
+        currentCastingPhase = SpellPhase.BEGIN;
     }
 
     private void startCasting() {
@@ -201,28 +216,35 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
     }
 
     private void castPhase(SpellPhase phase) {
+        currentCastingPhase = phase;
+        
+        if (castContext != null) {
+            updateContextPhase(phase);
+            if (phase == SpellPhase.BEGIN) {
+                castContext.isCasting = true;
+            }
+        }
+        
         Spell spell = switch (phase) {
             case BEGIN -> beginSpell;
             case TICK -> tickSpell;
             case END -> endSpell;
         };
         if (spell == null || spell.isEmpty()) {
+            if (phase == SpellPhase.BEGIN && castContext != null) {
+                castContext.beginFinished = true;
+            }
             return;
         }
+        
         spellCaster = (SpellCaster) spellCaster.setSpell(spell, 0);
-        
-        if (castContext != null && phase == SpellPhase.BEGIN) {
-            castContext.currentPhase = SpellPhase.BEGIN;
-            castContext.isCasting = true;
-        }
-        
         super.shootSpell();
         recordPhase(phase, spell);
     }
 
     @Override
     public void shootSpell() {
-        if (level == null || !(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
+        if (level == null || !(level instanceof ServerLevel serverLevel)) {
             super.shootSpell();
             return;
         }
@@ -233,76 +255,65 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile {
         
         BlockPos pos = this.getBlockPos();
         int manaCost = getManaCost();
-        if (manaCost > 0 && com.hollingsworth.arsnouveau.api.util.SourceUtil.takeSourceMultipleWithParticles(pos, serverLevel, 10, manaCost) == null) {
+        
+        if (manaCost > 0 && SourceUtil.takeSourceMultipleWithParticles(pos, serverLevel, 10, manaCost) == null) {
             return;
         }
         
-        SpellPhase currentPhase = castContext != null ? castContext.currentPhase : SpellPhase.BEGIN;
-        int animationArg = switch (currentPhase) {
+        SpellPhase spellPhase = currentCastingPhase;
+        int animationArg = switch (spellPhase) {
             case BEGIN -> 0;
             case TICK -> 1;
             case END -> 2;
         };
-        com.hollingsworth.arsnouveau.common.network.Networking.sendToNearbyClient(serverLevel, pos, new com.hollingsworth.arsnouveau.common.network.PacketOneShotAnimation(pos, animationArg));
-        net.minecraft.core.Position iposition = com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.getDispensePosition(pos, serverLevel.getBlockState(pos).getValue(com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.FACING));
-        net.minecraft.core.Direction direction = serverLevel.getBlockState(pos).getValue(com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.FACING);
+        Networking.sendToNearbyClient(serverLevel, pos, new PacketOneShotAnimation(pos, animationArg));
+        Position iposition = BasicSpellTurret.getDispensePosition(pos, serverLevel.getBlockState(pos).getValue(BasicSpellTurret.FACING));
         
-        net.neoforged.neoforge.common.util.FakePlayer fakePlayer = ownerUUID != null
-                ? net.neoforged.neoforge.common.util.FakePlayerFactory.get(serverLevel, new com.mojang.authlib.GameProfile(ownerUUID, ""))
-                : com.hollingsworth.arsnouveau.api.ANFakePlayer.getPlayer(serverLevel);
+        FakePlayer fakePlayer = ownerUUID != null
+                ? FakePlayerFactory.get(serverLevel, new GameProfile(ownerUUID, ""))
+                : ANFakePlayer.getPlayer(serverLevel);
         fakePlayer.setPos(pos.getX(), pos.getY(), pos.getZ());
-        SpellPhase spellPhase = switch (currentPhase) {
-            case BEGIN -> SpellPhase.BEGIN;
-            case TICK -> SpellPhase.TICK;
-            case END -> SpellPhase.END;
-        };
         
         SpellContext spellContext = new SpellContext(serverLevel, spellCaster.getSpell(), fakePlayer, new TileCaster(this, SpellContext.CasterType.TURRET));
-        com.hollingsworth.arsnouveau.api.spell.SpellResolver resolver = new com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver(spellContext);
+        SpellResolver resolver = new EntitySpellResolver(spellContext);
         
-        if (castContext != null && ownerUUID != null) {
-            resolver = new WrappedSpellResolver((com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver) resolver, ownerUUID, spellPhase, true);
-        }
+        resolver = wrapResolverForPhase(resolver, spellPhase);
         
-        if (resolver.castType != null && com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.TURRET_BEHAVIOR_MAP.containsKey(resolver.castType)) {
-            com.hollingsworth.arsnouveau.common.block.BasicSpellTurret.TURRET_BEHAVIOR_MAP.get(resolver.castType).onCast(resolver, serverLevel, pos, fakePlayer, iposition, direction);
-        }
-        
-        if (castContext != null) {
-            updateCastContextPhase(currentPhase);
+        if (resolver.castType != null) {
+            fakePlayer.setPos(iposition.x(), iposition.y(), iposition.z());
+            boolean canCast = resolver.canCast(fakePlayer);
+            if (canCast) {
+                resolver.onCast(ItemStack.EMPTY, serverLevel);
+            }
         }
     }
 
     private void initializeCastContext() {
         if (ownerUUID == null) {
+            ArsZero.LOGGER.warn("[MultiphaseSpellTurretTile] initializeCastContext: ownerUUID is null!");
             return;
         }
         castContext = new MultiPhaseCastContext(ownerUUID, MultiPhaseCastContext.CastSource.TURRET);
-        castContext.currentPhase = SpellPhase.BEGIN;
         castContext.isCasting = true;
+        updateContextPhase(SpellPhase.BEGIN);
         castContext.beginResults.clear();
         castContext.tickResults.clear();
         castContext.endResults.clear();
         castContext.createdAt = System.currentTimeMillis();
     }
 
-    private void updateCastContextPhase(SpellPhase phase) {
-        if (castContext == null) {
-            return;
-        }
-        castContext.currentPhase = phase;
-        if (phase == SpellPhase.TICK) {
-            castContext.tickCount++;
-            castContext.sequenceTick++;
-        }
-    }
-
     private void clearCastContext() {
         castContext = null;
     }
 
+    @Override
     public MultiPhaseCastContext getCastContext() {
         return castContext;
+    }
+
+    @Override
+    public UUID getPlayerId() {
+        return ownerUUID;
     }
 
     public UUID getOwnerUUID() {

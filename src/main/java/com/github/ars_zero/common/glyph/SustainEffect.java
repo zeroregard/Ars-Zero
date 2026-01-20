@@ -36,11 +36,17 @@ public class SustainEffect extends AbstractEffect {
         Entity target = rayTraceResult.getEntity();
         
         if (target == null || !target.isAlive()) {
+            ArsZero.LOGGER.debug("[SustainEffect] onResolveEntity: target is null or not alive");
             return;
         }
 
         if (target instanceof ILifespanExtendable lifespanExtendable) {
+            ArsZero.LOGGER.info("[SustainEffect] onResolveEntity: Extending lifespan for {}", 
+                target.getClass().getSimpleName());
             lifespanExtendable.addLifespan(shooter, spellStats, spellContext, resolver);
+        } else {
+            ArsZero.LOGGER.debug("[SustainEffect] onResolveEntity: target {} is not ILifespanExtendable", 
+                target.getClass().getSimpleName());
         }
     }
 

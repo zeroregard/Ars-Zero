@@ -1,8 +1,8 @@
 package com.github.ars_zero.event;
 
-import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -25,15 +25,18 @@ public class CurioCastingHandler {
             if (ACTIVE_CASTERS.contains(player.getUUID())) {
                 return;
             }
-            MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.getCastContext(player, MultiPhaseCastContext.CastSource.CURIO);
-            if (context != null && context.isCasting) {
-                return;
-            }
             Optional<ItemStack> stack = findCirclet(player);
             if (stack.isEmpty()) {
                 return;
             }
             ItemStack circletStack = stack.get();
+            IMultiPhaseCaster caster = AbstractMultiPhaseCastDevice.asMultiPhaseCaster(player, circletStack);
+            if (caster != null) {
+                MultiPhaseCastContext context = caster.getCastContext();
+                if (context != null && context.isCasting) {
+                    return;
+                }
+            }
             if (circletStack.getItem() instanceof SpellcastingCirclet circlet) {
                 circlet.beginCurioCast(player, circletStack);
                 ACTIVE_CASTERS.add(player.getUUID());
@@ -66,7 +69,11 @@ public class CurioCastingHandler {
             finishCurioCast(serverPlayer);
             return;
         }
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.getCastContext(serverPlayer, MultiPhaseCastContext.CastSource.CURIO);
+        IMultiPhaseCaster caster = AbstractMultiPhaseCastDevice.asMultiPhaseCaster(serverPlayer, circletStack);
+        if (caster == null) {
+            return;
+        }
+        MultiPhaseCastContext context = caster.getCastContext();
         if (context == null || !context.isCasting || context.source != MultiPhaseCastContext.CastSource.CURIO) {
             return;
         }
@@ -92,13 +99,21 @@ public class CurioCastingHandler {
     }
     
     private static void finishCurioCast(ServerPlayer player) {
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.getCastContext(player, MultiPhaseCastContext.CastSource.CURIO);
+        Optional<ItemStack> stack = findCirclet(player);
+        if (stack.isEmpty()) {
+            return;
+        }
+        ItemStack circletStack = stack.get();
+        IMultiPhaseCaster caster = AbstractMultiPhaseCastDevice.asMultiPhaseCaster(player, circletStack);
+        if (caster == null) {
+            return;
+        }
+        MultiPhaseCastContext context = caster.getCastContext();
         if (context == null) {
             return;
         }
-        ItemStack castingStack = context.castingStack;
-        if (castingStack.getItem() instanceof AbstractMultiPhaseCastDevice device) {
-            device.endPhase(player, castingStack);
+        if (circletStack.getItem() instanceof AbstractMultiPhaseCastDevice device) {
+            device.endPhase(player, circletStack);
         }
     }
     

@@ -23,6 +23,13 @@ public class WrappedSpellResolver extends SpellResolver {
         this.silent = original.silent;
         this.hitResult = original.hitResult;
         this.previousResolver = original.previousResolver;
+        
+        if (spellContext != null && spellContext.tag != null) {
+            spellContext.tag.putString("ars_zero:spell_phase", phase.name());
+            if (playerId != null) {
+                spellContext.tag.putUUID("ars_zero:player_id", playerId);
+            }
+        }
     }
     
     public UUID getPlayerId() {
@@ -50,5 +57,33 @@ public class WrappedSpellResolver extends SpellResolver {
         }
         
         super.resume(world);
+    }
+    
+    public static SpellPhase extractPhase(SpellResolver resolver, MultiPhaseCastContext context) {
+        if (resolver instanceof WrappedSpellResolver wrapped) {
+            return wrapped.getPhase();
+        }
+        
+        SpellResolver current = resolver;
+        while (current != null) {
+            if (current instanceof WrappedSpellResolver wrapped) {
+                return wrapped.getPhase();
+            }
+            if (current.spellContext != null && current.spellContext.tag != null 
+                    && current.spellContext.tag.contains("ars_zero:spell_phase")) {
+                try {
+                    return SpellPhase.valueOf(current.spellContext.tag.getString("ars_zero:spell_phase"));
+                } catch (IllegalArgumentException ignored) {
+                    break;
+                }
+            }
+            current = current.previousResolver;
+        }
+        
+        if (context != null && context.currentPhase == SpellPhase.TICK && context.beginResults.isEmpty()) {
+            return SpellPhase.BEGIN;
+        }
+        
+        return null;
     }
 }

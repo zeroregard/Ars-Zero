@@ -1,8 +1,6 @@
 package com.github.ars_zero.client.gui.buttons;
 
-import com.github.ars_zero.ArsZero;
 import com.hollingsworth.arsnouveau.api.mana.IManaCap;
-import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;

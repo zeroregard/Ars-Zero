@@ -4,8 +4,6 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemDisplayContext;
-import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.model.GeoModel;
 
 public class CreativeSpellStaffModel extends GeoModel<AbstractSpellStaff> {

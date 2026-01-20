@@ -3,6 +3,7 @@ package com.github.ars_zero.common.network;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -71,11 +72,13 @@ public record PacketMoveEntity(int entityId, MoveDirection direction, Vec3 playe
             .findFirst();
 
         if (casterTool.isPresent()) {
-          MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(serverPlayer,
-              casterTool.get());
-          if (castContext != null && !castContext.beginResults.isEmpty()) {
-            castContext.beginResults.get(0).userOffset = geometryEntity.getUserOffset();
-            castContext.beginResults.get(0).depth = geometryEntity.getDepth();
+          IMultiPhaseCaster caster = AbstractMultiPhaseCastDevice.asMultiPhaseCaster(serverPlayer, casterTool.get());
+          if (caster != null) {
+            MultiPhaseCastContext castContext = caster.getCastContext();
+            if (castContext != null && !castContext.beginResults.isEmpty()) {
+              castContext.beginResults.get(0).userOffset = geometryEntity.getUserOffset();
+              castContext.beginResults.get(0).depth = geometryEntity.getDepth();
+            }
           }
         }
       } else {

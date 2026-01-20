@@ -4,6 +4,7 @@ import com.github.ars_zero.common.entity.PlayerChargerEntity;
 import com.github.ars_zero.common.entity.SourceJarChargerEntity;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
+import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.common.block.tile.SourceJarTile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -23,7 +24,7 @@ public final class ChargerHelper {
     }
 
     public static void handlePlayerCharger(ServerLevel serverLevel, Vec3 pos, EntityHitResult entityHitResult,
-            @Nullable LivingEntity shooter, SpellContext spellContext, EffectConvergence convergence) {
+            @Nullable LivingEntity shooter, SpellContext spellContext, SpellResolver resolver, EffectConvergence convergence) {
         if (entityHitResult.getEntity() instanceof Player targetPlayer && shooter != null) {
             PlayerChargerEntity chargerEntity = new PlayerChargerEntity(ModEntities.PLAYER_CHARGER.get(), serverLevel);
             chargerEntity.setPos(pos.x, pos.y, pos.z);
@@ -33,13 +34,13 @@ public final class ChargerHelper {
             SoundEvent resolveSound = convergence.getResolveSoundFromStyle(spellContext);
             chargerEntity.setResolveSound(resolveSound);
             serverLevel.addFreshEntity(chargerEntity);
-            convergence.updateTemporalContext(shooter, chargerEntity, spellContext);
+            convergence.updateTemporalContext(shooter, chargerEntity, spellContext, resolver);
             convergence.triggerResolveEffects(spellContext, serverLevel, pos);
         }
     }
 
     public static void handleBlockCharger(ServerLevel serverLevel, Vec3 pos, BlockHitResult blockHitResult,
-            @Nullable LivingEntity shooter, SpellContext spellContext, EffectConvergence convergence) {
+            @Nullable LivingEntity shooter, SpellContext spellContext, SpellResolver resolver, EffectConvergence convergence) {
         BlockPos blockPos = blockHitResult.getBlockPos();
         if (serverLevel.getBlockEntity(blockPos) instanceof SourceJarTile && shooter != null) {
             SourceJarChargerEntity chargerEntity = new SourceJarChargerEntity(ModEntities.SOURCE_JAR_CHARGER.get(),
@@ -47,11 +48,12 @@ public final class ChargerHelper {
             chargerEntity.setPos(pos.x, pos.y, pos.z);
             chargerEntity.setJarPos(blockPos);
             chargerEntity.setCasterUUID(shooter.getUUID());
+            chargerEntity.setSourceOriginPos(shooter.blockPosition());
             chargerEntity.setLifespan(DEFAULT_LIFESPAN);
             SoundEvent resolveSound = convergence.getResolveSoundFromStyle(spellContext);
             chargerEntity.setResolveSound(resolveSound);
             serverLevel.addFreshEntity(chargerEntity);
-            convergence.updateTemporalContext(shooter, chargerEntity, spellContext);
+            convergence.updateTemporalContext(shooter, chargerEntity, spellContext, resolver);
             convergence.triggerResolveEffects(spellContext, serverLevel, pos);
         }
     }
