@@ -40,11 +40,9 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class BlightVoxelEntity extends BaseVoxelEntity {
-    private static final int COLOR = 0x6BFF78;
-    private static final ResourceKey<net.minecraft.world.effect.MobEffect> ENVENOM_EFFECT_KEY =
-        ResourceKey.create(Registries.MOB_EFFECT, ResourceLocation.fromNamespaceAndPath("ars_nouveau", "envenom"));
-    private static final ResourceKey<net.minecraft.world.effect.MobEffect> POISON_EFFECT_KEY =
-        ResourceKey.create(Registries.MOB_EFFECT, ResourceLocation.parse("minecraft:poison"));
+    private static final int COLOR = 0xFFFFFF;
+    private static final ResourceKey<net.minecraft.world.effect.MobEffect> WITHER_EFFECT_KEY =
+        ResourceKey.create(Registries.MOB_EFFECT, ResourceLocation.parse("minecraft:wither"));
 
     public BlightVoxelEntity(EntityType<? extends BlightVoxelEntity> entityType, Level level) {
         super(entityType, level);
@@ -415,16 +413,15 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
     }
     
     private void applyEffect(LivingEntity living, boolean burst) {
-        Holder<net.minecraft.world.effect.MobEffect> effect = resolveEnvenomEffect();
+        Holder<net.minecraft.world.effect.MobEffect> effect = resolveWitherEffect();
         int duration = getEffectDuration(burst);
         int amplifier = getEffectAmplifier(burst);
         living.addEffect(new MobEffectInstance(effect, duration, amplifier, false, true, true));
     }
 
-    private Holder<net.minecraft.world.effect.MobEffect> resolveEnvenomEffect() {
-        return BuiltInRegistries.MOB_EFFECT.getHolder(ENVENOM_EFFECT_KEY)
-            .or(() -> BuiltInRegistries.MOB_EFFECT.getHolder(POISON_EFFECT_KEY))
-            .orElseThrow(() -> new IllegalStateException("Neither Envenom nor Poison effect found"));
+    private Holder<net.minecraft.world.effect.MobEffect> resolveWitherEffect() {
+        return BuiltInRegistries.MOB_EFFECT.getHolder(WITHER_EFFECT_KEY)
+            .orElseThrow(() -> new IllegalStateException("Wither effect not found"));
     }
 
     private int getEffectDuration(boolean burst) {

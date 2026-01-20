@@ -53,7 +53,7 @@ public class BlightLiquidBlock extends LiquidBlock {
     @Override
     public void entityInside(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull Entity entity) {
         if (entity instanceof LivingEntity livingEntity) {
-            livingEntity.addEffect(new MobEffectInstance(MobEffects.POISON, 100, 0));
+            livingEntity.addEffect(new MobEffectInstance(MobEffects.WITHER, 100, 0));
         } else if (!level.isClientSide && entity instanceof ItemEntity itemEntity) {
             ItemStack stack = itemEntity.getItem();
             if (stack.getItem() instanceof BlockItem blockItem) {

@@ -11,7 +11,6 @@ import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
@@ -35,7 +34,7 @@ import com.hollingsworth.arsnouveau.common.spell.effect.EffectWindshear;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectColdSnap;
 import alexthw.ars_elemental.common.glyphs.EffectDischarge;
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
-import alexthw.ars_elemental.common.glyphs.EffectEnvenom;
+import com.github.ars_zero.common.glyph.EffectConjureBlight;
 import com.alexthw.sauce.registry.ModRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -68,7 +67,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         EffectConjureTerrain.INSTANCE.getRegistryName(),
         EffectColdSnap.INSTANCE.getRegistryName(),
         EffectDischarge.INSTANCE.getRegistryName(),
-        EffectEnvenom.INSTANCE.getRegistryName()
+        EffectConjureBlight.INSTANCE.getRegistryName()
     };
     
     static {
@@ -78,7 +77,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         VARIANT_CACHE.put(EffectConjureTerrain.INSTANCE, VoxelVariant.STONE);
         VARIANT_CACHE.put(EffectColdSnap.INSTANCE, VoxelVariant.ICE);
         VARIANT_CACHE.put(EffectDischarge.INSTANCE, VoxelVariant.LIGHTNING);
-        VARIANT_CACHE.put(EffectEnvenom.INSTANCE, VoxelVariant.BLIGHT);
+        VARIANT_CACHE.put(EffectConjureBlight.INSTANCE, VoxelVariant.BLIGHT);
     }
 
     public ConjureVoxelEffect() {
@@ -492,7 +491,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
 
     @Override
     public String getBookDescription() {
-        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water', 'Ignite', 'Wind Shear', 'Conjure Terrain', 'Cold Snap', 'Discharge', or 'Envenom'.";
+        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water', 'Ignite', 'Wind Shear', 'Conjure Terrain', 'Cold Snap', 'Discharge', or 'Conjure Blight'.";
     }
 
     @Override

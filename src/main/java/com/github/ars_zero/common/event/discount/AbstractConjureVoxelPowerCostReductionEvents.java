@@ -1,33 +1,23 @@
-package com.github.ars_zero.common.event;
+package com.github.ars_zero.common.event.discount;
 
-import com.alexthw.sauce.registry.ModRegistry;
 import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
 import com.github.ars_zero.common.util.SpellDiscountUtil;
 import com.hollingsworth.arsnouveau.api.event.SpellCostCalcEvent;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
-import alexthw.ars_elemental.common.glyphs.EffectDischarge;
-import com.hollingsworth.arsnouveau.common.spell.effect.EffectWindshear;
+import net.minecraft.core.Holder;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.util.FakePlayer;
 
-import java.util.List;
-
-public class AirPowerCostReductionEvents {
+public abstract class AbstractConjureVoxelPowerCostReductionEvents {
     
-    @SubscribeEvent
-    public static void onSpellCostCalcPre(SpellCostCalcEvent.Pre event) {
-        applyCostReduction(event);
-    }
+    protected abstract boolean isTargetEffect(AbstractSpellPart part);
     
-    @SubscribeEvent
-    public static void onSpellCostCalcPost(SpellCostCalcEvent.Post event) {
-        applyCostReduction(event);
-    }
+    protected abstract Holder<Attribute> getPowerAttribute();
     
-    private static void applyCostReduction(SpellCostCalcEvent event) {
+    protected void applyCostReduction(SpellCostCalcEvent event) {
         if (!(event.context.getCaster() instanceof LivingCaster caster)) {
             return;
         }
@@ -45,7 +35,7 @@ public class AirPowerCostReductionEvents {
         
         for (AbstractSpellPart part : recipe) {
             if (prev instanceof ConjureVoxelEffect) {
-                if (part instanceof EffectWindshear || part instanceof EffectDischarge) {
+                if (isTargetEffect(part)) {
                     augmentEffectCost = part.getCastingCost();
                     foundPair = true;
                     break;
@@ -57,11 +47,15 @@ public class AirPowerCostReductionEvents {
         if (foundPair && augmentEffectCost > 0) {
             event.currentCost = Math.max(0, event.currentCost - augmentEffectCost);
             
-            AttributeInstance airPower = player.getAttribute(ModRegistry.AIR_POWER);
-            if (airPower == null) {
+            Holder<Attribute> powerAttribute = getPowerAttribute();
+            if (powerAttribute == null) {
                 return;
             }
-            double power = airPower.getValue();
+            AttributeInstance powerInstance = player.getAttribute(powerAttribute);
+            if (powerInstance == null) {
+                return;
+            }
+            double power = powerInstance.getValue();
             if (power <= 0) {
                 return;
             }
@@ -73,6 +67,3 @@ public class AirPowerCostReductionEvents {
         }
     }
 }
-
-
-

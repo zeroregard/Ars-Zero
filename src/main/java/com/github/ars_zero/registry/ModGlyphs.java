@@ -2,6 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
 import com.github.ars_zero.common.glyph.DiscardEffect;
+import com.github.ars_zero.common.glyph.EffectConjureBlight;
 import com.github.ars_zero.common.glyph.NearForm;
 import com.github.ars_zero.common.glyph.PushEffect;
 import com.github.ars_zero.common.glyph.SelectEffect;
@@ -34,6 +35,7 @@ public class ModGlyphs {
     public static final AugmentSphere AUGMENT_SPHERE = AugmentSphere.INSTANCE;
     public static final AugmentCube AUGMENT_CUBE = AugmentCube.INSTANCE;
     public static final AugmentFlatten AUGMENT_FLATTEN = AugmentFlatten.INSTANCE;
+    public static final EffectConjureBlight EFFECT_CONJURE_BLIGHT = EffectConjureBlight.INSTANCE;
 
     public static void registerGlyphs() {
         GlyphRegistry.registerSpell(TEMPORAL_CONTEXT_FORM);
@@ -51,5 +53,6 @@ public class ModGlyphs {
         GlyphRegistry.registerSpell(AUGMENT_SPHERE);
         GlyphRegistry.registerSpell(AUGMENT_CUBE);
         GlyphRegistry.registerSpell(AUGMENT_FLATTEN);
+        GlyphRegistry.registerSpell(EFFECT_CONJURE_BLIGHT);
     }
 }
