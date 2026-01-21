@@ -80,8 +80,17 @@ public class WrappedSpellResolver extends SpellResolver {
             current = current.previousResolver;
         }
         
-        if (context != null && context.currentPhase == SpellPhase.TICK && context.beginResults.isEmpty()) {
-            return SpellPhase.BEGIN;
+        if (context != null) {
+            if (context.currentPhase == SpellPhase.TICK && context.beginResults.isEmpty() && !context.beginFinished) {
+                return SpellPhase.BEGIN;
+            }
+            if (context.currentPhase == SpellPhase.BEGIN && !context.beginFinished) {
+                return SpellPhase.BEGIN;
+            }
+            if (context.currentPhase == SpellPhase.END) {
+                return SpellPhase.END;
+            }
+            return context.currentPhase;
         }
         
         return null;

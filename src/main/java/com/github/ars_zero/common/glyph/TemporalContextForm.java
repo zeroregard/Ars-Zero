@@ -17,6 +17,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.IWrappedCaster;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
 import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -29,6 +30,8 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -119,22 +122,20 @@ public class TemporalContextForm extends AbstractCastMethod {
 
     private CastResolveType resolveFromStoredContext(Level level, LivingEntity caster, SpellContext spellContext,
             SpellResolver resolver) {
+        
         IWrappedCaster wrappedCaster = spellContext.getCaster();
         Player player = caster instanceof Player ? (Player) caster : null;
         ItemStack casterTool = spellContext.getCasterTool();
         
         IMultiPhaseCaster multiPhaseCaster = IMultiPhaseCaster.from(wrappedCaster, player, casterTool);
+        
         if (multiPhaseCaster == null) {
-            ArsZero.LOGGER.warn("[TemporalContextForm] resolveFromStoredContext: No IMultiPhaseCaster found - caster={}, wrappedCaster={}", 
-                caster != null ? caster.getClass().getSimpleName() : "null",
-                wrappedCaster != null ? wrappedCaster.getClass().getSimpleName() : "null");
             return CastResolveType.FAILURE;
         }
         
         MultiPhaseCastContext castContext = multiPhaseCaster.getCastContext();
+        
         if (castContext == null) {
-            ArsZero.LOGGER.warn("[TemporalContextForm] resolveFromStoredContext: MultiPhaseCastContext is null - multiPhaseCaster={}", 
-                multiPhaseCaster.getClass().getSimpleName());
             return CastResolveType.FAILURE;
         }
         
@@ -181,14 +182,29 @@ public class TemporalContextForm extends AbstractCastMethod {
         }
 
         SpellContext baseContext = spellContext.clone();
-        for (SpellResult result : resultsToUse) {
+        for (int i = 0; i < resultsToUse.size(); i++) {
+            SpellResult result = resultsToUse.get(i);
+            
             if (result == null || result.hitResult == null) {
                 continue;
             }
             
+            HitResult hitResultToUse = result.hitResult;
+            if (result.targetEntity != null) {
+                if (result.hitResult instanceof EntityHitResult entityHit) {
+                    Entity entityFromHit = entityHit.getEntity();
+                    if (entityFromHit == null || entityFromHit != result.targetEntity) {
+                        hitResultToUse = new EntityHitResult(result.targetEntity);
+                    }
+                } else {
+                    hitResultToUse = new EntityHitResult(result.targetEntity);
+                }
+            }
+            
             SpellResolver perTargetResolver = resolver.getNewResolver(baseContext.clone());
-            perTargetResolver.hitResult = result.hitResult;
-            perTargetResolver.onResolveEffect(level, result.hitResult);
+            perTargetResolver.hitResult = hitResultToUse;
+            perTargetResolver.onResolveEffect(level, hitResultToUse);
+            
             if (casterPos != null) {
                 triggerResolveEffects(spellContext, level, casterPos, casterYaw, casterPitch, result);
             }
@@ -265,11 +281,9 @@ public class TemporalContextForm extends AbstractCastMethod {
     }
     
     private static BlockEntity getBlockEntityFromCaster(IWrappedCaster wrappedCaster) {
-        try {
-            java.lang.reflect.Method getTileMethod = wrappedCaster.getClass().getMethod("getTile");
-            return (BlockEntity) getTileMethod.invoke(wrappedCaster);
-        } catch (Exception ignored) {
-            return null;
+        if (wrappedCaster instanceof TileCaster tileCaster) {
+            return tileCaster.getTile();
         }
+        return null;
     }
 }

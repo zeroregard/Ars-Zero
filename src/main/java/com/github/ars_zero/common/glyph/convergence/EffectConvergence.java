@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.spell.MultiPhaseCastContextRegistry;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.SpellResult;
@@ -23,12 +24,14 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectExplosion;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -79,7 +82,17 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
     }
 
     void updateTemporalContext(LivingEntity shooter, Entity entity, SpellContext spellContext, SpellResolver resolver) {
+        
         IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
+        
+        if (caster == null && spellContext.tag.contains("ars_zero:turret_pos") && spellContext.level instanceof ServerLevel serverLevel) {
+            long posLong = spellContext.tag.getLong("ars_zero:turret_pos");
+            BlockPos turretPos = BlockPos.of(posLong);
+            BlockEntity tile = serverLevel.getBlockEntity(turretPos);
+            if (tile instanceof IMultiPhaseCaster multiPhaseCaster) {
+                caster = multiPhaseCaster;
+            }
+        }
         if (caster == null) {
             return;
         }
@@ -94,7 +107,11 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
 
         SpellPhase phase = WrappedSpellResolver.extractPhase(resolver, context);
         if (phase == null) {
-            phase = context.currentPhase;
+            if (context.beginResults.isEmpty() && !context.beginFinished && context.currentPhase == SpellPhase.TICK) {
+                phase = SpellPhase.BEGIN;
+            } else {
+                phase = context.currentPhase;
+            }
         }
 
         SpellResult entityResult = SpellResult.fromHitResultWithCaster(
@@ -107,7 +124,9 @@ public class EffectConvergence extends AbstractEffect implements ISubsequentEffe
                 context.beginResults.clear();
                 context.beginResults.add(entityResult);
             }
-            case TICK -> context.tickResults.add(entityResult);
+            case TICK -> {
+                context.tickResults.add(entityResult);
+            }
             case END -> context.endResults.add(entityResult);
         }
     }

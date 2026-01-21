@@ -5,6 +5,7 @@ import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.IWrappedCaster;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -27,12 +28,10 @@ public interface IMultiPhaseCaster {
     }
     
     private static BlockEntity getBlockEntityFromCaster(IWrappedCaster wrappedCaster) {
-        try {
-            java.lang.reflect.Method getTileMethod = wrappedCaster.getClass().getMethod("getTile");
-            return (BlockEntity) getTileMethod.invoke(wrappedCaster);
-        } catch (Exception ignored) {
-            return null;
+        if (wrappedCaster instanceof TileCaster tileCaster) {
+            return tileCaster.getTile();
         }
+        return null;
     }
     
     static IMultiPhaseCaster from(com.hollingsworth.arsnouveau.api.spell.SpellContext spellContext, LivingEntity shooter) {

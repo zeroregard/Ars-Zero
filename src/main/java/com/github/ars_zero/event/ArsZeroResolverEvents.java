@@ -29,6 +29,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.IWrappedCaster;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -372,15 +375,20 @@ public class ArsZeroResolverEvents {
         }
         
         Player player = serverLevel != null ? serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId()) : null;
-        if (player == null) {
-            if (dimensionKey != null) {
-                capturedBlockStates.remove(dimensionKey);
-                blockGroupCreated.remove(dimensionKey);
+        IMultiPhaseCaster caster = null;
+        
+        if (player != null) {
+            caster = IMultiPhaseCaster.from(event.resolver.spellContext, player);
+        } else {
+            IWrappedCaster wrappedCaster = event.resolver.spellContext.getCaster();
+            if (wrappedCaster != null) {
+                BlockEntity tile = getBlockEntityFromCaster(wrappedCaster);
+                if (tile instanceof IMultiPhaseCaster multiPhaseCaster) {
+                    caster = multiPhaseCaster;
+                }
             }
-            return;
         }
         
-        IMultiPhaseCaster caster = IMultiPhaseCaster.from(event.resolver.spellContext, player);
         if (caster == null) {
             if (dimensionKey != null) {
                 capturedBlockStates.remove(dimensionKey);
@@ -404,5 +412,12 @@ public class ArsZeroResolverEvents {
         }
         
         context.beginFinished = true;
+    }
+    
+    private static BlockEntity getBlockEntityFromCaster(IWrappedCaster wrappedCaster) {
+        if (wrappedCaster instanceof TileCaster tileCaster) {
+            return tileCaster.getTile();
+        }
+        return null;
     }
 }

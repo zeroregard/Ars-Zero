@@ -1,8 +1,8 @@
 package com.github.ars_zero.common.block;
 
-import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.spell.MultiPhaseCastContextRegistry;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.registry.ModBlockEntities;
 import com.hollingsworth.arsnouveau.api.ANFakePlayer;
@@ -21,6 +21,7 @@ import com.hollingsworth.arsnouveau.common.network.PacketOneShotAnimation;
 import com.hollingsworth.arsnouveau.common.util.ANCodecs;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Position;
 import net.minecraft.nbt.CompoundTag;
@@ -59,7 +60,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
     private boolean wasPowered;
     private boolean casting;
     private int tickCooldown;
-    private int tickIntervalCounter;
+    private int tickCount = 0;
     private int tickDelayOffset = 0;
 
     private MultiPhaseCastContext castContext;
@@ -132,7 +133,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         endSpell = sanitizeSpell(end);
         casting = false;
         wasPowered = false;
-        tickIntervalCounter = 0;
+        tickCount = 0;
         this.tickDelayOffset = tickDelayOffset;
         tickCooldown = calculateTickCooldown(tickSpell) + tickDelayOffset;
         phaseHistory.clear();
@@ -181,7 +182,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
             ownerUUID = null;
         }
         casting = false;
-        tickIntervalCounter = 0;
+        tickCount = 0;
         tickCooldown = calculateTickCooldown(tickSpell) + tickDelayOffset;
         phaseHistory.clear();
         clearCastContext();
@@ -190,7 +191,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
 
     private void startCasting() {
         casting = true;
-        tickIntervalCounter = 0;
+        tickCount = 0;
         tickCooldown = calculateTickCooldown(tickSpell) + tickDelayOffset;
         initializeCastContext();
         castPhase(SpellPhase.BEGIN);
@@ -200,19 +201,25 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         if (tickSpell == null || tickSpell.isEmpty()) {
             return;
         }
-        if (tickIntervalCounter > 0) {
-            tickIntervalCounter--;
+        
+        if (currentCastingPhase == SpellPhase.BEGIN && castContext != null && !castContext.beginFinished) {
+            tickCount++;
             return;
         }
+        
+        tickCount++;
+        
+        if (tickCooldown > 0 && (tickCount - 1) % tickCooldown != 0) {
+            return;
+        }
+        
         castPhase(SpellPhase.TICK);
-        tickIntervalCounter = Math.max(0, tickCooldown);
     }
 
     private void finishCasting() {
         casting = false;
-        tickIntervalCounter = 0;
+        tickCount = 0;
         castPhase(SpellPhase.END);
-        clearCastContext();
     }
 
     private void castPhase(SpellPhase phase) {
@@ -230,6 +237,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
             case TICK -> tickSpell;
             case END -> endSpell;
         };
+        
         if (spell == null || spell.isEmpty()) {
             if (phase == SpellPhase.BEGIN && castContext != null) {
                 castContext.beginFinished = true;
@@ -238,7 +246,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         }
         
         spellCaster = (SpellCaster) spellCaster.setSpell(spell, 0);
-        super.shootSpell();
+        this.shootSpell();
         recordPhase(phase, spell);
     }
 
@@ -261,6 +269,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         }
         
         SpellPhase spellPhase = currentCastingPhase;
+        
         int animationArg = switch (spellPhase) {
             case BEGIN -> 0;
             case TICK -> 1;
@@ -275,11 +284,20 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         fakePlayer.setPos(pos.getX(), pos.getY(), pos.getZ());
         
         SpellContext spellContext = new SpellContext(serverLevel, spellCaster.getSpell(), fakePlayer, new TileCaster(this, SpellContext.CasterType.TURRET));
+        spellContext.tag.putLong("ars_zero:turret_pos", pos.asLong());
+        if (castContext != null) {
+            spellContext.tag.putUUID("ars_zero:cast_context_id", castContext.castId);
+        }
         SpellResolver resolver = new EntitySpellResolver(spellContext);
         
         resolver = wrapResolverForPhase(resolver, spellPhase);
         
-        if (resolver.castType != null) {
+        Direction direction = serverLevel.getBlockState(pos).getValue(BasicSpellTurret.FACING);
+        
+        if (resolver.castType != null && BasicSpellTurret.TURRET_BEHAVIOR_MAP.containsKey(resolver.castType)) {
+            fakePlayer.setPos(iposition.x(), iposition.y(), iposition.z());
+            BasicSpellTurret.TURRET_BEHAVIOR_MAP.get(resolver.castType).onCast(resolver, serverLevel, pos, fakePlayer, iposition, direction);
+        } else {
             fakePlayer.setPos(iposition.x(), iposition.y(), iposition.z());
             boolean canCast = resolver.canCast(fakePlayer);
             if (canCast) {
@@ -290,7 +308,6 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
 
     private void initializeCastContext() {
         if (ownerUUID == null) {
-            ArsZero.LOGGER.warn("[MultiphaseSpellTurretTile] initializeCastContext: ownerUUID is null!");
             return;
         }
         castContext = new MultiPhaseCastContext(ownerUUID, MultiPhaseCastContext.CastSource.TURRET);
@@ -300,9 +317,13 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         castContext.tickResults.clear();
         castContext.endResults.clear();
         castContext.createdAt = System.currentTimeMillis();
+        MultiPhaseCastContextRegistry.register(castContext);
     }
 
     private void clearCastContext() {
+        if (castContext != null) {
+            MultiPhaseCastContextRegistry.remove(castContext.castId);
+        }
         castContext = null;
     }
 

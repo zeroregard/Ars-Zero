@@ -22,20 +22,20 @@ import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-import java.util.UUID;
 import java.util.List;
+import java.util.UUID;
 
 @GameTestHolder(ArsZero.MOD_ID)
 @PrefixGameTestTemplate(false)
-public class MultiphaseSpellTurretTests {
+public class MultiphaseSpellTurretPhasesTest {
 
     public static void registerGameTests(RegisterGameTestsEvent event) {
-        if (TestRegistrationFilter.shouldRegister(MultiphaseSpellTurretTests.class)) {
-            event.register(MultiphaseSpellTurretTests.class);
+        if (TestRegistrationFilter.shouldRegister(MultiphaseSpellTurretPhasesTest.class)) {
+            event.register(MultiphaseSpellTurretPhasesTest.class);
         }
     }
 
-    @GameTest(batch = "MultiphaseSpellTurretTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "MultiphaseSpellTurretPhasesTest", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void multiphaseTurretCastsBeginTickEnd(GameTestHelper helper) {
         BlockPos turretPos = new BlockPos(3, 1, 3);
         BlockPos turretBase = turretPos.below();
@@ -86,4 +86,3 @@ public class MultiphaseSpellTurretTests {
         });
     }
 }
-
