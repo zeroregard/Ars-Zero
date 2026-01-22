@@ -50,12 +50,33 @@ public final class ChargerHelper {
             chargerEntity.setCasterUUID(shooter.getUUID());
             chargerEntity.setSourceOriginPos(shooter.blockPosition());
             chargerEntity.setLifespan(DEFAULT_LIFESPAN);
+            int convergenceCost = getConvergenceCost(spellContext, convergence);
+            chargerEntity.setInitialSourceAmount(convergenceCost);
             SoundEvent resolveSound = convergence.getResolveSoundFromStyle(spellContext);
             chargerEntity.setResolveSound(resolveSound);
             serverLevel.addFreshEntity(chargerEntity);
             convergence.updateTemporalContext(shooter, chargerEntity, spellContext, resolver);
             convergence.triggerResolveEffects(spellContext, serverLevel, pos);
         }
+    }
+
+    private static int getConvergenceCost(SpellContext spellContext, EffectConvergence convergence) {
+        int cost = 0;
+        com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart augmentedPart = null;
+        for (com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart part : spellContext.getSpell().recipe()) {
+            if (part == null) {
+                continue;
+            }
+            if (!(part instanceof com.hollingsworth.arsnouveau.api.spell.AbstractAugment)) {
+                augmentedPart = part;
+            }
+            if (augmentedPart == convergence && part instanceof com.hollingsworth.arsnouveau.api.spell.AbstractAugment augment) {
+                cost += augment.getCostForPart(augmentedPart);
+            } else if (part == convergence) {
+                cost += convergence.getCastingCost();
+            }
+        }
+        return Math.max(0, cost);
     }
 }
 

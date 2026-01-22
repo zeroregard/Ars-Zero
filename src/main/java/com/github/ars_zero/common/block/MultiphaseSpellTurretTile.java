@@ -20,6 +20,7 @@ import com.hollingsworth.arsnouveau.common.network.Networking;
 import com.hollingsworth.arsnouveau.common.network.PacketOneShotAnimation;
 import com.hollingsworth.arsnouveau.common.util.ANCodecs;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -355,6 +356,16 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         }
         if (!endSpell.isEmpty()) {
             tooltip.add(Component.literal("End: " + endSpell.getDisplayString()));
+        }
+        
+        if (level != null && level instanceof ServerLevel serverLevel) {
+            int totalCost = beginSpell.getCost() + tickSpell.getCost() + endSpell.getCost();
+            if (totalCost > 0) {
+                BlockPos pos = this.getBlockPos();
+                if (!SourceUtil.hasSourceNearby(pos, serverLevel, 10, totalCost)) {
+                    tooltip.add(Component.literal("Out of source").withStyle(ChatFormatting.RED));
+                }
+            }
         }
     }
 
