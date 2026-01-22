@@ -356,6 +356,8 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         JsonArray inputsArray = new JsonArray();
         inputsArray.add(item("ars_elemental:anima_essence"));
         inputsArray.add(item("minecraft:water_bucket"));
+        inputsArray.add(item("minecraft:wither_skeleton_skull"));
+        inputsArray.add(item("minecraft:wither_skeleton_skull"));
         json.add("inputs", inputsArray);
 
         JsonObject outputObj = new JsonObject();
