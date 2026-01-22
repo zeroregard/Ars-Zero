@@ -1,10 +1,11 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.SpellResult;
+import com.github.ars_zero.common.spell.WrappedSpellResolver;
 import com.github.ars_zero.registry.ModParticleTimelines;
 import com.hollingsworth.arsnouveau.api.particle.ParticleEmitter;
 import com.hollingsworth.arsnouveau.api.particle.configurations.properties.SoundProperty;
@@ -15,6 +16,7 @@ import com.hollingsworth.arsnouveau.api.spell.CastResolveType;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.IWrappedCaster;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
 import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
 import net.minecraft.core.BlockPos;
@@ -28,6 +30,8 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -118,39 +122,89 @@ public class TemporalContextForm extends AbstractCastMethod {
 
     private CastResolveType resolveFromStoredContext(Level level, LivingEntity caster, SpellContext spellContext,
             SpellResolver resolver) {
-        MultiPhaseCastContext castContext = null;
+        
+        IWrappedCaster wrappedCaster = spellContext.getCaster();
+        Player player = caster instanceof Player ? (Player) caster : null;
+        ItemStack casterTool = spellContext.getCasterTool();
+        
+        IMultiPhaseCaster multiPhaseCaster = IMultiPhaseCaster.from(wrappedCaster, player, casterTool);
+        
+        if (multiPhaseCaster == null) {
+            return CastResolveType.FAILURE;
+        }
+        
+        MultiPhaseCastContext castContext = multiPhaseCaster.getCastContext();
+        
+        if (castContext == null) {
+            return CastResolveType.FAILURE;
+        }
+        
         Vec3 casterPos = null;
         float casterYaw = 0;
         float casterPitch = 0;
-
-        if (caster instanceof Player playerCaster) {
-            casterPos = playerCaster.getEyePosition(1.0f);
-            casterYaw = playerCaster.getYRot();
-            casterPitch = playerCaster.getXRot();
-            ItemStack casterTool = spellContext.getCasterTool();
-            castContext = AbstractMultiPhaseCastDevice.findContextByStack(playerCaster, casterTool);
-        } else if (spellContext.getCaster() instanceof TileCaster tileCaster) {
-            BlockEntity tile = tileCaster.getTile();
-            if (tile instanceof MultiphaseSpellTurretTile turretTile) {
-                castContext = turretTile.getCastContext();
-                BlockPos tilePos = turretTile.getBlockPos();
-                casterPos = Vec3.atCenterOf(tilePos);
-                Direction facing = turretTile.getBlockState().getValue(BasicSpellTurret.FACING);
+        
+        BlockEntity tile = getBlockEntityFromCaster(wrappedCaster);
+        if (tile != null) {
+            BlockPos tilePos = tile.getBlockPos();
+            casterPos = Vec3.atCenterOf(tilePos);
+            if (tile.getBlockState().hasProperty(BasicSpellTurret.FACING)) {
+                Direction facing = tile.getBlockState().getValue(BasicSpellTurret.FACING);
                 casterYaw = directionToYaw(facing);
                 casterPitch = directionToPitch(facing);
             }
+        } else if (player != null) {
+            casterPos = player.getEyePosition(1.0f);
+            casterYaw = player.getYRot();
+            casterPitch = player.getXRot();
         }
 
-        if (castContext == null || castContext.beginResults.isEmpty()) {
+        SpellPhase phase = WrappedSpellResolver.extractPhase(resolver, castContext);
+        if (phase == null) {
+            phase = castContext.currentPhase;
+        }
+        
+        List<SpellResult> resultsToUse = new ArrayList<>();
+        
+        if (phase == SpellPhase.TICK || phase == SpellPhase.END) {
+            if (!castContext.beginResults.isEmpty()) {
+                resultsToUse.addAll(castContext.beginResults);
+            } else if (phase == SpellPhase.TICK && !castContext.beginFinished) {
+                return CastResolveType.FAILURE;
+            } else {
+                return CastResolveType.FAILURE;
+            }
+        } else {
+            return CastResolveType.FAILURE;
+        }
+
+        if (resultsToUse.isEmpty()) {
             return CastResolveType.FAILURE;
         }
 
         SpellContext baseContext = spellContext.clone();
-        List<SpellResult> resultsSnapshot = new ArrayList<>(castContext.beginResults);
-        for (SpellResult result : resultsSnapshot) {
+        for (int i = 0; i < resultsToUse.size(); i++) {
+            SpellResult result = resultsToUse.get(i);
+            
+            if (result == null || result.hitResult == null) {
+                continue;
+            }
+            
+            HitResult hitResultToUse = result.hitResult;
+            if (result.targetEntity != null) {
+                if (result.hitResult instanceof EntityHitResult entityHit) {
+                    Entity entityFromHit = entityHit.getEntity();
+                    if (entityFromHit == null || entityFromHit != result.targetEntity) {
+                        hitResultToUse = new EntityHitResult(result.targetEntity);
+                    }
+                } else {
+                    hitResultToUse = new EntityHitResult(result.targetEntity);
+                }
+            }
+            
             SpellResolver perTargetResolver = resolver.getNewResolver(baseContext.clone());
-            perTargetResolver.hitResult = result.hitResult;
-            perTargetResolver.onResolveEffect(level, result.hitResult);
+            perTargetResolver.hitResult = hitResultToUse;
+            perTargetResolver.onResolveEffect(level, hitResultToUse);
+            
             if (casterPos != null) {
                 triggerResolveEffects(spellContext, level, casterPos, casterYaw, casterPitch, result);
             }
@@ -224,5 +278,12 @@ public class TemporalContextForm extends AbstractCastMethod {
             case DOWN -> 90.0f;
             default -> 0.0f;
         };
+    }
+    
+    private static BlockEntity getBlockEntityFromCaster(IWrappedCaster wrappedCaster) {
+        if (wrappedCaster instanceof TileCaster tileCaster) {
+            return tileCaster.getTile();
+        }
+        return null;
     }
 }

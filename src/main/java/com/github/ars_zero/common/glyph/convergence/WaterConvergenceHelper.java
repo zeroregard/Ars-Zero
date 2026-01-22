@@ -5,6 +5,7 @@ import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.common.spell.SpellAugmentExtractor;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
+import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectConjureWater;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -23,7 +24,7 @@ public final class WaterConvergenceHelper {
   }
 
   public static void handleWaterConvergence(ServerLevel serverLevel, Vec3 pos, @Nullable LivingEntity shooter,
-      SpellContext spellContext, EffectConvergence convergence) {
+      SpellContext spellContext, SpellResolver resolver, EffectConvergence convergence) {
     Vec3 airPos = findNearestAirBlock(serverLevel, pos, 4);
     if (airPos == null) {
       return;
@@ -51,7 +52,7 @@ public final class WaterConvergenceHelper {
 
     entity.setLifespan(DEFAULT_LIFESPAN);
     serverLevel.addFreshEntity(entity);
-    convergence.updateTemporalContext(shooter, entity, spellContext);
+    convergence.updateTemporalContext(shooter, entity, spellContext, resolver);
     convergence.consumeFirstConjureWaterEffect(spellContext);
     convergence.triggerResolveEffects(spellContext, serverLevel, airPos);
   }

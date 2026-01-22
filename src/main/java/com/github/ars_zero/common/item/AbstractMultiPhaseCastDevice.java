@@ -8,11 +8,10 @@ import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.common.network.PacketSetMultiPhaseSpellCastingSlot;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
-import com.github.ars_zero.common.spell.MultiPhaseCastContextMap;
+import com.github.ars_zero.common.spell.MultiPhaseCastContextRegistry;
 import com.github.ars_zero.common.spell.SpellPhase;
-import com.github.ars_zero.common.spell.WrappedSpellResolver;
-import com.github.ars_zero.registry.ModAttachments;
 import com.hollingsworth.arsnouveau.api.item.ICasterTool;
 import com.hollingsworth.arsnouveau.api.item.IRadialProvider;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
@@ -41,7 +40,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -51,6 +49,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.component.CustomData;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
@@ -64,8 +63,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
-public abstract class AbstractMultiPhaseCastDevice extends Item implements ICasterTool, IRadialProvider {
+public abstract class AbstractMultiPhaseCastDevice extends Item implements ICasterTool, IRadialProvider, IMultiPhaseCaster {
 
     public static class ArsZeroSpellContext extends SpellContext {
         public final SpellPhase phase;
@@ -78,6 +78,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
 
     private final SpellTier tier;
     private static final String SLOT_TICK_DELAY_KEY = "ars_zero_tick_delays";
+    private static final String CAST_CONTEXT_ID_KEY = "ars_zero_cast_context_id";
     private static final int SLOT_COUNT = 10;
     private static final int DEFAULT_TICK_DELAY = 1;
     private static final int MAX_TICK_DELAY = 20;
@@ -94,44 +95,108 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         return tier;
     }
 
-    protected static MultiPhaseCastContext getOrCreateContext(Player player, MultiPhaseCastContext.CastSource source) {
-        MultiPhaseCastContextMap contextMap = player.getData(ModAttachments.CAST_CONTEXTS);
-        if (contextMap == null) {
-            contextMap = new MultiPhaseCastContextMap(player.getUUID());
-            player.setData(ModAttachments.CAST_CONTEXTS, contextMap);
-        }
-        return contextMap.getOrCreate(source);
-    }
-
-    public static MultiPhaseCastContext getCastContext(Player player, MultiPhaseCastContext.CastSource source) {
-        MultiPhaseCastContextMap contextMap = player.getData(ModAttachments.CAST_CONTEXTS);
-        if (contextMap == null) {
+    protected static MultiPhaseCastContext getOrCreateContext(Player player, ItemStack stack, MultiPhaseCastContext.CastSource source) {
+        if (stack.isEmpty()) {
             return null;
         }
-        return contextMap.get(source);
+        
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+        UUID castId = null;
+        if (customData != null) {
+            CompoundTag tag = customData.copyTag();
+            if (tag.hasUUID(CAST_CONTEXT_ID_KEY)) {
+                castId = tag.getUUID(CAST_CONTEXT_ID_KEY);
+                MultiPhaseCastContext existing = MultiPhaseCastContextRegistry.get(castId);
+                if (existing != null) {
+                    return existing;
+                }
+            }
+        }
+        
+        MultiPhaseCastContext context = new MultiPhaseCastContext(player.getUUID(), source);
+        context.castingStack = stack;
+        MultiPhaseCastContextRegistry.register(context);
+        
+        CompoundTag tag = customData != null ? customData.copyTag() : new CompoundTag();
+        tag.putUUID(CAST_CONTEXT_ID_KEY, context.castId);
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        return context;
     }
 
-    public static MultiPhaseCastContext findContextByStack(Player player, ItemStack stack) {
-        MultiPhaseCastContextMap contextMap = player.getData(ModAttachments.CAST_CONTEXTS);
-        if (contextMap == null || stack.isEmpty()) {
+    public static MultiPhaseCastContext findContextByStack(@Nullable Player player, ItemStack stack) {
+        if (stack.isEmpty()) {
             return null;
         }
-        for (MultiPhaseCastContext context : contextMap.getAll().values()) {
-            if (ItemStack.isSameItem(context.castingStack, stack)) {
-                return context;
-            }
+        
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+        if (customData == null) {
+            return null;
         }
-        return null;
+        
+        CompoundTag tag = customData.copyTag();
+        if (!tag.hasUUID(CAST_CONTEXT_ID_KEY)) {
+            return null;
+        }
+        
+        UUID castId = tag.getUUID(CAST_CONTEXT_ID_KEY);
+        return MultiPhaseCastContextRegistry.get(castId);
     }
 
-    public static void clearContext(Player player, MultiPhaseCastContext.CastSource source) {
-        MultiPhaseCastContextMap contextMap = player.getData(ModAttachments.CAST_CONTEXTS);
-        if (contextMap != null) {
-            contextMap.remove(source);
-            if (contextMap.isEmpty()) {
-                player.removeData(ModAttachments.CAST_CONTEXTS);
+    public static void clearContext(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+        if (customData == null) {
+            return;
+        }
+        
+        CompoundTag tag = customData.copyTag();
+        if (tag.hasUUID(CAST_CONTEXT_ID_KEY)) {
+            UUID castId = tag.getUUID(CAST_CONTEXT_ID_KEY);
+            MultiPhaseCastContextRegistry.remove(castId);
+            tag.remove(CAST_CONTEXT_ID_KEY);
+            if (tag.isEmpty()) {
+                stack.remove(DataComponents.CUSTOM_DATA);
+            } else {
+                stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
             }
         }
+    }
+
+    public static IMultiPhaseCaster asMultiPhaseCaster(Player player, ItemStack stack) {
+        return new ItemMultiPhaseCasterAdapter(player, stack);
+    }
+
+    private static class ItemMultiPhaseCasterAdapter implements IMultiPhaseCaster {
+        private final Player player;
+        private final ItemStack stack;
+
+        public ItemMultiPhaseCasterAdapter(Player player, ItemStack stack) {
+            this.player = player;
+            this.stack = stack;
+        }
+
+        @Override
+        public MultiPhaseCastContext getCastContext() {
+            return findContextByStack(player, stack);
+        }
+
+        @Override
+        public UUID getPlayerId() {
+            return player.getUUID();
+        }
+    }
+
+    @Override
+    public MultiPhaseCastContext getCastContext() {
+        throw new UnsupportedOperationException("Use asMultiPhaseCaster(Player, ItemStack) to get an IMultiPhaseCaster instance");
+    }
+
+    @Override
+    public UUID getPlayerId() {
+        throw new UnsupportedOperationException("Use asMultiPhaseCaster(Player, ItemStack) to get an IMultiPhaseCaster instance");
     }
 
     @Override
@@ -251,9 +316,8 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     }
 
     protected void beginPhase(Player player, ItemStack stack, MultiPhaseCastContext.CastSource source) {
-        MultiPhaseCastContext context = getOrCreateContext(player, source);
+        MultiPhaseCastContext context = getOrCreateContext(player, stack, source);
 
-        context.currentPhase = SpellPhase.BEGIN;
         context.isCasting = true;
         context.tickCount = 0;
         context.sequenceTick = 0;
@@ -265,6 +329,9 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         context.source = source;
         context.castingStack = stack;
 
+        IMultiPhaseCaster caster = asMultiPhaseCaster(player, stack);
+        caster.updateContextPhase(SpellPhase.BEGIN);
+
         executeSpell(player, stack, SpellPhase.BEGIN);
 
         if (player instanceof ServerPlayer serverPlayer) {
@@ -275,10 +342,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     public void tickPhase(Player player, ItemStack stack) {
         ItemStack castingStack = resolveCastingStack(player, stack);
         if (castingStack.isEmpty()) {
-            MultiPhaseCastContext context = findContextByStack(player, stack);
-            if (context != null) {
-                clearContext(player, context.source);
-            }
+            clearContext(stack);
             return;
         }
 
@@ -287,9 +351,8 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             return;
         }
 
-        context.currentPhase = SpellPhase.TICK;
-        context.tickCount++;
-        context.sequenceTick++;
+        IMultiPhaseCaster multiPhaseCaster = asMultiPhaseCaster(player, castingStack);
+        multiPhaseCaster.updateContextPhase(SpellPhase.TICK);
 
         AbstractCaster<?> caster = SpellCasterRegistry.from(castingStack);
         if (caster == null) {
@@ -321,16 +384,15 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         ItemStack castingStack = resolveCastingStack(player, stack);
         MultiPhaseCastContext context = findContextByStack(player, castingStack);
         if (castingStack.isEmpty()) {
-            if (context != null) {
-                clearContext(player, context.source);
-            }
+            clearContext(castingStack);
             return;
         }
         if (context == null || !context.isCasting) {
             return;
         }
 
-        context.currentPhase = SpellPhase.END;
+        IMultiPhaseCaster caster = asMultiPhaseCaster(player, castingStack);
+        caster.updateContextPhase(SpellPhase.END);
 
         AnchorEffect.restoreEntityPhysics(context);
 
@@ -340,21 +402,33 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             sendSpellFiredPacket(serverPlayer, SpellPhase.END, context.source);
         }
 
-        clearContext(player, context.source);
+        clearContext(castingStack);
     }
 
     private ItemStack resolveCastingStack(Player player, ItemStack stack) {
         if (stack != null && !stack.isEmpty()) {
-            return stack;
-        }
-        MultiPhaseCastContextMap contextMap = player.getData(ModAttachments.CAST_CONTEXTS);
-        if (contextMap != null) {
-            for (MultiPhaseCastContext context : contextMap.getAll().values()) {
-                if (!context.castingStack.isEmpty()) {
-                    return context.castingStack;
-                }
+            MultiPhaseCastContext context = findContextByStack(player, stack);
+            if (context != null && context.isCasting) {
+                return stack;
             }
         }
+        
+        ItemStack mainHand = player.getMainHandItem();
+        if (!mainHand.isEmpty()) {
+            MultiPhaseCastContext context = findContextByStack(player, mainHand);
+            if (context != null && context.isCasting) {
+                return mainHand;
+            }
+        }
+        
+        ItemStack offHand = player.getOffhandItem();
+        if (!offHand.isEmpty()) {
+            MultiPhaseCastContext context = findContextByStack(player, offHand);
+            if (context != null && context.isCasting) {
+                return offHand;
+            }
+        }
+        
         return ItemStack.EMPTY;
     }
 
@@ -409,12 +483,8 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         ArsZeroSpellContext context = new ArsZeroSpellContext(player.level(), spell, player, phase, stack);
         SpellResolver resolver = new SpellResolver(context);
 
-        if (phase == SpellPhase.BEGIN) {
-            MultiPhaseCastContext castContext = findContextByStack(player, stack);
-            if (castContext != null) {
-                resolver = new WrappedSpellResolver(resolver, player.getUUID(), SpellPhase.BEGIN, true);
-            }
-        }
+        IMultiPhaseCaster caster = asMultiPhaseCaster(player, stack);
+        resolver = caster.wrapResolverForPhase(resolver, phase);
 
         boolean canCast = resolver.canCast(player);
 
@@ -654,7 +724,8 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         boolean isMainHand = player.getUsedItemHand() == InteractionHand.MAIN_HAND;
 
         int tickCount = 0;
-        MultiPhaseCastContext context = getCastContext(player, source);
+        ItemStack stack = player.getUseItem();
+        MultiPhaseCastContext context = findContextByStack(player, stack);
         if (context != null) {
             tickCount = context.tickCount;
             if (context.source == MultiPhaseCastContext.CastSource.CURIO) {

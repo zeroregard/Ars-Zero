@@ -1,6 +1,5 @@
 package com.github.ars_zero.common.entity;
 
-import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.common.glyph.geometrize.EffectGeometrize;
 import com.github.ars_zero.common.network.Networking;

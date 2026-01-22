@@ -3,7 +3,7 @@ package com.github.ars_zero.common.glyph;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.util.BlockImmutabilityUtil;
@@ -26,7 +26,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -86,11 +85,11 @@ public class SelectEffect extends AbstractEffect {
         }
         
         if (!validBlocks.isEmpty()) {
-            createBlockGroup(serverLevel, validBlocks, player, spellContext);
+            createBlockGroup(serverLevel, validBlocks, player, spellContext, shooter);
         }
     }
     
-    private void createBlockGroup(ServerLevel level, List<BlockPos> blockPositions, Player player, SpellContext spellContext) {
+    private void createBlockGroup(ServerLevel level, List<BlockPos> blockPositions, Player player, SpellContext spellContext, LivingEntity shooter) {
         if (blockPositions.isEmpty()) {
             return;
         }
@@ -111,8 +110,8 @@ public class SelectEffect extends AbstractEffect {
         
         List<BlockPos> validPositions = new ArrayList<>(capturedStates.keySet());
         
-        ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
+        MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;
         
         List<BlockPos> filteredPositions = validPositions;
         if (context != null) {
@@ -152,7 +151,7 @@ public class SelectEffect extends AbstractEffect {
         level.addFreshEntity(blockGroup);
         
         if (context != null) {
-            SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, filteredPositions, player);
+            SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, filteredPositions, spellContext.getCaster());
             boolean hasExistingBlockGroups = context.beginResults.stream()
                 .anyMatch(r -> r != null && r.blockGroup != null);
             if (!hasExistingBlockGroups) {

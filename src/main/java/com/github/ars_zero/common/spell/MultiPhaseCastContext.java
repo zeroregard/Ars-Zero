@@ -1,6 +1,5 @@
 package com.github.ars_zero.common.spell;
 
-import com.github.ars_zero.common.spell.SpellPhase;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;

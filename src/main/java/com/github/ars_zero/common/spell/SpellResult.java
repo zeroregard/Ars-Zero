@@ -1,9 +1,13 @@
 package com.github.ars_zero.common.spell;
 
 import com.github.ars_zero.common.entity.BlockGroupEntity;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.IWrappedCaster;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -57,7 +61,7 @@ public class SpellResult {
         return fromHitResultWithCaster(hitResult, effectType, null);
     }
 
-    public static SpellResult fromHitResultWithCaster(HitResult hitResult, SpellEffectType effectType, Player caster) {
+    public static SpellResult fromHitResultWithCaster(HitResult hitResult, SpellEffectType effectType, IWrappedCaster caster) {
         Entity entity = null;
         BlockPos blockPos = null;
         Vec3 relativeOffset = null;
@@ -70,9 +74,10 @@ public class SpellResult {
 
             if (caster != null && entity != null) {
                 Vec3 entityPos = entity.position();
-                casterPosition = caster.getEyePosition(1.0f);
-                casterYaw = caster.getYRot();
-                casterPitch = caster.getXRot();
+                CasterInfo casterInfo = extractCasterInfo(caster);
+                casterPosition = casterInfo.position;
+                casterYaw = casterInfo.yaw;
+                casterPitch = casterInfo.pitch;
 
                 relativeOffset = calculateRelativeOffsetInLocalSpace(
                         casterPosition, entityPos, casterYaw, casterPitch);
@@ -81,9 +86,10 @@ public class SpellResult {
             blockPos = blockHit.getBlockPos();
 
             if (caster != null) {
-                casterPosition = caster.getEyePosition(1.0f);
-                casterYaw = caster.getYRot();
-                casterPitch = caster.getXRot();
+                CasterInfo casterInfo = extractCasterInfo(caster);
+                casterPosition = casterInfo.position;
+                casterYaw = casterInfo.yaw;
+                casterPitch = casterInfo.pitch;
 
                 Vec3 blockCenter = Vec3.atCenterOf(blockPos);
                 relativeOffset = calculateRelativeOffsetInLocalSpace(
@@ -95,17 +101,60 @@ public class SpellResult {
                 relativeOffset, casterYaw, casterPitch, casterPosition);
     }
 
+    private static CasterInfo extractCasterInfo(IWrappedCaster caster) {
+        Vec3 position;
+        float yaw = 0;
+        float pitch = 0;
+
+        if (caster instanceof LivingCaster livingCaster && livingCaster.livingEntity != null) {
+            LivingEntity living = livingCaster.livingEntity;
+            position = living.getEyePosition(1.0f);
+            yaw = living.getYRot();
+            pitch = living.getXRot();
+        } else if (caster instanceof TileCaster tileCaster) {
+            position = tileCaster.getPosition().add(0.5, 0.5, 0.5);
+            Direction facing = tileCaster.getFacingDirection();
+            yaw = directionToYaw(facing);
+            pitch = directionToPitch(facing);
+        } else {
+            position = caster.getPosition();
+        }
+
+        return new CasterInfo(position, yaw, pitch);
+    }
+
+    private static float directionToYaw(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 180.0f;
+            case SOUTH -> 0.0f;
+            case WEST -> 90.0f;
+            case EAST -> -90.0f;
+            default -> 0.0f;
+        };
+    }
+
+    private static float directionToPitch(Direction facing) {
+        return switch (facing) {
+            case UP -> -90.0f;
+            case DOWN -> 90.0f;
+            default -> 0.0f;
+        };
+    }
+
+    private record CasterInfo(Vec3 position, float yaw, float pitch) {}
+
     public static SpellResult fromBlockGroup(BlockGroupEntity blockGroup, List<BlockPos> blockPositions,
-            Player caster) {
+            IWrappedCaster caster) {
         Vec3 relativeOffset = null;
         float casterYaw = 0;
         float casterPitch = 0;
         Vec3 casterPosition = null;
 
         if (caster != null) {
-            casterPosition = caster.getEyePosition(1.0f);
-            casterYaw = caster.getYRot();
-            casterPitch = caster.getXRot();
+            CasterInfo casterInfo = extractCasterInfo(caster);
+            casterPosition = casterInfo.position;
+            casterYaw = casterInfo.yaw;
+            casterPitch = casterInfo.pitch;
 
             Vec3 groupCenter = blockGroup.position();
             relativeOffset = calculateRelativeOffsetInLocalSpace(

@@ -2,13 +2,10 @@ package com.github.ars_zero.common.item;
 
 import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
-import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
-import com.hollingsworth.arsnouveau.api.spell.SpellCaster;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
@@ -45,7 +42,8 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
         if (livingEntity instanceof Player player && !level.isClientSide) {
             int totalDuration = getUseDuration(stack, livingEntity);
             boolean isFirstTick = remainingUseDuration == totalDuration - 1;
-            MultiPhaseCastContext context = getCastContext(player, MultiPhaseCastContext.CastSource.ITEM);
+            IMultiPhaseCaster caster = AbstractMultiPhaseCastDevice.asMultiPhaseCaster(player, stack);
+            MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;
             boolean alreadyCasting = context != null && context.isCasting;
             if (isFirstTick && !alreadyCasting) {
                 beginPhase(player, stack, MultiPhaseCastContext.CastSource.ITEM);
@@ -59,7 +57,8 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (!level.isClientSide) {
-            MultiPhaseCastContext context = getCastContext(player, MultiPhaseCastContext.CastSource.ITEM);
+            IMultiPhaseCaster caster = AbstractMultiPhaseCastDevice.asMultiPhaseCaster(player, stack);
+            MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;
             boolean isCasting = context != null && context.isCasting;
             if (isCasting) {
                 return InteractionResultHolder.pass(stack);
@@ -74,7 +73,8 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
         if (level.isClientSide || !(livingEntity instanceof Player player)) {
             return;
         }
-        MultiPhaseCastContext context = getCastContext(player, MultiPhaseCastContext.CastSource.ITEM);
+        IMultiPhaseCaster caster = AbstractMultiPhaseCastDevice.asMultiPhaseCaster(player, stack);
+        MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;
         if (context == null || !context.isCasting) {
             return;
         }
