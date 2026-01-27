@@ -7,6 +7,8 @@ import com.github.ars_zero.common.glyph.augment.AugmentCube;
 import com.github.ars_zero.common.glyph.augment.AugmentFlatten;
 import com.github.ars_zero.common.glyph.augment.AugmentHollow;
 import com.github.ars_zero.common.glyph.augment.AugmentSphere;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAccelerate;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDecelerate;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.shape.GeometryDescription;
@@ -198,7 +200,9 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
         AugmentSphere.INSTANCE,
         AugmentCube.INSTANCE,
         AugmentFlatten.INSTANCE,
-        AugmentSensitive.INSTANCE);
+        AugmentSensitive.INSTANCE,
+        AugmentAccelerate.INSTANCE,
+        AugmentDecelerate.INSTANCE);
   }
 
   @Override
@@ -223,6 +227,10 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
         "Projects 3D shapes into 2D based on the caster's look direction.");
     map.put(AugmentSensitive.INSTANCE,
         "Processes blocks from bottom to top instead of top to bottom.");
+    map.put(AugmentAccelerate.INSTANCE,
+        "Increases the casting speed of the Golem. Speeding up makes the Golem faster.");
+    map.put(AugmentDecelerate.INSTANCE,
+        "Decreases the casting speed of the Golem. Slowing down makes it slower.");
   }
 
   public GeometryDescription resolveGeometryDescription(SpellContext context, @Nullable LivingEntity caster) {

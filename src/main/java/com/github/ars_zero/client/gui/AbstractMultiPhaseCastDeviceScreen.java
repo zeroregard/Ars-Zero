@@ -407,6 +407,11 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         }).withTooltip(Component.translatable("ars_nouveau.gui.notebook")));
 
         addAffinityButton();
+        
+        addRenderableWidget(
+                new GuiImageButton(bookLeft + 54, bookTop + 133, 16, 16, StaffGuiTextures.CASTING_STYLE_ICON, (b) -> {
+                    CastingStyleScreen.openScreen(this, selectedSpellSlot, deviceStack, this.guiHand);
+                }).withTooltip(Component.translatable("ars_zero.gui.casting_style")));
     }
 
     private void addAffinityButton() {

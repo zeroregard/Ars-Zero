@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.spell;
 
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -31,6 +32,8 @@ public class MultiPhaseCastContext {
     
     public double distanceMultiplier = 1.0;
     public int tickCooldown = 0;
+    
+    public Entity arcaneCircleEntity = null;
     
     public MultiPhaseCastContext(UUID playerId, CastSource source) {
         this.castId = UUID.randomUUID();

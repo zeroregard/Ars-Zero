@@ -50,6 +50,7 @@ public class StaffGuiTextures {
             "ars_nouveau",
             "textures/gui/documentation/doc_spellcrafting_icon_subform.png");
     public static final ResourceLocation STYLE_ICON = ArsZero.prefix("textures/gui/abstract/icon_style.png");
+    public static final ResourceLocation CASTING_STYLE_ICON = ArsZero.prefix("textures/gui/abstract/icon_casting.png");
     public static final ResourceLocation ICON_DISCORD = ArsZero.prefix("textures/gui/abstract/icon_discord.png");
     public static final ResourceLocation ICON_FAMILIARS = ArsZero.prefix("textures/gui/abstract/icon_familiars.png");
     public static final ResourceLocation ICON_DOCS = ArsZero.prefix("textures/gui/abstract/icon_docs.png");
