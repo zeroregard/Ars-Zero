@@ -196,7 +196,7 @@
   "ars_nouveau.spell.validation.adding.phase_restriction": "%s is not usable in this phase.",
   "ars_nouveau.spell.validation.exists.phase_restriction": "%s is not usable in this phase.",
 
-  "ars_zero.gui.casting_style": "Casting Style",
+  "ars_zero.gui.casting_style": "Casting Circle",
   "ars_zero.gui.casting_style.enabled": "Enabled",
   "ars_zero.gui.casting_style.bones": "Bones",
   "ars_zero.gui.casting_style.color": "Color",

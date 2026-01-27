@@ -37,6 +37,7 @@ import com.hollingsworth.arsnouveau.common.spell.validation.GlyphMaxTierValidato
 import com.hollingsworth.arsnouveau.common.spell.validation.ActionAugmentationPolicyValidator;
 import com.github.ars_zero.client.gui.validators.SpellPhaseValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.StartingCastMethodSpellValidator;
+import com.hollingsworth.arsnouveau.common.spell.validation.BaseSpellValidationError;
 import com.hollingsworth.arsnouveau.api.registry.FamiliarRegistry;
 import com.hollingsworth.arsnouveau.api.documentation.DocClientUtils;
 import com.hollingsworth.arsnouveau.client.gui.book.GuiFamiliarScreen;
@@ -729,6 +730,13 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             return;
         }
 
+        List<AbstractSpellPart> currentSpell = getCurrentPhaseSpell();
+        boolean isSpellEmpty = currentSpell.stream().allMatch(part -> part == null);
+
+        if (isSpellEmpty && !(glyphButton.abstractSpellPart instanceof AbstractCastMethod)) {
+            return;
+        }
+
         int currentPhaseIndex = currentPhase.ordinal();
         for (int i = 0; i < 10; i++) {
             int cellIndex = currentPhaseIndex * 10 + i;
@@ -737,7 +745,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             if (cell.getAbstractSpellPart() == null) {
                 cell.setAbstractSpellPart(glyphButton.abstractSpellPart);
 
-                List<AbstractSpellPart> currentSpell = getCurrentPhaseSpell();
                 if (i >= currentSpell.size()) {
                     while (currentSpell.size() <= i) {
                         currentSpell.add(null);
@@ -800,10 +807,20 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
                 slicedSpell.add(phaseList.get(i));
             }
         }
+        boolean isSpellEmpty = currentSpell.isEmpty();
         ISpellValidator validator = getSpellValidatorForCurrentPhase();
         for (GlyphButton glyphButton : glyphButtons) {
             glyphButton.validationErrors.clear();
             glyphButton.augmentingParent = lastEffect;
+            
+            if (isSpellEmpty && !(glyphButton.abstractSpellPart instanceof AbstractCastMethod)) {
+                glyphButton.validationErrors.add(new BaseSpellValidationError(
+                        0,
+                        glyphButton.abstractSpellPart,
+                        "starting_cast_method"
+                ));
+            }
+            
             AbstractSpellPart toAdd = GlyphRegistry.getSpellpartMap()
                     .get(glyphButton.abstractSpellPart.getRegistryName());
             slicedSpell.add(toAdd);

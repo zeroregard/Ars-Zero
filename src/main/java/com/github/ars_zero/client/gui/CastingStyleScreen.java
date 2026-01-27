@@ -145,6 +145,7 @@ public class CastingStyleScreen extends BaseBook {
             if (button instanceof CheckboxButton checkboxButton) {
                 checkboxButton.isSelected = style.isEnabled();
             }
+            updatePageVisibility();
         });
         enabledButton.isSelected = style.isEnabled();
         enabledButton.withTooltip(Component.translatable("ars_zero.gui.casting_style.enabled"));
@@ -385,9 +386,50 @@ public class CastingStyleScreen extends BaseBook {
     }
 
     private void updatePageVisibility() {
+        boolean enabled = style != null && style.isEnabled();
         if (enabledButton != null) {
             enabledButton.visible = isOnPage(0);
             enabledButton.active = isOnPage(0);
+        }
+        if (!enabled) {
+            if (symbolAutoButton != null) {
+                symbolAutoButton.visible = false;
+                symbolAutoButton.active = false;
+            }
+            for (RadioButton button : placementButtons) {
+                button.visible = false;
+                button.active = false;
+            }
+            for (ColorPresetButton button : colorPresetButtons) {
+                button.visible = false;
+                button.active = false;
+            }
+            if (speedSlider != null) {
+                speedSlider.visible = false;
+                speedSlider.active = false;
+            }
+            for (CheckboxButton outlineButton : outlineButtons) {
+                outlineButton.visible = false;
+                outlineButton.active = false;
+            }
+            updateSymbolSelectButtonState();
+            for (HeaderWidget header : headersByPage.values().stream().flatMap(List::stream).toList()) {
+                header.visible = false;
+                header.active = false;
+            }
+            if (leftArrow != null) {
+                leftArrow.visible = false;
+                leftArrow.active = false;
+            }
+            if (rightArrow != null) {
+                rightArrow.visible = false;
+                rightArrow.active = false;
+            }
+            for (GuiSpellSlot slot : hotkeySlots) {
+                slot.visible = false;
+                slot.active = false;
+            }
+            return;
         }
         if (symbolAutoButton != null) {
             symbolAutoButton.visible = isOnPage(1);
@@ -397,7 +439,6 @@ public class CastingStyleScreen extends BaseBook {
             button.visible = isOnPage(0);
             button.active = isOnPage(0);
         }
-
         for (ColorPresetButton button : colorPresetButtons) {
             button.visible = isOnPage(0);
             button.active = isOnPage(0);
@@ -406,19 +447,24 @@ public class CastingStyleScreen extends BaseBook {
             speedSlider.visible = isOnPage(0);
             speedSlider.active = isOnPage(0);
         }
-
         for (CheckboxButton outlineButton : outlineButtons) {
             outlineButton.visible = isOnPage(1);
             outlineButton.active = isOnPage(1);
         }
         updateSymbolSelectButtonState();
-
         updateHeaderVisibility();
-
-        leftArrow.visible = currentPage > 0;
-        leftArrow.active = currentPage > 0;
-        rightArrow.visible = currentPage < MAX_PAGE;
-        rightArrow.active = currentPage < MAX_PAGE;
+        if (leftArrow != null) {
+            leftArrow.visible = currentPage > 0;
+            leftArrow.active = currentPage > 0;
+        }
+        if (rightArrow != null) {
+            rightArrow.visible = currentPage < MAX_PAGE;
+            rightArrow.active = currentPage < MAX_PAGE;
+        }
+        for (GuiSpellSlot slot : hotkeySlots) {
+            slot.visible = true;
+            slot.active = true;
+        }
     }
 
     private void updateHeaderVisibility() {
@@ -533,6 +579,13 @@ public class CastingStyleScreen extends BaseBook {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         super.render(graphics, mouseX, mouseY, partialTicks);
+        boolean enabled = style != null && style.isEnabled();
+        if (!enabled) {
+            int leftX = bookLeft + LEFT_PAGE_OFFSET;
+            int y = bookTop + PAGE_TOP_OFFSET;
+            graphics.drawString(Minecraft.getInstance().font, Component.translatable("ars_zero.gui.casting_style.enabled"), leftX + 30, y + 23, 0x808080, false);
+            return;
+        }
         if (isOnPage(0)) {
             DocClientUtils.drawHeader(Component.translatable("ars_zero.gui.casting_style"), graphics, bookLeft + LEFT_PAGE_OFFSET, bookTop + PAGE_TOP_OFFSET, ONE_PAGE_WIDTH, mouseX, mouseY, partialTicks);
             renderPage0(graphics);
