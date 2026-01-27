@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -83,7 +84,7 @@ public class ArcaneCircleEntityRenderer extends GeoEntityRenderer<ArcaneCircleEn
         }
 
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, LightTexture.FULL_BRIGHT,
-                packedOverlay, color);
+                OverlayTexture.NO_OVERLAY, color);
     }
 
     private void hideChildBones(GeoBone bone) {
@@ -155,6 +156,6 @@ public class ArcaneCircleEntityRenderer extends GeoEntityRenderer<ArcaneCircleEn
             RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
             float partialTick, int packedLight, int packedOverlay, int color) {
         super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer, isReRender, partialTick,
-                LightTexture.FULL_BRIGHT, packedOverlay, color);
+                LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, color);
     }
 }

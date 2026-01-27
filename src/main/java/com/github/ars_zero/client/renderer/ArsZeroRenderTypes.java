@@ -81,14 +81,14 @@ public class ArsZeroRenderTypes extends RenderType {
             true,
             true,
             CompositeState.builder()
-                .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER)
+                .setShaderState(RENDERTYPE_EYES_SHADER)
                 .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
                 .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
                 .setLightmapState(NO_LIGHTMAP)
                 .setOverlayState(OVERLAY)
                 .setCullState(NO_CULL)
-                .setWriteMaskState(COLOR_DEPTH_WRITE)
-                .createCompositeState(true)
+                .setWriteMaskState(COLOR_WRITE)
+                .createCompositeState(false)
         );
     }
 
