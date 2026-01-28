@@ -1,23 +1,30 @@
 package com.github.ars_zero.client.renderer.entity;
 
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.renderer.ArsZeroRenderTypes;
 import com.github.ars_zero.common.entity.EffectBeamEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import java.util.Random;
 
 public class EffectBeamEntityRenderer extends EntityRenderer<EffectBeamEntity> {
 
     private static final double RAY_LENGTH = 300.0;
     private static final float BEAM_HALF_WIDTH = 0.05f;
+    private static final float SHAKE_RANGE = 0.03f;
+    private static final float ORIGIN_CIRCLE_SIZE = 0.15f;
+    private static final ResourceLocation BEAM_ORIGIN_CIRCLE_TEXTURE = ArsZero.prefix("textures/entity/beam_origin_circle.png");
 
     public EffectBeamEntityRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -53,6 +60,21 @@ public class EffectBeamEntityRenderer extends EntityRenderer<EffectBeamEntity> {
         float dy = (float) (hitPos.y - entity.getY());
         float dz = (float) (hitPos.z - entity.getZ());
 
+        poseStack.pushPose();
+        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+        poseStack.scale(ORIGIN_CIRCLE_SIZE, ORIGIN_CIRCLE_SIZE, ORIGIN_CIRCLE_SIZE);
+        PoseStack.Pose originPose = poseStack.last();
+        VertexConsumer originConsumer = buffer.getBuffer(ArsZeroRenderTypes.entityTranslucentEmissiveFullBright(BEAM_ORIGIN_CIRCLE_TEXTURE));
+        float cr = entity.getColorR();
+        float cg = entity.getColorG();
+        float cb = entity.getColorB();
+        float ca = 0.9f;
+        originConsumer.addVertex(originPose.pose(), -1, -1, 0).setUv(0, 0).setColor(cr, cg, cb, ca).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(originPose, 0f, 0f, 1f);
+        originConsumer.addVertex(originPose.pose(), -1, 1, 0).setUv(0, 1).setColor(cr, cg, cb, ca).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(originPose, 0f, 0f, 1f);
+        originConsumer.addVertex(originPose.pose(), 1, 1, 0).setUv(1, 1).setColor(cr, cg, cb, ca).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(originPose, 0f, 0f, 1f);
+        originConsumer.addVertex(originPose.pose(), 1, -1, 0).setUv(1, 0).setColor(cr, cg, cb, ca).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(originPose, 0f, 0f, 1f);
+        poseStack.popPose();
+
         Vec3 dir = new Vec3(dx, dy, dz);
         double len = dir.length();
         if (len > 1.0E-6) {
@@ -74,16 +96,23 @@ public class EffectBeamEntityRenderer extends EntityRenderer<EffectBeamEntity> {
             float g = entity.getColorG();
             float b = entity.getColorB();
             float alpha = 0.9f;
+            Random rand = new Random(entity.tickCount * 31L);
+            float s0x = (rand.nextFloat() - 0.5f) * 2.0f * SHAKE_RANGE;
+            float s0y = (rand.nextFloat() - 0.5f) * 2.0f * SHAKE_RANGE;
+            float s0z = (rand.nextFloat() - 0.5f) * 2.0f * SHAKE_RANGE;
+            float s1x = (rand.nextFloat() - 0.5f) * 2.0f * SHAKE_RANGE;
+            float s1y = (rand.nextFloat() - 0.5f) * 2.0f * SHAKE_RANGE;
+            float s1z = (rand.nextFloat() - 0.5f) * 2.0f * SHAKE_RANGE;
             PoseStack.Pose pose = poseStack.last();
             VertexConsumer consumer = buffer.getBuffer(ArsZeroRenderTypes.positionColorTranslucentNoCull());
-            float v0x = -rx - ux, v0y = -ry - uy, v0z = -rz - uz;
-            float v1x =  rx - ux, v1y =  ry - uy, v1z =  rz - uz;
-            float v2x =  rx + ux, v2y =  ry + uy, v2z =  rz + uz;
-            float v3x = -rx + ux, v3y = -ry + uy, v3z = -rz + uz;
-            float v4x = dx - rx - ux, v4y = dy - ry - uy, v4z = dz - rz - uz;
-            float v5x = dx + rx - ux, v5y = dy + ry - uy, v5z = dz + rz - uz;
-            float v6x = dx + rx + ux, v6y = dy + ry + uy, v6z = dz + rz + uz;
-            float v7x = dx - rx + ux, v7y = dy - ry + uy, v7z = dz - rz + uz;
+            float v0x = s0x - rx - ux, v0y = s0y - ry - uy, v0z = s0z - rz - uz;
+            float v1x = s0x + rx - ux, v1y = s0y + ry - uy, v1z = s0z + rz - uz;
+            float v2x = s0x + rx + ux, v2y = s0y + ry + uy, v2z = s0z + rz + uz;
+            float v3x = s0x - rx + ux, v3y = s0y - ry + uy, v3z = s0z - rz + uz;
+            float v4x = dx + s1x - rx - ux, v4y = dy + s1y - ry - uy, v4z = dz + s1z - rz - uz;
+            float v5x = dx + s1x + rx - ux, v5y = dy + s1y + ry - uy, v5z = dz + s1z + rz - uz;
+            float v6x = dx + s1x + rx + ux, v6y = dy + s1y + ry + uy, v6z = dz + s1z + rz + uz;
+            float v7x = dx + s1x - rx + ux, v7y = dy + s1y - ry + uy, v7z = dz + s1z - rz + uz;
             consumer.addVertex(pose, v0x, v0y, v0z).setColor(r, g, b, alpha);
             consumer.addVertex(pose, v1x, v1y, v1z).setColor(r, g, b, alpha);
             consumer.addVertex(pose, v2x, v2y, v2z).setColor(r, g, b, alpha);

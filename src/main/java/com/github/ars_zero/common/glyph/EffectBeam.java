@@ -226,7 +226,7 @@ public class EffectBeam extends AbstractEffect {
 
     @Override
     public String getBookDescription() {
-        return "Creates a beam that persists for a short time, dealing magic damage and spawning particles along its path. The beam is oriented in your look direction.";
+        return "Creates a beam that persists for a short time, dealing magic damage and spawning particles along its path. The beam is oriented in your look direction. Add effects after the beam to resolve them on each hit; mana is drained per hit as a percentage of the cost of those subsequent effects (augments on the beam itself do not count toward this cost).";
     }
 
     @Override

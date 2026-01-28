@@ -132,11 +132,11 @@ public class ArcaneCircleEntityRenderer extends GeoEntityRenderer<ArcaneCircleEn
         float opacity;
         if (animatable.isPendingDiscard()) {
             float remaining = animatable.getFadeOutLifespan() - 1 + partialTick;
-            opacity = Mth.clamp(remaining / ArcaneCircleEntity.FADE_TICKS, 0.0f, 1.0f);
+            opacity = Mth.clamp(remaining / ArcaneCircleEntity.FADE_TICKS, 0.0f, 0.80f);
         } else {
             int spawnTick = animatable.getSpawnTick();
             float ticksSinceSpawn = animatable.tickCount - spawnTick + partialTick;
-            opacity = Mth.clamp(ticksSinceSpawn / ArcaneCircleEntity.FADE_TICKS, 0.0f, 1.0f);
+            opacity = Mth.clamp(ticksSinceSpawn / ArcaneCircleEntity.FADE_TICKS, 0.0f, 0.80f);
         }
         return Color.ofRGBA(r / 255.0f, g / 255.0f, b / 255.0f, opacity);
     }

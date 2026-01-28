@@ -11,6 +11,8 @@ import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import org.jetbrains.annotations.Nullable;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -60,6 +62,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
     public EffectBeamEntity(EntityType<? extends EffectBeamEntity> entityType, Level level) {
         super(entityType, level);
         this.setNoGravity(true);
+        this.noPhysics = true;
         this.noCulling = true;
         this.setBoundingBox(new AABB(0, 0, 0, 0, 0, 0));
     }
@@ -74,6 +77,24 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         this.setColor(r, g, b);
         this.casterUUID = casterUUID;
         this.setDampened(dampened);
+    }
+
+    @Override
+    public boolean isPushable() {
+        return false;
+    }
+
+    @Override
+    public boolean canBeCollidedWith() {
+        return false;
+    }
+
+    @Override
+    public void push(double x, double y, double z) {
+    }
+
+    @Override
+    public void push(Entity entity) {
     }
 
     @Override
@@ -223,27 +244,35 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
             // serverLevel.sendParticles(particleOptions, origin.x, origin.y, origin.z, 2, 0.02, 0.02, 0.02, 0.0);
 
             if (hitResult.getType() != HitResult.Type.MISS) {
-                Vec3 hitPos = hitResult.getLocation();
-                serverLevel.sendParticles(particleOptions, hitPos.x, hitPos.y, hitPos.z, 4, 0.1, 0.1, 0.1, 0.02);
-
-                if (resolver != null) {
-                    if (forwardedSpellManaCost <= 0.0 || consumeManaAndAccumulate(serverLevel, forwardedSpellManaCost)) {
-                        SpellContext childContext = resolver.spellContext.clone().makeChildContext();
-                        SpellResolver childResolver = resolver.getNewResolver(childContext);
-                        childResolver.onResolveEffect(serverLevel, hitResult);
-                    }
+                boolean hitIsCaster = hitResult instanceof EntityHitResult entityHitResult
+                    && casterUUID != null
+                    && entityHitResult.getEntity().getUUID().equals(casterUUID);
+                if (hitIsCaster) {
+                    hitResult = BlockHitResult.miss(hitResult.getLocation(), Direction.getNearest(hitResult.getLocation().x, hitResult.getLocation().y, hitResult.getLocation().z), BlockPos.containing(hitResult.getLocation()));
                 }
+                if (hitResult.getType() != HitResult.Type.MISS) {
+                    Vec3 hitPos = hitResult.getLocation();
+                    serverLevel.sendParticles(particleOptions, hitPos.x, hitPos.y, hitPos.z, 4, 0.1, 0.1, 0.1, 0.02);
 
-                if (hitResult instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof LivingEntity target && !this.isDampened()) {
-                    float damage = BASE_DAMAGE;
-                    DamageSource damageSource = this.level().damageSources().magic();
-                    if (casterUUID != null) {
-                        Entity caster = serverLevel.getEntity(casterUUID);
-                        if (caster instanceof LivingEntity livingCaster) {
-                            damageSource = this.level().damageSources().indirectMagic(this, livingCaster);
+                    if (resolver != null) {
+                        if (forwardedSpellManaCost <= 0.0 || consumeManaAndAccumulate(serverLevel, forwardedSpellManaCost)) {
+                            SpellContext childContext = resolver.spellContext.clone().makeChildContext();
+                            SpellResolver childResolver = resolver.getNewResolver(childContext);
+                            childResolver.onResolveEffect(serverLevel, hitResult);
                         }
                     }
-                    target.hurt(damageSource, damage);
+
+                    if (hitResult instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof LivingEntity target && !this.isDampened()) {
+                        float damage = BASE_DAMAGE;
+                        DamageSource damageSource = this.level().damageSources().magic();
+                        if (casterUUID != null) {
+                            Entity caster = serverLevel.getEntity(casterUUID);
+                            if (caster instanceof LivingEntity livingCaster) {
+                                damageSource = this.level().damageSources().indirectMagic(this, livingCaster);
+                            }
+                        }
+                        target.hurt(damageSource, damage);
+                    }
                 }
             }
         }
