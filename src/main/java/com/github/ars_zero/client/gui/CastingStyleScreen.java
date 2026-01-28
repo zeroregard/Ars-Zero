@@ -36,7 +36,7 @@ public class CastingStyleScreen extends BaseBook {
         "alphabet", "circle_big", "circle_small", "circle_big_thick", "triangle_big"
     );
     private static final List<String> SYMBOL_ORDER = List.of(
-        "pentagram_big", "pentagram_small", "triangle_small",
+        "pentagram_big", "square_small", "triangle_small",
         "school_fire", "school_water", "school_earth", "school_air",
         "school_abjuration", "school_anima", "school_conjuration", "school_manipulation"
     );
@@ -48,7 +48,7 @@ public class CastingStyleScreen extends BaseBook {
         "circle_small", "Circle - Inner",
         "circle_big_thick", "Circle - Solid",
         "triangle_big", "Triangle",
-        "pentagram_small", "Pentagram - Small",
+        "square_small", "Square - Small",
         "pentagram_big", "Pentagram - Big",
         "triangle_small", "Triangle"
     );

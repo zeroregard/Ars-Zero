@@ -2,6 +2,7 @@ package com.github.ars_zero.client.renderer;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -128,6 +129,23 @@ public class ArsZeroRenderTypes extends RenderType {
                 .setCullState(NO_CULL)
                 .setWriteMaskState(COLOR_DEPTH_WRITE)
                 .createCompositeState(false)
+        );
+    }
+
+    public static RenderType positionColorTranslucentNoCull() {
+        return create(
+            "position_color_translucent_no_cull",
+            DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS,
+            1536,
+            true,
+            true,
+            CompositeState.builder()
+                .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
+                .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                .setCullState(NO_CULL)
+                .setWriteMaskState(COLOR_DEPTH_WRITE)
+                .createCompositeState(true)
         );
     }
 }

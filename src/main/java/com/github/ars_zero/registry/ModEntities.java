@@ -20,6 +20,7 @@ import com.github.ars_zero.common.entity.terrain.GeometryTerrainEntity;
 import com.github.ars_zero.common.entity.break_blocks.GeometryBreakEntity;
 import com.github.ars_zero.common.entity.GeometryEntity;
 import com.github.ars_zero.common.entity.ArcaneCircleEntity;
+import com.github.ars_zero.common.entity.EffectBeamEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -247,4 +248,15 @@ public class ModEntities {
                                                         .updateInterval(1)
                                                         .setShouldReceiveVelocityUpdates(false)
                                                         .build(ArsZero.MOD_ID + ":arcane_circle"));
+
+        public static final DeferredHolder<EntityType<?>, EntityType<EffectBeamEntity>> EFFECT_BEAM = ENTITIES
+                        .register(
+                                        "effect_beam",
+                                        () -> EntityType.Builder
+                                                        .<EffectBeamEntity>of(EffectBeamEntity::new, MobCategory.MISC)
+                                                        .sized(0.1f, 0.1f)
+                                                        .clientTrackingRange(384)
+                                                        .updateInterval(1)
+                                                        .setShouldReceiveVelocityUpdates(false)
+                                                        .build(ArsZero.MOD_ID + ":effect_beam"));
 }

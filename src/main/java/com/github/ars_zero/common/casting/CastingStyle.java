@@ -164,7 +164,7 @@ public class CastingStyle {
             style.activeBones.clear();
             ListTag bonesList = tag.getList("activeBones", Tag.TAG_STRING);
             Set<String> symbolBones = java.util.Set.of(
-                "pentagram_big", "pentagram_small", "triangle_small",
+                "pentagram_big", "square_small", "triangle_small",
                 "school_fire", "school_water", "school_earth", "school_air",
                 "school_abjuration", "school_anima", "school_conjuration", "school_manipulation"
             );

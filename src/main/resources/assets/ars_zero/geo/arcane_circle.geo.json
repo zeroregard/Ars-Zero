@@ -485,25 +485,6 @@
 					]
 				},
 				{
-					"name": "pentagram_small",
-					"parent": "symbols",
-					"pivot": [0, 0, 0],
-					"cubes": [
-						{
-							"origin": [-32, 0, -32],
-							"size": [64, 1, 64],
-							"uv": {
-								"north": {"uv": [0, 0], "uv_size": [0, 0]},
-								"east": {"uv": [0, 0], "uv_size": [0, 0]},
-								"south": {"uv": [0, 0], "uv_size": [0, 0]},
-								"west": {"uv": [0, 0], "uv_size": [0, 0]},
-								"up": {"uv": [256, 128], "uv_size": [-64, -64]},
-								"down": {"uv": [0, 0], "uv_size": [0, 0]}
-							}
-						}
-					]
-				},
-				{
 					"name": "triangle_small",
 					"parent": "symbols",
 					"pivot": [0, 0, 0],
@@ -573,7 +554,7 @@
 								"east": {"uv": [0, 0], "uv_size": [0, 0]},
 								"south": {"uv": [0, 0], "uv_size": [0, 0]},
 								"west": {"uv": [0, 0], "uv_size": [0, 0]},
-								"up": {"uv": [128, 192], "uv_size": [-64, -64]},
+								"up": {"uv": [64, 256], "uv_size": [-64, -64]},
 								"down": {"uv": [0, 0], "uv_size": [0, 0]}
 							}
 						}
@@ -592,7 +573,26 @@
 								"east": {"uv": [0, 0], "uv_size": [0, 0]},
 								"south": {"uv": [0, 0], "uv_size": [0, 0]},
 								"west": {"uv": [0, 0], "uv_size": [0, 0]},
-								"up": {"uv": [128, 192], "uv_size": [-64, -64]},
+								"up": {"uv": [256, 64], "uv_size": [-64, -64]},
+								"down": {"uv": [0, 0], "uv_size": [0, 0]}
+							}
+						}
+					]
+				},
+				{
+					"name": "school_conjuration",
+					"parent": "symbols",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{
+							"origin": [-32, 0, -32],
+							"size": [64, 1, 64],
+							"uv": {
+								"north": {"uv": [0, 0], "uv_size": [0, 0]},
+								"east": {"uv": [0, 0], "uv_size": [0, 0]},
+								"south": {"uv": [0, 0], "uv_size": [0, 0]},
+								"west": {"uv": [0, 0], "uv_size": [0, 0]},
+								"up": {"uv": [256, 128], "uv_size": [-64, -64]},
 								"down": {"uv": [0, 0], "uv_size": [0, 0]}
 							}
 						}
@@ -649,14 +649,14 @@
 								"east": {"uv": [0, 0], "uv_size": [0, 0]},
 								"south": {"uv": [0, 0], "uv_size": [0, 0]},
 								"west": {"uv": [0, 0], "uv_size": [0, 0]},
-								"up": {"uv": [128, 256], "uv_size": [-64, -64]},
+								"up": {"uv": [256, 256], "uv_size": [-64, -64]},
 								"down": {"uv": [0, 0], "uv_size": [0, 0]}
 							}
 						}
 					]
 				},
 				{
-					"name": "school_conjuration",
+					"name": "square_small",
 					"parent": "symbols",
 					"pivot": [0, 0, 0],
 					"cubes": [
@@ -668,7 +668,7 @@
 								"east": {"uv": [0, 0], "uv_size": [0, 0]},
 								"south": {"uv": [0, 0], "uv_size": [0, 0]},
 								"west": {"uv": [0, 0], "uv_size": [0, 0]},
-								"up": {"uv": [128, 192], "uv_size": [-64, -64]},
+								"up": {"uv": [128, 256], "uv_size": [-64, -64]},
 								"down": {"uv": [0, 0], "uv_size": [0, 0]}
 							}
 						}

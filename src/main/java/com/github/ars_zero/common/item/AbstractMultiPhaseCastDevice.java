@@ -459,7 +459,11 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         AnchorEffect.restoreEntityPhysics(context);
 
         if (context.arcaneCircleEntity != null && context.arcaneCircleEntity.isAlive()) {
-            context.arcaneCircleEntity.discard();
+            if (context.arcaneCircleEntity instanceof ArcaneCircleEntity arcaneCircle) {
+                arcaneCircle.scheduleDiscard();
+            } else {
+                context.arcaneCircleEntity.discard();
+            }
             context.arcaneCircleEntity = null;
         }
 

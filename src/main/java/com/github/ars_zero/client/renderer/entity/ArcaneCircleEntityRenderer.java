@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
@@ -27,7 +28,7 @@ public class ArcaneCircleEntityRenderer extends GeoEntityRenderer<ArcaneCircleEn
         "alphabet", "circle_big", "circle_small", "circle_big_thick", "triangle_big"
     );
     private static final Set<String> SYMBOL_BONES = Set.of(
-        "pentagram_big", "pentagram_small", "triangle_small",
+        "pentagram_big", "square_small", "triangle_small",
         "school_fire", "school_water", "school_earth", "school_air",
         "school_abjuration", "school_anima", "school_conjuration", "school_manipulation"
     );
@@ -128,7 +129,16 @@ public class ArcaneCircleEntityRenderer extends GeoEntityRenderer<ArcaneCircleEn
         int r = (colorInt >> 16) & 0xFF;
         int g = (colorInt >> 8) & 0xFF;
         int b = colorInt & 0xFF;
-        return Color.ofRGBA(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+        float opacity;
+        if (animatable.isPendingDiscard()) {
+            float remaining = animatable.getFadeOutLifespan() - 1 + partialTick;
+            opacity = Mth.clamp(remaining / ArcaneCircleEntity.FADE_TICKS, 0.0f, 1.0f);
+        } else {
+            int spawnTick = animatable.getSpawnTick();
+            float ticksSinceSpawn = animatable.tickCount - spawnTick + partialTick;
+            opacity = Mth.clamp(ticksSinceSpawn / ArcaneCircleEntity.FADE_TICKS, 0.0f, 1.0f);
+        }
+        return Color.ofRGBA(r / 255.0f, g / 255.0f, b / 255.0f, opacity);
     }
 
     @Override

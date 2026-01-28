@@ -23,12 +23,16 @@ import software.bernie.geckolib.animation.RawAnimation;
 import java.util.UUID;
 
 public class ArcaneCircleEntity extends AbstractConvergenceEntity {
+    public static final int FADE_TICKS = 5;
+
     private static final EntityDataAccessor<Integer> DATA_SPAWN_TICK = SynchedEntityData.defineId(ArcaneCircleEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_COLOR = SynchedEntityData.defineId(ArcaneCircleEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_Y_ROT = SynchedEntityData.defineId(ArcaneCircleEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_X_ROT = SynchedEntityData.defineId(ArcaneCircleEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<CompoundTag> DATA_STYLE = SynchedEntityData.defineId(ArcaneCircleEntity.class, EntityDataSerializers.COMPOUND_TAG);
     private static final EntityDataAccessor<String> DATA_SCHOOL_ID = SynchedEntityData.defineId(ArcaneCircleEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Boolean> DATA_PENDING_DISCARD = SynchedEntityData.defineId(ArcaneCircleEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_FADE_OUT_LIFESPAN = SynchedEntityData.defineId(ArcaneCircleEntity.class, EntityDataSerializers.INT);
 
     @Nullable
     private UUID casterUUID;
@@ -117,9 +121,36 @@ public class ArcaneCircleEntity extends AbstractConvergenceEntity {
         }
     }
 
+    public boolean isPendingDiscard() {
+        return this.entityData.get(DATA_PENDING_DISCARD);
+    }
+
+    public int getFadeOutLifespan() {
+        return this.entityData.get(DATA_FADE_OUT_LIFESPAN);
+    }
+
+    public void scheduleDiscard() {
+        if (!this.level().isClientSide && !this.entityData.get(DATA_PENDING_DISCARD)) {
+            this.entityData.set(DATA_PENDING_DISCARD, true);
+            this.entityData.set(DATA_FADE_OUT_LIFESPAN, FADE_TICKS);
+        }
+    }
+
     @Override
     public void tick() {
         super.tick();
+
+        if (!this.level().isClientSide) {
+            if (this.entityData.get(DATA_PENDING_DISCARD)) {
+                int lifespan = this.entityData.get(DATA_FADE_OUT_LIFESPAN) - 1;
+                this.entityData.set(DATA_FADE_OUT_LIFESPAN, lifespan);
+                if (lifespan <= 0) {
+                    this.discard();
+                    return;
+                }
+                return;
+            }
+        }
 
         if (this.level().isClientSide) {
             if (this.style != null && this.style.getPlacement() == CastingStyle.Placement.NEAR) {
@@ -135,7 +166,7 @@ public class ArcaneCircleEntity extends AbstractConvergenceEntity {
         if (this.level() instanceof ServerLevel serverLevel && this.casterUUID != null) {
             Player caster = serverLevel.getServer().getPlayerList().getPlayer(this.casterUUID);
             if (caster == null || !caster.isAlive()) {
-                this.discard();
+                this.scheduleDiscard();
                 return;
             }
 
@@ -217,6 +248,8 @@ public class ArcaneCircleEntity extends AbstractConvergenceEntity {
         builder.define(DATA_X_ROT, 0.0f);
         builder.define(DATA_STYLE, new CompoundTag());
         builder.define(DATA_SCHOOL_ID, "");
+        builder.define(DATA_PENDING_DISCARD, false);
+        builder.define(DATA_FADE_OUT_LIFESPAN, 0);
     }
 
     @Override
@@ -228,6 +261,10 @@ public class ArcaneCircleEntity extends AbstractConvergenceEntity {
         this.spawnTick = compound.getInt("spawnTick");
         if (compound.contains("style")) {
             this.style = CastingStyle.load(compound.getCompound("style"));
+        }
+        if (!this.level().isClientSide) {
+            this.entityData.set(DATA_PENDING_DISCARD, compound.getBoolean("pendingDiscard"));
+            this.entityData.set(DATA_FADE_OUT_LIFESPAN, compound.getInt("fadeOutLifespan"));
         }
     }
 
@@ -241,5 +278,7 @@ public class ArcaneCircleEntity extends AbstractConvergenceEntity {
         if (this.style != null) {
             compound.put("style", this.style.save());
         }
+        compound.putBoolean("pendingDiscard", this.entityData.get(DATA_PENDING_DISCARD));
+        compound.putInt("fadeOutLifespan", this.entityData.get(DATA_FADE_OUT_LIFESPAN));
     }
 }

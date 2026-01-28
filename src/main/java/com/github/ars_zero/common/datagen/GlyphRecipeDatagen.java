@@ -27,6 +27,7 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         addTemporalContextRecipe();
         addNearRecipe();
         addPushRecipe();
+        addEffectBeamRecipe();
         addConvergenceRecipe();
         addGeometrizeRecipe();
         addDiscardRecipe();
@@ -199,6 +200,27 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         json.add("output", outputObj);
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_push_effect.json"), json));
+    }
+
+    private void addEffectBeamRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 120);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("minecraft:ender_eye"));
+        inputsArray.add(item("ars_nouveau:source_gem"));
+        inputsArray.add(item("ars_nouveau:source_gem"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:effect_beam");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_effect_beam.json"), json));
     }
 
     private void addConvergenceRecipe() {

@@ -18,6 +18,7 @@ import com.github.ars_zero.client.renderer.entity.GeometryTerrainEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.GeometryBreakEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.GeometryEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.ExplosionControllerEntityRenderer;
+import com.github.ars_zero.client.renderer.entity.EffectBeamEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.ExplosionBurstProjectileRenderer;
 import com.github.ars_zero.client.renderer.entity.WaterConvergenceControllerEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.SourceJarChargerEntityRenderer;
@@ -77,6 +78,7 @@ public class ArsZeroClient {
                     GeometryEntityRenderer::new);
             EntityRenderers.register(ModEntities.EXPLOSION_BURST_PROJECTILE.get(),
                     ExplosionBurstProjectileRenderer::new);
+            EntityRenderers.register(ModEntities.EFFECT_BEAM.get(), EffectBeamEntityRenderer::new);
             EntityRenderers.register(ModEntities.SOURCE_JAR_CHARGER.get(), SourceJarChargerEntityRenderer::new);
             EntityRenderers.register(ModEntities.PLAYER_CHARGER.get(), PlayerChargerEntityRenderer::new);
             EntityRenderers.register(ModEntities.ARCANE_CIRCLE.get(), ArcaneCircleEntityRenderer::new);

@@ -23,6 +23,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtract;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -35,6 +36,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -136,6 +138,10 @@ public class AnchorEffect extends AbstractEffect {
                     targetPlayer.teleportTo(newPosition.x, newPosition.y, newPosition.z);
                     targetPlayer.setDeltaMovement(Vec3.ZERO);
                     targetPlayer.setNoGravity(true);
+                    if (spellStats.hasBuff(AugmentExtract.INSTANCE)) {
+                        targetPlayer.setYRot(yaw);
+                        targetPlayer.setXRot(pitch);
+                    }
                 } else {
                     if (target instanceof IAnchorLerp lerpEntity) {
                         Vec3 currentPos = target.position();
@@ -156,6 +162,11 @@ public class AnchorEffect extends AbstractEffect {
                     }
                     target.setDeltaMovement(Vec3.ZERO);
                     target.setNoGravity(true);
+
+                    if (spellStats.hasBuff(AugmentExtract.INSTANCE)) {
+                        target.setYRot(yaw);
+                        target.setXRot(pitch);
+                    }
 
                     if (target instanceof BaseVoxelEntity voxel) {
                         voxel.freezePhysics();
@@ -353,7 +364,13 @@ public class AnchorEffect extends AbstractEffect {
     @NotNull
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
-        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE, AugmentSensitive.INSTANCE);
+        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE, AugmentSensitive.INSTANCE, AugmentExtract.INSTANCE);
+    }
+
+    @Override
+    protected void addAugmentCostOverrides(Map<ResourceLocation, Integer> defaults) {
+        super.addAugmentCostOverrides(defaults);
+        defaults.put(AugmentExtract.INSTANCE.getRegistryName(), 0);
     }
 
     @Override
@@ -362,6 +379,7 @@ public class AnchorEffect extends AbstractEffect {
         map.put(AugmentAmplify.INSTANCE, "Increases the distance from the player");
         map.put(AugmentDampen.INSTANCE, "Decreases the distance from the player");
         map.put(AugmentSensitive.INSTANCE, "Freezes target in initial relative position");
+        map.put(AugmentExtract.INSTANCE, "Rotates the target to match your look direction");
     }
 
     @Override

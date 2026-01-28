@@ -48,6 +48,7 @@
   "entity.ars_zero.geometry_terrain_controller": "Earth Golem",
   "entity.ars_zero.geometry_controller": "Arcane Golem",
   "entity.ars_zero.arcane_circle": "Arcane Circle",
+  "entity.ars_zero.effect_beam": "Effect Beam",
 
   "gui.ars_zero.staff_title": "Creative Spell Staff",
   "gui.ars_zero.phase.begin": "Begin",
@@ -101,6 +102,14 @@
   "ars_nouveau.augment_desc.anchor_effect_glyph_amplify": "Increases the distance from the player",
   "ars_nouveau.augment_desc.anchor_effect_glyph_dampen": "Decreases the distance from the player",
   "ars_nouveau.augment_desc.anchor_effect_glyph_sensitive": "Freezes target in initial relative position",
+  "ars_nouveau.augment_desc.anchor_effect_glyph_extract": "Rotates the target to match your look direction",
+
+  "ars_nouveau.augment_desc.effect_beam_glyph_extend_time": "Increases the beam duration",
+  "ars_nouveau.augment_desc.effect_beam_glyph_sensitive": "Uses the look direction from when the spell was cast",
+  "ars_nouveau.augment_desc.effect_beam_glyph_split": "Splits the beam into multiples",
+  "ars_nouveau.augment_desc.effect_beam_glyph_dampen": "Stops the beam from hurting entities",
+  "ars_nouveau.augment_desc.effect_beam_glyph_aoe": "Increases the radius of the circle when using Split",
+  "ars_zero.glyph_name.beam_effect": "Effect Beam",
 
   "item.ars_zero.sustain_effect": "Sustain",
   "ars_zero.glyph_name.sustain_effect": "Sustain",
