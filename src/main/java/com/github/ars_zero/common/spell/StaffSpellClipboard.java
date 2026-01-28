@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.spell;
 
+import com.github.ars_zero.common.casting.CastingStyle;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.common.util.ANCodecs;
 import net.minecraft.core.component.DataComponents;
@@ -10,7 +11,7 @@ import net.minecraft.world.item.component.CustomData;
 
 import java.util.Optional;
 
-public record StaffSpellClipboard(Spell begin, Spell tick, Spell end, String name, int tickDelay) {
+public record StaffSpellClipboard(Spell begin, Spell tick, Spell end, String name, int tickDelay, CastingStyle castingStyle) {
 
     private static final String CLIPBOARD_KEY = "ars_zero_staff_clipboard";
     private static final String BEGIN_KEY = "begin";
@@ -18,6 +19,7 @@ public record StaffSpellClipboard(Spell begin, Spell tick, Spell end, String nam
     private static final String END_KEY = "end";
     private static final String NAME_KEY = "name";
     private static final String DELAY_KEY = "delay";
+    private static final String CASTING_STYLE_KEY = "castingStyle";
 
     public CompoundTag toTag() {
         CompoundTag tag = new CompoundTag();
@@ -28,6 +30,9 @@ public record StaffSpellClipboard(Spell begin, Spell tick, Spell end, String nam
             tag.putString(NAME_KEY, name);
         }
         tag.putInt(DELAY_KEY, tickDelay);
+        if (castingStyle != null) {
+            tag.put(CASTING_STYLE_KEY, castingStyle.save());
+        }
         return tag;
     }
 
@@ -40,6 +45,9 @@ public record StaffSpellClipboard(Spell begin, Spell tick, Spell end, String nam
         Spell end = getSpell(tag, END_KEY);
         String name = tag.contains(NAME_KEY, Tag.TAG_STRING) ? tag.getString(NAME_KEY) : "";
         int delay = tag.contains(DELAY_KEY, Tag.TAG_INT) ? tag.getInt(DELAY_KEY) : 1;
+        CastingStyle castingStyle = tag.contains(CASTING_STYLE_KEY, Tag.TAG_COMPOUND) 
+            ? CastingStyle.load(tag.getCompound(CASTING_STYLE_KEY)) 
+            : new CastingStyle();
         if ((begin == null || begin.isEmpty()) && (tick == null || tick.isEmpty()) && (end == null || end.isEmpty()) && name.isEmpty()) {
             return Optional.empty();
         }
@@ -48,7 +56,8 @@ public record StaffSpellClipboard(Spell begin, Spell tick, Spell end, String nam
             tick == null ? new Spell() : tick,
             end == null ? new Spell() : end,
             name,
-            delay
+            delay,
+            castingStyle
         ));
     }
 

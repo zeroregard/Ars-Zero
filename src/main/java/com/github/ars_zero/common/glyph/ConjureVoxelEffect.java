@@ -478,6 +478,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
     @Override
     protected void addDefaultAugmentLimits(java.util.Map<ResourceLocation, Integer> defaults) {
         defaults.put(AugmentAmplify.INSTANCE.getRegistryName(), MAX_AMPLIFY_LEVEL);
+        defaults.put(AugmentSplit.INSTANCE.getRegistryName(), 3);
     }
 
     @Override

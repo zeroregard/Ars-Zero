@@ -122,7 +122,7 @@ public class GeometryEntity extends AbstractGeometryProcessEntity implements IMa
 
     @Override
     protected float getBlocksPerTick() {
-        return 1.0f;
+        return 1.0f * (1.0f + accelerationModifier);
     }
 
     @Override

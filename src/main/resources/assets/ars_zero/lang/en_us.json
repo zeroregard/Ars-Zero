@@ -47,6 +47,8 @@
   "entity.ars_zero.geometry_break_controller": "Earth Golem",
   "entity.ars_zero.geometry_terrain_controller": "Earth Golem",
   "entity.ars_zero.geometry_controller": "Arcane Golem",
+  "entity.ars_zero.arcane_circle": "Arcane Circle",
+  "entity.ars_zero.effect_beam": "Effect Beam",
 
   "gui.ars_zero.staff_title": "Creative Spell Staff",
   "gui.ars_zero.phase.begin": "Begin",
@@ -100,6 +102,15 @@
   "ars_nouveau.augment_desc.anchor_effect_glyph_amplify": "Increases the distance from the player",
   "ars_nouveau.augment_desc.anchor_effect_glyph_dampen": "Decreases the distance from the player",
   "ars_nouveau.augment_desc.anchor_effect_glyph_sensitive": "Freezes target in initial relative position",
+  "ars_nouveau.augment_desc.anchor_effect_glyph_extract": "Rotates the target to match your look direction",
+
+  "ars_nouveau.augment_desc.effect_beam_glyph_extend_time": "Increases the beam duration",
+  "ars_nouveau.augment_desc.effect_beam_glyph_sensitive": "Uses the look direction from when the spell was cast",
+  "ars_nouveau.augment_desc.effect_beam_glyph_split": "Splits the beam into multiples",
+  "ars_nouveau.augment_desc.effect_beam_glyph_dampen": "Stops the beam from hurting entities",
+  "ars_nouveau.augment_desc.effect_beam_glyph_aoe": "Increases the radius of the circle when using Split",
+  "ars_zero.glyph_name.effect_beam": "Effect Beam",
+  "ars_zero.glyph_desc.effect_beam": "Compresses mana into a violent beam; resolves the remainder of the spell on each hit, draining mana per hit.",
 
   "item.ars_zero.sustain_effect": "Sustain",
   "ars_zero.glyph_name.sustain_effect": "Sustain",
@@ -189,7 +200,29 @@
   "ars_zero.glyph_desc.augment_flatten": "Projects a 3D shape into 2D based on the caster's look direction at resolve time.",
   "ars_nouveau.augment_desc.effect_geometrize_augment_flatten": "Projects 3D shapes into 2D based on the caster's look direction.",
   "ars_nouveau.augment_desc.effect_geometrize_augment_sensitive": "Processes blocks from bottom to top instead of top to bottom.",
+  "ars_nouveau.augment_desc.effect_geometrize_augment_accelerate": "Increases the casting speed of the Golem. Speeding up makes the Golem faster.",
+  "ars_nouveau.augment_desc.effect_geometrize_augment_decelerate": "Decreases the casting speed of the Golem. Slowing down makes it slower.",
 
   "ars_nouveau.spell.validation.adding.phase_restriction": "%s is not usable in this phase.",
-  "ars_nouveau.spell.validation.exists.phase_restriction": "%s is not usable in this phase."
+  "ars_nouveau.spell.validation.exists.phase_restriction": "%s is not usable in this phase.",
+
+  "ars_zero.gui.casting_style": "Casting Circle",
+  "ars_zero.gui.casting_style.enabled": "Enabled",
+  "ars_zero.gui.casting_style.bones": "Bones",
+  "ars_zero.gui.casting_style.color": "Color",
+  "ars_zero.gui.casting_style.color_r": "Red",
+  "ars_zero.gui.casting_style.color_g": "Green",
+  "ars_zero.gui.casting_style.color_b": "Blue",
+  "ars_zero.gui.casting_style.animate_in": "Animation",
+  "ars_zero.gui.casting_style.animate_in_ticks": "Fade In Ticks",
+  "ars_zero.gui.casting_style.speed": "Speed",
+  "ars_zero.gui.casting_style.placement": "Placement",
+  "ars_zero.gui.casting_style.placement.feet": "Feet",
+  "ars_zero.gui.casting_style.placement.near": "Near",
+  "ars_zero.gui.casting_style.symbol_auto": "Auto",
+  "ars_zero.gui.casting_style.symbol_auto.tooltip": "Replaces the inner symbol with that for each school of magic depending on current school of magic.",
+  "ars_zero.gui.casting_style.outlines": "Outlines",
+  "ars_zero.gui.casting_style.symbol": "Symbol",
+  "ars_zero.gui.casting_style.symbol.none": "None",
+  "ars_zero.gui.casting_style.symbol.auto": "Auto (from spell)"
 }
