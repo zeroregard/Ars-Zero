@@ -4,6 +4,7 @@ import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
 import com.github.ars_zero.common.glyph.DiscardEffect;
 import com.github.ars_zero.common.glyph.EffectConjureBlight;
 import com.github.ars_zero.common.glyph.NearForm;
+import com.github.ars_zero.common.glyph.EffectBeam;
 import com.github.ars_zero.common.glyph.PushEffect;
 import com.github.ars_zero.common.glyph.SelectEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
@@ -27,6 +28,7 @@ public class ModGlyphs {
     public static final AnchorEffect ANCHOR_EFFECT = new AnchorEffect();
     public static final SustainEffect SUSTAIN_EFFECT = new SustainEffect();
     public static final PushEffect PUSH_EFFECT = new PushEffect();
+    public static final EffectBeam EFFECT_BEAM = EffectBeam.INSTANCE;
     public static final ZeroGravityEffect ZERO_GRAVITY_EFFECT = new ZeroGravityEffect();
     public static final EffectConvergence EFFECT_CONVERGENCE = new EffectConvergence();
     public static final EffectGeometrize EFFECT_GEOMETRIZE = EffectGeometrize.INSTANCE;
@@ -45,6 +47,7 @@ public class ModGlyphs {
         GlyphRegistry.registerSpell(ANCHOR_EFFECT);
         GlyphRegistry.registerSpell(SUSTAIN_EFFECT);
         GlyphRegistry.registerSpell(PUSH_EFFECT);
+        GlyphRegistry.registerSpell(EFFECT_BEAM);
         GlyphRegistry.registerSpell(ZERO_GRAVITY_EFFECT);
         GlyphRegistry.registerSpell(EFFECT_CONVERGENCE);
         GlyphRegistry.registerSpell(EFFECT_GEOMETRIZE);

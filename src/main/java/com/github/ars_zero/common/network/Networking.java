@@ -55,6 +55,11 @@ public class Networking {
                                 PacketMoveEntity.CODEC,
                                 PacketMoveEntity::handle);
 
+                registrar.playToServer(
+                                PacketUpdateCastingStyle.TYPE,
+                                PacketUpdateCastingStyle.CODEC,
+                                PacketUpdateCastingStyle::handle);
+
                 if (FMLEnvironment.dist.isDedicatedServer()) {
                         registrar.playToClient(
                                         PacketStaffSpellFired.TYPE,
@@ -121,6 +126,10 @@ public class Networking {
         }
 
         public static void sendToServer(PacketMoveEntity packet) {
+                PacketDistributor.sendToServer(packet);
+        }
+
+        public static void sendToServer(PacketUpdateCastingStyle packet) {
                 PacketDistributor.sendToServer(packet);
         }
 }

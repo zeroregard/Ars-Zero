@@ -1,9 +1,12 @@
 package com.github.ars_zero.client.gui;
 
 import com.github.ars_zero.client.gui.buttons.StaffSpellSlot;
+import com.github.ars_zero.common.casting.CastingStyle;
+import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.network.ArsNouveauNetworking;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.common.network.PacketSetStaffClipboard;
+import com.github.ars_zero.common.network.PacketUpdateCastingStyle;
 import com.github.ars_zero.common.network.PacketUpdateTickDelay;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.StaffSpellClipboard;
@@ -78,13 +81,15 @@ public final class StaffSlotClipboardSupport {
         Spell endSpell = caster.getSpell(endPhysicalSlot);
         String name = caster.getSpellName(beginPhysicalSlot);
         int delay = host.getHostStoredDelayValueForSlot(logicalSlot);
+        CastingStyle castingStyle = AbstractMultiPhaseCastDevice.getCastingStyle(host.getHostDeviceStack(), logicalSlot);
 
         StaffSpellClipboard clipboard = new StaffSpellClipboard(
             beginSpell == null ? new Spell() : beginSpell,
             tickSpell == null ? new Spell() : tickSpell,
             endSpell == null ? new Spell() : endSpell,
             name,
-            delay
+            delay,
+            castingStyle
         );
 
         StaffSpellClipboardClient.set(clipboard);
@@ -113,6 +118,10 @@ public final class StaffSlotClipboardSupport {
 
         applyDelayToSlot(logicalSlot, clipboard.tickDelay());
         host.setHostSlotSpellName(logicalSlot, clipboard.name());
+
+        if (clipboard.castingStyle() != null) {
+            Networking.sendToServer(new PacketUpdateCastingStyle(logicalSlot, clipboard.castingStyle(), host.isHostCircletDevice()));
+        }
 
         if (logicalSlot == host.getHostSelectedSpellSlot()) {
             host.setHostSpellNameBoxValue(clipboard.name());

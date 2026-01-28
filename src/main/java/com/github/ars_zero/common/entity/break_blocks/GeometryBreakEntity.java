@@ -100,7 +100,7 @@ public class GeometryBreakEntity extends AbstractGeometryProcessEntity implement
 
   @Override
   protected float getBlocksPerTick() {
-    return BASE_BLOCKS_PER_TICK * BLOCK_BREAKING_SPEED_MULTIPLIER * (1.0f + earthPower / 2.0f);
+    return BASE_BLOCKS_PER_TICK * BLOCK_BREAKING_SPEED_MULTIPLIER * (1.0f + earthPower / 2.0f) * (1.0f + accelerationModifier);
   }
 
   @Override
