@@ -3,7 +3,6 @@ package com.github.ars_zero.client.renderer.tile;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
 import net.minecraft.resources.ResourceLocation;
-import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.model.GeoModel;
 
 public class MultiphaseTurretModel extends GeoModel<MultiphaseSpellTurretTile> {

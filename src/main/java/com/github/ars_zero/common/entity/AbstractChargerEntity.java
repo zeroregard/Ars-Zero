@@ -106,35 +106,50 @@ public abstract class AbstractChargerEntity extends Entity implements ILifespanE
         if (lifespan > 0) {
             this.lifespan--;
             this.entityData.set(DATA_LIFESPAN, this.lifespan);
-
-            if (casterUUID != null) {
-                LivingEntity caster = serverLevel.getEntity(casterUUID) instanceof LivingEntity living ? living : null;
-                if (caster != null && caster instanceof Player player) {
-                    IManaCap manaCap = CapabilityRegistry.getMana(caster);
-                    if (manaCap != null && manaCap.getCurrentMana() > 0) {
-                        if (canTransferMana()) {
-                            double manaRegen = ManaUtil.getManaRegen(player);
-                            int regenInterval = ServerConfig.REGEN_INTERVAL.get();
-                            double manaRegenPerTick = manaRegen / Math.max(1, regenInterval);
-                            double manaToDrain = manaRegenPerTick * 1.1;
-                            int manaToTransfer = (int) Math.floor(manaToDrain);
-
-                            if (manaToTransfer > 0) {
-                                double actualManaToDrain = Math.min(manaToDrain, manaCap.getCurrentMana());
-                                int actualManaToTransfer = (int) Math.floor(actualManaToDrain);
-
-                                if (actualManaToTransfer > 0 && transferMana(serverLevel, actualManaToTransfer)) {
-                                    manaCap.removeMana(actualManaToDrain);
-                                    spawnChargeParticles(serverLevel, getParticlePosition(), tickCount, manaRegen);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            onChargeTick(serverLevel);
         } else {
             this.discard();
         }
+    }
+
+    protected void onChargeTick(ServerLevel serverLevel) {
+        if (casterUUID == null) {
+            return;
+        }
+        LivingEntity caster = serverLevel.getEntity(casterUUID) instanceof LivingEntity living ? living : null;
+        if (!(caster instanceof Player player)) {
+            return;
+        }
+
+        IManaCap manaCap = CapabilityRegistry.getMana(caster);
+        if (manaCap == null || manaCap.getCurrentMana() <= 0) {
+            return;
+        }
+        if (!canTransferMana()) {
+            return;
+        }
+
+        double manaRegen = ManaUtil.getManaRegen(player);
+        int regenInterval = ServerConfig.REGEN_INTERVAL.get();
+        double manaRegenPerTick = manaRegen / Math.max(1, regenInterval);
+        double manaToDrain = manaRegenPerTick * 1.1;
+        int manaToTransfer = (int) Math.floor(manaToDrain);
+
+        if (manaToTransfer <= 0) {
+            return;
+        }
+
+        double actualManaToDrain = Math.min(manaToDrain, manaCap.getCurrentMana());
+        int actualManaToTransfer = (int) Math.floor(actualManaToDrain);
+        if (actualManaToTransfer <= 0) {
+            return;
+        }
+
+        if (!transferMana(serverLevel, actualManaToTransfer)) {
+            return;
+        }
+        manaCap.removeMana(actualManaToDrain);
+        spawnChargeParticles(serverLevel, getParticlePosition(), tickCount, manaRegen);
     }
 
     protected abstract boolean canTransferMana();

@@ -1,8 +1,8 @@
 package com.github.ars_zero.client.renderer;
 
-import com.github.ars_zero.ArsZero;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -73,6 +73,26 @@ public class ArsZeroRenderTypes extends RenderType {
         );
     }
 
+    public static RenderType entityTranslucentEmissiveFullBright(ResourceLocation texture) {
+        return create(
+            "entity_translucent_emissive_full_bright",
+            DefaultVertexFormat.NEW_ENTITY,
+            VertexFormat.Mode.QUADS,
+            1536,
+            true,
+            true,
+            CompositeState.builder()
+                .setShaderState(RENDERTYPE_EYES_SHADER)
+                .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                .setLightmapState(NO_LIGHTMAP)
+                .setOverlayState(OVERLAY)
+                .setCullState(NO_CULL)
+                .setWriteMaskState(COLOR_WRITE)
+                .createCompositeState(false)
+        );
+    }
+
     public static RenderType eyesNoCull(ResourceLocation texture) {
         return create(
             "eyes_no_cull",
@@ -109,6 +129,23 @@ public class ArsZeroRenderTypes extends RenderType {
                 .setCullState(NO_CULL)
                 .setWriteMaskState(COLOR_DEPTH_WRITE)
                 .createCompositeState(false)
+        );
+    }
+
+    public static RenderType positionColorTranslucentNoCull() {
+        return create(
+            "position_color_translucent_no_cull",
+            DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS,
+            1536,
+            true,
+            true,
+            CompositeState.builder()
+                .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
+                .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                .setCullState(NO_CULL)
+                .setWriteMaskState(COLOR_DEPTH_WRITE)
+                .createCompositeState(true)
         );
     }
 }

@@ -5,6 +5,7 @@ import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.common.spell.SpellAugmentExtractor;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
+import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectExplosion;
@@ -22,7 +23,7 @@ public final class ExplosionConvergenceHelper {
   }
 
   public static void handleExplosionConvergence(ServerLevel serverLevel, Vec3 pos, @Nullable LivingEntity shooter,
-      SpellStats spellStats, SpellContext spellContext, EffectConvergence convergence) {
+      SpellStats spellStats, SpellContext spellContext, SpellResolver resolver, EffectConvergence convergence) {
     ExplosionControllerEntity entity = new ExplosionControllerEntity(ModEntities.EXPLOSION_CONTROLLER.get(),
         serverLevel);
     entity.setPos(pos.x, pos.y, pos.z);
@@ -46,7 +47,7 @@ public final class ExplosionConvergenceHelper {
         entity.setResolveSound(resolveSound);
 
         serverLevel.addFreshEntity(entity);
-        convergence.updateTemporalContext(shooter, entity, spellContext);
+        convergence.updateTemporalContext(shooter, entity, spellContext, resolver);
         convergence.consumeEffect(spellContext, explosionEffect);
         convergence.triggerResolveEffects(spellContext, serverLevel, pos);
         break;

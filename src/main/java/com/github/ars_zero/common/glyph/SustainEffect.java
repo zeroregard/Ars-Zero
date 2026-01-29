@@ -14,6 +14,7 @@ import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,7 @@ public class SustainEffect extends AbstractEffect {
         
         Entity target = rayTraceResult.getEntity();
         
-        if (target == null || !target.isAlive()) {
+        if (target == null || target.isRemoved() || target.level() == null) {
             return;
         }
 
@@ -45,8 +46,13 @@ public class SustainEffect extends AbstractEffect {
     }
 
     @Override
+    public void onResolveBlock(BlockHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
+        if (world.isClientSide) return;
+    }
+
+    @Override
     public int getDefaultManaCost() {
-        return 30;
+        return 0;
     }
 
     @NotNull

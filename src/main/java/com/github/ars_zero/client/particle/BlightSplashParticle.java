@@ -16,9 +16,9 @@ public class BlightSplashParticle extends TextureSheetParticle {
         this.gravity = 0.04f;
         this.lifetime = (int)(4.0D / (Math.random() * 0.8D + 0.2D));
         this.quadSize = 0.2f + (float)(Math.random() * 0.1);
-        this.rCol = (float) Math.random() * 0.15f;
-        this.gCol = 0.6f + (float) Math.random() * 0.3f;
-        this.bCol = (float) Math.random() * 0.15f;
+        this.rCol = 0.0706f + (float)(Math.random() * 0.02f);
+        this.gCol = 0.2118f + (float)(Math.random() * 0.02f);
+        this.bCol = 0.1176f + (float)(Math.random() * 0.02f);
         this.alpha = 1.0f;
     }
     

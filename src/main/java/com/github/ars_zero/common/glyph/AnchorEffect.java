@@ -7,7 +7,7 @@ import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.entity.ILifespanExtendable;
 import com.github.ars_zero.common.entity.IAnchorLerp;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
@@ -20,21 +20,23 @@ import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtract;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -72,9 +74,12 @@ public class AnchorEffect extends AbstractEffect {
         if (!(world instanceof ServerLevel serverLevel))
             return;
 
-        ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
-
+        IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
+        if (caster == null) {
+            return;
+        }
+        
+        MultiPhaseCastContext castContext = caster.getCastContext();
         if (castContext == null || castContext.beginResults.isEmpty()) {
             return;
         }
@@ -133,6 +138,10 @@ public class AnchorEffect extends AbstractEffect {
                     targetPlayer.teleportTo(newPosition.x, newPosition.y, newPosition.z);
                     targetPlayer.setDeltaMovement(Vec3.ZERO);
                     targetPlayer.setNoGravity(true);
+                    if (spellStats.hasBuff(AugmentExtract.INSTANCE)) {
+                        targetPlayer.setYRot(yaw);
+                        targetPlayer.setXRot(pitch);
+                    }
                 } else {
                     if (target instanceof IAnchorLerp lerpEntity) {
                         Vec3 currentPos = target.position();
@@ -153,6 +162,11 @@ public class AnchorEffect extends AbstractEffect {
                     }
                     target.setDeltaMovement(Vec3.ZERO);
                     target.setNoGravity(true);
+
+                    if (spellStats.hasBuff(AugmentExtract.INSTANCE)) {
+                        target.setYRot(yaw);
+                        target.setXRot(pitch);
+                    }
 
                     if (target instanceof BaseVoxelEntity voxel) {
                         voxel.freezePhysics();
@@ -278,7 +292,7 @@ public class AnchorEffect extends AbstractEffect {
                             SpellResult placedBlockResult = SpellResult.fromHitResultWithCaster(
                                     blockHit,
                                     SpellEffectType.RESOLVED,
-                                    player);
+                                    LivingCaster.from(player));
                             newResults.add(placedBlockResult);
                         }
                     }
@@ -306,9 +320,12 @@ public class AnchorEffect extends AbstractEffect {
         if (!(shooter instanceof Player player))
             return;
 
-        ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext castContext = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
-
+        IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
+        if (caster == null) {
+            return;
+        }
+        
+        MultiPhaseCastContext castContext = caster.getCastContext();
         if (castContext == null || castContext.beginResults.isEmpty()) {
             return;
         }
@@ -347,7 +364,13 @@ public class AnchorEffect extends AbstractEffect {
     @NotNull
     @Override
     public Set<AbstractAugment> getCompatibleAugments() {
-        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE, AugmentSensitive.INSTANCE);
+        return Set.of(AugmentAmplify.INSTANCE, AugmentDampen.INSTANCE, AugmentSensitive.INSTANCE, AugmentExtract.INSTANCE);
+    }
+
+    @Override
+    protected void addAugmentCostOverrides(Map<ResourceLocation, Integer> defaults) {
+        super.addAugmentCostOverrides(defaults);
+        defaults.put(AugmentExtract.INSTANCE.getRegistryName(), 0);
     }
 
     @Override
@@ -356,6 +379,7 @@ public class AnchorEffect extends AbstractEffect {
         map.put(AugmentAmplify.INSTANCE, "Increases the distance from the player");
         map.put(AugmentDampen.INSTANCE, "Decreases the distance from the player");
         map.put(AugmentSensitive.INSTANCE, "Freezes target in initial relative position");
+        map.put(AugmentExtract.INSTANCE, "Rotates the target to match your look direction");
     }
 
     @Override

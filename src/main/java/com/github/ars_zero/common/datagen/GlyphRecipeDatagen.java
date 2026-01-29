@@ -27,6 +27,7 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         addTemporalContextRecipe();
         addNearRecipe();
         addPushRecipe();
+        addEffectBeamRecipe();
         addConvergenceRecipe();
         addGeometrizeRecipe();
         addDiscardRecipe();
@@ -34,6 +35,7 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         addAugmentSphereRecipe();
         addAugmentHollowRecipe();
         addAugmentFlattenRecipe();
+        addConjureBlightRecipe();
 
         for (FileObj fileObj : files) {
             saveStable(pOutput, fileObj.element, fileObj.path);
@@ -200,6 +202,27 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_push_effect.json"), json));
     }
 
+    private void addEffectBeamRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 120);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("minecraft:ender_eye"));
+        inputsArray.add(item("ars_nouveau:source_gem"));
+        inputsArray.add(item("ars_nouveau:source_gem"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:effect_beam");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_effect_beam.json"), json));
+    }
+
     private void addConvergenceRecipe() {
         JsonObject json = new JsonObject();
         json.addProperty("type", "ars_nouveau:glyph");
@@ -345,6 +368,26 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         json.add("output", outputObj);
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_augment_flatten.json"), json));
+    }
+
+    private void addConjureBlightRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 100);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("ars_elemental:anima_essence"));
+        inputsArray.add(item("minecraft:water_bucket"));
+        inputsArray.add(item("minecraft:wither_skeleton_skull"));
+        inputsArray.add(item("minecraft:wither_skeleton_skull"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:effect_conjure_blight");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_effect_conjure_blight.json"), json));
     }
 
     private static JsonObject item(String id) {

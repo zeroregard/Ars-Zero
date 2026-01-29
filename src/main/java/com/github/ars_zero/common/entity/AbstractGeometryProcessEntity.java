@@ -1,6 +1,5 @@
 package com.github.ars_zero.common.entity;
 
-import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.common.glyph.geometrize.EffectGeometrize;
 import com.github.ars_zero.common.network.Networking;
@@ -98,6 +97,7 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
     protected SpellResolver spellResolver = null;
 
     protected boolean sensitive = false;
+    protected float accelerationModifier = 0.0f;
 
     protected boolean building = false;
     protected boolean paused = false;
@@ -303,6 +303,7 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
         this.spellContext = context;
         this.spellResolver = resolver;
         this.sensitive = hasSensitiveAugment(context);
+        this.accelerationModifier = computeAccelerationModifier(context);
     }
 
     private boolean hasSensitiveAugment(@Nullable SpellContext context) {
@@ -331,6 +332,37 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
         }
 
         return false;
+    }
+
+    private float computeAccelerationModifier(@Nullable SpellContext context) {
+        if (context == null || context.getSpell() == null) {
+            return 0.0f;
+        }
+
+        var recipe = context.getSpell().unsafeList();
+        boolean foundGeometrize = false;
+        float modifier = 0.0f;
+
+        for (AbstractSpellPart part : recipe) {
+            if (!foundGeometrize) {
+                if (part instanceof AbstractEffect effect && effect == EffectGeometrize.INSTANCE) {
+                    foundGeometrize = true;
+                }
+                continue;
+            }
+
+            if (part instanceof AbstractEffect) {
+                break;
+            }
+
+            if (part == com.hollingsworth.arsnouveau.common.spell.augment.AugmentAccelerate.INSTANCE) {
+                modifier += 1.0f;
+            } else if (part == com.hollingsworth.arsnouveau.common.spell.augment.AugmentDecelerate.INSTANCE) {
+                modifier -= 0.5f;
+            }
+        }
+
+        return modifier;
     }
 
     @Nullable
@@ -636,7 +668,7 @@ public abstract class AbstractGeometryProcessEntity extends AbstractConvergenceE
     }
 
     protected float getBlocksPerTick() {
-        return BASE_BLOCKS_PER_TICK;
+        return BASE_BLOCKS_PER_TICK * (1.0f + accelerationModifier);
     }
 
     protected int processBlocks(ServerLevel level, int maxCount) {

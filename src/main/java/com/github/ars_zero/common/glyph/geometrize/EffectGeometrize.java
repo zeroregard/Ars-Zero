@@ -7,8 +7,10 @@ import com.github.ars_zero.common.glyph.augment.AugmentCube;
 import com.github.ars_zero.common.glyph.augment.AugmentFlatten;
 import com.github.ars_zero.common.glyph.augment.AugmentHollow;
 import com.github.ars_zero.common.glyph.augment.AugmentSphere;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAccelerate;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDecelerate;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.shape.GeometryDescription;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
@@ -33,8 +35,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -120,12 +120,12 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
   }
 
   public void updateTemporalContext(LivingEntity shooter, Entity entity, SpellContext spellContext) {
-    if (!(shooter instanceof Player player)) {
+    IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
+    if (caster == null) {
       return;
     }
-
-    ItemStack casterTool = spellContext.getCasterTool();
-    MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+    
+    MultiPhaseCastContext context = caster.getCastContext();
     if (context == null) {
       return;
     }
@@ -133,7 +133,7 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
     SpellResult entityResult = SpellResult.fromHitResultWithCaster(
         new net.minecraft.world.phys.EntityHitResult(entity),
         SpellEffectType.RESOLVED,
-        player);
+        spellContext.getCaster());
 
     if (entity instanceof AbstractGeometryProcessEntity geometryEntity) {
       entityResult.userOffset = geometryEntity.getUserOffset();
@@ -200,7 +200,9 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
         AugmentSphere.INSTANCE,
         AugmentCube.INSTANCE,
         AugmentFlatten.INSTANCE,
-        AugmentSensitive.INSTANCE);
+        AugmentSensitive.INSTANCE,
+        AugmentAccelerate.INSTANCE,
+        AugmentDecelerate.INSTANCE);
   }
 
   @Override
@@ -225,6 +227,10 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
         "Projects 3D shapes into 2D based on the caster's look direction.");
     map.put(AugmentSensitive.INSTANCE,
         "Processes blocks from bottom to top instead of top to bottom.");
+    map.put(AugmentAccelerate.INSTANCE,
+        "Increases the casting speed of the Golem. Speeding up makes the Golem faster.");
+    map.put(AugmentDecelerate.INSTANCE,
+        "Decreases the casting speed of the Golem. Slowing down makes it slower.");
   }
 
   public GeometryDescription resolveGeometryDescription(SpellContext context, @Nullable LivingEntity caster) {

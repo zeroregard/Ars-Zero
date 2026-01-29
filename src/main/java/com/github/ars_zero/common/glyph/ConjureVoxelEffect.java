@@ -10,8 +10,7 @@ import com.github.ars_zero.common.entity.BlightVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
@@ -35,14 +34,13 @@ import com.hollingsworth.arsnouveau.common.spell.effect.EffectWindshear;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectColdSnap;
 import alexthw.ars_elemental.common.glyphs.EffectDischarge;
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
-import alexthw.ars_elemental.common.glyphs.EffectEnvenom;
+import com.github.ars_zero.common.glyph.EffectConjureBlight;
 import com.alexthw.sauce.registry.ModRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -68,7 +66,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         EffectConjureTerrain.INSTANCE.getRegistryName(),
         EffectColdSnap.INSTANCE.getRegistryName(),
         EffectDischarge.INSTANCE.getRegistryName(),
-        EffectEnvenom.INSTANCE.getRegistryName()
+        EffectConjureBlight.INSTANCE.getRegistryName()
     };
     
     static {
@@ -78,7 +76,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         VARIANT_CACHE.put(EffectConjureTerrain.INSTANCE, VoxelVariant.STONE);
         VARIANT_CACHE.put(EffectColdSnap.INSTANCE, VoxelVariant.ICE);
         VARIANT_CACHE.put(EffectDischarge.INSTANCE, VoxelVariant.LIGHTNING);
-        VARIANT_CACHE.put(EffectEnvenom.INSTANCE, VoxelVariant.BLIGHT);
+        VARIANT_CACHE.put(EffectConjureBlight.INSTANCE, VoxelVariant.BLIGHT);
     }
 
     public ConjureVoxelEffect() {
@@ -389,12 +387,12 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
     }
     
     private void updateTemporalContext(LivingEntity shooter, BaseVoxelEntity voxel, SpellContext spellContext) {
-        if (!(shooter instanceof net.minecraft.world.entity.player.Player player)) {
+        IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
+        if (caster == null) {
             return;
         }
         
-        ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        MultiPhaseCastContext context = caster.getCastContext();
         if (context == null) {
             return;
         }
@@ -409,7 +407,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
         SpellResult voxelResult = SpellResult.fromHitResultWithCaster(
             new net.minecraft.world.phys.EntityHitResult(voxel), 
             SpellEffectType.RESOLVED, 
-            player
+            spellContext.getCaster()
         );
         
         context.beginResults.clear();
@@ -417,12 +415,12 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
     }
     
     private void updateTemporalContextMultiple(LivingEntity shooter, java.util.List<BaseVoxelEntity> voxels, SpellContext spellContext) {
-        if (!(shooter instanceof net.minecraft.world.entity.player.Player player)) {
+        IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
+        if (caster == null) {
             return;
         }
         
-        ItemStack casterTool = spellContext.getCasterTool();
-        MultiPhaseCastContext context = AbstractMultiPhaseCastDevice.findContextByStack(player, casterTool);
+        MultiPhaseCastContext context = caster.getCastContext();
         if (context == null) {
             return;
         }
@@ -441,7 +439,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
             SpellResult voxelResult = SpellResult.fromHitResultWithCaster(
                 new net.minecraft.world.phys.EntityHitResult(voxel), 
                 SpellEffectType.RESOLVED, 
-                player
+                spellContext.getCaster()
             );
             context.beginResults.add(voxelResult);
         }
@@ -480,6 +478,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
     @Override
     protected void addDefaultAugmentLimits(java.util.Map<ResourceLocation, Integer> defaults) {
         defaults.put(AugmentAmplify.INSTANCE.getRegistryName(), MAX_AMPLIFY_LEVEL);
+        defaults.put(AugmentSplit.INSTANCE.getRegistryName(), 3);
     }
 
     @Override
@@ -492,7 +491,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
 
     @Override
     public String getBookDescription() {
-        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water', 'Ignite', 'Wind Shear', 'Conjure Terrain', 'Cold Snap', 'Discharge', or 'Envenom'.";
+        return "Conjures a magic voxel entity that persists for some time. Possible effect augments via: 'Conjure Water', 'Ignite', 'Wind Shear', 'Conjure Terrain', 'Cold Snap', 'Discharge', or 'Conjure Blight'.";
     }
 
     @Override

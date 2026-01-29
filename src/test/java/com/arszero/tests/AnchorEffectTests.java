@@ -1,9 +1,7 @@
 package com.arszero.tests;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.glyph.AnchorEffect;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.SpellEffectType;
@@ -12,12 +10,10 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -64,7 +60,7 @@ public final class AnchorEffectTests {
             SpellResult result = SpellResult.fromHitResultWithCaster(
                 new EntityHitResult(target),
                 SpellEffectType.RESOLVED,
-                caster
+                com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster.from(caster)
             );
             context.beginResults.add(result);
             
@@ -119,7 +115,7 @@ public final class AnchorEffectTests {
             SpellResult result = SpellResult.fromHitResultWithCaster(
                 new EntityHitResult(target),
                 SpellEffectType.RESOLVED,
-                caster
+                com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster.from(caster)
             );
             context.beginResults.add(result);
             
@@ -173,7 +169,7 @@ public final class AnchorEffectTests {
         SpellResult result = SpellResult.fromHitResultWithCaster(
             new EntityHitResult(target),
             SpellEffectType.RESOLVED,
-            caster
+            com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster.from(caster)
         );
         context.beginResults.add(result);
         
@@ -244,7 +240,7 @@ public final class AnchorEffectTests {
         SpellResult result = SpellResult.fromHitResultWithCaster(
             new EntityHitResult(target),
             SpellEffectType.RESOLVED,
-            caster
+            com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster.from(caster)
         );
         context.beginResults.add(result);
         

@@ -23,7 +23,7 @@ public final class TestRegistrationFilter {
         ArcaneVoxelTests.class,
         FireWaterVoxelInteractionBehaviour.class,
         ZeroGravityEffectTests.class,
-        MultiphaseSpellTurretTests.class,
+        MultiphaseSpellTurretPhasesTest.class,
         WindVoxelWorldInteractionBehaviour.class,
         WindVoxelInteractionBehaviour.class
     );

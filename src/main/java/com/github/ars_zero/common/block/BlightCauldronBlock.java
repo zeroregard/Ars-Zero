@@ -155,7 +155,7 @@ public class BlightCauldronBlock extends AbstractCauldronBlock implements Entity
         }
         
         if (entity instanceof LivingEntity living) {
-            living.addEffect(new MobEffectInstance(MobEffects.POISON, 100, 0));
+            living.addEffect(new MobEffectInstance(MobEffects.WITHER, 100, 0));
         } else if (entity instanceof ItemEntity itemEntity) {
             ItemStack stack = itemEntity.getItem();
             if (stack.getItem() instanceof BlockItem blockItem) {

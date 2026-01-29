@@ -139,7 +139,7 @@ public class GeometryTerrainEntity extends AbstractGeometryProcessEntity impleme
 
     @Override
     protected float getBlocksPerTick() {
-        return BASE_BLOCKS_PER_TICK * (1.0f + earthPower / 2.0f);
+        return BASE_BLOCKS_PER_TICK * (1.0f + earthPower / 2.0f) * (1.0f + accelerationModifier);
     }
 
     @Override
