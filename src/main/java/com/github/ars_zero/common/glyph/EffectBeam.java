@@ -7,7 +7,7 @@ import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.util.MathHelper;
-import com.hollingsworth.arsnouveau.api.registry.ParticleTimelineRegistry;
+import com.github.ars_zero.registry.ModParticleTimelines;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -105,7 +105,7 @@ public class EffectBeam extends AbstractEffect {
         float beamColorR = 1.0f;
         float beamColorG = 1.0f;
         float beamColorB = 1.0f;
-        var timeline = spellContext.getParticleTimeline(ParticleTimelineRegistry.PROJECTILE_TIMELINE.get());
+        var timeline = spellContext.getParticleTimeline(ModParticleTimelines.BEAM_TIMELINE.get());
         if (timeline != null) {
             ParticleColor color = timeline.getColor();
             if (color != null) {
