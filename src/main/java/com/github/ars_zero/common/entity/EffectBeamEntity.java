@@ -271,11 +271,19 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
                                 damageSource = this.level().damageSources().indirectMagic(this, livingCaster);
                             }
                         }
-                        target.hurt(damageSource, damage);
+                        applyBeamDamage(target, damageSource, damage);
                     }
                 }
             }
         }
+    }
+
+    private void applyBeamDamage(LivingEntity target, DamageSource damageSource, float damage) {
+        // Bypass vanilla damage cooldown for beam ticks.
+        int previousInvulnerableTime = target.invulnerableTime;
+        target.invulnerableTime = 0;
+        target.hurt(damageSource, damage);
+        target.invulnerableTime = previousInvulnerableTime;
     }
 
     @Override
