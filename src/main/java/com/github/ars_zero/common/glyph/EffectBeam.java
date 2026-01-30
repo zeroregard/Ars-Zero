@@ -7,6 +7,7 @@ import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.util.MathHelper;
+import com.hollingsworth.arsnouveau.api.registry.ParticleTimelineRegistry;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -15,6 +16,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellStats;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
+import com.hollingsworth.arsnouveau.client.particle.ParticleColor;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAOE;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
@@ -100,10 +102,23 @@ public class EffectBeam extends AbstractEffect {
             lifetime = EffectBeamEntity.DEFAULT_LIFETIME_TICKS;
         }
 
+        float beamColorR = 1.0f;
+        float beamColorG = 1.0f;
+        float beamColorB = 1.0f;
+        var timeline = spellContext.getParticleTimeline(ParticleTimelineRegistry.PROJECTILE_TIMELINE.get());
+        if (timeline != null) {
+            ParticleColor color = timeline.getColor();
+            if (color != null) {
+                beamColorR = color.getRed();
+                beamColorG = color.getGreen();
+                beamColorB = color.getBlue();
+            }
+        }
+
         boolean dampened = spellStats.getBuffCount(AugmentDampen.INSTANCE) > 0;
         int splitLevel = spellStats.getBuffCount(AugmentSplit.INSTANCE);
         if (splitLevel <= 0) {
-            EffectBeamEntity beam = new EffectBeamEntity(serverLevel, pos.x, pos.y, pos.z, yaw, pitch, lifetime, 1.0f, 1.0f, 1.0f, shooter.getUUID(), dampened);
+            EffectBeamEntity beam = new EffectBeamEntity(serverLevel, pos.x, pos.y, pos.z, yaw, pitch, lifetime, beamColorR, beamColorG, beamColorB, shooter.getUUID(), dampened);
             spellContext.setCanceled(true);
             SpellContext childContext = spellContext.makeChildContext();
             beam.setResolver(resolver.getNewResolver(childContext));
@@ -145,7 +160,7 @@ public class EffectBeam extends AbstractEffect {
         List<Vec3> positions = MathHelper.getCirclePositions(center, circleNormal, circleRadius, entityCount);
         List<EffectBeamEntity> beams = new ArrayList<>();
         for (Vec3 p : positions) {
-            EffectBeamEntity beam = new EffectBeamEntity(serverLevel, p.x, p.y, p.z, yaw, pitch, lifetime, 1.0f, 1.0f, 1.0f, shooter.getUUID(), dampened);
+            EffectBeamEntity beam = new EffectBeamEntity(serverLevel, p.x, p.y, p.z, yaw, pitch, lifetime, beamColorR, beamColorG, beamColorB, shooter.getUUID(), dampened);
             beam.setResolver(childResolver);
             serverLevel.addFreshEntity(beam);
             beams.add(beam);
