@@ -1,7 +1,6 @@
 package com.github.ars_zero.event;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
@@ -82,9 +81,13 @@ public class ArsZeroResolverEvents {
                 ItemStack casterTool = event.resolver.spellContext.getCasterTool();
                 boolean willCreateEntityGroup = requiresEntityGroupForTemporalAnchor(casterTool, player);
                 
-                if (willCreateEntityGroup && wrapped.isRootResolver() && ServerConfig.ALLOW_BLOCK_GROUP_CREATION.get()) {
+                if (willCreateEntityGroup && wrapped.isRootResolver()) {
                     // Store in map keyed by dimension and position
-                    capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>()).put(pos, state);
+                    Map<BlockPos, BlockState> dimensionStates = capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>());
+                    boolean posEligible = BlockImmutabilityUtil.canBlockBeGrouped(event.world, pos, state);
+                    if (posEligible) {
+                        dimensionStates.put(pos, state);
+                    }
                     
                     double aoeBuff = event.spellStats.getAoeMultiplier();
                     int pierceBuff = event.spellStats.getBuffCount(com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce.INSTANCE);
@@ -92,15 +95,15 @@ public class ArsZeroResolverEvents {
                     for (BlockPos aoePos : posList) {
                         if (!event.world.isOutsideBuildHeight(aoePos)) {
                             var aoeState = event.world.getBlockState(aoePos);
-                            if (!aoeState.isAir() && !BlockImmutabilityUtil.isBlockImmutable(aoeState)) {
-                                capturedBlockStates.get(dimensionKey).put(aoePos, aoeState);
+                            if (BlockImmutabilityUtil.canBlockBeGrouped(event.world, aoePos, aoeState)) {
+                                dimensionStates.put(aoePos, aoeState);
                                 
                                 event.world.setBlock(aoePos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                             }
                         }
                     }
                     
-                    if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
+                    if (posEligible) {
                         event.world.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                     }
                 }
@@ -201,7 +204,7 @@ public class ArsZeroResolverEvents {
                             state = event.world.getBlockState(blockPos);
                         }
                         
-                        if (state != null && !state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
+                        if (state != null && BlockImmutabilityUtil.canBlockBeGrouped(event.world, blockPos, state)) {
                             validBlocks.add(blockPos);
                             capturedStates.put(blockPos, state);
                         }
@@ -209,7 +212,7 @@ public class ArsZeroResolverEvents {
                 }
                 
                 ItemStack casterTool = event.resolver.spellContext.getCasterTool();
-                if (!validBlocks.isEmpty() && !casterTool.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player) && wrapped.isRootResolver() && ServerConfig.ALLOW_BLOCK_GROUP_CREATION.get()) {
+                if (!validBlocks.isEmpty() && !casterTool.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player) && wrapped.isRootResolver()) {
                     if (!blockGroupCreated.getOrDefault(dimensionKey, false)) {
                         Vec3 centerPos = calculateCenter(validBlocks);
 
