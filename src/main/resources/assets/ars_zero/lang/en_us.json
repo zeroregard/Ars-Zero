@@ -224,5 +224,15 @@
   "ars_zero.gui.casting_style.outlines": "Outlines",
   "ars_zero.gui.casting_style.symbol": "Symbol",
   "ars_zero.gui.casting_style.symbol.none": "None",
-  "ars_zero.gui.casting_style.symbol.auto": "Auto (from spell)"
+  "ars_zero.gui.casting_style.symbol.auto": "Auto (from spell)",
+  "ars_zero.section.ars_zero": "Ars Zero",
+  "ars_zero.page.overview": "Ars Zero Overview",
+  "ars_zero.page1.overview": "Placeholder text for the Ars Zero overview.",
+  "ars_zero.page2.overview": "Placeholder text for future details.",
+  "ars_zero.page.multiphase_spellcasting": "Multiphase Spellcasting",
+  "ars_zero.page1.multiphase_spellcasting": "Placeholder text for multiphase spellcasting.",
+  "ars_zero.page2.multiphase_spellcasting": "Placeholder text for future details.",
+  "ars_zero.page.voxel_interactions": "Voxel Interactions",
+  "ars_zero.page1.voxel_interactions": "Placeholder text for voxel interactions.",
+  "ars_zero.page2.voxel_interactions": "Placeholder text for future details."
 }
