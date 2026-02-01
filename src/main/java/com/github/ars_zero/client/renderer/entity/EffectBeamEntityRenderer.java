@@ -40,8 +40,8 @@ public class EffectBeamEntityRenderer extends EntityRenderer<EffectBeamEntity> {
 
         BlockHitResult blockHit = entity.level().clip(new ClipContext(origin, end, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, entity));
         EntityHitResult entityHit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
-                entity.level(), entity, origin, end, entity.getBoundingBox().inflate(RAY_LENGTH),
-                e -> e.isPickable() && !e.isSpectator() && e != entity);
+                entity, origin, end, entity.getBoundingBox().inflate(RAY_LENGTH),
+                e -> e.isPickable() && !e.isSpectator() && e != entity, RAY_LENGTH * RAY_LENGTH);
 
         Vec3 hitPos = end;
         if (entityHit != null) {

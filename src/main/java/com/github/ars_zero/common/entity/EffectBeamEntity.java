@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.common.glyph.EffectBeam;
+import com.github.ars_zero.common.util.MathHelper;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
@@ -40,8 +41,7 @@ import java.util.UUID;
 public class EffectBeamEntity extends Entity implements ILifespanExtendable, IManaDrainable {
 
     public static final int DEFAULT_LIFETIME_TICKS = 5;
-    private static final double RAY_LENGTH = 300.0;
-    private static final float BASE_DAMAGE = 2.0f;
+    public static final double RAY_LENGTH = 256.0;
 
     private static final EntityDataAccessor<Integer> LIFETIME = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> MAX_LIFETIME = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.INT);
@@ -58,6 +58,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
     private double forwardedSpellManaCost = 0.0;
     private double accumulatedDrain = 0.0;
     private int ticksSinceLastDrainSync = 0;
+    private float damage = 0.5f;
 
     public EffectBeamEntity(EntityType<? extends EffectBeamEntity> entityType, Level level) {
         super(entityType, level);
@@ -67,7 +68,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         this.setBoundingBox(new AABB(0, 0, 0, 0, 0, 0));
     }
 
-    public EffectBeamEntity(Level level, double x, double y, double z, float yRot, float xRot, int lifetime, float r, float g, float b, @Nullable UUID casterUUID, boolean dampened) {
+    public EffectBeamEntity(Level level, double x, double y, double z, float yRot, float xRot, int lifetime, float r, float g, float b, @Nullable UUID casterUUID, boolean dampened, float damage) {
         this(ModEntities.EFFECT_BEAM.get(), level);
         this.setPos(x, y, z);
         this.setYRot(yRot);
@@ -77,6 +78,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         this.setColor(r, g, b);
         this.casterUUID = casterUUID;
         this.setDampened(dampened);
+        this.damage = damage;
     }
 
     @Override
@@ -199,6 +201,31 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         return Vec3.directionFromRotation(this.getXRot(), this.getYRot());
     }
 
+    private void updateRotationToCasterLookPoint(LivingEntity caster) {
+        Vec3 eyePos = caster.getEyePosition(1.0f);
+        Vec3 lookVec = caster.getLookAngle();
+        Vec3 end = eyePos.add(lookVec.scale(RAY_LENGTH));
+        BlockHitResult blockHit = this.level().clip(new ClipContext(eyePos, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, caster));
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(caster, eyePos, end, caster.getBoundingBox().inflate(RAY_LENGTH), e -> e.isPickable() && !e.isSpectator() && e != this && e != caster && !(e instanceof EffectBeamEntity), RAY_LENGTH * RAY_LENGTH);
+        Vec3 targetPoint;
+        if (entityHit != null) {
+            double entityDist = eyePos.distanceTo(entityHit.getLocation());
+            double blockDist = blockHit.getType() == HitResult.Type.MISS ? Double.MAX_VALUE : eyePos.distanceTo(blockHit.getLocation());
+            targetPoint = entityDist < blockDist ? entityHit.getLocation() : (blockHit.getType() == HitResult.Type.MISS ? end : blockHit.getLocation());
+        } else {
+            targetPoint = blockHit.getType() == HitResult.Type.MISS ? end : blockHit.getLocation();
+        }
+        Vec3 toTarget = targetPoint.subtract(this.position());
+        double lenSq = toTarget.lengthSqr();
+        if (lenSq < 1.0E-12) {
+            return;
+        }
+        Vec3 dir = toTarget.normalize();
+        float[] yawPitch = MathHelper.vecToYawPitch(dir);
+        this.setYRot(yawPitch[0]);
+        this.setXRot(yawPitch[1]);
+    }
+
     @Override
     public void addLifespan(LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         int extensionAmount = 1;
@@ -221,6 +248,12 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
                 return;
             }
             this.setLifetime(this.getLifetime() - 1);
+            if (casterUUID != null) {
+                Entity caster = serverLevel.getEntity(casterUUID);
+                if (caster instanceof LivingEntity livingCaster) {
+                    updateRotationToCasterLookPoint(livingCaster);
+                }
+            }
         }
 
         Vec3 origin = this.position();
@@ -228,7 +261,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         Vec3 end = origin.add(forward.scale(RAY_LENGTH));
 
         BlockHitResult blockHit = this.level().clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(this.level(), this, origin, end, this.getBoundingBox().inflate(RAY_LENGTH), e -> e.isPickable() && !e.isSpectator() && e != this);
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(this, origin, end, this.getBoundingBox().inflate(RAY_LENGTH), e -> e.isPickable() && !e.isSpectator() && e != this, RAY_LENGTH * RAY_LENGTH);
 
         HitResult hitResult = blockHit;
         if (entityHit != null) {
@@ -263,15 +296,19 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
                     }
 
                     if (hitResult instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof LivingEntity target && !this.isDampened()) {
-                        float damage = BASE_DAMAGE;
-                        DamageSource damageSource = this.level().damageSources().magic();
-                        if (casterUUID != null) {
-                            Entity caster = serverLevel.getEntity(casterUUID);
-                            if (caster instanceof LivingEntity livingCaster) {
-                                damageSource = this.level().damageSources().indirectMagic(this, livingCaster);
+                        if (consumeManaAndAccumulate(serverLevel, this.damage)) {
+                            DamageSource damageSource = this.level().damageSources().magic();
+                            if (casterUUID != null) {
+                                Entity caster = serverLevel.getEntity(casterUUID);
+                                if (caster instanceof LivingEntity livingCaster) {
+                                    damageSource = this.level().damageSources().indirectMagic(this, livingCaster);
+                                }
                             }
+                            applyBeamDamage(target, damageSource, this.damage);
+                        } else {
+                            this.discard();
+                            return;
                         }
-                        applyBeamDamage(target, damageSource, damage);
                     }
                 }
             }
