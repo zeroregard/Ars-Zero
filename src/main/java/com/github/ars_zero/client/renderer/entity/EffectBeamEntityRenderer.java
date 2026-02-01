@@ -7,27 +7,47 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import java.util.Random;
 
 public class EffectBeamEntityRenderer extends EntityRenderer<EffectBeamEntity> {
 
-    private static final double RAY_LENGTH = 300.0;
     private static final float BEAM_HALF_WIDTH = 0.05f;
     private static final float SHAKE_RANGE = 0.03f;
     private static final float ORIGIN_CIRCLE_SIZE = 0.15f;
     private static final ResourceLocation BEAM_ORIGIN_CIRCLE_TEXTURE = ArsZero.prefix("textures/entity/beam_origin_circle.png");
 
+    private static final double RENDER_DISTANCE = 256.0;
+
     public EffectBeamEntityRenderer(EntityRendererProvider.Context context) {
         super(context);
+        this.shadowRadius = 0.0f;
+        this.shadowStrength = 0.0f;
+    }
+
+    @Override
+    public boolean shouldRender(EffectBeamEntity entity, Frustum frustum, double camX, double camY, double camZ) {
+        Vec3 origin = entity.position();
+        Vec3 end = entity.getEffectiveEndPoint(origin);
+        double minX = Math.min(origin.x, end.x) - 0.5;
+        double minY = Math.min(origin.y, end.y) - 0.5;
+        double minZ = Math.min(origin.z, end.z) - 0.5;
+        double maxX = Math.max(origin.x, end.x) + 0.5;
+        double maxY = Math.max(origin.y, end.y) + 0.5;
+        double maxZ = Math.max(origin.z, end.z) + 0.5;
+        double dx = (minX + maxX) / 2.0 - camX;
+        double dy = (minY + maxY) / 2.0 - camY;
+        double dz = (minZ + maxZ) / 2.0 - camZ;
+        if (dx * dx + dy * dy + dz * dz > RENDER_DISTANCE * RENDER_DISTANCE) {
+            return false;
+        }
+        return frustum.isVisible(new AABB(minX, minY, minZ, maxX, maxY, maxZ));
     }
 
     @Override
@@ -35,26 +55,7 @@ public class EffectBeamEntityRenderer extends EntityRenderer<EffectBeamEntity> {
         super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
 
         Vec3 origin = entity.position();
-        Vec3 forward = entity.getForward();
-        Vec3 end = origin.add(forward.scale(RAY_LENGTH));
-
-        BlockHitResult blockHit = entity.level().clip(new ClipContext(origin, end, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, entity));
-        EntityHitResult entityHit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
-                entity, origin, end, entity.getBoundingBox().inflate(RAY_LENGTH),
-                e -> e.isPickable() && !e.isSpectator() && e != entity, RAY_LENGTH * RAY_LENGTH);
-
-        Vec3 hitPos = end;
-        if (entityHit != null) {
-            double entityDist = origin.distanceTo(entityHit.getLocation());
-            double blockDist = blockHit.getType() == HitResult.Type.MISS ? Double.MAX_VALUE : origin.distanceTo(blockHit.getLocation());
-            if (entityDist < blockDist) {
-                hitPos = entityHit.getLocation();
-            } else if (blockHit.getType() != HitResult.Type.MISS) {
-                hitPos = blockHit.getLocation();
-            }
-        } else if (blockHit.getType() != HitResult.Type.MISS) {
-            hitPos = blockHit.getLocation();
-        }
+        Vec3 hitPos = entity.getEffectiveEndPoint(origin);
 
         float dx = (float) (hitPos.x - entity.getX());
         float dy = (float) (hitPos.y - entity.getY());

@@ -23,6 +23,11 @@ import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSplit;
+import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -41,6 +46,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class EffectBeam extends AbstractEffect {
+
+    private record TurretAim(BlockPos turretPos, Direction facing) {}
 
     public static final String ID = "effect_beam";
     public static final EffectBeam INSTANCE = new EffectBeam();
@@ -69,7 +76,7 @@ public class EffectBeam extends AbstractEffect {
 
     public double getResolverManaCostMultiplier() {
         if (BEAM_RESOLVER_MANA_COST_MULTIPLIER == null) {
-            return 0.05;
+            return 0.1;
         }
         return BEAM_RESOLVER_MANA_COST_MULTIPLIER.get();
     }
@@ -88,6 +95,54 @@ public class EffectBeam extends AbstractEffect {
         return BEAM_AMPLIFY_DAMAGE_BONUS.get().floatValue();
     }
 
+    private static TurretAim findTurretAim(ServerLevel level, BlockPos playerBlock) {
+        BlockState atPlayer = level.getBlockState(playerBlock);
+        if (atPlayer.getBlock() instanceof BasicSpellTurret) {
+            return new TurretAim(playerBlock, atPlayer.getValue(BasicSpellTurret.FACING));
+        }
+        for (Direction dir : Direction.values()) {
+            BlockPos neighbor = playerBlock.relative(dir);
+            BlockState state = level.getBlockState(neighbor);
+            if (state.getBlock() instanceof BasicSpellTurret) {
+                Direction facing = state.getValue(BasicSpellTurret.FACING);
+                if (neighbor.relative(facing).equals(playerBlock)) {
+                    return new TurretAim(neighbor, facing);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Vec3 getBeamAimTarget(Level world, LivingEntity shooter, SpellContext spellContext) {
+        Vec3 eyePos;
+        Vec3 lookVec;
+        if (shooter instanceof FakePlayer && world instanceof ServerLevel serverLevel) {
+            BlockPos shooterBlock = BlockPos.containing(shooter.position());
+            TurretAim aim = findTurretAim(serverLevel, shooterBlock);
+            if (aim != null) {
+                var dispensePos = BasicSpellTurret.getDispensePosition(aim.turretPos, aim.facing);
+                eyePos = new Vec3(dispensePos.x(), dispensePos.y(), dispensePos.z());
+                lookVec = new Vec3(aim.facing.getStepX(), aim.facing.getStepY(), aim.facing.getStepZ()).normalize();
+            } else {
+                eyePos = shooter.getEyePosition(1.0f);
+                lookVec = shooter.getLookAngle();
+            }
+        } else {
+            eyePos = shooter.getEyePosition(1.0f);
+            lookVec = shooter.getLookAngle();
+        }
+        Vec3 lookEnd = eyePos.add(lookVec.scale(EffectBeamEntity.RAY_LENGTH));
+        Vec3 extendedEnd = lookEnd.add(lookVec.scale(0.5));
+        BlockHitResult blockHit = world.clip(new net.minecraft.world.level.ClipContext(eyePos, extendedEnd, net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, shooter));
+        EntityHitResult entityHit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(shooter, eyePos, extendedEnd, shooter.getBoundingBox().inflate(EffectBeamEntity.RAY_LENGTH), e -> e.isPickable() && !e.isSpectator() && !(e instanceof EffectBeamEntity), EffectBeamEntity.RAY_LENGTH * EffectBeamEntity.RAY_LENGTH);
+        if (entityHit != null) {
+            double entityDist = eyePos.distanceTo(entityHit.getLocation());
+            double blockDist = blockHit.getType() == HitResult.Type.MISS ? Double.MAX_VALUE : eyePos.distanceTo(blockHit.getLocation());
+            return entityDist < blockDist ? entityHit.getLocation() : (blockHit.getType() == HitResult.Type.MISS ? lookEnd : blockHit.getLocation());
+        }
+        return blockHit.getType() == HitResult.Type.MISS ? lookEnd : blockHit.getLocation();
+    }
+
     @Override
     public void onResolve(HitResult rayTraceResult, Level world, @Nullable LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
         if (world.isClientSide || !(world instanceof ServerLevel serverLevel) || shooter == null) {
@@ -95,27 +150,31 @@ public class EffectBeam extends AbstractEffect {
         }
 
         Vec3 pos = safelyGetHitPos(rayTraceResult);
-        Vec3 eyePos = shooter.getEyePosition(1.0f);
-        Vec3 lookVec = shooter.getLookAngle();
-        Vec3 lookEnd = eyePos.add(lookVec.scale(EffectBeamEntity.RAY_LENGTH));
-        BlockHitResult blockHit = world.clip(new net.minecraft.world.level.ClipContext(eyePos, lookEnd, net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, shooter));
-        EntityHitResult entityHit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(shooter, eyePos, lookEnd, shooter.getBoundingBox().inflate(EffectBeamEntity.RAY_LENGTH), e -> e.isPickable() && !e.isSpectator() && !(e instanceof EffectBeamEntity), EffectBeamEntity.RAY_LENGTH * EffectBeamEntity.RAY_LENGTH);
-        Vec3 targetPoint;
-        if (entityHit != null) {
-            double entityDist = eyePos.distanceTo(entityHit.getLocation());
-            double blockDist = blockHit.getType() == HitResult.Type.MISS ? Double.MAX_VALUE : eyePos.distanceTo(blockHit.getLocation());
-            targetPoint = entityDist < blockDist ? entityHit.getLocation() : (blockHit.getType() == HitResult.Type.MISS ? lookEnd : blockHit.getLocation());
+        Vec3 lookVec;
+        BlockPos turretPos = null;
+        Direction turretFacing = null;
+        
+        if (spellContext.getCaster().getCasterType() == SpellContext.CasterType.TURRET && spellContext.getCaster() instanceof com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster tileCaster) {
+            turretPos = tileCaster.getTile().getBlockPos();
+            turretFacing = tileCaster.getFacingDirection();
+            lookVec = new Vec3(turretFacing.getStepX(), turretFacing.getStepY(), turretFacing.getStepZ()).normalize();
+        } else if (shooter instanceof FakePlayer && serverLevel != null) {
+            BlockPos shooterBlock = BlockPos.containing(shooter.position());
+            TurretAim aim = findTurretAim(serverLevel, shooterBlock);
+            if (aim != null) {
+                turretPos = aim.turretPos;
+                turretFacing = aim.facing;
+                lookVec = new Vec3(aim.facing.getStepX(), aim.facing.getStepY(), aim.facing.getStepZ()).normalize();
+            } else {
+                lookVec = shooter.getLookAngle();
+            }
         } else {
-            targetPoint = blockHit.getType() == HitResult.Type.MISS ? lookEnd : blockHit.getLocation();
+            lookVec = shooter.getLookAngle();
         }
-        Vec3 toTarget = targetPoint.subtract(pos);
-        float yaw;
-        float pitch;
-        if (toTarget.lengthSqr() >= 1.0E-12) {
-            float[] yawPitch = MathHelper.vecToYawPitch(toTarget.normalize());
-            yaw = yawPitch[0];
-            pitch = yawPitch[1];
-        } else {
+        
+        float yaw = 0.0f;
+        float pitch = 0.0f;
+        if (lookVec.lengthSqr() >= 1.0E-12) {
             float[] yawPitch = MathHelper.vecToYawPitch(lookVec);
             yaw = yawPitch[0];
             pitch = yawPitch[1];
@@ -145,6 +204,9 @@ public class EffectBeam extends AbstractEffect {
         int splitLevel = spellStats.getBuffCount(AugmentSplit.INSTANCE);
         if (splitLevel <= 0) {
             EffectBeamEntity beam = new EffectBeamEntity(serverLevel, pos.x, pos.y, pos.z, yaw, pitch, lifetime, beamColorR, beamColorG, beamColorB, shooter.getUUID(), dampened, damage);
+            if (turretPos != null && turretFacing != null) {
+                beam.setTurretInfo(turretPos, turretFacing);
+            }
             spellContext.setCanceled(true);
             SpellContext childContext = spellContext.makeChildContext();
             beam.setResolver(resolver.getNewResolver(childContext));
@@ -186,18 +248,10 @@ public class EffectBeam extends AbstractEffect {
         List<Vec3> positions = MathHelper.getCirclePositions(center, circleNormal, circleRadius, entityCount);
         List<EffectBeamEntity> beams = new ArrayList<>();
         for (Vec3 p : positions) {
-            Vec3 toTargetFromP = targetPoint.subtract(p);
-            float beamYaw;
-            float beamPitch;
-            if (toTargetFromP.lengthSqr() >= 1.0E-12) {
-                float[] beamYawPitch = MathHelper.vecToYawPitch(toTargetFromP.normalize());
-                beamYaw = beamYawPitch[0];
-                beamPitch = beamYawPitch[1];
-            } else {
-                beamYaw = yaw;
-                beamPitch = pitch;
+            EffectBeamEntity beam = new EffectBeamEntity(serverLevel, p.x, p.y, p.z, yaw, pitch, lifetime, beamColorR, beamColorG, beamColorB, shooter.getUUID(), dampened, damage);
+            if (turretPos != null && turretFacing != null) {
+                beam.setTurretInfo(turretPos, turretFacing);
             }
-            EffectBeamEntity beam = new EffectBeamEntity(serverLevel, p.x, p.y, p.z, beamYaw, beamPitch, lifetime, beamColorR, beamColorG, beamColorB, shooter.getUUID(), dampened, damage);
             beam.setResolver(childResolver);
             serverLevel.addFreshEntity(beam);
             beams.add(beam);
