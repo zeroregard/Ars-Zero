@@ -65,8 +65,8 @@ public class EffectBeam extends AbstractEffect {
         super.buildConfig(builder);
         builder.comment("Effect Beam Settings").push("effect_beam");
         BEAM_RESOLVER_MANA_COST_MULTIPLIER = builder.comment(
-            "Mana cost multiplier for beam resolver. Each resolve (on hit) costs this percentage of the forwarded spell's total mana cost. Default is 0.05 (5%).")
-            .defineInRange("beamResolverManaCostMultiplier", 0.05, 0.0, 1.0);
+            "Mana cost multiplier for beam resolver. Each resolve (on hit) costs this percentage of the forwarded spell's total mana cost. Default is 0.1 (10%).")
+            .defineInRange("beamResolverManaCostMultiplier", 0.1, 0.0, 1.0);
         BEAM_BASE_DAMAGE = builder.comment("Base magic damage dealt by the beam per tick. Default is 0.5.")
             .defineInRange("beamBaseDamage", 0.5, 0.0, 100.0);
         BEAM_AMPLIFY_DAMAGE_BONUS = builder.comment("Additional damage per Amplify augment level. Default is 0.5.")
