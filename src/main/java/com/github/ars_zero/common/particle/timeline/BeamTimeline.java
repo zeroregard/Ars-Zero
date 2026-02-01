@@ -47,6 +47,8 @@ public class BeamTimeline extends BaseTimeline<BeamTimeline> {
 
     @Override
     public List<BaseProperty<?>> getProperties() {
-        return List.of(propMap.createIfMissing(new ColorProperty(ParticleColor.WHITE, false)));
+        BaseProperty<?> colorProp = propMap.createIfMissing(new ColorProperty(ParticleColor.WHITE, false));
+        colorProp.propertyHolder = this.propMap;
+        return List.of(colorProp);
     }
 }
