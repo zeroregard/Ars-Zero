@@ -33,6 +33,12 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
+import com.hollingsworth.arsnouveau.api.source.ISpecialSourceProvider;
+import com.hollingsworth.arsnouveau.api.source.ISourceTile;
+import com.hollingsworth.arsnouveau.api.util.SourceUtil;
+import com.hollingsworth.arsnouveau.common.block.tile.CreativeSourceJarTile;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,8 +46,7 @@ import java.util.UUID;
 public class EffectBeamEntity extends Entity implements ILifespanExtendable, IManaDrainable {
 
     public static final int DEFAULT_LIFETIME_TICKS = 5;
-    private static final double RAY_LENGTH = 300.0;
-    private static final float BASE_DAMAGE = 2.0f;
+    public static final double RAY_LENGTH = 256.0;
 
     private static final EntityDataAccessor<Integer> LIFETIME = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> MAX_LIFETIME = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.INT);
@@ -49,6 +54,15 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
     private static final EntityDataAccessor<Float> COLOR_G = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> COLOR_B = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DAMPENED = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> HAS_TARGET = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> TARGET_X = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> TARGET_Y = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> TARGET_Z = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> IS_TURRET = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> TURRET_X = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> TURRET_Y = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> TURRET_Z = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> TURRET_FACING = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.INT);
 
     @Nullable
     private UUID casterUUID;
@@ -58,6 +72,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
     private double forwardedSpellManaCost = 0.0;
     private double accumulatedDrain = 0.0;
     private int ticksSinceLastDrainSync = 0;
+    private float damage = 0.5f;
 
     public EffectBeamEntity(EntityType<? extends EffectBeamEntity> entityType, Level level) {
         super(entityType, level);
@@ -67,7 +82,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         this.setBoundingBox(new AABB(0, 0, 0, 0, 0, 0));
     }
 
-    public EffectBeamEntity(Level level, double x, double y, double z, float yRot, float xRot, int lifetime, float r, float g, float b, @Nullable UUID casterUUID, boolean dampened) {
+    public EffectBeamEntity(Level level, double x, double y, double z, float yRot, float xRot, int lifetime, float r, float g, float b, @Nullable UUID casterUUID, boolean dampened, float damage) {
         this(ModEntities.EFFECT_BEAM.get(), level);
         this.setPos(x, y, z);
         this.setYRot(yRot);
@@ -77,10 +92,26 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         this.setColor(r, g, b);
         this.casterUUID = casterUUID;
         this.setDampened(dampened);
+        this.damage = damage;
     }
 
     @Override
     public boolean isPushable() {
+        return false;
+    }
+
+    @Override
+    public float getPickRadius() {
+        return 0.0f;
+    }
+
+    @Override
+    public boolean shouldShowName() {
+        return false;
+    }
+
+    @Override
+    public boolean isPickable() {
         return false;
     }
 
@@ -98,6 +129,25 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
     }
 
     @Override
+    protected AABB makeBoundingBox() {
+        Vec3 pos = this.position();
+        return new AABB(pos.x, pos.y, pos.z, pos.x, pos.y, pos.z);
+    }
+
+    @Override
+    public AABB getBoundingBoxForCulling() {
+        Vec3 origin = this.position();
+        Vec3 end = this.getEffectiveEndPoint(origin);
+        double minX = Math.min(origin.x, end.x) - 0.5;
+        double minY = Math.min(origin.y, end.y) - 0.5;
+        double minZ = Math.min(origin.z, end.z) - 0.5;
+        double maxX = Math.max(origin.x, end.x) + 0.5;
+        double maxY = Math.max(origin.y, end.y) + 0.5;
+        double maxZ = Math.max(origin.z, end.z) + 0.5;
+        return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(LIFETIME, DEFAULT_LIFETIME_TICKS);
         builder.define(MAX_LIFETIME, DEFAULT_LIFETIME_TICKS);
@@ -105,6 +155,15 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         builder.define(COLOR_G, 1.0f);
         builder.define(COLOR_B, 1.0f);
         builder.define(DAMPENED, false);
+        builder.define(HAS_TARGET, false);
+        builder.define(TARGET_X, 0.0f);
+        builder.define(TARGET_Y, 0.0f);
+        builder.define(TARGET_Z, 0.0f);
+        builder.define(IS_TURRET, false);
+        builder.define(TURRET_X, 0);
+        builder.define(TURRET_Y, 0);
+        builder.define(TURRET_Z, 0);
+        builder.define(TURRET_FACING, 0);
     }
 
     public int getLifetime() {
@@ -147,6 +206,54 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
 
     public void setDampened(boolean dampened) {
         this.entityData.set(DAMPENED, dampened);
+    }
+
+    public void setTargetEndpoint(Vec3 target) {
+        this.entityData.set(HAS_TARGET, true);
+        this.entityData.set(TARGET_X, (float) target.x);
+        this.entityData.set(TARGET_Y, (float) target.y);
+        this.entityData.set(TARGET_Z, (float) target.z);
+    }
+
+    public void setTurretInfo(BlockPos turretPos, Direction facing) {
+        this.entityData.set(IS_TURRET, true);
+        this.entityData.set(TURRET_X, turretPos.getX());
+        this.entityData.set(TURRET_Y, turretPos.getY());
+        this.entityData.set(TURRET_Z, turretPos.getZ());
+        this.entityData.set(TURRET_FACING, facing.ordinal());
+    }
+
+    private void updateRotation(ServerLevel level) {
+        Vec3 lookVec;
+        
+        if (this.entityData.get(IS_TURRET)) {
+            Direction facing = Direction.from3DDataValue(this.entityData.get(TURRET_FACING));
+            lookVec = new Vec3(facing.getStepX(), facing.getStepY(), facing.getStepZ()).normalize();
+        } else {
+            if (this.casterUUID == null) {
+                return;
+            }
+            Entity casterEntity = level.getEntity(this.casterUUID);
+            if (!(casterEntity instanceof LivingEntity caster)) {
+                return;
+            }
+            lookVec = caster.getLookAngle();
+        }
+        
+        if (lookVec.lengthSqr() >= 1.0E-12) {
+            float[] yawPitch = com.github.ars_zero.common.util.MathHelper.vecToYawPitch(lookVec);
+            this.setYRot(yawPitch[0]);
+            this.setXRot(yawPitch[1]);
+        }
+    }
+
+
+    public Vec3 getEffectiveEndPoint(Vec3 origin) {
+        if (this.entityData.get(HAS_TARGET)) {
+            return new Vec3(this.entityData.get(TARGET_X), this.entityData.get(TARGET_Y), this.entityData.get(TARGET_Z));
+        }
+        Vec3 forward = this.getForward();
+        return origin.add(forward.scale(RAY_LENGTH + 0.5));
     }
 
     public void setResolver(@Nullable SpellResolver resolver) {
@@ -221,14 +328,15 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
                 return;
             }
             this.setLifetime(this.getLifetime() - 1);
+            updateRotation(serverLevel);
         }
 
         Vec3 origin = this.position();
         Vec3 forward = this.getForward();
-        Vec3 end = origin.add(forward.scale(RAY_LENGTH));
+        Vec3 end = origin.add(forward.scale(RAY_LENGTH + 0.5));
 
         BlockHitResult blockHit = this.level().clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(this.level(), this, origin, end, this.getBoundingBox().inflate(RAY_LENGTH), e -> e.isPickable() && !e.isSpectator() && e != this);
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(this, origin, end, this.getBoundingBox().inflate(RAY_LENGTH), e -> e.isPickable() && !e.isSpectator() && e != this, RAY_LENGTH * RAY_LENGTH);
 
         HitResult hitResult = blockHit;
         if (entityHit != null) {
@@ -238,6 +346,15 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
                 hitResult = entityHit;
             }
         }
+
+        Vec3 hitPos;
+        if (hitResult.getType() != HitResult.Type.MISS) {
+            hitPos = hitResult.getLocation();
+        } else {
+            hitPos = end;
+        }
+        
+        this.setTargetEndpoint(hitPos);
 
         if (!this.level().isClientSide && this.level() instanceof ServerLevel serverLevel) {
             DustParticleOptions particleOptions = new DustParticleOptions(new Vector3f(this.getColorR(), this.getColorG(), this.getColorB()), 0.8f);
@@ -251,7 +368,6 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
                     hitResult = BlockHitResult.miss(hitResult.getLocation(), Direction.getNearest(hitResult.getLocation().x, hitResult.getLocation().y, hitResult.getLocation().z), BlockPos.containing(hitResult.getLocation()));
                 }
                 if (hitResult.getType() != HitResult.Type.MISS) {
-                    Vec3 hitPos = hitResult.getLocation();
                     serverLevel.sendParticles(particleOptions, hitPos.x, hitPos.y, hitPos.z, 4, 0.1, 0.1, 0.1, 0.02);
 
                     if (resolver != null) {
@@ -259,23 +375,38 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
                             SpellContext childContext = resolver.spellContext.clone().makeChildContext();
                             SpellResolver childResolver = resolver.getNewResolver(childContext);
                             childResolver.onResolveEffect(serverLevel, hitResult);
+                        } else {
+                            this.discard();
+                            return;
                         }
                     }
 
                     if (hitResult instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof LivingEntity target && !this.isDampened()) {
-                        float damage = BASE_DAMAGE;
-                        DamageSource damageSource = this.level().damageSources().magic();
-                        if (casterUUID != null) {
-                            Entity caster = serverLevel.getEntity(casterUUID);
-                            if (caster instanceof LivingEntity livingCaster) {
-                                damageSource = this.level().damageSources().indirectMagic(this, livingCaster);
+                        if (consumeManaAndAccumulate(serverLevel, this.damage)) {
+                            DamageSource damageSource = this.level().damageSources().magic();
+                            if (casterUUID != null) {
+                                Entity caster = serverLevel.getEntity(casterUUID);
+                                if (caster instanceof LivingEntity livingCaster) {
+                                    damageSource = this.level().damageSources().indirectMagic(this, livingCaster);
+                                }
                             }
+                            applyBeamDamage(target, damageSource, this.damage);
+                        } else {
+                            this.discard();
+                            return;
                         }
-                        target.hurt(damageSource, damage);
                     }
                 }
             }
         }
+    }
+
+    private void applyBeamDamage(LivingEntity target, DamageSource damageSource, float damage) {
+        // Bypass vanilla damage cooldown for beam ticks.
+        int previousInvulnerableTime = target.invulnerableTime;
+        target.invulnerableTime = 0;
+        target.hurt(damageSource, damage);
+        target.invulnerableTime = previousInvulnerableTime;
     }
 
     @Override
@@ -359,5 +490,65 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
 
     @Override
     public void setCasterPlayer(Player player) {
+    }
+
+    @Override
+    public boolean consumeManaAndAccumulate(ServerLevel level, double manaCost) {
+        if (this.entityData.get(IS_TURRET)) {
+            BlockPos turretPos = new BlockPos(this.entityData.get(TURRET_X), this.entityData.get(TURRET_Y), this.entityData.get(TURRET_Z));
+            int requested = (int) Math.ceil(manaCost);
+            int drained = drainSourceFromTurret(level, turretPos, requested);
+            if (drained >= requested) {
+                return true;
+            }
+            return false;
+        }
+        return IManaDrainable.super.consumeManaAndAccumulate(level, manaCost);
+    }
+
+    private int drainSourceFromTurret(ServerLevel serverLevel, BlockPos turretPos, int requested) {
+        List<ISpecialSourceProvider> providers = SourceUtil.canTakeSource(turretPos, serverLevel, 10);
+        if (providers.isEmpty()) {
+            return 0;
+        }
+        
+        Multimap<ISpecialSourceProvider, Integer> takenFrom = ArrayListMultimap.create();
+        int needed = requested;
+        int totalExtracted = 0;
+        
+        for (ISpecialSourceProvider provider : providers) {
+            ISourceTile sourceTile = provider.getSource();
+            if (sourceTile instanceof CreativeSourceJarTile) {
+                for (var entry : takenFrom.entries()) {
+                    entry.getKey().getSource().addSource(entry.getValue());
+                }
+                int extracted = Math.min(needed, sourceTile.getSource());
+                sourceTile.removeSource(extracted);
+                return totalExtracted + extracted;
+            }
+            
+            if (needed <= 0) {
+                continue;
+            }
+            
+            int initial = sourceTile.getSource();
+            int available = Math.min(needed, initial);
+            int after = sourceTile.removeSource(available);
+            if (initial > after) {
+                int extracted = initial - after;
+                needed -= extracted;
+                totalExtracted += extracted;
+                takenFrom.put(provider, extracted);
+            }
+        }
+        
+        if (needed > 0) {
+            for (var entry : takenFrom.entries()) {
+                entry.getKey().getSource().addSource(entry.getValue());
+            }
+            return 0;
+        }
+        
+        return totalExtracted;
     }
 }

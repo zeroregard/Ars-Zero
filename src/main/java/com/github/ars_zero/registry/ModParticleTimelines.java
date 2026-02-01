@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.particle.timeline.BeamTimeline;
 import com.github.ars_zero.common.particle.timeline.ConvergenceTimeline;
 import com.github.ars_zero.common.particle.timeline.DiscardTimeline;
 import com.github.ars_zero.common.particle.timeline.GeometrizeTimeline;
@@ -48,6 +49,12 @@ public class ModParticleTimelines {
                     "geometrize",
                     () -> new SimpleParticleTimelineType<>(ModGlyphs.EFFECT_GEOMETRIZE, GeometrizeTimeline.CODEC,
                             GeometrizeTimeline.STREAM_CODEC, GeometrizeTimeline::new));
+
+    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<BeamTimeline>> BEAM_TIMELINE = TIMELINES
+            .register(
+                    "beam",
+                    () -> new SimpleParticleTimelineType<>(ModGlyphs.EFFECT_BEAM, BeamTimeline.CODEC,
+                            BeamTimeline.STREAM_CODEC, BeamTimeline::new));
 
     public static void init(IEventBus eventBus) {
         TIMELINES.register(eventBus);

@@ -1,12 +1,20 @@
 package com.github.ars_zero.common.util;
 
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MathHelper {
-    
+
+    public static float[] vecToYawPitch(Vec3 dir) {
+        Vec3 n = dir.normalize();
+        float yaw = (float) (-Mth.atan2(n.x, n.z) * (180F / Math.PI));
+        float pitch = (float) (Mth.atan2(-n.y, n.horizontalDistance()) * (180F / Math.PI));
+        return new float[] { yaw, pitch };
+    }
+
     public static List<Vec3> getCirclePositions(Vec3 center, Vec3 lookDirection, double radius, int count) {
         if (count <= 0) {
             return List.of();

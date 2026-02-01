@@ -332,7 +332,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
                 .orElse(null);
             
             if (spellName.isEmpty()) {
-                radialMenuSlots.add(new RadialMenuSlot<>("Empty", null));
+                radialMenuSlots.add(new RadialMenuSlot<>("Empty", iconGlyph));
             } else {
                 radialMenuSlots.add(new RadialMenuSlot<>(spellName, iconGlyph));
             }

@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "ars_zero:novice_spell_staff",
+    "ars_zero:mage_spell_staff",
+    "ars_zero:archmage_spell_staff",
+    "ars_zero:creative_spell_staff",
+    "ars_zero:spellcasting_circlet"
+  ]
+}

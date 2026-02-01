@@ -579,15 +579,15 @@ public class CastingStyleScreen extends BaseBook {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         super.render(graphics, mouseX, mouseY, partialTicks);
+        int leftX = bookLeft + LEFT_PAGE_OFFSET;
+        int y = bookTop + PAGE_TOP_OFFSET;
+        DocClientUtils.drawHeader(Component.translatable("ars_zero.gui.casting_style"), graphics, leftX, y, ONE_PAGE_WIDTH, mouseX, mouseY, partialTicks);
         boolean enabled = style != null && style.isEnabled();
         if (!enabled) {
-            int leftX = bookLeft + LEFT_PAGE_OFFSET;
-            int y = bookTop + PAGE_TOP_OFFSET;
             graphics.drawString(Minecraft.getInstance().font, Component.translatable("ars_zero.gui.casting_style.enabled"), leftX + 30, y + 23, 0x808080, false);
             return;
         }
         if (isOnPage(0)) {
-            DocClientUtils.drawHeader(Component.translatable("ars_zero.gui.casting_style"), graphics, bookLeft + LEFT_PAGE_OFFSET, bookTop + PAGE_TOP_OFFSET, ONE_PAGE_WIDTH, mouseX, mouseY, partialTicks);
             renderPage0(graphics);
         } else if (isOnPage(1)) {
             renderPage1(graphics);
