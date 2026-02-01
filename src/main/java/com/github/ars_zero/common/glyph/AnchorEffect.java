@@ -38,6 +38,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.util.FakePlayer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -121,9 +122,10 @@ public class AnchorEffect extends AbstractEffect {
             }
 
             boolean isSensitive = spellStats.hasBuff(AugmentSensitive.INSTANCE);
-            float yaw = isSensitive ? beginResult.casterYaw : player.getYRot();
-            float pitch = isSensitive ? beginResult.casterPitch : player.getXRot();
-            Vec3 casterPos = isSensitive && beginResult.casterPosition != null
+            boolean useStoredCasterInfo = isSensitive || player instanceof FakePlayer;
+            float yaw = useStoredCasterInfo ? beginResult.casterYaw : player.getYRot();
+            float pitch = useStoredCasterInfo ? beginResult.casterPitch : player.getXRot();
+            Vec3 casterPos = useStoredCasterInfo && beginResult.casterPosition != null
                     ? beginResult.casterPosition
                     : player.getEyePosition(1.0f);
 
@@ -335,9 +337,10 @@ public class AnchorEffect extends AbstractEffect {
                 BlockGroupEntity blockGroup = beginResult.blockGroup;
 
                 boolean isSensitive = spellStats.hasBuff(AugmentSensitive.INSTANCE);
-                float yaw = isSensitive ? beginResult.casterYaw : player.getYRot();
-                float pitch = isSensitive ? beginResult.casterPitch : player.getXRot();
-                Vec3 casterPos = isSensitive && beginResult.casterPosition != null
+                boolean useStoredCasterInfo = isSensitive || player instanceof FakePlayer;
+                float yaw = useStoredCasterInfo ? beginResult.casterYaw : player.getYRot();
+                float pitch = useStoredCasterInfo ? beginResult.casterPitch : player.getXRot();
+                Vec3 casterPos = useStoredCasterInfo && beginResult.casterPosition != null
                         ? beginResult.casterPosition
                         : player.getEyePosition(1.0f);
 

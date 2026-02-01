@@ -5,14 +5,19 @@ import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
+import com.hollingsworth.arsnouveau.common.block.tile.ScribesTile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -54,8 +59,22 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
     }
 
     @Override
+    public InteractionResult useOn(UseOnContext context) {
+        if (context.getLevel().getBlockEntity(context.getClickedPos()) instanceof ScribesTile && !context.getPlayer().isShiftKeyDown()) {
+            return InteractionResult.SUCCESS;
+        }
+        return super.useOn(context);
+    }
+
+    @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        BlockHitResult hitResult = getPlayerPOVHitResult(level, player, ClipContext.Fluid.NONE);
+        if (hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK
+                && level.getBlockEntity(hitResult.getBlockPos()) instanceof ScribesTile
+                && !player.isShiftKeyDown()) {
+            return InteractionResultHolder.pass(stack);
+        }
         if (!level.isClientSide) {
             IMultiPhaseCaster caster = AbstractMultiPhaseCastDevice.asMultiPhaseCaster(player, stack);
             MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;

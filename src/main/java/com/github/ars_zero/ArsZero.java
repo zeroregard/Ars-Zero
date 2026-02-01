@@ -60,6 +60,7 @@ import com.github.ars_zero.registry.ModParticleTimelines;
 import com.github.ars_zero.registry.ModParticles;
 import com.github.ars_zero.registry.ModRecipes;
 import com.github.ars_zero.registry.ModSounds;
+import com.hollingsworth.arsnouveau.api.ArsNouveauAPI;
 import com.hollingsworth.arsnouveau.api.spell.ITurretBehavior;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
@@ -126,6 +127,7 @@ public class ArsZero {
                 ModParticleTimelines.configureTimelineOptions();
                 registerTurretBehaviors();
                 registerCauldronInteractions();
+                ArsNouveauAPI.getInstance().getEnchantingRecipeTypes().add(ModRecipes.PROTECTION_UPGRADE_TYPE.get());
             });
         });
 
