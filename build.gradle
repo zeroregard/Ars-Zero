@@ -143,6 +143,7 @@ dependencies {
     implementation("top.theillusivec4.curios:curios-neoforge:${curios_version}+${minecraft_version}")
 
     compileOnly("mezz.jei:jei-1.21.1-neoforge-api:19.21.0.247")
+    compileOnly("mezz.jei:jei-1.21.1-neoforge:19.21.0.247")
     runtimeOnly("mezz.jei:jei-1.21.1-neoforge:19.21.0.247")
     
     jarJar(implementation('com.hollingsworth.nuggets:nuggets-neoforge-1.21') {

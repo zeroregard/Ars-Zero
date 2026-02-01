@@ -31,23 +31,28 @@ public class EffectBeamEntityRenderer extends EntityRenderer<EffectBeamEntity> {
         this.shadowStrength = 0.0f;
     }
 
+    private static final double ORIGIN_END_PADDING = 0.5;
+
     @Override
     public boolean shouldRender(EffectBeamEntity entity, Frustum frustum, double camX, double camY, double camZ) {
         Vec3 origin = entity.position();
         Vec3 end = entity.getEffectiveEndPoint(origin);
-        double minX = Math.min(origin.x, end.x) - 0.5;
-        double minY = Math.min(origin.y, end.y) - 0.5;
-        double minZ = Math.min(origin.z, end.z) - 0.5;
-        double maxX = Math.max(origin.x, end.x) + 0.5;
-        double maxY = Math.max(origin.y, end.y) + 0.5;
-        double maxZ = Math.max(origin.z, end.z) + 0.5;
-        double dx = (minX + maxX) / 2.0 - camX;
-        double dy = (minY + maxY) / 2.0 - camY;
-        double dz = (minZ + maxZ) / 2.0 - camZ;
-        if (dx * dx + dy * dy + dz * dz > RENDER_DISTANCE * RENDER_DISTANCE) {
+        double originDx = origin.x - camX;
+        double originDy = origin.y - camY;
+        double originDz = origin.z - camZ;
+        double endDx = end.x - camX;
+        double endDy = end.y - camY;
+        double endDz = end.z - camZ;
+        double originDistSq = originDx * originDx + originDy * originDy + originDz * originDz;
+        double endDistSq = endDx * endDx + endDy * endDy + endDz * endDz;
+        if (originDistSq > RENDER_DISTANCE * RENDER_DISTANCE && endDistSq > RENDER_DISTANCE * RENDER_DISTANCE) {
             return false;
         }
-        return frustum.isVisible(new AABB(minX, minY, minZ, maxX, maxY, maxZ));
+        AABB originBox = new AABB(origin.x - ORIGIN_END_PADDING, origin.y - ORIGIN_END_PADDING, origin.z - ORIGIN_END_PADDING,
+                origin.x + ORIGIN_END_PADDING, origin.y + ORIGIN_END_PADDING, origin.z + ORIGIN_END_PADDING);
+        AABB endBox = new AABB(end.x - ORIGIN_END_PADDING, end.y - ORIGIN_END_PADDING, end.z - ORIGIN_END_PADDING,
+                end.x + ORIGIN_END_PADDING, end.y + ORIGIN_END_PADDING, end.z + ORIGIN_END_PADDING);
+        return frustum.isVisible(originBox) || frustum.isVisible(endBox);
     }
 
     @Override

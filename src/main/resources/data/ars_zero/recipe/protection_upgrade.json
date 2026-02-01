@@ -1,0 +1,14 @@
+{
+  "type": "ars_zero:protection_upgrade",
+  "reagent": {
+    "tag": "ars_zero:protection_upgrade_input"
+  },
+  "pedestalItems": [
+    { "item": "minecraft:netherite_ingot" },
+    { "item": "ars_nouveau:earth_essence" },
+    { "item": "ars_nouveau:water_essence" },
+    { "item": "ars_nouveau:fire_essence" },
+    { "item": "ars_nouveau:air_essence" }
+  ],
+  "sourceCost": 2000
+}
