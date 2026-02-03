@@ -199,11 +199,12 @@ public class EffectBeam extends AbstractEffect {
         }
 
         boolean dampened = spellStats.getBuffCount(AugmentDampen.INSTANCE) > 0 || spellStats.getBuffCount(AugmentSensitive.INSTANCE) > 0;
+        boolean ignoreEntities = spellStats.getBuffCount(AugmentSensitive.INSTANCE) > 0;
         int amplifyLevel = spellStats.getBuffCount(AugmentAmplify.INSTANCE);
         float damage = getBaseDamage() + amplifyLevel * getAmplifyDamageBonus();
         int splitLevel = spellStats.getBuffCount(AugmentSplit.INSTANCE);
         if (splitLevel <= 0) {
-            EffectBeamEntity beam = new EffectBeamEntity(serverLevel, pos.x, pos.y, pos.z, yaw, pitch, lifetime, beamColorR, beamColorG, beamColorB, shooter.getUUID(), dampened, damage);
+            EffectBeamEntity beam = new EffectBeamEntity(serverLevel, pos.x, pos.y, pos.z, yaw, pitch, lifetime, beamColorR, beamColorG, beamColorB, shooter.getUUID(), dampened, ignoreEntities, damage);
             if (turretPos != null && turretFacing != null) {
                 beam.setTurretInfo(turretPos, turretFacing);
             }
@@ -248,7 +249,7 @@ public class EffectBeam extends AbstractEffect {
         List<Vec3> positions = MathHelper.getCirclePositions(center, circleNormal, circleRadius, entityCount);
         List<EffectBeamEntity> beams = new ArrayList<>();
         for (Vec3 p : positions) {
-            EffectBeamEntity beam = new EffectBeamEntity(serverLevel, p.x, p.y, p.z, yaw, pitch, lifetime, beamColorR, beamColorG, beamColorB, shooter.getUUID(), dampened, damage);
+            EffectBeamEntity beam = new EffectBeamEntity(serverLevel, p.x, p.y, p.z, yaw, pitch, lifetime, beamColorR, beamColorG, beamColorB, shooter.getUUID(), dampened, ignoreEntities, damage);
             if (turretPos != null && turretFacing != null) {
                 beam.setTurretInfo(turretPos, turretFacing);
             }
@@ -325,7 +326,7 @@ public class EffectBeam extends AbstractEffect {
     public void addAugmentDescriptions(Map<AbstractAugment, String> map) {
         super.addAugmentDescriptions(map);
         map.put(AugmentExtendTime.INSTANCE, "Increases the beam duration");
-        map.put(AugmentSensitive.INSTANCE, "Prevents the beam from dealing damage");
+        map.put(AugmentSensitive.INSTANCE, "Prevents the beam from dealing damage and makes it pass through entities");
         map.put(AugmentSplit.INSTANCE, "Splits the beam into multiples");
         map.put(AugmentDampen.INSTANCE, "Stops the beam from hurting entities");
         map.put(AugmentAOE.INSTANCE, "Increases the radius of the circle when using Split");

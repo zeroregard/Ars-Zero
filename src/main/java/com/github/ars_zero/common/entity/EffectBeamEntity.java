@@ -54,6 +54,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
     private static final EntityDataAccessor<Float> COLOR_G = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> COLOR_B = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DAMPENED = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IGNORE_ENTITIES = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> HAS_TARGET = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> TARGET_X = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> TARGET_Y = SynchedEntityData.defineId(EffectBeamEntity.class, EntityDataSerializers.FLOAT);
@@ -82,7 +83,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         this.setBoundingBox(new AABB(0, 0, 0, 0, 0, 0));
     }
 
-    public EffectBeamEntity(Level level, double x, double y, double z, float yRot, float xRot, int lifetime, float r, float g, float b, @Nullable UUID casterUUID, boolean dampened, float damage) {
+    public EffectBeamEntity(Level level, double x, double y, double z, float yRot, float xRot, int lifetime, float r, float g, float b, @Nullable UUID casterUUID, boolean dampened, boolean ignoreEntities, float damage) {
         this(ModEntities.EFFECT_BEAM.get(), level);
         this.setPos(x, y, z);
         this.setYRot(yRot);
@@ -92,6 +93,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         this.setColor(r, g, b);
         this.casterUUID = casterUUID;
         this.setDampened(dampened);
+        this.setIgnoreEntities(ignoreEntities);
         this.damage = damage;
     }
 
@@ -155,6 +157,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         builder.define(COLOR_G, 1.0f);
         builder.define(COLOR_B, 1.0f);
         builder.define(DAMPENED, false);
+        builder.define(IGNORE_ENTITIES, false);
         builder.define(HAS_TARGET, false);
         builder.define(TARGET_X, 0.0f);
         builder.define(TARGET_Y, 0.0f);
@@ -206,6 +209,14 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
 
     public void setDampened(boolean dampened) {
         this.entityData.set(DAMPENED, dampened);
+    }
+
+    public boolean isIgnoreEntities() {
+        return this.entityData.get(IGNORE_ENTITIES);
+    }
+
+    public void setIgnoreEntities(boolean ignoreEntities) {
+        this.entityData.set(IGNORE_ENTITIES, ignoreEntities);
     }
 
     public void setTargetEndpoint(Vec3 target) {
@@ -336,14 +347,15 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         Vec3 end = origin.add(forward.scale(RAY_LENGTH + 0.5));
 
         BlockHitResult blockHit = this.level().clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(this, origin, end, this.getBoundingBox().inflate(RAY_LENGTH), e -> e.isPickable() && !e.isSpectator() && e != this, RAY_LENGTH * RAY_LENGTH);
-
         HitResult hitResult = blockHit;
-        if (entityHit != null) {
-            double entityDist = origin.distanceTo(entityHit.getLocation());
-            double blockDist = blockHit.getType() == HitResult.Type.MISS ? Double.MAX_VALUE : origin.distanceTo(blockHit.getLocation());
-            if (entityDist < blockDist) {
-                hitResult = entityHit;
+        if (!this.isIgnoreEntities()) {
+            EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(this, origin, end, this.getBoundingBox().inflate(RAY_LENGTH), e -> e.isPickable() && !e.isSpectator() && e != this, RAY_LENGTH * RAY_LENGTH);
+            if (entityHit != null) {
+                double entityDist = origin.distanceTo(entityHit.getLocation());
+                double blockDist = blockHit.getType() == HitResult.Type.MISS ? Double.MAX_VALUE : origin.distanceTo(blockHit.getLocation());
+                if (entityDist < blockDist) {
+                    hitResult = entityHit;
+                }
             }
         }
 
@@ -425,6 +437,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         this.setMaxLifetime(maxLifetime);
         this.setColor(compound.getFloat("color_r"), compound.getFloat("color_g"), compound.getFloat("color_b"));
         this.setDampened(compound.getBoolean("dampened"));
+        this.setIgnoreEntities(compound.getBoolean("ignore_entities"));
         if (compound.hasUUID("caster_uuid")) {
             this.casterUUID = compound.getUUID("caster_uuid");
         } else {
@@ -440,6 +453,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         compound.putFloat("color_g", this.getColorG());
         compound.putFloat("color_b", this.getColorB());
         compound.putBoolean("dampened", this.isDampened());
+        compound.putBoolean("ignore_entities", this.isIgnoreEntities());
         if (this.casterUUID != null) {
             compound.putUUID("caster_uuid", this.casterUUID);
         }
