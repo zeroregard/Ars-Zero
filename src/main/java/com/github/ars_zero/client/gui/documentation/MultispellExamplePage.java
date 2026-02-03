@@ -15,7 +15,7 @@ import net.minecraft.world.item.TooltipFlag;
 
 import java.util.List;
 
-public class GravityGunExamplePage extends SinglePageWidget {
+public class MultispellExamplePage extends SinglePageWidget {
 
     private static final float GLYPH_SCALE = 0.5f;
     private static final int SLOT_SIZE_FULL = 16;
@@ -40,7 +40,7 @@ public class GravityGunExamplePage extends SinglePageWidget {
 
     private Component phaseTooltip;
 
-    public GravityGunExamplePage(Component title, Component quote,
+    public MultispellExamplePage(Component title, Component quote,
                                  List<ItemStack> beginGlyphs, List<ItemStack> tickGlyphs, List<ItemStack> endGlyphs,
                                  Component beginPhaseTooltip, Component tickPhaseTooltip, Component endPhaseTooltip,
                                  BaseDocScreen parent, int x, int y, int width, int height) {
@@ -58,7 +58,7 @@ public class GravityGunExamplePage extends SinglePageWidget {
     public static SinglePageCtor create(Component title, Component quote,
                                        List<ItemStack> beginGlyphs, List<ItemStack> tickGlyphs, List<ItemStack> endGlyphs,
                                        Component beginPhaseTooltip, Component tickPhaseTooltip, Component endPhaseTooltip) {
-        return (parent, x, y, width, height) -> new GravityGunExamplePage(
+        return (parent, x, y, width, height) -> new MultispellExamplePage(
                 title, quote, beginGlyphs, tickGlyphs, endGlyphs,
                 beginPhaseTooltip, tickPhaseTooltip, endPhaseTooltip,
                 parent, x, y, width, height);

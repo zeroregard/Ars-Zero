@@ -136,7 +136,7 @@
   "ars_zero.effect_augment_desc.conjure_voxel_effect_glyph_conjure_blight": "Composite Effect: Conjure Blight Voxel",
 
   "ars_zero.glyph_name.temporal_context_form": "Temporal Context",
-  "ars_zero.glyph_desc.temporal_context_form": "A cast method that provides access to the context of the previous spell phase (Staff only)",
+  "ars_zero.glyph_desc.temporal_context_form": "A cast method that provides access to the context of the previous spell phase",
 
   "ars_zero.glyph_name.near_form": "Near",
   "ars_zero.glyph_desc.near_form": "Casts the spell at a short distance in front of your gaze",
@@ -237,6 +237,12 @@
   "ars_zero.page.examples": "Examples",
   "ars_zero.examples.gravity_gun": "Gravity Gun",
   "ars_zero.examples.gravity_gun.quote": "\"You can call it Zero Point Energy Field Manipulator, if you really want to.\"",
+  "ars_zero.examples.tier2_teleportation": "Tier 2 Teleportation",
+  "ars_zero.examples.tier2_teleportation.quote": "\"Why walk, when you can conjure a ball of mana and swap places with it?\"",
+  "ars_zero.examples.ekusupuroshon": "Ekusupuroshon",
+  "ars_zero.examples.ekusupuroshon.quote": "\"Darkness blacker than black, and darker than dark\"",
+  "ars_zero.examples.mage_march": "Mage's March",
+  "ars_zero.examples.mage_march.quote": "\"Never touch the ground again—or at least not until the blocks expire.\"",
   "ars_zero.tooltip.begin_phase": "Begin phase",
   "ars_zero.tooltip.tick_phase": "Tick phase",
   "ars_zero.tooltip.end_phase": "End phase"
