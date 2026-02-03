@@ -45,16 +45,13 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
     @Override
     public void onUseTick(Level level, LivingEntity livingEntity, ItemStack stack, int remainingUseDuration) {
         if (livingEntity instanceof Player player && !level.isClientSide) {
-            int totalDuration = getUseDuration(stack, livingEntity);
-            boolean isFirstTick = remainingUseDuration == totalDuration - 1;
             IMultiPhaseCaster caster = AbstractMultiPhaseCastDevice.asMultiPhaseCaster(player, stack);
             MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;
-            boolean alreadyCasting = context != null && context.isCasting;
-            if (isFirstTick && !alreadyCasting) {
-                beginPhase(player, stack, MultiPhaseCastContext.CastSource.ITEM);
-            } else if (!isFirstTick && alreadyCasting) {
-                tickPhase(player, stack);
+            if (context == null || !context.isCasting) {
+                return;
             }
+            
+            tickPhase(player, stack);
         }
     }
 
@@ -82,6 +79,7 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
             if (isCasting) {
                 return InteractionResultHolder.pass(stack);
             }
+            beginPhase(player, stack, MultiPhaseCastContext.CastSource.ITEM);
         }
         player.startUsingItem(hand);
         return InteractionResultHolder.consume(stack);
@@ -97,12 +95,12 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
         if (context == null || !context.isCasting) {
             return;
         }
+        
         if (context.sequenceTick == 0) {
             tickPhase(player, stack);
-            endPhase(player, stack);
-        } else {
-            endPhase(player, stack);
         }
+        
+        endPhase(player, stack);
     }
 
     @Override
