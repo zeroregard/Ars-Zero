@@ -59,7 +59,7 @@
   "ars_affinity.gui.affinities": "親和能力",
 
   "key.category.ars_zero.general": "Ars Zero",
-
+  "key.ars_zero.curio_cast": "打開/關閉法術選取HUD",
   "itemGroup.ars_zero": "Ars Zero",
 
   "ars_zero.tooltip.circlet.cast": "按下%s以引導飾冠",
@@ -225,5 +225,25 @@
   "ars_zero.gui.casting_style.outlines": "外框",
   "ars_zero.gui.casting_style.symbol": "符號",
   "ars_zero.gui.casting_style.symbol.none": "無",
-  "ars_zero.gui.casting_style.symbol.auto": "自動（根據法術）"
+  "ars_zero.gui.casting_style.symbol.auto": "自動（根據法術）",
+  "ars_zero.section.ars_zero": "Ars Zero",
+  "ars_zero.page.overview": "Ars Zero概覽",
+  "ars_zero.page1.overview": "Ars Zero為新生魔藝新增了多階段施法方式，法術杖、施法飾冠等裝置則能按順序串聯起多個法術。",
+  "ars_zero.page2.overview": "",
+  "ars_zero.page.spell_phases": "法術階段",
+  "ars_zero.page1.spell_phases": "階段描述了多階段法術的生命週期。法術可包含多個魔符，多階段裝置則可包含多個法術；不過這些法術會嚴格按照開始、執行、結束的順序施放。\n\n開始使用法術杖等裝置時，會施放一次開始階段法術；之後的每一刻都會施放執行階段法術；停止使用時則施放結束階段法術。\n\n此外，在執行階段圖示上滾動滾輪可以調整該階段的延遲。",
+  "ars_zero.page.phase_targeting": "階段目標",
+  "ars_zero.page1.phase_targeting": "各階段法術彼此獨立，因此必須使用特殊的“時間上下文”形態才能對上一階段的目標進行操作。\n\n例如，可以在開始階段“構築方體”，在執行階段用“時間上下文”配合“錨鎖”，再在結束階段用“時間上下文”配合“推離”。\n\n這樣就能製造並沿視線方向瞄準和發射彈射物。",
+  "ars_zero.page.examples": "示例",
+  "ars_zero.examples.gravity_gun": "重力槍",
+  "ars_zero.examples.gravity_gun.quote": "“如果你願意，也可以叫它零點能量場牽引器。”",
+  "ars_zero.examples.tier2_teleportation": "二級傳送",
+  "ars_zero.examples.tier2_teleportation.quote": "“何必走路？構築一個魔力球再和它換位置就行了。”",
+  "ars_zero.examples.ekusupuroshon": "爆裂",
+  "ars_zero.examples.ekusupuroshon.quote": "“比黑色更黑，比黑暗更暗的漆黑”",
+  "ars_zero.examples.mage_march": "法師進行曲",
+  "ars_zero.examples.mage_march.quote": "“再也不用沾地——至少在這些方塊消失之前。”",
+  "ars_zero.tooltip.begin_phase": "開始階段",
+  "ars_zero.tooltip.tick_phase": "執行階段",
+  "ars_zero.tooltip.end_phase": "結束階段"
 }
