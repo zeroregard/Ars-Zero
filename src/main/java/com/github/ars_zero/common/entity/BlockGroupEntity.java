@@ -111,7 +111,7 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
             }
             
             BlockState state = level().getBlockState(pos);
-            if (state.isAir()) {
+            if (!BlockImmutabilityUtil.canBlockBeGrouped(level(), pos, state)) {
                 continue;
             }
             
@@ -134,7 +134,7 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
     public void addBlocksWithStates(List<BlockPos> positions, Map<BlockPos, BlockState> capturedStates) {
         for (BlockPos pos : positions) {
             BlockState state = capturedStates.get(pos);
-            if (state == null || state.isAir()) {
+            if (state == null || !BlockImmutabilityUtil.canBlockBeGrouped(level(), pos, state)) {
                 continue;
             }
             
@@ -158,7 +158,7 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
         if (level().isOutsideBuildHeight(pos)) return;
         
         BlockState state = level().getBlockState(pos);
-        if (state.isAir()) return;
+        if (!BlockImmutabilityUtil.canBlockBeGrouped(level(), pos, state)) return;
         
         BlockEntity tileEntity = level().getBlockEntity(pos);
         if (tileEntity != null) {
