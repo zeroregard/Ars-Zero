@@ -202,9 +202,12 @@
   "ars_zero.glyph_desc.augment_flatten": "根據法術產生效果時施法者的視線方向將三維形狀投影成二維形狀。",
   "ars_nouveau.augment_desc.effect_geometrize_augment_flatten": "根據施法者的視線方向將三維形狀投影成二維形狀。",
   "ars_nouveau.augment_desc.effect_geometrize_augment_sensitive": "從底部至頂部投影，而非從頂至底投影。",
+  "ars_nouveau.augment_desc.effect_geometrize_glyph_sensitive": "從底部至頂部投影，而非從頂至底投影。",
   "ars_zero.augment_desc.effect_geometrize_augment_sensitive": "從底部至頂部投影，而非從頂至底投影。",
   "ars_nouveau.augment_desc.effect_geometrize_augment_accelerate": "加快傀儡的施法速度。“加速”可讓傀儡更快。",
+  "ars_nouveau.augment_desc.effect_geometrize_glyph_accelerate": "加快傀儡的施法速度。“加速”可讓傀儡更快。",
   "ars_nouveau.augment_desc.effect_geometrize_augment_decelerate": "減慢傀儡的施法速度。“減速”可讓傀儡更慢。",
+  "ars_nouveau.augment_desc.effect_geometrize_glyph_decelerate": "減慢傀儡的施法速度。“減速”可讓傀儡更慢。",
 
   "ars_nouveau.spell.validation.adding.phase_restriction": "%s不可用於此階段。",
   "ars_nouveau.spell.validation.exists.phase_restriction": "%s不可用於此階段。",
