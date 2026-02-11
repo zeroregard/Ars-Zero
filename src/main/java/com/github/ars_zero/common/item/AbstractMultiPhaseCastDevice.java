@@ -86,7 +86,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     private static final String SLOT_TICK_DELAY_KEY = "ars_zero_tick_delays";
     private static final String CAST_CONTEXT_ID_KEY = "ars_zero_cast_context_id";
     private static final int SLOT_COUNT = 10;
-    private static final int DEFAULT_TICK_DELAY = 1;
+    private static final int DEFAULT_TICK_DELAY = 10;
     private static final int MAX_TICK_DELAY = 20;
     
     public static CastingStyle getCastingStyle(ItemStack stack, int logicalSlot) {
