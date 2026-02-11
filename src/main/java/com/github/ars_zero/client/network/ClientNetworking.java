@@ -2,6 +2,7 @@ package com.github.ars_zero.client.network;
 
 import com.github.ars_zero.common.network.PacketExplosionShake;
 import com.github.ars_zero.common.network.PacketManaDrain;
+import com.github.ars_zero.common.network.PacketOpenCircletGui;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.network.PacketUpdateStaffGUI;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -37,5 +38,10 @@ public final class ClientNetworking {
                 PacketManaDrain.TYPE,
                 PacketManaDrain.STREAM_CODEC,
                 ClientPacketHandlers::handleManaDrain);
+
+        registrar.playToClient(
+                PacketOpenCircletGui.TYPE,
+                PacketOpenCircletGui.CODEC,
+                ClientPacketHandlers::handleOpenCircletGui);
     }
 }

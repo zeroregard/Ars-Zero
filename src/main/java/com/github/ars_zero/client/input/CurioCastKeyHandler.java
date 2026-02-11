@@ -5,17 +5,19 @@ import com.github.ars_zero.client.RadialMenuTracker;
 import com.github.ars_zero.client.gui.SpellcastingCircletGUI;
 import com.github.ars_zero.client.registry.ModKeyBindings;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
+import com.github.ars_zero.common.network.CircletSlotInfo;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.common.network.PacketCurioCastInput;
-import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
-import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
+import com.github.ars_zero.common.network.PacketPutCircletBack;
+import com.github.ars_zero.common.network.PacketSwapCircletToHand;
 import com.hollingsworth.arsnouveau.api.util.StackUtil;
 import com.hollingsworth.arsnouveau.client.gui.radial_menu.GuiRadialMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+
+import static com.hollingsworth.arsnouveau.client.registry.ModKeyBindings.OPEN_BOOK;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -28,8 +30,20 @@ import top.theillusivec4.curios.api.CuriosApi;
 public final class CurioCastKeyHandler {
 
     private static boolean wasCastingPressed = false;
+    /** Set when server sent open-circlet-gui; we open next tick after inventory sync. */
+    private static CircletSlotInfo pendingOpenCircletGui;
+    /** Set when circlet GUI (with put-back slot) closes; we put back when all screens close (screen == null). */
+    private static CircletSlotInfo pendingPutCircletBack;
 
     private CurioCastKeyHandler() {
+    }
+
+    public static void setPendingOpenCircletGui(CircletSlotInfo slot) {
+        pendingOpenCircletGui = slot;
+    }
+
+    public static void setPendingPutCircletBack(CircletSlotInfo slot) {
+        pendingPutCircletBack = slot;
     }
 
     @SubscribeEvent
@@ -41,24 +55,20 @@ public final class CurioCastKeyHandler {
         if (minecraft.player == null || minecraft.screen != null) {
             return;
         }
-        if (event.getKey() != ModKeyBindings.CURIO_CAST.getKey().getValue() || ModKeyBindings.CURIO_CAST.isUnbound()) {
+        // C = spellbook GUI key in Ars Nouveau; open circlet GUI when no book/staff in hand but circlet equipped.
+        // Only when main hand is empty: request server to swap circlet to hand, then server sends open-gui and we set "opened via swap".
+        if (event.getKey() != OPEN_BOOK.getKey().getValue() || OPEN_BOOK.isUnbound()) {
             return;
         }
         if (StackUtil.getHeldCasterTool(minecraft.player) != null) {
             return;
         }
-        CuriosApi.getCuriosHelper().findEquippedCurio(
-                stack -> stack.getItem() instanceof SpellcastingCirclet,
-                minecraft.player
-        ).ifPresent(result -> {
-            ItemStack circletStack = result.getRight();
-            AbstractCaster<?> caster = SpellCasterRegistry.from(circletStack);
-            if (caster == null) {
-                minecraft.player.sendSystemMessage(Component.literal("§cError: Device has no spell data! Try crafting a new one."));
-                return;
-            }
-            minecraft.setScreen(new SpellcastingCircletGUI(circletStack, InteractionHand.MAIN_HAND));
-        });
+        if (!minecraft.player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+            return;
+        }
+        CuriosApi.getCuriosInventory(minecraft.player)
+                .flatMap(handler -> handler.findCurios(stack -> stack.getItem() instanceof SpellcastingCirclet).stream().findFirst())
+                .ifPresent(slotResult -> Networking.sendToServer(new PacketSwapCircletToHand()));
     }
 
     @SubscribeEvent
@@ -68,7 +78,20 @@ public final class CurioCastKeyHandler {
             return;
         }
 
-        boolean pressed = com.github.ars_zero.client.registry.ModKeyBindings.CURIO_CAST.isDown();
+        if (pendingOpenCircletGui != null && minecraft.screen == null) {
+            ItemStack mainHand = minecraft.player.getItemInHand(InteractionHand.MAIN_HAND);
+            if (mainHand.getItem() instanceof SpellcastingCirclet) {
+                minecraft.setScreen(new SpellcastingCircletGUI(mainHand, InteractionHand.MAIN_HAND, pendingOpenCircletGui));
+                pendingOpenCircletGui = null;
+            }
+        }
+
+        if (minecraft.screen == null && pendingPutCircletBack != null) {
+            Networking.sendToServer(new PacketPutCircletBack(pendingPutCircletBack));
+            pendingPutCircletBack = null;
+        }
+
+        boolean pressed = ModKeyBindings.CURIO_CAST.isDown();
         if (pressed != wasCastingPressed) {
             wasCastingPressed = pressed;
             Networking.sendToServer(new PacketCurioCastInput(pressed));
@@ -103,6 +126,13 @@ public final class CurioCastKeyHandler {
     public static void onRadialScreenClosed(ScreenEvent.Closing event) {
         if (event.getScreen() instanceof GuiRadialMenu) {
             RadialMenuTracker.clear();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onCircletGuiClosed(ScreenEvent.Closing event) {
+        if (event.getScreen() instanceof SpellcastingCircletGUI gui) {
+            gui.getPutBackSlot().ifPresent(CurioCastKeyHandler::setPendingPutCircletBack);
         }
     }
 }
