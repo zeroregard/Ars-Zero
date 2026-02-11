@@ -21,6 +21,11 @@ public class Networking {
                                 PacketSetParchmentClipboard::handle);
 
                 registrar.playToServer(
+                                PacketConvertParchmentToMultiphase.TYPE,
+                                PacketConvertParchmentToMultiphase.CODEC,
+                                PacketConvertParchmentToMultiphase::handle);
+
+                registrar.playToServer(
                                 PacketSetStaffSound.TYPE,
                                 PacketSetStaffSound.CODEC,
                                 PacketSetStaffSound::handle);
@@ -114,6 +119,10 @@ public class Networking {
         }
 
         public static void sendToServer(PacketSetParchmentClipboard packet) {
+                PacketDistributor.sendToServer(packet);
+        }
+
+        public static void sendToServer(PacketConvertParchmentToMultiphase packet) {
                 PacketDistributor.sendToServer(packet);
         }
 

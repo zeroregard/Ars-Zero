@@ -5,6 +5,7 @@ import com.github.ars_zero.common.casting.CastingStyle;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.network.ArsNouveauNetworking;
 import com.github.ars_zero.common.network.Networking;
+import com.github.ars_zero.common.network.PacketConvertParchmentToMultiphase;
 import com.github.ars_zero.common.network.PacketSetParchmentClipboard;
 import com.github.ars_zero.common.network.PacketUpdateCastingStyle;
 import com.github.ars_zero.common.network.PacketUpdateTickDelay;
@@ -98,13 +99,17 @@ public final class StaffSlotClipboardSupport {
 
         StaffSpellClipboardClient.set(clipboard);
 
-        // If other hand holds a multiphase parchment, write there too
+        // If other hand holds a parchment: multiphase → write data; regular spell parchment → convert to multiphase
         ItemStack otherHandStack = getOtherHandStack();
-        if (!otherHandStack.isEmpty() && otherHandStack.getItem() == ModItems.MULTIPHASE_SPELL_PARCHMENT.get()) {
-            StaffSpellClipboard.writeToStack(otherHandStack, clipboard, StaffSpellClipboard.PARCHMENT_SLOT_KEY);
+        if (!otherHandStack.isEmpty()) {
             InteractionHand guiHand = host.getHostGuiHand();
             boolean parchmentInMainHand = (guiHand != null && guiHand == InteractionHand.OFF_HAND);
-            Networking.sendToServer(new PacketSetParchmentClipboard(clipboard.toTag(), parchmentInMainHand));
+            if (otherHandStack.getItem() == ModItems.MULTIPHASE_SPELL_PARCHMENT.get()) {
+                StaffSpellClipboard.writeToStack(otherHandStack, clipboard, StaffSpellClipboard.PARCHMENT_SLOT_KEY);
+                Networking.sendToServer(new PacketSetParchmentClipboard(clipboard.toTag(), parchmentInMainHand));
+            } else if (PacketConvertParchmentToMultiphase.isSpellParchment(otherHandStack)) {
+                Networking.sendToServer(new PacketConvertParchmentToMultiphase(clipboard.toTag(), parchmentInMainHand));
+            }
         }
     }
 

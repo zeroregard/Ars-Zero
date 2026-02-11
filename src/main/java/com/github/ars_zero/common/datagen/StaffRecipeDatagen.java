@@ -30,7 +30,6 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
         addDullCircletRecipe();
         addSpellcastingCircletRecipe();
         addMultiphaseOrbRecipe();
-        addMultiphaseSpellParchmentRecipe();
         addMultiphaseTurretRecipe();
 
         for (FileObj fileObj : files) {
@@ -210,24 +209,6 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
         json.add("result", result);
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/multiphase_orb.json"), json));
-    }
-
-    private void addMultiphaseSpellParchmentRecipe() {
-        JsonObject json = new JsonObject();
-        json.addProperty("type", "minecraft:crafting_shapeless");
-        json.addProperty("category", "misc");
-
-        JsonArray ingredients = new JsonArray();
-        ingredients.add(item("ars_nouveau:spell_parchment"));
-        ingredients.add(item(id(ModItems.MULTIPHASE_ORB.get().asItem())));
-        json.add("ingredients", ingredients);
-
-        JsonObject result = new JsonObject();
-        result.addProperty("count", 1);
-        result.addProperty("id", id(ModItems.MULTIPHASE_SPELL_PARCHMENT.get().asItem()));
-        json.add("result", result);
-
-        files.add(new FileObj(resolvePath("data/ars_zero/recipe/multiphase_spell_parchment.json"), json));
     }
 
     private void addMultiphaseTurretRecipe() {
