@@ -7,6 +7,8 @@ import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.DullCirclet;
 import com.github.ars_zero.common.item.MageSpellStaff;
+import com.github.ars_zero.common.item.MultiphaseOrbItem;
+import com.github.ars_zero.common.item.MultiphaseSpellParchment;
 import com.github.ars_zero.common.item.NoviceSpellStaff;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
@@ -41,13 +43,10 @@ public class ModItems {
     public static final ItemRegistryWrapper<DullCirclet> DULL_CIRCLET = register("dull_circlet", () -> new DullCirclet(defaultItemProperties()));
     
     public static final ItemRegistryWrapper<Item> ARCHWOOD_ROD = register("archwood_rod", () -> new Item(defaultItemProperties()));
+
+    public static final ItemRegistryWrapper<MultiphaseSpellParchment> MULTIPHASE_SPELL_PARCHMENT = register("multiphase_spell_parchment", () -> new MultiphaseSpellParchment(defaultItemProperties()));
     
-    public static final ItemRegistryWrapper<Item> MULTIPHASE_ORB = register("multiphase_orb", () -> new Item(defaultItemProperties()) {
-        @Override
-        public boolean isFoil(net.minecraft.world.item.ItemStack stack) {
-            return true;
-        }
-    });
+    public static final ItemRegistryWrapper<MultiphaseOrbItem> MULTIPHASE_ORB = register("multiphase_orb", () -> new MultiphaseOrbItem(defaultItemProperties()));
     
     public static final DeferredHolder<Item, BlockItem> ARCANE_VOXEL_SPAWNER = ITEMS.register(
         "arcane_voxel_spawner",

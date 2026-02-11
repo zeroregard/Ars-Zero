@@ -1090,6 +1090,24 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     }
 
     @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (hasControlDown() && getFocused() != searchBar && getFocused() != spellNameBox) {
+            if (isCopy(keyCode)) {
+                if (slotClipboardSupport != null && selectedSpellSlot >= 0 && selectedSpellSlot < 10) {
+                    slotClipboardSupport.copySlot(selectedSpellSlot);
+                    return true;
+                }
+            } else if (isPaste(keyCode)) {
+                if (slotClipboardSupport != null && selectedSpellSlot >= 0 && selectedSpellSlot < 10) {
+                    slotClipboardSupport.pasteSlot(selectedSpellSlot);
+                    return true;
+                }
+            }
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
     public AbstractCaster<?> getHostCaster() {
         return caster;
     }

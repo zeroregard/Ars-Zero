@@ -17,6 +17,10 @@
   "item.ars_zero.spellcasting_circlet.desc": "A circlet that channels spells from your head slot with Begin, Tick, and End phases.",
 
   "item.ars_zero.archwood_rod": "Archwood Rod",
+  "item.ars_zero.multiphase_spell_parchment": "Multiphase Spell Parchment",
+  "ars_zero.tooltip.multiphase_parchment.empty": "Empty. Copy a staff or circlet slot while holding this to store it.",
+  "ars_zero.tooltip.multiphase_parchment.slot_name": "Slot: %s",
+  "ars_zero.tooltip.multiphase_parchment.tick_delay": "Tick delay: %s",
   "item.ars_zero.multiphase_orb": "Phased Orb",
 
   "block.ars_zero.arcane_voxel_spawner": "Arcane Voxel Spawner",

@@ -5,11 +5,12 @@ import com.github.ars_zero.common.casting.CastingStyle;
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.network.ArsNouveauNetworking;
 import com.github.ars_zero.common.network.Networking;
-import com.github.ars_zero.common.network.PacketSetStaffClipboard;
+import com.github.ars_zero.common.network.PacketSetParchmentClipboard;
 import com.github.ars_zero.common.network.PacketUpdateCastingStyle;
 import com.github.ars_zero.common.network.PacketUpdateTickDelay;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.StaffSpellClipboard;
+import com.github.ars_zero.registry.ModItems;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.common.network.PacketUpdateCaster;
@@ -17,10 +18,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public final class StaffSlotClipboardSupport {
 
@@ -57,7 +61,7 @@ public final class StaffSlotClipboardSupport {
         for (StaffSpellSlot slot : spellSlots) {
             if (slot != null && slot.isMouseOver(mouseX, mouseY)) {
                 int logicalSlot = slot.slotNum;
-                boolean pasteEnabled = StaffSpellClipboardClient.get().isPresent() || StaffSpellClipboard.readFromStack(host.getHostDeviceStack()).isPresent();
+                boolean pasteEnabled = hasPasteSource();
                 menu.show((int) mouseX, (int) mouseY, pasteEnabled, () -> copyWholeSlot(logicalSlot), () -> pasteWholeSlot(logicalSlot));
                 return true;
             }
@@ -93,17 +97,19 @@ public final class StaffSlotClipboardSupport {
         );
 
         StaffSpellClipboardClient.set(clipboard);
-        StaffSpellClipboard.writeToStack(host.getHostDeviceStack(), clipboard);
 
-        InteractionHand guiHand = host.getHostGuiHand();
-        boolean mainHand = guiHand == null || guiHand == InteractionHand.MAIN_HAND;
-        Networking.sendToServer(new PacketSetStaffClipboard(clipboard.toTag(), mainHand, host.isHostCircletDevice()));
+        // If other hand holds a multiphase parchment, write there too
+        ItemStack otherHandStack = getOtherHandStack();
+        if (!otherHandStack.isEmpty() && otherHandStack.getItem() == ModItems.MULTIPHASE_SPELL_PARCHMENT.get()) {
+            StaffSpellClipboard.writeToStack(otherHandStack, clipboard, StaffSpellClipboard.PARCHMENT_SLOT_KEY);
+            InteractionHand guiHand = host.getHostGuiHand();
+            boolean parchmentInMainHand = (guiHand != null && guiHand == InteractionHand.OFF_HAND);
+            Networking.sendToServer(new PacketSetParchmentClipboard(clipboard.toTag(), parchmentInMainHand));
+        }
     }
 
     private void pasteWholeSlot(int logicalSlot) {
-        StaffSpellClipboard clipboard = StaffSpellClipboardClient.get()
-            .or(() -> StaffSpellClipboard.readFromStack(host.getHostDeviceStack()))
-            .orElse(null);
+        StaffSpellClipboard clipboard = resolvePasteClipboard();
         if (clipboard == null) {
             return;
         }
@@ -160,6 +166,46 @@ public final class StaffSlotClipboardSupport {
         for (int i = 0; i < recipeList.size() && i < 10; i++) {
             phaseList.set(i, recipeList.get(i));
         }
+    }
+
+    /** Paste source order: in-memory client clipboard first, then other-hand parchment. */
+    private StaffSpellClipboard resolvePasteClipboard() {
+        return StaffSpellClipboardClient.get()
+            .or(this::getParchmentClipboardFromOtherHand)
+            .orElse(null);
+    }
+
+    private boolean hasPasteSource() {
+        return StaffSpellClipboardClient.get().isPresent()
+            || getParchmentClipboardFromOtherHand().isPresent();
+    }
+
+    private ItemStack getOtherHandStack() {
+        Player player = Minecraft.getInstance().player;
+        if (player == null) {
+            return ItemStack.EMPTY;
+        }
+        InteractionHand guiHand = host.getHostGuiHand();
+        InteractionHand other = (guiHand == InteractionHand.MAIN_HAND) ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+        return player.getItemInHand(other);
+    }
+
+    private Optional<StaffSpellClipboard> getParchmentClipboardFromOtherHand() {
+        ItemStack other = getOtherHandStack();
+        if (other.isEmpty() || other.getItem() != ModItems.MULTIPHASE_SPELL_PARCHMENT.get()) {
+            return Optional.empty();
+        }
+        return StaffSpellClipboard.readFromStack(other, StaffSpellClipboard.PARCHMENT_SLOT_KEY);
+    }
+
+    /** Called from screen for Ctrl+C: copy the given slot (in-memory, device, and parchment in other hand if present). */
+    public void copySlot(int logicalSlot) {
+        copyWholeSlot(logicalSlot);
+    }
+
+    /** Called from screen for Ctrl+V: paste into the given slot from clipboard (client, device, or parchment). */
+    public void pasteSlot(int logicalSlot) {
+        pasteWholeSlot(logicalSlot);
     }
 }
 
