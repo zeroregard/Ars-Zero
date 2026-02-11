@@ -4,7 +4,6 @@ import com.github.ars_zero.client.input.CurioCastKeyHandler;
 import com.github.ars_zero.client.ScreenShakeManager;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.client.gui.MultiphaseDeviceStylesScreen;
-import com.github.ars_zero.client.gui.SpellcastingCircletGUI;
 import com.github.ars_zero.client.renderer.StaffDebugHUD;
 import com.github.ars_zero.client.sound.StaffSoundManager;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
