@@ -1,0 +1,22 @@
+{
+  "type": "ars_nouveau:glyph",
+  "exp": 55,
+  "inputs": [
+    {
+      "item": "minecraft:compass"
+    },
+    {
+      "item": "minecraft:iron_block"
+    },
+    {
+      "item": "minecraft:ender_pearl"
+    },
+    {
+      "item": "ars_nouveau:source_gem"
+    }
+  ],
+  "output": {
+    "count": 1,
+    "id": "ars_zero:anchor_effect"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "type": "ars_nouveau:glyph",
+  "exp": 27,
+  "inputs": [
+    {
+      "item": "ars_nouveau:magebloom_fiber"
+    },
+    {
+      "item": "ars_zero:archwood_rod"
+    },
+    {
+      "item": "minecraft:amethyst_shard"
+    },
+    {
+      "item": "ars_nouveau:source_gem"
+    }
+  ],
+  "output": {
+    "count": 1,
+    "id": "ars_zero:select_effect"
+  }
+}
