@@ -12,7 +12,7 @@ import org.lwjgl.glfw.GLFW;
 public class ModKeyBindings {
 
     public static final String CATEGORY = "key.category.ars_zero.general";
-    public static final KeyMapping CURIO_CAST = new KeyMapping("key.ars_zero.curio_cast", GLFW.GLFW_KEY_V, CATEGORY);
+    public static final KeyMapping CURIO_CAST = new KeyMapping("key.ars_zero.curio_cast", GLFW.GLFW_KEY_U, CATEGORY);
 
     @SubscribeEvent
     public static void registerKeyBindings(RegisterKeyMappingsEvent event) {
