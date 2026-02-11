@@ -1,0 +1,22 @@
+{
+  "type": "ars_nouveau:glyph",
+  "exp": 160,
+  "inputs": [
+    {
+      "item": "ars_nouveau:manipulation_essence"
+    },
+    {
+      "item": "minecraft:ender_eye"
+    },
+    {
+      "item": "minecraft:nether_star"
+    },
+    {
+      "tag": "c:rods/blaze"
+    }
+  ],
+  "output": {
+    "count": 1,
+    "id": "ars_zero:effect_convergence"
+  }
+}

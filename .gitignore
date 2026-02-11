@@ -46,4 +46,4 @@ runs/
 run-bot/
 
 # Generated
-src/generated/
+src/generated/resources/.cache
