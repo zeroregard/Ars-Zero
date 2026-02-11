@@ -172,7 +172,8 @@ public class ArcaneCircleEntity extends AbstractConvergenceEntity {
 
             Vec3 targetPos;
             if (style.getPlacement() == CastingStyle.Placement.FEET) {
-                targetPos = caster.position().add(0, -caster.getEyeHeight() + caster.getBbHeight() / 2 + 0.5, 0);
+                double y = caster.blockPosition().below().getY() + 1;
+                targetPos = new Vec3(caster.position().x, y, caster.position().z);
             } else {
                 Vec3 eyePos = caster.getEyePosition(1.0f);
                 Vec3 lookVec = caster.getLookAngle();

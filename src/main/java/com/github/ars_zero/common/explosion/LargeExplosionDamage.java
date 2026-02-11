@@ -28,7 +28,7 @@ public final class LargeExplosionDamage {
         for (Entity entity : entities) {
             Vec3 delta = entity.position().subtract(center);
             double dist = delta.length();
-            if (dist > radius || dist <= 0.0001) {
+            if (dist > radius) {
                 continue;
             }
 
@@ -38,7 +38,8 @@ public final class LargeExplosionDamage {
                 living.hurt(damageSource, (float) damage);
             }
 
-            Vec3 knockDir = delta.scale(1.0 / dist);
+            // At center (dist ~0) use up so we don't divide by zero; otherwise use direction away from center
+            Vec3 knockDir = dist > 1.0E-6 ? delta.scale(1.0 / dist) : new Vec3(0, 1, 0);
             double knock = maxKnockback * t * 2.0; // Double the knockback
             entity.push(knockDir.x * knock, knockDir.y * knock * 1.2, knockDir.z * knock); // Y component is 2x stronger (was 0.6, now 1.2)
             entity.hurtMarked = true;

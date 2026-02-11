@@ -33,8 +33,8 @@ public final class ExamplesDocHelper {
                 glyphStacks("ars_zero:temporal_context_form", "ars_nouveau:glyph_exchange", "ars_zero:discard_effect"));
         builder = addExampleSpell(builder, "ars_zero.examples.ekusupuroshon", "ars_zero.examples.ekusupuroshon.quote",
                 glyphStacks("ars_nouveau:glyph_projectile", "ars_zero:effect_convergence", "ars_nouveau:glyph_explosion",
-                        "ars_nouveau:glyph_amplify", "ars_nouveau:glyph_amplify", "ars_nouveau:glyph_amplify",
-                        "ars_nouveau:glyph_aoe", "ars_nouveau:glyph_aoe", "ars_nouveau:glyph_aoe", "ars_nouveau:glyph_aoe"),
+                        "ars_nouveau:glyph_amplify", "ars_nouveau:glyph_amplify",
+                        "ars_nouveau:glyph_aoe", "ars_nouveau:glyph_aoe", "ars_nouveau:glyph_aoe", "ars_nouveau:glyph_aoe", "ars_nouveau:glyph_aoe"),
                 glyphStacks("ars_zero:temporal_context_form", "ars_zero:sustain_effect"),
                 glyphStacks());
         builder = addExampleSpell(builder, "ars_zero.examples.mage_march", "ars_zero.examples.mage_march.quote",
