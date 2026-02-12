@@ -46,6 +46,16 @@ public class Networking {
                                 PacketCurioCastInput::handle);
 
                 registrar.playToServer(
+                                PacketSwapCircletToHand.TYPE,
+                                PacketSwapCircletToHand.CODEC,
+                                PacketSwapCircletToHand::handle);
+
+                registrar.playToServer(
+                                PacketPutCircletBack.TYPE,
+                                PacketPutCircletBack.CODEC,
+                                PacketPutCircletBack::handle);
+
+                registrar.playToServer(
                                 PacketCancelEntity.TYPE,
                                 PacketCancelEntity.CODEC,
                                 PacketCancelEntity::handle);
@@ -90,6 +100,12 @@ public class Networking {
                                         PacketManaDrain.STREAM_CODEC,
                                         (packet, context) -> {
                                         });
+
+                        registrar.playToClient(
+                                        PacketOpenCircletGui.TYPE,
+                                        PacketOpenCircletGui.CODEC,
+                                        (packet, context) -> {
+                                        });
                 }
         }
 
@@ -118,6 +134,14 @@ public class Networking {
         }
 
         public static void sendToServer(PacketCurioCastInput packet) {
+                PacketDistributor.sendToServer(packet);
+        }
+
+        public static void sendToServer(PacketSwapCircletToHand packet) {
+                PacketDistributor.sendToServer(packet);
+        }
+
+        public static void sendToServer(PacketPutCircletBack packet) {
                 PacketDistributor.sendToServer(packet);
         }
 

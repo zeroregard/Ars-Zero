@@ -1,5 +1,6 @@
 package com.github.ars_zero.client.network;
 
+import com.github.ars_zero.client.input.CurioCastKeyHandler;
 import com.github.ars_zero.client.ScreenShakeManager;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.client.gui.MultiphaseDeviceStylesScreen;
@@ -10,6 +11,7 @@ import com.github.ars_zero.client.sound.ExplosionActivateSoundInstance;
 import com.github.ars_zero.common.network.PacketExplosionActivateSound;
 import com.github.ars_zero.common.network.PacketExplosionShake;
 import com.github.ars_zero.common.network.PacketManaDrain;
+import com.github.ars_zero.common.network.PacketOpenCircletGui;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.network.PacketUpdateStaffGUI;
@@ -90,6 +92,13 @@ final class ClientPacketHandlers {
     static void handleManaDrain(PacketManaDrain packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             GuiManaDrainOverlay.onManaDrain(packet.amount());
+        });
+    }
+
+    static void handleOpenCircletGui(PacketOpenCircletGui packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            // Defer opening to next tick so client inventory is synced (main hand has the circlet)
+            CurioCastKeyHandler.setPendingOpenCircletGui(packet.slot());
         });
     }
 }

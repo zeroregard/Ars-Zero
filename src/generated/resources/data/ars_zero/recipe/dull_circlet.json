@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": {
+      "item": "ars_nouveau:source_gem"
+    },
+    "I": {
+      "tag": "c:ingots/iron"
+    }
+  },
+  "pattern": [
+    " D ",
+    "III",
+    "I I"
+  ],
+  "result": {
+    "count": 1,
+    "id": "ars_zero:dull_circlet"
+  }
+}

@@ -366,7 +366,8 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
                 if (circleEntity != null) {
                     Vec3 spawnPos;
                     if (style.getPlacement() == CastingStyle.Placement.FEET) {
-                        spawnPos = player.position().add(0, -player.getEyeHeight() + player.getBbHeight() / 2, 0);
+                        double y = player.blockPosition().below().getY() + 1;
+                        spawnPos = new Vec3(player.position().x, y, player.position().z);
                     } else {
                         Vec3 eyePos = player.getEyePosition(1.0f);
                         Vec3 lookVec = player.getLookAngle();
