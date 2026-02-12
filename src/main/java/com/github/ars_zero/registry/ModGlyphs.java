@@ -11,6 +11,10 @@ import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.SustainEffect;
 import com.github.ars_zero.common.glyph.ZeroGravityEffect;
+import com.github.ars_zero.common.glyph.augment.AugmentAmplifyThree;
+import com.github.ars_zero.common.glyph.augment.AugmentAmplifyTwo;
+import com.github.ars_zero.common.glyph.augment.AugmentAOEThree;
+import com.github.ars_zero.common.glyph.augment.AugmentAOETwo;
 import com.github.ars_zero.common.glyph.augment.AugmentCube;
 import com.github.ars_zero.common.glyph.augment.AugmentFlatten;
 import com.github.ars_zero.common.glyph.augment.AugmentHollow;
@@ -38,6 +42,10 @@ public class ModGlyphs {
     public static final AugmentCube AUGMENT_CUBE = AugmentCube.INSTANCE;
     public static final AugmentFlatten AUGMENT_FLATTEN = AugmentFlatten.INSTANCE;
     public static final EffectConjureBlight EFFECT_CONJURE_BLIGHT = EffectConjureBlight.INSTANCE;
+    public static final AugmentAOETwo AUGMENT_AOE_TWO = AugmentAOETwo.INSTANCE;
+    public static final AugmentAOEThree AUGMENT_AOE_THREE = AugmentAOEThree.INSTANCE;
+    public static final AugmentAmplifyTwo AUGMENT_AMPLIFY_TWO = AugmentAmplifyTwo.INSTANCE;
+    public static final AugmentAmplifyThree AUGMENT_AMPLIFY_THREE = AugmentAmplifyThree.INSTANCE;
 
     public static void registerGlyphs() {
         GlyphRegistry.registerSpell(TEMPORAL_CONTEXT_FORM);
@@ -57,5 +65,9 @@ public class ModGlyphs {
         GlyphRegistry.registerSpell(AUGMENT_CUBE);
         GlyphRegistry.registerSpell(AUGMENT_FLATTEN);
         GlyphRegistry.registerSpell(EFFECT_CONJURE_BLIGHT);
+        GlyphRegistry.registerSpell(AUGMENT_AOE_TWO);
+        GlyphRegistry.registerSpell(AUGMENT_AOE_THREE);
+        GlyphRegistry.registerSpell(AUGMENT_AMPLIFY_TWO);
+        GlyphRegistry.registerSpell(AUGMENT_AMPLIFY_THREE);
     }
 }

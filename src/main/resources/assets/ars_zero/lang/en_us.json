@@ -190,6 +190,15 @@
   "ars_zero.effect_augment_desc.effect_geometrize_glyph_conjure_terrain": "Place Terrain: Creates a structure with blocks defined by regular Conjure Terrain augments/effects. Drains mana per block placed.",
   "ars_zero.effect_augment_desc.effect_geometrize_glyph_break": "Break Structure: Breaks blocks in a geometric pattern. Drains mana per block broken.",
 
+  "ars_zero.glyph_name.augment_aoe_two": "AOE II",
+  "ars_zero.glyph_desc.augment_aoe_two": "Spells will affect a huge area around a targeted block.§9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
+  "ars_zero.glyph_name.augment_aoe_three": "AOE III",
+  "ars_zero.glyph_desc.augment_aoe_three": "Spells will affect a gargantuan area around a targeted block. §9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
+  "ars_zero.glyph_name.augment_amplify_two": "Amplify II",
+  "ars_zero.glyph_desc.augment_amplify_two": "Greatly increases the power of most spell effects. §9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
+  "ars_zero.glyph_name.augment_amplify_three": "Amplify III",
+  "ars_zero.glyph_desc.augment_amplify_three": "Massively increases the power of most spell effects. §9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
+
   "ars_zero.glyph_name.augment_cube": "Geometry - Cube",
   "ars_zero.glyph_desc.augment_cube": "Shapes geometry into a cube.",
   "ars_nouveau.augment_desc.effect_geometrize_augment_cube": "Generates cube shapes (default). When flattened, produces squares.",
