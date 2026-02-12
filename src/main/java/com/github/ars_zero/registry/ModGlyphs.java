@@ -22,6 +22,9 @@ import com.github.ars_zero.common.glyph.augment.AugmentSphere;
 import com.github.ars_zero.common.glyph.convergence.EffectConvergence;
 import com.github.ars_zero.common.glyph.geometrize.EffectGeometrize;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
+import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAOE;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 
 public class ModGlyphs {
 
@@ -69,5 +72,22 @@ public class ModGlyphs {
         GlyphRegistry.registerSpell(AUGMENT_AOE_THREE);
         GlyphRegistry.registerSpell(AUGMENT_AMPLIFY_TWO);
         GlyphRegistry.registerSpell(AUGMENT_AMPLIFY_THREE);
+    }
+
+    /**
+     * Adds AOE II/III and Amplify II/III to every spell part that already accepts AOE or Amplify.
+     * Called from common setup so they are treated as compatible wherever the base augment is.
+     */
+    public static void addOptionalAugmentCompatibility() {
+        for (AbstractSpellPart part : GlyphRegistry.getSpellpartMap().values()) {
+            if (part.compatibleAugments.contains(AugmentAOE.INSTANCE)) {
+                part.compatibleAugments.add(AUGMENT_AOE_TWO);
+                part.compatibleAugments.add(AUGMENT_AOE_THREE);
+            }
+            if (part.compatibleAugments.contains(AugmentAmplify.INSTANCE)) {
+                part.compatibleAugments.add(AUGMENT_AMPLIFY_TWO);
+                part.compatibleAugments.add(AUGMENT_AMPLIFY_THREE);
+            }
+        }
     }
 }
