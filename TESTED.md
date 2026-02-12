@@ -2,5 +2,6 @@
 
 - [ ] Multi phase parchment
 - [ ] Mult phase copy paste
-- [ ] Adams AOE/Amp
+- [x] Adams AOE/Amp show up
+- [ ] Adams AOE/Amp work for sure in spells
 - [ ] Default cooldown config
