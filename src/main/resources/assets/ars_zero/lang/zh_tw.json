@@ -116,9 +116,9 @@
 
   "item.ars_zero.sustain_effect": "維繫",
   "ars_zero.glyph_name.sustain_effect": "維繫",
-  "ars_zero.glyph_desc.sustain_effect": "延長目標的存在時間。",
+  "ars_zero.glyph_desc.sustain_effect": "延長目標的存在時間。§6[延長存在時間]",
   "ars_zero.glyph_name.glyph_sustain_effect": "維繫",
-  "ars_zero.glyph_desc.glyph_sustain_effect": "延長目標的存在時間。",
+  "ars_zero.glyph_desc.glyph_sustain_effect": "延長目標的存在時間。§6[延長存在時間]",
   "ars_nouveau.glyph_name.sustain_effect": "維繫",
   "ars_nouveau.augment_desc.sustain_effect_glyph_extend_time": "每等級追加1刻。",
 
@@ -146,9 +146,9 @@
 
   "item.ars_zero.anchor_effect": "錨鎖",
   "ars_zero.glyph_name.anchor_effect": "錨鎖",
-  "ars_zero.glyph_desc.anchor_effect": "維持各目標關於玩家的相對位置不變。",
+  "ars_zero.glyph_desc.anchor_effect": "維持各目標關於玩家的相對位置不變。同時會像維繫一樣延長其存在時間。§6[延長存在時間]",
   "ars_zero.glyph_name.glyph_anchor_effect": "錨鎖",
-  "ars_zero.glyph_desc.glyph_anchor_effect": "維持各目標關於玩家的相對位置不變。",
+  "ars_zero.glyph_desc.glyph_anchor_effect": "維持各目標關於玩家的相對位置不變。同時會像維繫一樣延長其存在時間。§6[延長存在時間]",
   "ars_nouveau.glyph_name.anchor_effect": "錨鎖",
 
   "ars_zero.glyph_name.push_effect": "推離",

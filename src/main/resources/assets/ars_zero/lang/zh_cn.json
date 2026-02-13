@@ -116,9 +116,9 @@
 
   "item.ars_zero.sustain_effect": "维系",
   "ars_zero.glyph_name.sustain_effect": "维系",
-  "ars_zero.glyph_desc.sustain_effect": "延长目标的存在时间。",
+  "ars_zero.glyph_desc.sustain_effect": "延长目标的存在时间。§6[延长存在时间]",
   "ars_zero.glyph_name.glyph_sustain_effect": "维系",
-  "ars_zero.glyph_desc.glyph_sustain_effect": "延长目标的存在时间。",
+  "ars_zero.glyph_desc.glyph_sustain_effect": "延长目标的存在时间。§6[延长存在时间]",
   "ars_nouveau.glyph_name.sustain_effect": "维系",
   "ars_nouveau.augment_desc.sustain_effect_glyph_extend_time": "每等级追加1刻。",
 
@@ -146,9 +146,9 @@
 
   "item.ars_zero.anchor_effect": "锚锁",
   "ars_zero.glyph_name.anchor_effect": "锚锁",
-  "ars_zero.glyph_desc.anchor_effect": "维持各目标关于玩家的相对位置不变。",
+  "ars_zero.glyph_desc.anchor_effect": "维持各目标关于玩家的相对位置不变。同时会像维系一样延长其存在时间。§6[延长存在时间]",
   "ars_zero.glyph_name.glyph_anchor_effect": "锚锁",
-  "ars_zero.glyph_desc.glyph_anchor_effect": "维持各目标关于玩家的相对位置不变。",
+  "ars_zero.glyph_desc.glyph_anchor_effect": "维持各目标关于玩家的相对位置不变。同时会像维系一样延长其存在时间。§6[延长存在时间]",
   "ars_nouveau.glyph_name.anchor_effect": "锚锁",
 
   "ars_zero.glyph_name.push_effect": "推离",

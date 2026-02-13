@@ -900,8 +900,9 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
             int physicalSlot = selectedSpellSlot * 3 + phase.ordinal();
 
+            boolean mainHand = guiHand == null || guiHand == InteractionHand.MAIN_HAND;
             com.hollingsworth.arsnouveau.common.network.Networking
-                    .sendToServer(new PacketUpdateCaster(spell, physicalSlot, spellName, true));
+                    .sendToServer(new PacketUpdateCaster(spell, physicalSlot, spellName, mainHand));
         }
 
         spellSlots[selectedSpellSlot].spellName = spellName;
@@ -920,8 +921,9 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
             int physicalSlot = selectedSpellSlot * 3 + phase.ordinal();
             Spell emptySpell = new Spell();
+            boolean mainHand = guiHand == null || guiHand == InteractionHand.MAIN_HAND;
             com.hollingsworth.arsnouveau.common.network.Networking
-                    .sendToServer(new PacketUpdateCaster(emptySpell, physicalSlot, "", false));
+                    .sendToServer(new PacketUpdateCaster(emptySpell, physicalSlot, "", mainHand));
         }
 
         resetCraftingCells();

@@ -120,9 +120,9 @@
 
   "item.ars_zero.sustain_effect": "Sustain",
   "ars_zero.glyph_name.sustain_effect": "Sustain",
-  "ars_zero.glyph_desc.sustain_effect": "Extends the lifespan of a target",
+  "ars_zero.glyph_desc.sustain_effect": "Extends the lifespan of a target. §6[Extends lifespan]",
   "ars_zero.glyph_name.glyph_sustain_effect": "Sustain",
-  "ars_zero.glyph_desc.glyph_sustain_effect": "Extends the lifespan of a target",
+  "ars_zero.glyph_desc.glyph_sustain_effect": "Extends the lifespan of a target. §6[Extends lifespan]",
   "ars_nouveau.glyph_name.sustain_effect": "Sustain",
   "ars_nouveau.augment_desc.sustain_effect_glyph_extend_time": "Adds an additional tick per level",
 
@@ -150,9 +150,9 @@
 
   "item.ars_zero.anchor_effect": "Anchor",
   "ars_zero.glyph_name.anchor_effect": "Anchor",
-  "ars_zero.glyph_desc.anchor_effect": "Maintains the relative position of the target(s) to the caster",
+  "ars_zero.glyph_desc.anchor_effect": "Maintains the relative position of the target(s) to the caster. Also extends their lifespan like Sustain. §6[Extends lifespan]",
   "ars_zero.glyph_name.glyph_anchor_effect": "Anchor",
-  "ars_zero.glyph_desc.glyph_anchor_effect": "Maintains the relative position of the target(s) to the caster",
+  "ars_zero.glyph_desc.glyph_anchor_effect": "Maintains the relative position of the target(s) to the caster. Also extends their lifespan like Sustain. §6[Extends lifespan]",
   "ars_nouveau.glyph_name.anchor_effect": "Anchor",
 
   "ars_zero.glyph_name.push_effect": "Push",

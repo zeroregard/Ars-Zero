@@ -123,9 +123,11 @@ public final class StaffSlotClipboardSupport {
         int tickPhysicalSlot = logicalSlot * 3 + SpellPhase.TICK.ordinal();
         int endPhysicalSlot = logicalSlot * 3 + SpellPhase.END.ordinal();
 
-        ArsNouveauNetworking.sendToServer(new PacketUpdateCaster(clipboard.begin(), beginPhysicalSlot, clipboard.name(), true));
-        ArsNouveauNetworking.sendToServer(new PacketUpdateCaster(clipboard.tick(), tickPhysicalSlot, clipboard.name(), true));
-        ArsNouveauNetworking.sendToServer(new PacketUpdateCaster(clipboard.end(), endPhysicalSlot, clipboard.name(), true));
+        InteractionHand guiHand = host.getHostGuiHand();
+        boolean mainHand = guiHand == null || guiHand == InteractionHand.MAIN_HAND;
+        ArsNouveauNetworking.sendToServer(new PacketUpdateCaster(clipboard.begin(), beginPhysicalSlot, clipboard.name(), mainHand));
+        ArsNouveauNetworking.sendToServer(new PacketUpdateCaster(clipboard.tick(), tickPhysicalSlot, clipboard.name(), mainHand));
+        ArsNouveauNetworking.sendToServer(new PacketUpdateCaster(clipboard.end(), endPhysicalSlot, clipboard.name(), mainHand));
 
         applyDelayToSlot(logicalSlot, clipboard.tickDelay());
         host.setHostSlotSpellName(logicalSlot, clipboard.name());

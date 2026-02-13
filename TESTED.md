@@ -2,10 +2,12 @@
 
 - [x] Multi phase parchment can be created from Ctrl+C w/ blank parchment
 - [ ] Multi phase parchment can be applied to turret
-- [x] Mult phase copy paste from one device to another, also with Cmd+C - Cmd+V
-- [x] Adams AOE/Amp show up
-- [x] Adams AOE/Amp work for sure in spells
-- [x] Default cooldown config
+- [x] qol: cmd+c & cmd+v support for multiphase devices (copy to/from different devices supported too)
+- [x] feat: copy over AOE/Amp glyphs from Adam's Ars Plus, disabled by default
+- [x] qol: config for default staff tick (defaults to 10)
+- [ ] fix: offhand saving spells not working
+- [x] docs: explain lifespan-based effects and show all these with a special tooltip addition
+- [ ] docs: show that Sustain and Anchor extend lifespans
 
 ---
 
