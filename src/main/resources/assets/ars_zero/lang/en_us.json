@@ -13,7 +13,6 @@
   "item.ars_zero.dull_circlet": "Dull Circlet",
   "item.ars_zero.dull_circlet.desc": "A dull trinket, cannot be worn. Used for crafting.",
   "ars_zero.tooltip.dull": "A dull trinket, cannot be worn. Used for crafting.",
-  "ars_zero.tooltip.lifespan_based": "[Lifespan-based]",
   "item.ars_zero.spellcasting_circlet": "Psion's Circlet",
   "item.ars_zero.spellcasting_circlet.desc": "A circlet that channels spells from your head slot with Begin, Tick, and End phases.",
 
@@ -76,7 +75,7 @@
   "ars_zero.alert.multiphase_turret.spell_set": "Multiphase turret spells updated.",
 
   "ars_zero.glyph_name.conjure_voxel_effect": "Conjure Voxel",
-  "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity",
+  "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity. §6[Lifespan-based]",
   "ars_zero.glyph_name.effect_windshear": "Wind Shear",
   "ars_zero.glyph_desc.effect_windshear": "Conjures a wind voxel when used with Conjure Voxel",
   "ars_zero.glyph_name.effect_conjure_blight": "Conjure Blight",
@@ -117,7 +116,7 @@
   "ars_nouveau.augment_desc.effect_beam_glyph_dampen": "Stops the beam from hurting entities",
   "ars_nouveau.augment_desc.effect_beam_glyph_aoe": "Increases the radius of the circle when using Split",
   "ars_zero.glyph_name.effect_beam": "Beam",
-  "ars_zero.glyph_desc.effect_beam": "Compresses mana into a violent beam; resolves the remainder of the spell on each hit, draining mana per hit.",
+  "ars_zero.glyph_desc.effect_beam": "Compresses mana into a violent beam; resolves the remainder of the spell on each hit, draining mana per hit. §6[Lifespan-based]",
 
   "item.ars_zero.sustain_effect": "Sustain",
   "ars_zero.glyph_name.sustain_effect": "Sustain",
@@ -176,7 +175,7 @@
   "effect.ars_zero.zero_gravity.description": "Temporarily removes gravity from the entity",
 
   "ars_zero.glyph_name.effect_convergence": "Convergence",
-  "ars_zero.glyph_desc.effect_convergence": "Concentrates a large amount of mana into a single point.",
+  "ars_zero.glyph_desc.effect_convergence": "Concentrates a large amount of mana into a single point. §6[Lifespan-based]",
   "ars_zero.glyph_name.glyph_effect_convergence": "Convergence",
   "ars_zero.glyph_desc.glyph_effect_convergence": "Creates a powerful convergence point that can be augmented with other effects.",
   "ars_nouveau.glyph_name.effect_convergence": "Convergence",
@@ -184,7 +183,7 @@
   "ars_zero.effect_augment_desc.effect_convergence_glyph_conjure_water": "Sacred Conjure Water: Fills a large area with water from bottom to top. Water Power affects placement speed. AOE determines radius. Drains mana per block placed.",
 
   "ars_zero.glyph_name.effect_geometrize": "Geometrize",
-  "ars_zero.glyph_desc.effect_geometrize": "Resolve forwarded spell in a geometric structure pattern. Needs to be combined with other glyphs",
+  "ars_zero.glyph_desc.effect_geometrize": "Resolve forwarded spell in a geometric structure pattern. Needs to be combined with other glyphs. §6[Lifespan-based]",
   "ars_zero.glyph_name.glyph_effect_geometrize": "Geometrize",
   "ars_zero.glyph_desc.glyph_effect_geometrize": "Resolve forwarded spell in a geometric structure pattern. Needs to be combined with other glyphs",
   "ars_nouveau.glyph_name.effect_geometrize": "Geometrize",
@@ -258,7 +257,7 @@
   "ars_zero.page.phase_targeting": "Phase Targeting",
   "ars_zero.page1.phase_targeting": "Because spells work completely in isolation, you must use the special form \"Temporal Context\" in order to do something with the previous phase's target.\n\nFor example, you can conjure a voxel in \"begin\", and have Temporal Context in your \"tick\" with Anchor, then Temporal Context with Push in your \"end\" phase.\n\nThis will allow you to create, aim and fire a projectile in the direction you're aiming.",
   "ars_zero.page.lifespan_based_effects": "Lifespan based effects",
-  "ars_zero.page.lifespan_based_effects.intro": "Some glyphs in Ars Zero spawn entities that exist only for their lifespan. These entities disappear when their duration runs out. To keep them alive you must use either the Anchor glyph (to hold them in place relative to you) or the Sustain glyph (to extend their duration). The glyphs shown below are all lifespan-based effects.",
+  "ars_zero.page.lifespan_based_effects.intro": "Some glyphs in Ars Zero spawn entities that exist only for their lifespan. These entities change state when their duration runs out - for example disappearing, exploding, starting a process. To keep them in their initial state you must use either the Anchor glyph or the Sustain glyph. The next page shows all lifespan-based effects.",
   "ars_zero.page.examples": "Examples",
   "ars_zero.examples.gravity_gun": "Gravity Gun",
   "ars_zero.examples.gravity_gun.quote": "\"You can call it Zero Point Energy Field Manipulator, if you really want to.\"",

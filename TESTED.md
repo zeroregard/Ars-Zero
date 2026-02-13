@@ -4,7 +4,7 @@
 - [ ] Multi phase parchment can be applied to turret
 - [x] Mult phase copy paste from one device to another, also with Cmd+C - Cmd+V
 - [x] Adams AOE/Amp show up
-- [ ] Adams AOE/Amp work for sure in spells
+- [x] Adams AOE/Amp work for sure in spells
 - [x] Default cooldown config
 
 ---

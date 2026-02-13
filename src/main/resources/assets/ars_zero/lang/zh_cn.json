@@ -71,7 +71,7 @@
   "ars_zero.alert.multiphase_turret.spell_set": "多阶段炮塔法术已更新。",
 
   "ars_zero.glyph_name.conjure_voxel_effect": "构筑方体",
-  "ars_zero.glyph_desc.conjure_voxel_effect": "构筑一个类似方块的小型实体。",
+  "ars_zero.glyph_desc.conjure_voxel_effect": "构筑一个类似方块的小型实体。§6[基于存在时间]",
   "ars_zero.glyph_name.effect_windshear": "风切",
   "ars_zero.glyph_desc.effect_windshear": "与“构筑方体”配合使用时构筑一个风方体。",
   "ars_zero.glyph_name.effect_conjure_blight": "构筑剧毒液",
@@ -112,7 +112,7 @@
   "ars_nouveau.augment_desc.effect_beam_glyph_dampen": "阻止能束对实体造成伤害。",
   "ars_nouveau.augment_desc.effect_beam_glyph_aoe": "增加“分裂”时圆环的半径。",
   "ars_zero.glyph_name.effect_beam": "能束",
-  "ars_zero.glyph_desc.effect_beam": "将魔力汇聚为强大的能束；每次击中时令法术剩余部分产生效果，每次击中都会消耗魔力。",
+  "ars_zero.glyph_desc.effect_beam": "将魔力汇聚为强大的能束；每次击中时令法术剩余部分产生效果，每次击中都会消耗魔力。§6[基于存在时间]",
 
   "item.ars_zero.sustain_effect": "维系",
   "ars_zero.glyph_name.sustain_effect": "维系",
@@ -171,7 +171,7 @@
   "effect.ars_zero.zero_gravity.description": "暂时性令实体不受重力。",
 
   "ars_zero.glyph_name.effect_convergence": "汇聚",
-  "ars_zero.glyph_desc.effect_convergence": "将大量的魔力汇聚至一点。",
+  "ars_zero.glyph_desc.effect_convergence": "将大量的魔力汇聚至一点。§6[基于存在时间]",
   "ars_zero.glyph_name.glyph_effect_convergence": "汇聚",
   "ars_zero.glyph_desc.glyph_effect_convergence": "制造强大的汇聚点，可使用其他效果构件增强。",
   "ars_nouveau.glyph_name.effect_convergence": "汇聚",
@@ -179,7 +179,7 @@
   "ars_zero.effect_augment_desc.effect_convergence_glyph_conjure_water": "神能构筑水：自下向上往大片区域填充水。水元素法术强度影响填充速度。“扩散”决定半径。每放置一个方块都会消耗魔力。",
 
   "ars_zero.glyph_name.effect_geometrize": "几何构形",
-  "ars_zero.glyph_desc.effect_geometrize": "令发出的法术作用于几何结构区域。需与其他魔符配合。",
+  "ars_zero.glyph_desc.effect_geometrize": "令发出的法术作用于几何结构区域。需与其他魔符配合。§6[基于存在时间]",
   "ars_zero.glyph_name.glyph_effect_geometrize": "几何构形",
   "ars_zero.glyph_desc.glyph_effect_geometrize": "令发出的法术作用于几何结构区域。需与其他魔符配合。",
   "ars_nouveau.glyph_name.effect_geometrize": "几何构形",
@@ -252,6 +252,8 @@
   "ars_zero.page1.spell_phases": "阶段描述了多阶段法术的生命周期。法术可包含多个魔符，多阶段设备则可包含多个法术；不过这些法术会严格按照开始、执行、结束的顺序施放。\n\n开始使用法术杖等设备时，会施放一次开始阶段法术；之后的每一刻都会施放执行阶段法术；停止使用时则施放结束阶段法术。\n\n此外，在执行阶段图标上滚动滚轮可以调整该阶段的延迟。",
   "ars_zero.page.phase_targeting": "阶段目标",
   "ars_zero.page1.phase_targeting": "各阶段法术彼此独立，因此必须使用特殊的“时间上下文”形态才能对上一阶段的目标进行操作。\n\n例如，可以在开始阶段“构筑方体”，在执行阶段用“时间上下文”配合“锚锁”，再在结束阶段用“时间上下文”配合“推离”。\n\n这样就能制造并沿视线方向瞄准和发射弹射物。",
+  "ars_zero.page.lifespan_based_effects": "基于存在时间的效果",
+  "ars_zero.page.lifespan_based_effects.intro": "Ars Zero 中部分魔符会生成仅在其存在时间内存续的实体。这些实体会在持续时间结束时改变状态——例如消失、爆炸或启动某个过程。若要保持其初始状态，必须使用锚锁魔符或维系魔符。下一页列出所有基于存在时间的效果。",
   "ars_zero.page.examples": "示例",
   "ars_zero.examples.gravity_gun": "重力枪",
   "ars_zero.examples.gravity_gun.quote": "“如果你愿意，也可以叫它零点能量场牵引器。”",

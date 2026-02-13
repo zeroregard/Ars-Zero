@@ -1,5 +1,6 @@
 package com.github.ars_zero.registry;
 
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.glyph.ConjureVoxelEffect;
 import com.github.ars_zero.common.glyph.DiscardEffect;
 import com.github.ars_zero.common.glyph.EffectConjureBlight;
@@ -26,8 +27,23 @@ import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAOE;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.Set;
 
 public class ModGlyphs {
+
+    /** Registry IDs of effect glyphs that spawn entities which exist only for their lifespan and need Anchor or Sustain to stay alive. */
+    public static final Set<ResourceLocation> LIFESPAN_BASED_GLYPH_IDS = Set.of(
+            ArsZero.prefix("effect_beam"),
+            ArsZero.prefix("effect_convergence"),
+            ArsZero.prefix("effect_geometrize"),
+            ArsZero.prefix("conjure_voxel_effect")
+    );
+
+    public static boolean isLifespanBased(ResourceLocation glyphId) {
+        return glyphId != null && LIFESPAN_BASED_GLYPH_IDS.contains(glyphId);
+    }
 
     public static final TemporalContextForm TEMPORAL_CONTEXT_FORM = new TemporalContextForm();
     public static final NearForm NEAR_FORM = new NearForm();
