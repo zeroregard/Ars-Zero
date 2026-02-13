@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.block;
 
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.spell.StaffSpellClipboard;
 import com.github.ars_zero.registry.ModItems;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;

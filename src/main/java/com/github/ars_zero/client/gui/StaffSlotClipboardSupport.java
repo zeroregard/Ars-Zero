@@ -2,7 +2,7 @@ package com.github.ars_zero.client.gui;
 
 import com.github.ars_zero.client.gui.buttons.StaffSpellSlot;
 import com.github.ars_zero.common.casting.CastingStyle;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.network.ArsNouveauNetworking;
 import com.github.ars_zero.common.network.Networking;
 import com.github.ars_zero.common.network.PacketConvertParchmentToMultiphase;

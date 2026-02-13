@@ -3,7 +3,7 @@ package com.github.ars_zero.client.gui;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.buttons.ManaIndicator;
 import com.github.ars_zero.client.gui.buttons.StaffArrowButton;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.common.item.AbstractSpellStaff;

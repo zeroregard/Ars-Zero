@@ -1,4 +1,4 @@
-package com.github.ars_zero.common.item;
+package com.github.ars_zero.common.item.multi;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.RadialMenuTracker;
@@ -7,11 +7,11 @@ import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.network.Networking;
+import com.github.ars_zero.common.item.SpellcastingCirclet;
+import com.github.ars_zero.common.item.multi.helpers.MultiPhaseParchmentHelper;
 import com.github.ars_zero.common.network.PacketConvertParchmentToMultiphase;
 import com.github.ars_zero.common.network.PacketSetMultiPhaseSpellCastingSlot;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
-import com.github.ars_zero.common.spell.StaffSpellClipboard;
-import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.common.casting.CastingStyle;
 import com.github.ars_zero.common.casting.SpellSchoolBoneIds;
 import com.github.ars_zero.common.entity.ArcaneCircleEntity;
@@ -77,6 +77,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public abstract class AbstractMultiPhaseCastDevice extends Item implements ICasterTool, IRadialProvider, IMultiPhaseCaster, IScribeable {
@@ -716,7 +717,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             return;
         }
         int index = Mth.clamp(logicalSlot, 0, SLOT_COUNT - 1);
-        int clampedDelay = Mth.clamp(delay, getDefaultTickDelay(), MAX_TICK_DELAY);
+        int clampedDelay = Mth.clamp(delay, 1, MAX_TICK_DELAY);
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         CompoundTag tag = data != null ? data.copyTag() : new CompoundTag();
         int[] delays = readDelayArray(tag);
@@ -733,7 +734,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         int[] stored = tag.getIntArray(SLOT_TICK_DELAY_KEY);
         for (int i = 0; i < delays.length; i++) {
             int value = i < stored.length ? stored[i] : getDefaultTickDelay();
-            delays[i] = Mth.clamp(value, getDefaultTickDelay(), MAX_TICK_DELAY);
+            delays[i] = Mth.clamp(value, 1, MAX_TICK_DELAY);
         }
         return delays;
     }
@@ -742,6 +743,14 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         int[] delays = new int[SLOT_COUNT];
         Arrays.fill(delays, getDefaultTickDelay());
         return delays;
+    }
+
+    /**
+     * Creates a multiphase spell parchment with the first non-empty slot from the given device stack.
+     * Used when inscribing from a device (on table or in hand) onto the Scribes table.
+     */
+    public static Optional<ItemStack> createMultiphaseParchmentFromDevice(ItemStack deviceStack) {
+        return MultiPhaseParchmentHelper.createMultiphaseParchmentFromDevice(deviceStack);
     }
 
     /**
@@ -761,53 +770,12 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         if (heldStack.isEmpty() || !PacketConvertParchmentToMultiphase.isConvertibleParchment(heldStack)) {
             return false;
         }
-        AbstractCaster<?> caster = SpellCasterRegistry.from(thisStack);
-        if (caster == null) {
+        Optional<ItemStack> multiphaseOpt = MultiPhaseParchmentHelper.createMultiphaseParchmentFromDevice(thisStack);
+        if (multiphaseOpt.isEmpty()) {
             return false;
         }
-        int logicalSlot = -1;
-        for (int slot = 0; slot < SLOT_COUNT; slot++) {
-            int beginPhysical = slot * 3 + SpellPhase.BEGIN.ordinal();
-            int tickPhysical = slot * 3 + SpellPhase.TICK.ordinal();
-            int endPhysical = slot * 3 + SpellPhase.END.ordinal();
-            if (!caster.getSpell(beginPhysical).isEmpty() || !caster.getSpell(tickPhysical).isEmpty() || !caster.getSpell(endPhysical).isEmpty()) {
-                logicalSlot = slot;
-                break;
-            }
-        }
-        if (logicalSlot < 0) {
-            return false;
-        }
-        int beginPhysical = logicalSlot * 3 + SpellPhase.BEGIN.ordinal();
-        int tickPhysical = logicalSlot * 3 + SpellPhase.TICK.ordinal();
-        int endPhysical = logicalSlot * 3 + SpellPhase.END.ordinal();
-        Spell beginSpell = caster.getSpell(beginPhysical);
-        Spell tickSpell = caster.getSpell(tickPhysical);
-        Spell endSpell = caster.getSpell(endPhysical);
-        String name = caster.getSpellName(beginPhysical);
-        if (name == null || name.isEmpty()) {
-            name = caster.getSpellName(tickPhysical);
-        }
-        if (name == null || name.isEmpty()) {
-            name = caster.getSpellName(endPhysical);
-        }
-        if (name == null) {
-            name = "";
-        }
-        int delay = getSlotTickDelay(thisStack, logicalSlot);
-        CastingStyle castingStyle = getCastingStyle(thisStack, logicalSlot);
-        StaffSpellClipboard clipboard = new StaffSpellClipboard(
-            beginSpell == null || beginSpell.isEmpty() ? new Spell() : beginSpell,
-            tickSpell == null || tickSpell.isEmpty() ? new Spell() : tickSpell,
-            endSpell == null || endSpell.isEmpty() ? new Spell() : endSpell,
-            name,
-            delay,
-            castingStyle == null ? new CastingStyle() : castingStyle
-        );
-        ItemStack multiphase = new ItemStack(ModItems.MULTIPHASE_SPELL_PARCHMENT.get(), 1);
-        StaffSpellClipboard.writeToStack(multiphase, clipboard, StaffSpellClipboard.PARCHMENT_SLOT_KEY);
         heldStack.shrink(1);
-        scribesTile.setStack(multiphase);
+        scribesTile.setStack(multiphaseOpt.get());
         if (!player.getInventory().add(thisStack)) {
             player.drop(thisStack, false);
         }

@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.spell;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.EntitySpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.IWrappedCaster;
