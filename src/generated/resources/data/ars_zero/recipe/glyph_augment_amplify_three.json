@@ -1,25 +1,25 @@
 {
-    "type": "ars_nouveau:glyph",
-    "exp": 160,
-    "inputs": [
-        {
-            "item": "minecraft:netherite_block"
-        },
-        {
-            "item": "ars_nouveau:source_gem_block"
-        },
-        {
-            "item": "ars_nouveau:earth_essence"
-        },
-        {
-            "item": "ars_nouveau:manipulation_essence"
-        },
-        {
-            "item": "ars_nouveau:conjuration_essence"
-        }
-    ],
-    "output": {
-        "count": 1,
-        "id": "ars_zero:augment_amplify_three"
+  "type": "ars_nouveau:glyph",
+  "exp": 160,
+  "inputs": [
+    {
+      "item": "minecraft:netherite_block"
+    },
+    {
+      "item": "ars_nouveau:source_gem_block"
+    },
+    {
+      "item": "ars_nouveau:earth_essence"
+    },
+    {
+      "item": "ars_nouveau:manipulation_essence"
+    },
+    {
+      "item": "ars_nouveau:conjuration_essence"
     }
+  ],
+  "output": {
+    "count": 1,
+    "id": "ars_zero:augment_amplify_three"
+  }
 }
