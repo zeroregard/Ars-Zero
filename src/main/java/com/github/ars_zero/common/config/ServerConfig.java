@@ -8,6 +8,7 @@ public class ServerConfig {
     public static ModConfigSpec.BooleanValue ALLOW_NON_OP_ANCHOR_ON_PLAYERS;
     public static ModConfigSpec.IntValue LARGE_EXPLOSION_MAX_BLOCKS_PER_TICK;
     public static ModConfigSpec.BooleanValue ALLOW_BLOCK_GROUP_CREATION;
+    public static ModConfigSpec.IntValue DEFAULT_MULTIPHASE_DEVICE_TICK_DELAY;
 
     static {
         ModConfigSpec.Builder SERVER_BUILDER = new ModConfigSpec.Builder();
@@ -32,6 +33,12 @@ public class ServerConfig {
                 "When set to true, Select and Anchor can create block group entities for block translation.",
                 "This feature is experimental and may cause performance issues or unexpected behavior.")
                 .define("allowBlockGroupCreation", false);
+        SERVER_BUILDER.pop();
+
+        SERVER_BUILDER.comment("Multiphase cast device settings").push("multiphase");
+        DEFAULT_MULTIPHASE_DEVICE_TICK_DELAY = SERVER_BUILDER.comment(
+                "Default tick delay (in ticks) for multiphase device slots. Minimum 1 (20 times per second).")
+                .defineInRange("defaultTickDelay", 10, 1, 20);
         SERVER_BUILDER.pop();
 
         SERVER_CONFIG = SERVER_BUILDER.build();

@@ -1,11 +1,15 @@
-package com.github.ars_zero.common.item;
+package com.github.ars_zero.common.item.multi;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.RadialMenuTracker;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
+import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.network.Networking;
+import com.github.ars_zero.common.item.SpellcastingCirclet;
+import com.github.ars_zero.common.item.multi.helpers.MultiPhaseParchmentHelper;
+import com.github.ars_zero.common.network.PacketConvertParchmentToMultiphase;
 import com.github.ars_zero.common.network.PacketSetMultiPhaseSpellCastingSlot;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
 import com.github.ars_zero.common.casting.CastingStyle;
@@ -20,6 +24,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 import com.hollingsworth.arsnouveau.api.item.ICasterTool;
 import com.hollingsworth.arsnouveau.api.item.IRadialProvider;
+import com.hollingsworth.arsnouveau.api.item.IScribeable;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.sound.ConfiguredSpellSound;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCastMethod;
@@ -37,9 +42,11 @@ import com.hollingsworth.arsnouveau.client.gui.radial_menu.RadialMenu;
 import com.hollingsworth.arsnouveau.client.gui.radial_menu.RadialMenuSlot;
 import com.hollingsworth.arsnouveau.client.gui.radial_menu.SecondaryIconPosition;
 import com.hollingsworth.arsnouveau.client.gui.utils.RenderUtils;
+import com.hollingsworth.arsnouveau.common.block.tile.ScribesTile;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -58,6 +65,7 @@ import net.minecraft.world.item.component.CustomData;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -69,9 +77,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-public abstract class AbstractMultiPhaseCastDevice extends Item implements ICasterTool, IRadialProvider, IMultiPhaseCaster {
+public abstract class AbstractMultiPhaseCastDevice extends Item implements ICasterTool, IRadialProvider, IMultiPhaseCaster, IScribeable {
 
     public static class ArsZeroSpellContext extends SpellContext {
         public final SpellPhase phase;
@@ -86,8 +95,11 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     private static final String SLOT_TICK_DELAY_KEY = "ars_zero_tick_delays";
     private static final String CAST_CONTEXT_ID_KEY = "ars_zero_cast_context_id";
     private static final int SLOT_COUNT = 10;
-    private static final int DEFAULT_TICK_DELAY = 1;
     private static final int MAX_TICK_DELAY = 20;
+
+    private static int getDefaultTickDelay() {
+        return ServerConfig.DEFAULT_MULTIPHASE_DEVICE_TICK_DELAY.get();
+    }
     
     public static CastingStyle getCastingStyle(ItemStack stack, int logicalSlot) {
         if (stack == null || stack.isEmpty()) {
@@ -697,7 +709,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     }
 
     public static int getSlotTickDelayOffset(ItemStack stack, int logicalSlot) {
-        return Math.max(0, getSlotTickDelay(stack, logicalSlot) - DEFAULT_TICK_DELAY);
+        return Math.max(0, getSlotTickDelay(stack, logicalSlot) - getDefaultTickDelay());
     }
 
     public static void setSlotTickDelay(ItemStack stack, int logicalSlot, int delay) {
@@ -705,7 +717,7 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             return;
         }
         int index = Mth.clamp(logicalSlot, 0, SLOT_COUNT - 1);
-        int clampedDelay = Mth.clamp(delay, DEFAULT_TICK_DELAY, MAX_TICK_DELAY);
+        int clampedDelay = Mth.clamp(delay, 1, MAX_TICK_DELAY);
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         CompoundTag tag = data != null ? data.copyTag() : new CompoundTag();
         int[] delays = readDelayArray(tag);
@@ -721,16 +733,53 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         }
         int[] stored = tag.getIntArray(SLOT_TICK_DELAY_KEY);
         for (int i = 0; i < delays.length; i++) {
-            int value = i < stored.length ? stored[i] : DEFAULT_TICK_DELAY;
-            delays[i] = Mth.clamp(value, DEFAULT_TICK_DELAY, MAX_TICK_DELAY);
+            int value = i < stored.length ? stored[i] : getDefaultTickDelay();
+            delays[i] = Mth.clamp(value, 1, MAX_TICK_DELAY);
         }
         return delays;
     }
 
     private static int[] createDefaultDelayArray() {
         int[] delays = new int[SLOT_COUNT];
-        Arrays.fill(delays, DEFAULT_TICK_DELAY);
+        Arrays.fill(delays, getDefaultTickDelay());
         return delays;
+    }
+
+    /**
+     * Creates a multiphase spell parchment with the first non-empty slot from the given device stack.
+     * Used when inscribing from a device (on table or in hand) onto the Scribes table.
+     */
+    public static Optional<ItemStack> createMultiphaseParchmentFromDevice(ItemStack deviceStack) {
+        return MultiPhaseParchmentHelper.createMultiphaseParchmentFromDevice(deviceStack);
+    }
+
+    /**
+     * Scribes table: place this device on the table, hold a blank/spell parchment, shift-right-click
+     * to create a multiphase spell parchment from the first non-empty slot. The device is returned to the player.
+     */
+    @Override
+    public boolean onScribe(Level world, BlockPos pos, Player player, InteractionHand handIn, ItemStack thisStack) {
+        if (world.isClientSide()) {
+            return false;
+        }
+        BlockEntity blockEntity = world.getBlockEntity(pos);
+        if (!(blockEntity instanceof ScribesTile scribesTile)) {
+            return false;
+        }
+        ItemStack heldStack = player.getItemInHand(handIn);
+        if (heldStack.isEmpty() || !PacketConvertParchmentToMultiphase.isConvertibleParchment(heldStack)) {
+            return false;
+        }
+        Optional<ItemStack> multiphaseOpt = MultiPhaseParchmentHelper.createMultiphaseParchmentFromDevice(thisStack);
+        if (multiphaseOpt.isEmpty()) {
+            return false;
+        }
+        heldStack.shrink(1);
+        scribesTile.setStack(multiphaseOpt.get());
+        if (!player.getInventory().add(thisStack)) {
+            player.drop(thisStack, false);
+        }
+        return true;
     }
 
     private static String getSchoolBoneIdForSlot(AbstractCaster<?> caster, int logicalSlot, boolean preferTick) {

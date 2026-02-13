@@ -27,6 +27,7 @@ public class ModCreativeTabs {
                     output.accept(ModItems.DULL_CIRCLET.get().getDefaultInstance());
                     output.accept(ModItems.SPELLCASTING_CIRCLET.get().getDefaultInstance());
                     output.accept(ModItems.ARCHWOOD_ROD.get().getDefaultInstance());
+                    output.accept(ModItems.MULTIPHASE_SPELL_PARCHMENT.get().getDefaultInstance());
                     output.accept(ModItems.MULTIPHASE_ORB.get().getDefaultInstance());
                     output.accept(ModItems.ARCANE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.FIRE_VOXEL_SPAWNER.get().getDefaultInstance());

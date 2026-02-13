@@ -307,7 +307,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
     }
     
     private int clampAmplifyLevel(SpellStats spellStats) {
-        int amplifyLevel = spellStats.getBuffCount(AugmentAmplify.INSTANCE);
+        int amplifyLevel = (int) Math.round(spellStats.getAmpMultiplier());
         return Math.min(amplifyLevel, MAX_AMPLIFY_LEVEL);
     }
     

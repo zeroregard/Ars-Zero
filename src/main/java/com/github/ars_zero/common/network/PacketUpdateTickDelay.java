@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -9,6 +9,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import top.theillusivec4.curios.api.CuriosApi;
 
@@ -58,6 +59,8 @@ public record PacketUpdateTickDelay(int logicalSlot, int delay, boolean mainHand
 
             AbstractMultiPhaseCastDevice.setSlotTickDelay(stack, packet.logicalSlot(), packet.delay());
             player.containerMenu.broadcastChanges();
+            // Push updated stack to client so GUI and player inventory stay in sync (persists on close/reopen)
+            PacketDistributor.sendToPlayer(player, new PacketUpdateStaffGUI(stack));
         });
     }
 }

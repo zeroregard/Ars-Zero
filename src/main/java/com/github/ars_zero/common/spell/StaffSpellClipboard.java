@@ -14,6 +14,7 @@ import java.util.Optional;
 public record StaffSpellClipboard(Spell begin, Spell tick, Spell end, String name, int tickDelay, CastingStyle castingStyle) {
 
     private static final String CLIPBOARD_KEY = "ars_zero_staff_clipboard";
+    public static final String PARCHMENT_SLOT_KEY = "ars_zero_multiphase_slot";
     private static final String BEGIN_KEY = "begin";
     private static final String TICK_KEY = "tick";
     private static final String END_KEY = "end";
@@ -62,7 +63,11 @@ public record StaffSpellClipboard(Spell begin, Spell tick, Spell end, String nam
     }
 
     public static Optional<StaffSpellClipboard> readFromStack(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) {
+        return readFromStack(stack, CLIPBOARD_KEY);
+    }
+
+    public static Optional<StaffSpellClipboard> readFromStack(ItemStack stack, String dataKey) {
+        if (stack == null || stack.isEmpty() || dataKey == null) {
             return Optional.empty();
         }
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
@@ -70,19 +75,23 @@ public record StaffSpellClipboard(Spell begin, Spell tick, Spell end, String nam
             return Optional.empty();
         }
         CompoundTag root = data.copyTag();
-        if (!root.contains(CLIPBOARD_KEY, Tag.TAG_COMPOUND)) {
+        if (!root.contains(dataKey, Tag.TAG_COMPOUND)) {
             return Optional.empty();
         }
-        return fromTag(root.getCompound(CLIPBOARD_KEY));
+        return fromTag(root.getCompound(dataKey));
     }
 
     public static void writeToStack(ItemStack stack, StaffSpellClipboard clipboard) {
-        if (stack == null || stack.isEmpty() || clipboard == null) {
+        writeToStack(stack, clipboard, CLIPBOARD_KEY);
+    }
+
+    public static void writeToStack(ItemStack stack, StaffSpellClipboard clipboard, String dataKey) {
+        if (stack == null || stack.isEmpty() || clipboard == null || dataKey == null) {
             return;
         }
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         CompoundTag root = data != null ? data.copyTag() : new CompoundTag();
-        root.put(CLIPBOARD_KEY, clipboard.toTag());
+        root.put(dataKey, clipboard.toTag());
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
     }
 

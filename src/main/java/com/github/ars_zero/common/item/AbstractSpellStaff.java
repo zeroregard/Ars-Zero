@@ -2,6 +2,7 @@ package com.github.ars_zero.common.item;
 
 import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;

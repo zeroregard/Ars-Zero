@@ -128,6 +128,7 @@ public class ArsZero {
                 registerTurretBehaviors();
                 registerCauldronInteractions();
                 ArsNouveauAPI.getInstance().getEnchantingRecipeTypes().add(ModRecipes.PROTECTION_UPGRADE_TYPE.get());
+                ModGlyphs.addOptionalAugmentCompatibility();
             });
         });
 

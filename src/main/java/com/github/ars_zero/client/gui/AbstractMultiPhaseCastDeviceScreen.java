@@ -3,7 +3,7 @@ package com.github.ars_zero.client.gui;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.buttons.ManaIndicator;
 import com.github.ars_zero.client.gui.buttons.StaffArrowButton;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
@@ -900,8 +900,9 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
             int physicalSlot = selectedSpellSlot * 3 + phase.ordinal();
 
+            boolean mainHand = guiHand == null || guiHand == InteractionHand.MAIN_HAND;
             com.hollingsworth.arsnouveau.common.network.Networking
-                    .sendToServer(new PacketUpdateCaster(spell, physicalSlot, spellName, true));
+                    .sendToServer(new PacketUpdateCaster(spell, physicalSlot, spellName, mainHand));
         }
 
         spellSlots[selectedSpellSlot].spellName = spellName;
@@ -920,8 +921,9 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
             int physicalSlot = selectedSpellSlot * 3 + phase.ordinal();
             Spell emptySpell = new Spell();
+            boolean mainHand = guiHand == null || guiHand == InteractionHand.MAIN_HAND;
             com.hollingsworth.arsnouveau.common.network.Networking
-                    .sendToServer(new PacketUpdateCaster(emptySpell, physicalSlot, "", false));
+                    .sendToServer(new PacketUpdateCaster(emptySpell, physicalSlot, "", mainHand));
         }
 
         resetCraftingCells();
@@ -1087,6 +1089,24 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (hasControlDown() && getFocused() != searchBar && getFocused() != spellNameBox) {
+            if (isCopy(keyCode)) {
+                if (slotClipboardSupport != null && selectedSpellSlot >= 0 && selectedSpellSlot < 10) {
+                    slotClipboardSupport.copySlot(selectedSpellSlot);
+                    return true;
+                }
+            } else if (isPaste(keyCode)) {
+                if (slotClipboardSupport != null && selectedSpellSlot >= 0 && selectedSpellSlot < 10) {
+                    slotClipboardSupport.pasteSlot(selectedSpellSlot);
+                    return true;
+                }
+            }
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
