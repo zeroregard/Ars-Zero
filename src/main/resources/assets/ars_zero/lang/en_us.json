@@ -13,6 +13,7 @@
   "item.ars_zero.dull_circlet": "Dull Circlet",
   "item.ars_zero.dull_circlet.desc": "A dull trinket, cannot be worn. Used for crafting.",
   "ars_zero.tooltip.dull": "A dull trinket, cannot be worn. Used for crafting.",
+  "ars_zero.tooltip.lifespan_based": "[Lifespan-based]",
   "item.ars_zero.spellcasting_circlet": "Psion's Circlet",
   "item.ars_zero.spellcasting_circlet.desc": "A circlet that channels spells from your head slot with Begin, Tick, and End phases.",
 
@@ -198,6 +199,10 @@
   "ars_zero.glyph_desc.augment_amplify_two": "Greatly increases the power of most spell effects. §9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
   "ars_zero.glyph_name.augment_amplify_three": "Amplify III",
   "ars_zero.glyph_desc.augment_amplify_three": "Massively increases the power of most spell effects. §9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
+  "ars_zero.augment_desc.aoe_two_generic": "Increases the area of effect (stronger than AOE).",
+  "ars_zero.augment_desc.aoe_three_generic": "Increases the area of effect (stronger than AOE II).",
+  "ars_zero.augment_desc.amplify_two_generic": "Increases the power of the effect (stronger than Amplify).",
+  "ars_zero.augment_desc.amplify_three_generic": "Increases the power of the effect (stronger than Amplify II).",
 
   "ars_zero.glyph_name.augment_cube": "Geometry - Cube",
   "ars_zero.glyph_desc.augment_cube": "Shapes geometry into a cube.",
@@ -252,6 +257,8 @@
   "ars_zero.page1.spell_phases": "A phase is a description of a lifecycle of an incantation with multiple spells. Where spells hold multiple glyphs, devices that are multi-phased hold multiple spells, though these are always fired in sequences; begin, tick and end.\n\nOnce a device - such as a Spell Staff - begins being used, it fires the begin phase, once. Every subsequent tick, the \"tick\" phase executes the spell it holds. Upon stopping, finally the end phase's spell is performed.\n\nAdditionally, it is possible to configure the delay the tick phase has by scrolling the icon on the tick row.",
   "ars_zero.page.phase_targeting": "Phase Targeting",
   "ars_zero.page1.phase_targeting": "Because spells work completely in isolation, you must use the special form \"Temporal Context\" in order to do something with the previous phase's target.\n\nFor example, you can conjure a voxel in \"begin\", and have Temporal Context in your \"tick\" with Anchor, then Temporal Context with Push in your \"end\" phase.\n\nThis will allow you to create, aim and fire a projectile in the direction you're aiming.",
+  "ars_zero.page.lifespan_based_effects": "Lifespan based effects",
+  "ars_zero.page.lifespan_based_effects.intro": "Some glyphs in Ars Zero spawn entities that exist only for their lifespan. These entities disappear when their duration runs out. To keep them alive you must use either the Anchor glyph (to hold them in place relative to you) or the Sustain glyph (to extend their duration). The glyphs shown below are all lifespan-based effects.",
   "ars_zero.page.examples": "Examples",
   "ars_zero.examples.gravity_gun": "Gravity Gun",
   "ars_zero.examples.gravity_gun.quote": "\"You can call it Zero Point Energy Field Manipulator, if you really want to.\"",

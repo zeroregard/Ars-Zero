@@ -1,6 +1,8 @@
 package com.github.ars_zero.common.block;
 
 import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.spell.StaffSpellClipboard;
+import com.github.ars_zero.registry.ModItems;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
@@ -49,16 +51,38 @@ public class MultiphaseSpellTurret extends BasicSpellTurret {
             return ItemInteractionResult.SUCCESS;
         }
         Item item = stack.getItem();
-        if (!(item instanceof AbstractMultiPhaseCastDevice)) {
+        if (level.getBlockEntity(pos) instanceof MultiphaseSpellTurretTile tile) {
+            if (item == ModItems.MULTIPHASE_SPELL_PARCHMENT.get()) {
+                var clipboardOpt = StaffSpellClipboard.readFromStack(stack, StaffSpellClipboard.PARCHMENT_SLOT_KEY);
+                if (clipboardOpt.isPresent()) {
+                    var clipboard = clipboardOpt.get();
+                    if (clipboard.begin().isEmpty() && clipboard.tick().isEmpty() && clipboard.end().isEmpty()) {
+                        PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.multiphase_turret.empty_slot"));
+                        return ItemInteractionResult.SUCCESS;
+                    }
+                    tile.configureSpells(
+                        copySpell(clipboard.begin()),
+                        copySpell(clipboard.tick()),
+                        copySpell(clipboard.end()),
+                        player.getUUID(),
+                        clipboard.tickDelay()
+                    );
+                    tile.updateBlock();
+                    level.sendBlockUpdated(pos, tile.getBlockState(), tile.getBlockState(), 2);
+                    Component message = Component.translatable("ars_zero.alert.multiphase_turret.spell_set")
+                        .append(Component.literal(" (" + clipboard.tickDelay() + ")").withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY)));
+                    PortUtil.sendMessage(player, message);
+                    return ItemInteractionResult.SUCCESS;
+                }
+            }
+            if (item instanceof AbstractMultiPhaseCastDevice) {
+                configureFromDevice(stack, player, level, pos, tile);
+                player.getCooldowns().addCooldown(item, 10);
+                return ItemInteractionResult.SUCCESS;
+            }
             if (item instanceof SpellBook) {
                 PortUtil.sendMessage(player, Component.translatable("ars_zero.alert.multiphase_turret.multi_phase_required"));
             }
-            return super.useItemOn(stack, state, level, pos, player, handIn, hitResult);
-        }
-        if (level.getBlockEntity(pos) instanceof MultiphaseSpellTurretTile tile) {
-            configureFromDevice(stack, player, level, pos, tile);
-            player.getCooldowns().addCooldown(item, 10);
-            return ItemInteractionResult.SUCCESS;
         }
         return super.useItemOn(stack, state, level, pos, player, handIn, hitResult);
     }

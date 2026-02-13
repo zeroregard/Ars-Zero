@@ -7,8 +7,11 @@ import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.network.Networking;
+import com.github.ars_zero.common.network.PacketConvertParchmentToMultiphase;
 import com.github.ars_zero.common.network.PacketSetMultiPhaseSpellCastingSlot;
 import com.github.ars_zero.common.network.PacketStaffSpellFired;
+import com.github.ars_zero.common.spell.StaffSpellClipboard;
+import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.common.casting.CastingStyle;
 import com.github.ars_zero.common.casting.SpellSchoolBoneIds;
 import com.github.ars_zero.common.entity.ArcaneCircleEntity;
@@ -21,6 +24,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 import com.hollingsworth.arsnouveau.api.item.ICasterTool;
 import com.hollingsworth.arsnouveau.api.item.IRadialProvider;
+import com.hollingsworth.arsnouveau.api.item.IScribeable;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.sound.ConfiguredSpellSound;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCastMethod;
@@ -38,9 +42,11 @@ import com.hollingsworth.arsnouveau.client.gui.radial_menu.RadialMenu;
 import com.hollingsworth.arsnouveau.client.gui.radial_menu.RadialMenuSlot;
 import com.hollingsworth.arsnouveau.client.gui.radial_menu.SecondaryIconPosition;
 import com.hollingsworth.arsnouveau.client.gui.utils.RenderUtils;
+import com.hollingsworth.arsnouveau.common.block.tile.ScribesTile;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -59,6 +65,7 @@ import net.minecraft.world.item.component.CustomData;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -72,7 +79,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-public abstract class AbstractMultiPhaseCastDevice extends Item implements ICasterTool, IRadialProvider, IMultiPhaseCaster {
+public abstract class AbstractMultiPhaseCastDevice extends Item implements ICasterTool, IRadialProvider, IMultiPhaseCaster, IScribeable {
 
     public static class ArsZeroSpellContext extends SpellContext {
         public final SpellPhase phase;
@@ -735,6 +742,76 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         int[] delays = new int[SLOT_COUNT];
         Arrays.fill(delays, getDefaultTickDelay());
         return delays;
+    }
+
+    /**
+     * Scribes table: place this device on the table, hold a blank/spell parchment, shift-right-click
+     * to create a multiphase spell parchment from the first non-empty slot. The device is returned to the player.
+     */
+    @Override
+    public boolean onScribe(Level world, BlockPos pos, Player player, InteractionHand handIn, ItemStack thisStack) {
+        if (world.isClientSide()) {
+            return false;
+        }
+        BlockEntity blockEntity = world.getBlockEntity(pos);
+        if (!(blockEntity instanceof ScribesTile scribesTile)) {
+            return false;
+        }
+        ItemStack heldStack = player.getItemInHand(handIn);
+        if (heldStack.isEmpty() || !PacketConvertParchmentToMultiphase.isConvertibleParchment(heldStack)) {
+            return false;
+        }
+        AbstractCaster<?> caster = SpellCasterRegistry.from(thisStack);
+        if (caster == null) {
+            return false;
+        }
+        int logicalSlot = -1;
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
+            int beginPhysical = slot * 3 + SpellPhase.BEGIN.ordinal();
+            int tickPhysical = slot * 3 + SpellPhase.TICK.ordinal();
+            int endPhysical = slot * 3 + SpellPhase.END.ordinal();
+            if (!caster.getSpell(beginPhysical).isEmpty() || !caster.getSpell(tickPhysical).isEmpty() || !caster.getSpell(endPhysical).isEmpty()) {
+                logicalSlot = slot;
+                break;
+            }
+        }
+        if (logicalSlot < 0) {
+            return false;
+        }
+        int beginPhysical = logicalSlot * 3 + SpellPhase.BEGIN.ordinal();
+        int tickPhysical = logicalSlot * 3 + SpellPhase.TICK.ordinal();
+        int endPhysical = logicalSlot * 3 + SpellPhase.END.ordinal();
+        Spell beginSpell = caster.getSpell(beginPhysical);
+        Spell tickSpell = caster.getSpell(tickPhysical);
+        Spell endSpell = caster.getSpell(endPhysical);
+        String name = caster.getSpellName(beginPhysical);
+        if (name == null || name.isEmpty()) {
+            name = caster.getSpellName(tickPhysical);
+        }
+        if (name == null || name.isEmpty()) {
+            name = caster.getSpellName(endPhysical);
+        }
+        if (name == null) {
+            name = "";
+        }
+        int delay = getSlotTickDelay(thisStack, logicalSlot);
+        CastingStyle castingStyle = getCastingStyle(thisStack, logicalSlot);
+        StaffSpellClipboard clipboard = new StaffSpellClipboard(
+            beginSpell == null || beginSpell.isEmpty() ? new Spell() : beginSpell,
+            tickSpell == null || tickSpell.isEmpty() ? new Spell() : tickSpell,
+            endSpell == null || endSpell.isEmpty() ? new Spell() : endSpell,
+            name,
+            delay,
+            castingStyle == null ? new CastingStyle() : castingStyle
+        );
+        ItemStack multiphase = new ItemStack(ModItems.MULTIPHASE_SPELL_PARCHMENT.get(), 1);
+        StaffSpellClipboard.writeToStack(multiphase, clipboard, StaffSpellClipboard.PARCHMENT_SLOT_KEY);
+        heldStack.shrink(1);
+        scribesTile.setStack(multiphase);
+        if (!player.getInventory().add(thisStack)) {
+            player.drop(thisStack, false);
+        }
+        return true;
     }
 
     private static String getSchoolBoneIdForSlot(AbstractCaster<?> caster, int logicalSlot, boolean preferTick) {

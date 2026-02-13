@@ -25,6 +25,7 @@ import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAOE;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
+import net.minecraft.network.chat.Component;
 
 public class ModGlyphs {
 
@@ -83,10 +84,14 @@ public class ModGlyphs {
             if (part.compatibleAugments.contains(AugmentAOE.INSTANCE)) {
                 part.compatibleAugments.add(AUGMENT_AOE_TWO);
                 part.compatibleAugments.add(AUGMENT_AOE_THREE);
+                part.augmentDescriptions.put(AUGMENT_AOE_TWO, Component.translatable("ars_zero.augment_desc.aoe_two_generic"));
+                part.augmentDescriptions.put(AUGMENT_AOE_THREE, Component.translatable("ars_zero.augment_desc.aoe_three_generic"));
             }
             if (part.compatibleAugments.contains(AugmentAmplify.INSTANCE)) {
                 part.compatibleAugments.add(AUGMENT_AMPLIFY_TWO);
                 part.compatibleAugments.add(AUGMENT_AMPLIFY_THREE);
+                part.augmentDescriptions.put(AUGMENT_AMPLIFY_TWO, Component.translatable("ars_zero.augment_desc.amplify_two_generic"));
+                part.augmentDescriptions.put(AUGMENT_AMPLIFY_THREE, Component.translatable("ars_zero.augment_desc.amplify_three_generic"));
             }
         }
     }

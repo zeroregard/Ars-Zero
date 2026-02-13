@@ -107,7 +107,7 @@ public final class StaffSlotClipboardSupport {
             if (otherHandStack.getItem() == ModItems.MULTIPHASE_SPELL_PARCHMENT.get()) {
                 StaffSpellClipboard.writeToStack(otherHandStack, clipboard, StaffSpellClipboard.PARCHMENT_SLOT_KEY);
                 Networking.sendToServer(new PacketSetParchmentClipboard(clipboard.toTag(), parchmentInMainHand));
-            } else if (PacketConvertParchmentToMultiphase.isSpellParchment(otherHandStack)) {
+            } else if (PacketConvertParchmentToMultiphase.isConvertibleParchment(otherHandStack)) {
                 Networking.sendToServer(new PacketConvertParchmentToMultiphase(clipboard.toTag(), parchmentInMainHand));
             }
         }

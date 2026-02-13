@@ -63,6 +63,8 @@ public class EffectBeam extends AbstractEffect {
     @Override
     public void buildConfig(ModConfigSpec.Builder builder) {
         super.buildConfig(builder);
+        PER_SPELL_LIMIT = builder.comment("The maximum number of times this glyph may appear in a single spell")
+                .defineInRange("per_spell_limit", 3, 1, 10);
         builder.comment("Effect Beam Settings").push("effect_beam");
         BEAM_RESOLVER_MANA_COST_MULTIPLIER = builder.comment(
             "Mana cost multiplier for beam resolver. Each resolve (on hit) costs this percentage of the forwarded spell's total mana cost. Default is 0.1 (10%).")
@@ -200,7 +202,7 @@ public class EffectBeam extends AbstractEffect {
 
         boolean dampened = spellStats.getBuffCount(AugmentDampen.INSTANCE) > 0 || spellStats.getBuffCount(AugmentSensitive.INSTANCE) > 0;
         boolean ignoreEntities = spellStats.getBuffCount(AugmentSensitive.INSTANCE) > 0;
-        int amplifyLevel = spellStats.getBuffCount(AugmentAmplify.INSTANCE);
+        int amplifyLevel = (int) Math.round(spellStats.getAmpMultiplier());
         float damage = getBaseDamage() + amplifyLevel * getAmplifyDamageBonus();
         int splitLevel = spellStats.getBuffCount(AugmentSplit.INSTANCE);
         if (splitLevel <= 0) {
@@ -238,7 +240,7 @@ public class EffectBeam extends AbstractEffect {
                 circleRadius = 0.0;
                 break;
         }
-        int aoeLevel = spellStats.getBuffCount(AugmentAOE.INSTANCE);
+        double aoeLevel = spellStats.getAoeMultiplier();
         circleRadius += aoeLevel * 0.4;
 
         spellContext.setCanceled(true);

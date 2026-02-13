@@ -21,9 +21,13 @@ public record PacketConvertParchmentToMultiphase(CompoundTag clipboardTag, boole
         new CustomPacketPayload.Type<>(ArsZero.prefix("convert_parchment_to_multiphase"));
 
     private static final ResourceLocation SPELL_PARCHMENT_ID = ResourceLocation.fromNamespaceAndPath("ars_nouveau", "spell_parchment");
+    private static final ResourceLocation BLANK_PARCHMENT_ID = ResourceLocation.fromNamespaceAndPath("ars_nouveau", "blank_parchment");
 
-    public static boolean isSpellParchment(ItemStack stack) {
-        return !stack.isEmpty() && BuiltInRegistries.ITEM.getKey(stack.getItem()).equals(SPELL_PARCHMENT_ID);
+    /** True if this stack is a parchment we can convert (blank or spell parchment from Ars Nouveau). */
+    public static boolean isConvertibleParchment(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        return id.equals(SPELL_PARCHMENT_ID) || id.equals(BLANK_PARCHMENT_ID);
     }
 
     public static final StreamCodec<RegistryFriendlyByteBuf, PacketConvertParchmentToMultiphase> CODEC =
@@ -52,7 +56,7 @@ public record PacketConvertParchmentToMultiphase(CompoundTag clipboardTag, boole
             InteractionHand hand = packet.parchmentInMainHand() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
             ItemStack inHand = player.getItemInHand(hand);
 
-            if (inHand.isEmpty() || !BuiltInRegistries.ITEM.getKey(inHand.getItem()).equals(SPELL_PARCHMENT_ID)) {
+            if (inHand.isEmpty() || !isConvertibleParchment(inHand)) {
                 return;
             }
 
