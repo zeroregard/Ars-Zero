@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.spell;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,5 +22,11 @@ public class MultiPhaseCastContextRegistry {
     
     public static void clear() {
         contexts.clear();
+    }
+    
+    public static List<MultiPhaseCastContext> getActiveContextsForPlayer(UUID playerId) {
+        return contexts.values().stream()
+                .filter(c -> c.playerId.equals(playerId) && c.isCasting)
+                .toList();
     }
 }

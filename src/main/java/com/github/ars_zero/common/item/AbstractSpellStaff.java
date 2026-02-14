@@ -1,8 +1,8 @@
 package com.github.ars_zero.common.item;
 
 import com.github.ars_zero.client.gui.ArsZeroStaffGUI;
-import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
+import net.minecraft.client.gui.screens.Screen;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
@@ -39,7 +39,7 @@ public abstract class AbstractSpellStaff extends AbstractMultiPhaseCastDevice im
 
     @OnlyIn(Dist.CLIENT)
     @Override
-    protected AbstractMultiPhaseCastDeviceScreen createDeviceScreen(ItemStack stack, InteractionHand hand) {
+    protected Screen createDeviceScreen(ItemStack stack, InteractionHand hand) {
         return new ArsZeroStaffGUI(stack, hand);
     }
 

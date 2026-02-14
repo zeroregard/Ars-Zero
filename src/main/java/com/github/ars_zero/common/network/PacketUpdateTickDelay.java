@@ -59,8 +59,6 @@ public record PacketUpdateTickDelay(int logicalSlot, int delay, boolean mainHand
 
             AbstractMultiPhaseCastDevice.setSlotTickDelay(stack, packet.logicalSlot(), packet.delay());
             player.containerMenu.broadcastChanges();
-            // Push updated stack to client so GUI and player inventory stay in sync (persists on close/reopen)
-            PacketDistributor.sendToPlayer(player, new PacketUpdateStaffGUI(stack));
         });
     }
 }

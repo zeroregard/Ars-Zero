@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "ars_zero:item/wand_telekinesis"
+  }
+}
