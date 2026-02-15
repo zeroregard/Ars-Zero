@@ -31,6 +31,7 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
         addSpellcastingCircletRecipe();
         addMultiphaseOrbRecipe();
         addMultiphaseTurretRecipe();
+        addStaffDisplayRecipe();
 
         for (FileObj fileObj : files) {
             saveStable(pOutput, fileObj.element, fileObj.path);
@@ -231,6 +232,32 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
         json.addProperty("source", 5000);
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/multiphase_spell_turret.json"), json));
+    }
+
+    private void addStaffDisplayRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "minecraft:crafting_shaped");
+        json.addProperty("category", "misc");
+
+        JsonArray pattern = new JsonArray();
+        pattern.add("xbx");
+        pattern.add("yzy");
+        pattern.add("yxy");
+        json.add("pattern", pattern);
+
+        JsonObject key = new JsonObject();
+        key.add("x", item("ars_nouveau:sourcestone"));
+        key.add("y", tag("c:nuggets/gold"));
+        key.add("z", item("ars_zero:archwood_rod"));
+        key.add("b", item("minecraft:book"));
+        json.add("key", key);
+
+        JsonObject result = new JsonObject();
+        result.addProperty("count", 4);
+        result.addProperty("id", id(ModItems.STAFF_DISPLAY.get().asItem()));
+        json.add("result", result);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/staff_display.json"), json));
     }
 
     private static JsonObject item(String id) {

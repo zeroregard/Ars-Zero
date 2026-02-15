@@ -35,6 +35,7 @@ import com.hollingsworth.arsnouveau.common.spell.validation.CombinedSpellValidat
 import com.hollingsworth.arsnouveau.common.spell.validation.GlyphKnownValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.GlyphMaxTierValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.ActionAugmentationPolicyValidator;
+import com.github.ars_zero.client.gui.SpellSlotPhaseMemory;
 import com.github.ars_zero.client.gui.validators.SpellPhaseValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.StartingCastMethodSpellValidator;
 import com.hollingsworth.arsnouveau.common.spell.validation.BaseSpellValidationError;
@@ -110,6 +111,9 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     protected ItemStack deviceStack;
     private InteractionHand guiHand;
 
+    /** When the screen was opened; used to ignore the open key in charTyped (match base spellbook). */
+    private long timeOpened;
+
     protected abstract ResourceLocation getBackgroundTexture();
 
     @Override
@@ -155,6 +159,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
     @Override
     public void init() {
+        timeOpened = System.currentTimeMillis();
         super.init();
         bookLeft = width / 2 - STAFF_GUI_WIDTH / 2;
         bookTop = height / 2 - STAFF_GUI_HEIGHT / 2;
@@ -236,7 +241,13 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
         updateCraftingCellVisibility();
 
-        selectPhase(SpellPhase.BEGIN);
+        // Restore last-edited phase for current slot (per-slot memory)
+        var clientPlayer = Minecraft.getInstance().player;
+        if (clientPlayer != null && selectedSpellSlot >= 0 && selectedSpellSlot < 10) {
+            selectPhase(SpellSlotPhaseMemory.get(clientPlayer.getUUID(), guiHand, selectedSpellSlot));
+        } else {
+            selectPhase(SpellPhase.BEGIN);
+        }
 
         validate();
 
@@ -257,6 +268,10 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             StaffSpellSlot slot = new StaffSpellSlot(slotStartX, slotStartY + slotSpacing * i, i, name, (b) -> {
                 if (!(b instanceof StaffSpellSlot button) || this.selectedSpellSlot == button.slotNum) {
                     return;
+                }
+                var clientPlayer = Minecraft.getInstance().player;
+                if (clientPlayer != null) {
+                    SpellSlotPhaseMemory.save(clientPlayer.getUUID(), guiHand, this.selectedSpellSlot, this.currentPhase);
                 }
                 this.selectedSlotButton.isSelected = false;
                 this.selectedSlotButton = button;
@@ -286,6 +301,11 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         }
 
         validate();
+
+        var clientPlayer = Minecraft.getInstance().player;
+        if (clientPlayer != null) {
+            selectPhase(SpellSlotPhaseMemory.get(clientPlayer.getUUID(), guiHand, selectedSpellSlot));
+        }
     }
 
     private void loadSpellFromSlot() {
@@ -465,6 +485,11 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
     private void selectPhase(SpellPhase phase) {
         currentPhase = phase;
+
+        var clientPlayer = Minecraft.getInstance().player;
+        if (clientPlayer != null && selectedSpellSlot >= 0 && selectedSpellSlot < 10) {
+            SpellSlotPhaseMemory.save(clientPlayer.getUUID(), guiHand, selectedSpellSlot, phase);
+        }
 
         beginPhaseButton.active = (phase != SpellPhase.BEGIN);
         tickPhaseButton.active = (phase != SpellPhase.TICK);
@@ -909,6 +934,19 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
         boolean isCirclet = bookStack.getItem() instanceof SpellcastingCirclet;
         Networking.sendToServer(new PacketSetMultiPhaseSpellCastingSlot(selectedSpellSlot, isCirclet));
+
+        for (SpellPhase phase : SpellPhase.values()) {
+            List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
+            List<AbstractSpellPart> trimmed = phaseSpell.stream()
+                    .filter(part -> part != null)
+                    .collect(Collectors.toList());
+            phaseSpell.clear();
+            for (int i = 0; i < 10; i++) {
+                phaseSpell.add(i < trimmed.size() ? trimmed.get(i) : null);
+            }
+        }
+        resetCraftingCells();
+        validate();
     }
 
     public void clear() {
@@ -1088,6 +1126,25 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
         if (slotClipboardSupport != null && slotClipboardSupport.mouseClicked(mouseX, mouseY, button, spellSlots)) {
             return true;
         }
+        if (button == 2) {
+            for (int i = 0; i < craftingCells.size(); i++) {
+                CraftingButton cell = craftingCells.get(i);
+                if (cell.getX() <= mouseX && mouseX < cell.getX() + cell.getWidth()
+                        && cell.getY() <= mouseY && mouseY < cell.getY() + cell.getHeight()) {
+                    int phaseIndex = i / 10;
+                    int slotInPhase = i % 10;
+                    SpellPhase phase = SpellPhase.values()[phaseIndex];
+                    List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
+                    while (phaseSpell.size() <= slotInPhase) {
+                        phaseSpell.add(null);
+                    }
+                    phaseSpell.add(slotInPhase, null);
+                    resetCraftingCells();
+                    validate();
+                    return true;
+                }
+            }
+        }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
@@ -1107,6 +1164,31 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             }
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    /**
+     * When focus is not on the search bar (e.g. after clicking a glyph), typing clears the search
+     * bar and writes the new text there, then focuses it — matching base spellbook workflow
+     * (type to search, click glyph, type, click, etc.).
+     */
+    /**
+     * When focus is not on the search bar, typing clears the search bar and writes the new text
+     * there, then focuses it — matching base spellbook (type to search, click glyph, type, etc.).
+     * The 30ms guard ignores the key that opened the screen (same as GuiSpellBook).
+     */
+    @Override
+    public boolean charTyped(char codePoint, int modifiers) {
+        if (searchBar != null && getFocused() != searchBar && getFocused() != spellNameBox
+                && System.currentTimeMillis() - timeOpened > 30) {
+            if (codePoint >= 32 && codePoint != 127) {
+                searchBar.setValue("");
+                searchBar.setValue(String.valueOf(codePoint));
+                setFocused(searchBar);
+                onSearchChanged(searchBar.getValue());
+                return true;
+            }
+        }
+        return super.charTyped(codePoint, modifiers);
     }
 
     @Override
@@ -1224,7 +1306,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             int indicatorY = baseY + phaseIndex * rowHeight + (PHASE_ROW_HEIGHT - indicatorHeight) / 2 - 1 + 1;
 
-            ManaIndicator indicator = new ManaIndicator(indicatorX, indicatorY, phaseSpell);
+            ManaIndicator indicator = new ManaIndicator(indicatorX, indicatorY, phaseSpell, deviceStack);
             indicator.render(graphics, player);
 
             if (indicator.isHovered(mouseX, mouseY)) {
@@ -1372,6 +1454,10 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
     @Override
     public void onClose() {
+        var clientPlayer = Minecraft.getInstance().player;
+        if (clientPlayer != null && selectedSpellSlot >= 0 && selectedSpellSlot < 10) {
+            SpellSlotPhaseMemory.save(clientPlayer.getUUID(), guiHand, selectedSpellSlot, currentPhase);
+        }
         boolean isCirclet = bookStack.getItem() instanceof SpellcastingCirclet;
         Networking.sendToServer(new PacketSetMultiPhaseSpellCastingSlot(selectedSpellSlot, isCirclet));
         super.onClose();

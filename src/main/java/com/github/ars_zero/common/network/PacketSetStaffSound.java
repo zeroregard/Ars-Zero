@@ -1,7 +1,8 @@
 package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.AbstractStaff;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.hollingsworth.arsnouveau.api.sound.ConfiguredSpellSound;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -54,8 +55,8 @@ public class PacketSetStaffSound implements CustomPacketPayload {
 
     public void onServerReceived(MinecraftServer minecraftServer, ServerPlayer player) {
         ItemStack stack = player.getItemInHand(mainHand ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
-        if (stack.getItem() instanceof AbstractSpellStaff) {
-            AbstractSpellStaff.setStaffSounds(stack, beginSound, tickSound, endSound, tickLoopingSoundId);
+        if (stack.getItem() instanceof AbstractStaff) {
+            AbstractMultiPhaseCastDevice.setStaffSounds(stack, beginSound, tickSound, endSound, tickLoopingSoundId);
         }
     }
 

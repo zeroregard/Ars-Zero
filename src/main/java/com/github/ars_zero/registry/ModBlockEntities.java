@@ -3,6 +3,7 @@ package com.github.ars_zero.registry;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.block.BlightCauldronBlockEntity;
 import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
+import com.github.ars_zero.common.block.StaffDisplayBlockEntity;
 import com.github.ars_zero.common.block.VoxelSpawnerBlockEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -46,6 +47,14 @@ public class ModBlockEntities {
         () -> BlockEntityType.Builder.of(
             BlightCauldronBlockEntity::new,
             ModBlocks.BLIGHT_CAULDRON.get()
+        ).build(null)
+    );
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StaffDisplayBlockEntity>> STAFF_DISPLAY = BLOCK_ENTITIES.register(
+        "staff_display",
+        () -> BlockEntityType.Builder.of(
+            StaffDisplayBlockEntity::new,
+            ModBlocks.STAFF_DISPLAY.get()
         ).build(null)
     );
 }
