@@ -11,7 +11,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 /**
  * Renders a staff as a simple 2D item texture by delegating to the vanilla item renderer.
- * Use for wands that have a flat texture (e.g. Wand of Telekinesis).
+ * Use for static staffs that have a flat texture (when not using the 3D staff model).
  */
 public class Simple2DStaffRenderer extends BlockEntityWithoutLevelRenderer {
 

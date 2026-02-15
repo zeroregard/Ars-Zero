@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.item;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.client.renderer.item.Simple2DStaffRenderer;
+import com.github.ars_zero.client.renderer.item.TelekinesisStaffRenderer;
 import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
@@ -9,35 +9,37 @@ import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.api.spell.SpellCaster;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.client.GeoRenderProvider;
 
+import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * Wand "Wand of Telekinesis" — Begin: select target (projectile + select);
- * Tick: hold in place (temporal context + anchor), delay 0; End: throw (temporal context + push).
- * Wands cannot be customized. Renders as a simple 2D texture. 50% mana discount.
- */
-public class WandTelekinesis extends AbstractStaticSpellStaff {
+public class StaffTelekinesis extends AbstractStaticSpellStaff {
 
-    private static final String SPELL_NAME = "Wand of Telekinesis";
+    private static final String SPELL_NAME = "Staff of Telekinesis";
 
-    public WandTelekinesis() {
+    public StaffTelekinesis() {
         super();
     }
 
     @Override
-    protected int getDiscountPercent() {
+    public int getDiscountPercent() {
         return 50;
     }
 
     @Override
-    protected boolean addDiscountToTooltip() {
-        return false; // desc already says "50% discount"
+    public void appendHoverText(@NotNull ItemStack stack, @NotNull Item.TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
+        tooltip.add(Component.translatable("item.ars_zero.staff_telekinesis.desc"));
     }
 
     @Override
@@ -63,11 +65,19 @@ public class WandTelekinesis extends AbstractStaticSpellStaff {
         }
     }
 
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, net.minecraft.world.entity.Entity entity, int slotId, boolean isSelected) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected);
+        if (!stack.isEmpty() && AbstractMultiPhaseCastDevice.getSlotTickDelay(stack, 0) != 1) {
+            AbstractMultiPhaseCastDevice.setSlotTickDelay(stack, 0, 1);
+        }
+    }
+
     @OnlyIn(Dist.CLIENT)
     @Override
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
         consumer.accept(new GeoRenderProvider() {
-            private final BlockEntityWithoutLevelRenderer renderer = new Simple2DStaffRenderer();
+            private final BlockEntityWithoutLevelRenderer renderer = new TelekinesisStaffRenderer();
 
             @Override
             public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {

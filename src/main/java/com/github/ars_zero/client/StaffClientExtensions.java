@@ -34,7 +34,7 @@ public class StaffClientExtensions {
             com.github.ars_zero.registry.ModItems.MAGE_SPELL_STAFF.get(),
             com.github.ars_zero.registry.ModItems.ARCHMAGE_SPELL_STAFF.get(),
             com.github.ars_zero.registry.ModItems.CREATIVE_SPELL_STAFF.get(),
-            com.github.ars_zero.registry.ModItems.WAND_TELEKINESIS.get()
+            com.github.ars_zero.registry.ModItems.STAFF_TELEKINESIS.get()
         );
     }
 }

@@ -7,7 +7,6 @@ import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
@@ -30,7 +29,7 @@ import java.util.function.Consumer;
 
 /**
  * Abstract base for preprogrammed staffs with a single fixed spell slot (three phases: Begin, Tick, End).
- * Spells cannot be altered by the player. Not obtainable as an item; use concrete subclasses (e.g. WandTelekinesis).
+ * Spells cannot be altered by the player. Not obtainable as an item; use concrete subclasses (e.g. StaffTelekinesis).
  */
 public abstract class AbstractStaticSpellStaff extends AbstractSpellStaff implements IManaDiscountEquipment {
 
@@ -40,8 +39,9 @@ public abstract class AbstractStaticSpellStaff extends AbstractSpellStaff implem
 
     /**
      * Percentage discount applied to spell cost (0–100). Subclasses override for preset staffs.
+     * Used for tooltip display (e.g. mana indicator) so the shown percentage matches the design.
      */
-    protected int getDiscountPercent() {
+    public int getDiscountPercent() {
         return 0;
     }
 
@@ -52,17 +52,9 @@ public abstract class AbstractStaticSpellStaff extends AbstractSpellStaff implem
         return (int) Math.round(spell.getCost() * Math.min(100, pct) / 100.0);
     }
 
-    /** If true, a separate "Reduces spell cost by X%." line is added. Subclasses (e.g. wands with discount in desc) can override to false. */
-    protected boolean addDiscountToTooltip() {
-        return true;
-    }
-
     @Override
     public void appendHoverText(@NotNull ItemStack stack, @NotNull Item.TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
-        if (addDiscountToTooltip() && getDiscountPercent() > 0) {
-            tooltip.add(Component.translatable("ars_zero.tooltip.static_staff.discount", getDiscountPercent()));
-        }
     }
 
     /**

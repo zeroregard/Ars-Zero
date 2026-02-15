@@ -1302,7 +1302,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             List<AbstractSpellPart> phaseSpell = phaseSpells.getPhaseList(phase);
             int indicatorY = baseY + phaseIndex * rowHeight + (PHASE_ROW_HEIGHT - indicatorHeight) / 2 - 1 + 1;
 
-            ManaIndicator indicator = new ManaIndicator(indicatorX, indicatorY, phaseSpell);
+            ManaIndicator indicator = new ManaIndicator(indicatorX, indicatorY, phaseSpell, deviceStack);
             indicator.render(graphics, player);
 
             if (indicator.isHovered(mouseX, mouseY)) {

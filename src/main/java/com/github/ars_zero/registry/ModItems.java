@@ -11,7 +11,7 @@ import com.github.ars_zero.common.item.MultiphaseOrbItem;
 import com.github.ars_zero.common.item.MultiphaseSpellParchment;
 import com.github.ars_zero.common.item.NoviceSpellStaff;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
-import com.github.ars_zero.common.item.WandTelekinesis;
+import com.github.ars_zero.common.item.StaffTelekinesis;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.common.items.RendererBlockItem;
 import com.hollingsworth.arsnouveau.setup.registry.ItemRegistryWrapper;
@@ -94,6 +94,11 @@ public class ModItems {
         () -> new BlockItem(ModBlocks.FROZEN_BLIGHT.get(), defaultItemProperties())
     );
 
+    public static final DeferredHolder<Item, BlockItem> STAFF_DISPLAY = ITEMS.register(
+        "staff_display",
+        () -> new BlockItem(ModBlocks.STAFF_DISPLAY.get(), defaultItemProperties())
+    );
+
     public static final DeferredHolder<Item, RendererBlockItem> MULTIPHASE_SPELL_TURRET = ITEMS.register(
         "multiphase_spell_turret",
         () -> {
@@ -114,7 +119,7 @@ public class ModItems {
     // "Static" staff items
     //
 
-    public static final ItemRegistryWrapper<WandTelekinesis> WAND_TELEKINESIS = register("wand_telekinesis", WandTelekinesis::new);
+    public static final ItemRegistryWrapper<StaffTelekinesis> STAFF_TELEKINESIS = register("staff_telekinesis", StaffTelekinesis::new);
 
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);
@@ -131,7 +136,7 @@ public class ModItems {
         registerStaff(MAGE_SPELL_STAFF.get());
         registerStaff(ARCHMAGE_SPELL_STAFF.get());
         registerStaff(CREATIVE_SPELL_STAFF.get());
-        registerStaff(WAND_TELEKINESIS.get());
+        registerStaff(STAFF_TELEKINESIS.get());
         registerDevice(SPELLCASTING_CIRCLET.get());
         ArsZero.LOGGER.debug("SpellCasterRegistry registration completed");
     }
