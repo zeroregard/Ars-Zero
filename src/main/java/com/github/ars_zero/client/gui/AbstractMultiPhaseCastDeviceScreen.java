@@ -114,6 +114,9 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     /** One-shot: restore saved phase on first render so the highlight is not overwritten by init. */
     private boolean phaseRestorePending = false;
 
+    /** When the screen was opened; used to ignore the open key in charTyped (match base spellbook). */
+    private long timeOpened;
+
     protected abstract ResourceLocation getBackgroundTexture();
 
     @Override
@@ -159,6 +162,7 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
     @Override
     public void init() {
+        timeOpened = System.currentTimeMillis();
         super.init();
         bookLeft = width / 2 - STAFF_GUI_WIDTH / 2;
         bookTop = height / 2 - STAFF_GUI_HEIGHT / 2;
@@ -1173,9 +1177,15 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
      * bar and writes the new text there, then focuses it — matching base spellbook workflow
      * (type to search, click glyph, type, click, etc.).
      */
+    /**
+     * When focus is not on the search bar, typing clears the search bar and writes the new text
+     * there, then focuses it — matching base spellbook (type to search, click glyph, type, etc.).
+     * The 30ms guard ignores the key that opened the screen (same as GuiSpellBook).
+     */
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
-        if (searchBar != null && getFocused() != searchBar && getFocused() != spellNameBox) {
+        if (searchBar != null && getFocused() != searchBar && getFocused() != spellNameBox
+                && System.currentTimeMillis() - timeOpened > 30) {
             if (codePoint >= 32 && codePoint != 127) {
                 searchBar.setValue("");
                 searchBar.setValue(String.valueOf(codePoint));

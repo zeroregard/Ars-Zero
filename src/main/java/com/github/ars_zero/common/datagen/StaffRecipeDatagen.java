@@ -240,8 +240,8 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
         json.addProperty("category", "misc");
 
         JsonArray pattern = new JsonArray();
-        pattern.add("xzx");
-        pattern.add("yxy");
+        pattern.add("xbx");
+        pattern.add("yzy");
         pattern.add("yxy");
         json.add("pattern", pattern);
 
@@ -249,6 +249,7 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
         key.add("x", item("ars_nouveau:sourcestone"));
         key.add("y", tag("c:nuggets/gold"));
         key.add("z", item("ars_zero:archwood_rod"));
+        key.add("b", item("minecraft:book"));
         json.add("key", key);
 
         JsonObject result = new JsonObject();
