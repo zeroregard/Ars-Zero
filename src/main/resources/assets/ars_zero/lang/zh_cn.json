@@ -17,10 +17,10 @@
   "item.ars_zero.spellcasting_circlet.desc": "能在头部槽位施法的饰冠，它的施法分为三个阶段：开始、执行、结束。",
 
   "item.ars_zero.archwood_rod": "至高木棍",
-  "item.ars_zero.multiphase_spell_parchment": "Multiphase Spell Parchment",
-  "ars_zero.tooltip.multiphase_parchment.empty": "Empty. Copy a staff or circlet slot while holding this to store it.",
-  "ars_zero.tooltip.multiphase_parchment.slot_name": "Slot: %s",
-  "ars_zero.tooltip.multiphase_parchment.tick_delay": "Tick delay: %s",
+  "item.ars_zero.multiphase_spell_parchment": "多阶段法术羊皮纸",
+  "ars_zero.tooltip.multiphase_parchment.empty": "当前为空。持有它时复制法术杖或饰冠的法术槽以存入法术。",
+  "ars_zero.tooltip.multiphase_parchment.slot_name": "槽位：%s",
+  "ars_zero.tooltip.multiphase_parchment.tick_delay": "延迟刻数：%s",
   "item.ars_zero.multiphase_orb": "多阶段球珠",
 
   "block.ars_zero.arcane_voxel_spawner": "奥术方体生成器",
