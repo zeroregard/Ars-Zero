@@ -1,7 +1,8 @@
 package com.github.ars_zero.common.block;
 
-import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.AbstractStaff;
 import com.github.ars_zero.registry.ModBlockEntities;
+import com.hollingsworth.arsnouveau.common.items.SpellBook;
 import com.hollingsworth.arsnouveau.common.block.ArcanePlatform;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
@@ -41,7 +42,7 @@ public class StaffDisplayBlock extends ArcanePlatform {
         ItemStack held = player.getItemInHand(hand);
 
         if (tile.getStack().isEmpty()) {
-            if (held.getItem() instanceof AbstractSpellStaff) {
+            if (held.getItem() instanceof AbstractStaff || held.getItem() instanceof SpellBook) {
                 tile.setStack(held.copyWithCount(1));
                 held.shrink(1);
                 level.sendBlockUpdated(pos, state, state, 2);
@@ -58,7 +59,7 @@ public class StaffDisplayBlock extends ArcanePlatform {
             return ItemInteractionResult.SUCCESS;
         }
 
-        if (held.getItem() instanceof AbstractSpellStaff) {
+        if (held.getItem() instanceof AbstractStaff || held.getItem() instanceof SpellBook) {
             ItemEntity dropped = new ItemEntity(level, player.getX(), player.getY(), player.getZ(), tile.getStack());
             level.addFreshEntity(dropped);
             tile.setStack(held.copyWithCount(1));

@@ -2,7 +2,7 @@ package com.github.ars_zero.event;
 
 import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.AbstractStaff;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.MultiPhaseCastContextRegistry;
@@ -26,7 +26,7 @@ public class StaffCleanupHandler {
         MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;
         
         if (context != null && context.isCasting) {
-            boolean isHoldingStaff = heldItem.getItem() instanceof AbstractSpellStaff;
+            boolean isHoldingStaff = heldItem.getItem() instanceof AbstractStaff;
             boolean isUsingItem = player.isUsingItem();
             
             if (!isHoldingStaff || !isUsingItem) {

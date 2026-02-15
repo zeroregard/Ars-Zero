@@ -31,7 +31,7 @@ import java.util.function.Consumer;
  * Abstract base for preprogrammed staffs with a single fixed spell slot (three phases: Begin, Tick, End).
  * Spells cannot be altered by the player. Not obtainable as an item; use concrete subclasses (e.g. StaffTelekinesis).
  */
-public abstract class AbstractStaticSpellStaff extends AbstractSpellStaff implements IManaDiscountEquipment {
+public abstract class AbstractStaticSpellStaff extends AbstractStaff implements IManaDiscountEquipment {
 
     public AbstractStaticSpellStaff() {
         super(SpellTier.ONE);

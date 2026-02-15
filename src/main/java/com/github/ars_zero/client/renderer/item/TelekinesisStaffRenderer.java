@@ -1,7 +1,7 @@
 package com.github.ars_zero.client.renderer.item;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.AbstractStaff;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
 /**
  * Renders the Staff of Telekinesis with custom model, texture, and animations (telekinesis_staff.*).
  */
-public class TelekinesisStaffRenderer extends GeoItemRenderer<AbstractSpellStaff> {
+public class TelekinesisStaffRenderer extends GeoItemRenderer<AbstractStaff> {
 
     private static final ResourceLocation TEXTURE = ArsZero.prefix("textures/item/telekinesis_staff.png");
 
@@ -31,12 +31,12 @@ public class TelekinesisStaffRenderer extends GeoItemRenderer<AbstractSpellStaff
     }
 
     @Override
-    public ResourceLocation getTextureLocation(AbstractSpellStaff animatable) {
+    public ResourceLocation getTextureLocation(AbstractStaff animatable) {
         return TEXTURE;
     }
 
     @Override
-    public RenderType getRenderType(AbstractSpellStaff animatable, ResourceLocation texture, @Nullable MultiBufferSource bufferSource, float partialTick) {
+    public RenderType getRenderType(AbstractStaff animatable, ResourceLocation texture, @Nullable MultiBufferSource bufferSource, float partialTick) {
         return RenderType.entityTranslucent(texture);
     }
 
@@ -63,7 +63,7 @@ public class TelekinesisStaffRenderer extends GeoItemRenderer<AbstractSpellStaff
 
         poseStack.pushPose();
 
-        poseStack.translate(0F, 0.35, 0F);
+        poseStack.translate(-0.1F, 0.25f, 0F);
         poseStack.scale(0.47F, 0.47F, 0.47F);
         poseStack.mulPose(Axis.ZP.rotationDegrees(-45));
         poseStack.mulPose(Axis.XP.rotationDegrees(10));
@@ -76,7 +76,7 @@ public class TelekinesisStaffRenderer extends GeoItemRenderer<AbstractSpellStaff
     }
 
     /** Same pipeline as SpellStaffRenderer for consistent GUI/hand rendering. */
-    public void defaultRenderGui(PoseStack poseStack, AbstractSpellStaff animatable, MultiBufferSource bufferSource, @Nullable RenderType renderType, @Nullable VertexConsumer buffer, float yaw, float partialTick, int packedLight, int packedOverlay, int packedColor) {
+    public void defaultRenderGui(PoseStack poseStack, AbstractStaff animatable, MultiBufferSource bufferSource, @Nullable RenderType renderType, @Nullable VertexConsumer buffer, float yaw, float partialTick, int packedLight, int packedOverlay, int packedColor) {
         poseStack.pushPose();
         BakedGeoModel model = this.model.getBakedModel(this.model.getModelResource(animatable));
         if (renderType == null) {

@@ -51,8 +51,6 @@ public class StaticStaffScreen extends Screen {
     private static final int GLYPH_SIZE = 16;
     private static final int MAX_GLYPH_CELLS = 10;
 
-    private static final ResourceLocation SPELL_GLYPH_SLOT = ResourceLocation.fromNamespaceAndPath("ars_nouveau", "textures/gui/spell_glyph_slot.png");
-
     protected final ItemStack deviceStack;
     protected final InteractionHand guiHand;
     private int bookLeft;
@@ -145,10 +143,10 @@ public class StaticStaffScreen extends Screen {
         int baseRowY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y;
         int rowHeight = PHASE_ROW_HEIGHT + 2;
 
-        int phaseIconX = bookLeft + PHASE_SECTION_SHIFT_X - 3;
+        int phaseIconX = bookLeft + PHASE_SECTION_SHIFT_X - 2;
         int phaseIconY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y + 2;
 
-        int cellStartX = bookLeft + CRAFTING_CELL_START_X_OFFSET + PHASE_SECTION_SHIFT_X - 24;
+        int cellStartX = bookLeft + CRAFTING_CELL_START_X_OFFSET + PHASE_SECTION_SHIFT_X - 21;
         int cellStartY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y;
 
         for (int i = 0; i < SpellPhase.values().length; i++) {
@@ -178,8 +176,6 @@ public class StaticStaffScreen extends Screen {
             for (int slot = 0; slot < MAX_GLYPH_CELLS; slot++) {
                 int cellX = cellStartX + slot * CRAFTING_CELL_SPACING;
                 int cellY = cellStartY + i * rowHeight;
-
-                graphics.blit(SPELL_GLYPH_SLOT, cellX, cellY, 0, 0, CELL_WIDTH, CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT);
 
                 if (slot < recipe.size()) {
                     AbstractSpellPart part = recipe.get(slot);
@@ -211,7 +207,7 @@ public class StaticStaffScreen extends Screen {
     }
 
     private void renderManaIndicators(GuiGraphics graphics, int mouseX, int mouseY) {
-        int rowX = bookLeft + PHASE_ROW_TEXTURE_X_OFFSET + PHASE_SECTION_SHIFT_X - 6;
+        int rowX = bookLeft + PHASE_ROW_TEXTURE_X_OFFSET + PHASE_SECTION_SHIFT_X - 8;
         int phaseRowEndX = rowX + PHASE_ROW_TEXTURE_WIDTH;
         int indicatorX = phaseRowEndX + 4 - 8 - 4 + 1;
         int baseY = bookTop + PHASE_SECTION_Y_OFFSET + PHASE_SECTION_SHIFT_Y;

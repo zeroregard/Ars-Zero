@@ -1,6 +1,6 @@
 package com.github.ars_zero.mixin;
 
-import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.AbstractStaff;
 import com.hollingsworth.arsnouveau.common.block.tile.ScribesTile;
 import com.hollingsworth.arsnouveau.common.network.Networking;
 import com.hollingsworth.arsnouveau.common.network.PacketOpenGlyphCraft;
@@ -28,7 +28,7 @@ public class ScribesBlockMixin {
         if (world.isClientSide || handIn != InteractionHand.MAIN_HAND || !(world.getBlockEntity(pos) instanceof ScribesTile)) {
             return;
         }
-        if (player.getItemInHand(handIn).getItem() instanceof AbstractSpellStaff && !player.isShiftKeyDown()) {
+        if (player.getItemInHand(handIn).getItem() instanceof AbstractStaff && !player.isShiftKeyDown()) {
             Networking.sendToPlayerClient(new PacketOpenGlyphCraft(pos), (ServerPlayer) player);
             cir.setReturnValue(ItemInteractionResult.SUCCESS);
         }

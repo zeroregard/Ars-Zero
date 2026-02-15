@@ -2,7 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.renderer.item.MultiphaseTurretItemRenderer;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.AbstractStaff;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.DullCirclet;
@@ -141,7 +141,7 @@ public class ModItems {
         ArsZero.LOGGER.debug("SpellCasterRegistry registration completed");
     }
     
-    private static void registerStaff(AbstractSpellStaff staff) {
+    private static void registerStaff(AbstractStaff staff) {
         SpellCasterRegistry.register(staff, (stack) -> {
             return stack.get(com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry.SPELL_CASTER);
         });

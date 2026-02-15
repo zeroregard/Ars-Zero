@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "x": {
+      "item": "ars_nouveau:sourcestone"
+    },
+    "y": {
+      "tag": "c:nuggets/gold"
+    },
+    "z": {
+      "item": "ars_zero:archwood_rod"
+    }
+  },
+  "pattern": [
+    "xzx",
+    "yxy",
+    "yxy"
+  ],
+  "result": {
+    "count": 4,
+    "id": "ars_zero:staff_display"
+  }
+}
