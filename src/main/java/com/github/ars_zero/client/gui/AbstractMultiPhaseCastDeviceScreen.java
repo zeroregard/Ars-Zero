@@ -111,9 +111,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
     protected ItemStack deviceStack;
     private InteractionHand guiHand;
 
-    /** One-shot: restore saved phase on first render so the highlight is not overwritten by init. */
-    private boolean phaseRestorePending = false;
-
     /** When the screen was opened; used to ignore the open key in charTyped (match base spellbook). */
     private long timeOpened;
 
@@ -244,7 +241,13 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
         updateCraftingCellVisibility();
 
-        selectPhase(SpellPhase.BEGIN);
+        // Restore last-edited phase for current slot (per-slot memory)
+        var clientPlayer = Minecraft.getInstance().player;
+        if (clientPlayer != null && selectedSpellSlot >= 0 && selectedSpellSlot < 10) {
+            selectPhase(SpellSlotPhaseMemory.get(clientPlayer.getUUID(), guiHand, selectedSpellSlot));
+        } else {
+            selectPhase(SpellPhase.BEGIN);
+        }
 
         validate();
 
@@ -252,8 +255,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
             slotClipboardSupport = new StaffSlotClipboardSupport(this);
         }
         slotClipboardSupport.onInit();
-
-        phaseRestorePending = true;
     }
 
     private void initSpellSlots() {
@@ -1112,13 +1113,6 @@ public abstract class AbstractMultiPhaseCastDeviceScreen extends SpellSlottedScr
 
     @Override
     public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        if (phaseRestorePending) {
-            phaseRestorePending = false;
-            var clientPlayer = Minecraft.getInstance().player;
-            if (clientPlayer != null && selectedSpellSlot >= 0 && selectedSpellSlot < 10) {
-                selectPhase(SpellSlotPhaseMemory.get(clientPlayer.getUUID(), guiHand, selectedSpellSlot));
-            }
-        }
         super.render(graphics, mouseX, mouseY, partialTicks);
         renderManaIndicators(graphics, mouseX, mouseY);
         renderTickPhaseTooltip(graphics, mouseX, mouseY);
