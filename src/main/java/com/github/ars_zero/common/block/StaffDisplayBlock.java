@@ -1,7 +1,6 @@
 package com.github.ars_zero.common.block;
 
 import com.github.ars_zero.common.item.AbstractStaff;
-import com.github.ars_zero.registry.ModBlockEntities;
 import com.hollingsworth.arsnouveau.common.items.SpellBook;
 import com.hollingsworth.arsnouveau.common.block.ArcanePlatform;
 import net.minecraft.core.BlockPos;
