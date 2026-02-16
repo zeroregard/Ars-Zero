@@ -2,7 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.renderer.item.MultiphaseTurretItemRenderer;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.AbstractStaff;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.DullCirclet;
@@ -11,6 +11,7 @@ import com.github.ars_zero.common.item.MultiphaseOrbItem;
 import com.github.ars_zero.common.item.MultiphaseSpellParchment;
 import com.github.ars_zero.common.item.NoviceSpellStaff;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
+import com.github.ars_zero.common.item.StaffTelekinesis;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.common.items.RendererBlockItem;
 import com.hollingsworth.arsnouveau.setup.registry.ItemRegistryWrapper;
@@ -93,6 +94,11 @@ public class ModItems {
         () -> new BlockItem(ModBlocks.FROZEN_BLIGHT.get(), defaultItemProperties())
     );
 
+    public static final DeferredHolder<Item, BlockItem> STAFF_DISPLAY = ITEMS.register(
+        "staff_display",
+        () -> new BlockItem(ModBlocks.STAFF_DISPLAY.get(), defaultItemProperties())
+    );
+
     public static final DeferredHolder<Item, RendererBlockItem> MULTIPHASE_SPELL_TURRET = ITEMS.register(
         "multiphase_spell_turret",
         () -> {
@@ -109,6 +115,12 @@ public class ModItems {
         }
     );
 
+    //
+    // "Static" staff items
+    //
+
+    public static final ItemRegistryWrapper<StaffTelekinesis> STAFF_TELEKINESIS = register("staff_telekinesis", StaffTelekinesis::new);
+
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);
         return new ItemRegistryWrapper<>(ITEMS.register(name, item));
@@ -124,11 +136,12 @@ public class ModItems {
         registerStaff(MAGE_SPELL_STAFF.get());
         registerStaff(ARCHMAGE_SPELL_STAFF.get());
         registerStaff(CREATIVE_SPELL_STAFF.get());
+        registerStaff(STAFF_TELEKINESIS.get());
         registerDevice(SPELLCASTING_CIRCLET.get());
         ArsZero.LOGGER.debug("SpellCasterRegistry registration completed");
     }
     
-    private static void registerStaff(AbstractSpellStaff staff) {
+    private static void registerStaff(AbstractStaff staff) {
         SpellCasterRegistry.register(staff, (stack) -> {
             return stack.get(com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry.SPELL_CASTER);
         });

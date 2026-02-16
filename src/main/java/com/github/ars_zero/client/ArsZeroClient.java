@@ -29,6 +29,7 @@ import com.github.ars_zero.client.particle.ExplosiveChargeParticle;
 import com.github.ars_zero.client.particle.FastPoofParticle;
 import com.github.ars_zero.client.particle.SourceJarChargeParticle;
 import com.github.ars_zero.client.renderer.tile.MultiphaseTurretRenderer;
+import com.github.ars_zero.client.renderer.tile.StaffDisplayRenderer;
 import com.github.ars_zero.registry.ModBlockEntities;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModParticles;
@@ -88,6 +89,8 @@ public class ArsZeroClient {
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlockEntities.MULTIPHASE_SPELL_TURRET.get(),
                 MultiphaseTurretRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.STAFF_DISPLAY.get(),
+                StaffDisplayRenderer::new);
     }
 
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {

@@ -1,31 +1,41 @@
 package com.github.ars_zero.client.gui.buttons;
 
+import com.github.ars_zero.client.gui.PhaseManaHelper;
+import com.github.ars_zero.common.item.AbstractStaticSpellStaff;
 import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
-import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ManaIndicator {
     private static final int INDICATOR_WIDTH = 4;
     private static final int INDICATOR_HEIGHT = 14;
     private static final int MANA_COLOR = 0xFFC67EDE;
-    
+
     private final int x;
     private final int y;
     private final List<AbstractSpellPart> phaseSpell;
-    
+    private final ItemStack deviceStack;
+
+    /** No discount (e.g. regular staff). */
     public ManaIndicator(int x, int y, List<AbstractSpellPart> phaseSpell) {
+        this(x, y, phaseSpell, ItemStack.EMPTY);
+    }
+
+    /** With optional device for discount (e.g. wand with IManaDiscountEquipment). */
+    public ManaIndicator(int x, int y, List<AbstractSpellPart> phaseSpell, ItemStack deviceStack) {
         this.x = x;
         this.y = y;
         this.phaseSpell = phaseSpell;
+        this.deviceStack = deviceStack != null ? deviceStack : ItemStack.EMPTY;
     }
     
     public void render(GuiGraphics graphics, Player player) {
@@ -48,7 +58,7 @@ public class ManaIndicator {
             return;
         }
         
-        int spellCost = calculatePhaseManaCost();
+        int spellCost = PhaseManaHelper.getDisplayCost(phaseSpell, deviceStack);
         double fillRatio = Math.min(spellCost / maxMana, 1.0);
         int fillHeight = (int) (INDICATOR_HEIGHT * fillRatio);
         
@@ -70,44 +80,46 @@ public class ManaIndicator {
     }
     
     public void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
-        int spellCost = calculatePhaseManaCost();
+        int displayCost = PhaseManaHelper.getDisplayCost(phaseSpell, deviceStack);
+        int rawCost = PhaseManaHelper.getRawCost(phaseSpell);
+        boolean hasDiscount = !deviceStack.isEmpty() && rawCost > 0 && displayCost < rawCost;
+        int discountPercent = 0;
+        if (hasDiscount) {
+            if (deviceStack.getItem() instanceof AbstractStaticSpellStaff staff) {
+                discountPercent = staff.getDiscountPercent();
+            }
+            if (discountPercent <= 0) {
+                discountPercent = (int) Math.round(100.0 * (rawCost - displayCost) / rawCost);
+            }
+        }
+
         Player player = Minecraft.getInstance().player;
-        
         if (player == null) {
             return;
         }
-        
+
         IManaCap manaCap = CapabilityRegistry.getMana(player);
         if (manaCap == null) {
-            Component tooltip = Component.literal("~" + spellCost + " mana");
+            Component tooltip = buildManaLine(displayCost, hasDiscount, discountPercent, false);
             graphics.renderTooltip(Minecraft.getInstance().font, tooltip, mouseX, mouseY);
             return;
         }
-        
+
         double maxMana = manaCap.getMaxMana();
-        Component tooltip;
-        
-        if (spellCost > maxMana) {
-            tooltip = Component.literal("~" + spellCost + " mana").append(
-                Component.literal(" - exceeds your max mana level").withStyle(ChatFormatting.RED)
-            );
-        } else {
-            tooltip = Component.literal("~" + spellCost + " mana");
-        }
-        
+        boolean exceedsMax = displayCost > maxMana;
+        Component tooltip = buildManaLine(displayCost, hasDiscount, discountPercent, exceedsMax);
         graphics.renderTooltip(Minecraft.getInstance().font, tooltip, mouseX, mouseY);
     }
-    
-    private int calculatePhaseManaCost() {
-        List<AbstractSpellPart> filteredSpell = new ArrayList<>();
-        for (AbstractSpellPart part : phaseSpell) {
-            if (part != null) {
-                filteredSpell.add(part);
-            }
+
+    private Component buildManaLine(int displayCost, boolean hasDiscount, int discountPercent, boolean exceedsMax) {
+        MutableComponent line = Component.literal("~" + displayCost + " mana");
+        if (hasDiscount && discountPercent > 0) {
+            line = line.append(Component.literal(" (" + discountPercent + "% discount)").withStyle(ChatFormatting.GRAY));
         }
-        
-        Spell spell = new Spell(filteredSpell);
-        return spell.getCost();
+        if (exceedsMax) {
+            line = line.append(Component.literal(" - exceeds your max mana level").withStyle(ChatFormatting.RED));
+        }
+        return line;
     }
 }
 

@@ -2,9 +2,11 @@ package com.github.ars_zero.event;
 
 import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.AbstractStaff;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.spell.MultiPhaseCastContextRegistry;
+import com.github.ars_zero.common.spell.MultiPhaseCastContext.CastSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -21,21 +23,29 @@ public class StaffCleanupHandler {
         
         ItemStack heldItem = player.getMainHandItem();
         IMultiPhaseCaster caster = AbstractMultiPhaseCastDevice.asMultiPhaseCaster(player, heldItem);
-        if (caster == null) {
+        MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;
+        
+        if (context != null && context.isCasting) {
+            boolean isHoldingStaff = heldItem.getItem() instanceof AbstractStaff;
+            boolean isUsingItem = player.isUsingItem();
+            
+            if (!isHoldingStaff || !isUsingItem) {
+                AnchorEffect.restoreEntityPhysics(context);
+                AbstractMultiPhaseCastDevice.clearContext(heldItem);
+            }
             return;
         }
         
-        MultiPhaseCastContext context = caster.getCastContext();
-        if (context == null || !context.isCasting) {
-            return;
-        }
-        
-        boolean isHoldingStaff = heldItem.getItem() instanceof AbstractSpellStaff;
-        boolean isUsingItem = player.isUsingItem();
-        
-        if (!isHoldingStaff || !isUsingItem) {
-            AnchorEffect.restoreEntityPhysics(context);
-            AbstractMultiPhaseCastDevice.clearContext(heldItem);
+        // Orphan detection: player swapped away from staff while channeling
+        for (MultiPhaseCastContext ctx : MultiPhaseCastContextRegistry.getActiveContextsForPlayer(player.getUUID())) {
+            if (ctx.source != CastSource.ITEM) continue;
+            
+            boolean inHand = AbstractMultiPhaseCastDevice.findContextByStack(player, player.getMainHandItem()) == ctx
+                    || AbstractMultiPhaseCastDevice.findContextByStack(player, player.getOffhandItem()) == ctx;
+            if (!inHand && !ctx.castingStack.isEmpty() && ctx.castingStack.getItem() instanceof AbstractMultiPhaseCastDevice device) {
+                AnchorEffect.restoreEntityPhysics(ctx);
+                device.endPhase(player, ctx.castingStack);
+            }
         }
     }
 }
