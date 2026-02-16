@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph.convergence;
 
 import com.github.ars_zero.common.entity.explosion.ExplosionControllerEntity;
+import com.github.ars_zero.common.spell.TemporalContextRecorder;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.common.spell.SpellAugmentExtractor;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
@@ -47,7 +48,7 @@ public final class ExplosionConvergenceHelper {
         entity.setResolveSound(resolveSound);
 
         serverLevel.addFreshEntity(entity);
-        convergence.updateTemporalContext(shooter, entity, spellContext, resolver);
+        TemporalContextRecorder.record(spellContext, entity);
         convergence.consumeEffect(spellContext, explosionEffect);
         convergence.triggerResolveEffects(spellContext, serverLevel, pos);
         break;

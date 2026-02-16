@@ -89,6 +89,7 @@ public class EffectConjureBlight extends AbstractEffect {
     public void addAugmentDescriptions(Map<AbstractAugment, String> map) {
         super.addAugmentDescriptions(map);
         addBlockAoeAugmentDescriptions(map);
+        map.put(AugmentExtendTime.INSTANCE, "Extends the duration of the effect.");
         map.put(AugmentSensitive.INSTANCE, "Places blight at a target entity's feet.");
     }
 

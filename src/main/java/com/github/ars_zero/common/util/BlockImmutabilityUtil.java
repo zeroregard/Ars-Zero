@@ -5,6 +5,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.PushReaction;
 
 public class BlockImmutabilityUtil {
     
@@ -18,6 +19,15 @@ public class BlockImmutabilityUtil {
     
     public static boolean isBlockImmutable(BlockState state) {
         return isBlockImmutable(state.getBlock());
+    }
+
+    /**
+     * True if a piston can push this block (NORMAL or PUSH_ONLY).
+     * Used to restrict block group entity creation to blocks that are movable by pistons.
+     */
+    public static boolean isPistonPushable(BlockState state) {
+        PushReaction reaction = state.getPistonPushReaction();
+        return reaction == PushReaction.NORMAL || reaction == PushReaction.PUSH_ONLY;
     }
     
     public static boolean isBlockImmutable(Level level, BlockPos pos) {

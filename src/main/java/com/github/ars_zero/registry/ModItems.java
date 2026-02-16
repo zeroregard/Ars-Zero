@@ -11,7 +11,11 @@ import com.github.ars_zero.common.item.MultiphaseOrbItem;
 import com.github.ars_zero.common.item.MultiphaseSpellParchment;
 import com.github.ars_zero.common.item.NoviceSpellStaff;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
+import com.github.ars_zero.common.item.StaffBeaming;
+import com.github.ars_zero.common.item.StaffConvergence;
+import com.github.ars_zero.common.item.StaffGeometrize;
 import com.github.ars_zero.common.item.StaffTelekinesis;
+import com.github.ars_zero.common.item.StaffVoxels;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.common.items.RendererBlockItem;
 import com.hollingsworth.arsnouveau.setup.registry.ItemRegistryWrapper;
@@ -120,7 +124,10 @@ public class ModItems {
     //
 
     public static final ItemRegistryWrapper<StaffTelekinesis> STAFF_TELEKINESIS = register("staff_telekinesis", StaffTelekinesis::new);
-
+    public static final ItemRegistryWrapper<StaffBeaming> STAFF_BEAMING = register("staff_beaming", StaffBeaming::new);
+    public static final ItemRegistryWrapper<StaffVoxels> STAFF_VOXELS = register("staff_voxels", StaffVoxels::new);
+    public static final ItemRegistryWrapper<StaffGeometrize> STAFF_GEOMETRIZE = register("staff_geometrize", StaffGeometrize::new);
+    public static final ItemRegistryWrapper<StaffConvergence> STAFF_CONVERGENCE = register("staff_convergence", StaffConvergence::new);
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);
         return new ItemRegistryWrapper<>(ITEMS.register(name, item));
@@ -137,6 +144,10 @@ public class ModItems {
         registerStaff(ARCHMAGE_SPELL_STAFF.get());
         registerStaff(CREATIVE_SPELL_STAFF.get());
         registerStaff(STAFF_TELEKINESIS.get());
+        registerStaff(STAFF_BEAMING.get());
+        registerStaff(STAFF_VOXELS.get());
+        registerStaff(STAFF_GEOMETRIZE.get());
+        registerStaff(STAFF_CONVERGENCE.get());
         registerDevice(SPELLCASTING_CIRCLET.get());
         ArsZero.LOGGER.debug("SpellCasterRegistry registration completed");
     }

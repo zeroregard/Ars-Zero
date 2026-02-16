@@ -2,10 +2,7 @@ package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.EffectBeamEntity;
-import com.github.ars_zero.common.spell.IMultiPhaseCaster;
-import com.github.ars_zero.common.spell.MultiPhaseCastContext;
-import com.github.ars_zero.common.spell.SpellEffectType;
-import com.github.ars_zero.common.spell.SpellResult;
+import com.github.ars_zero.common.spell.TemporalContextRecorder;
 import com.github.ars_zero.common.util.MathHelper;
 import com.github.ars_zero.registry.ModParticleTimelines;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
@@ -214,7 +211,7 @@ public class EffectBeam extends AbstractEffect {
             SpellContext childContext = spellContext.makeChildContext();
             beam.setResolver(resolver.getNewResolver(childContext));
             serverLevel.addFreshEntity(beam);
-            updateTemporalContext(shooter, beam, spellContext);
+            TemporalContextRecorder.record(spellContext, beam);
             return;
         }
 
@@ -259,50 +256,7 @@ public class EffectBeam extends AbstractEffect {
             serverLevel.addFreshEntity(beam);
             beams.add(beam);
         }
-        updateTemporalContextMultiple(shooter, beams, spellContext);
-    }
-
-    private void updateTemporalContext(LivingEntity shooter, EffectBeamEntity beam, SpellContext spellContext) {
-        IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
-        if (caster == null) {
-            return;
-        }
-        MultiPhaseCastContext context = caster.getCastContext();
-        if (context == null) {
-            return;
-        }
-        SpellResult beamResult = SpellResult.fromHitResultWithCaster(
-                new EntityHitResult(beam),
-                SpellEffectType.RESOLVED,
-                spellContext.getCaster());
-        context.beginResults.clear();
-        context.beginResults.add(beamResult);
-    }
-
-    private void updateTemporalContextMultiple(LivingEntity shooter, List<EffectBeamEntity> beams, SpellContext spellContext) {
-        IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
-        if (caster == null) {
-            return;
-        }
-        MultiPhaseCastContext context = caster.getCastContext();
-        if (context == null) {
-            return;
-        }
-        if (!context.beginResults.isEmpty()) {
-            for (SpellResult oldResult : context.beginResults) {
-                if (oldResult.targetEntity instanceof EffectBeamEntity oldBeam && oldBeam.isAlive()) {
-                    oldBeam.discard();
-                }
-            }
-        }
-        context.beginResults.clear();
-        for (EffectBeamEntity beam : beams) {
-            SpellResult beamResult = SpellResult.fromHitResultWithCaster(
-                    new EntityHitResult(beam),
-                    SpellEffectType.RESOLVED,
-                    spellContext.getCaster());
-            context.beginResults.add(beamResult);
-        }
+        TemporalContextRecorder.record(spellContext, beams);
     }
 
     @Override

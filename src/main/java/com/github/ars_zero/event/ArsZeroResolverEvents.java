@@ -1,7 +1,6 @@
 package com.github.ars_zero.event;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
@@ -10,6 +9,7 @@ import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellPhase;
+import com.github.ars_zero.common.spell.TemporalContextRecorder;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
 import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
@@ -39,6 +39,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -82,25 +83,23 @@ public class ArsZeroResolverEvents {
                 ItemStack casterTool = event.resolver.spellContext.getCasterTool();
                 boolean willCreateEntityGroup = requiresEntityGroupForTemporalAnchor(casterTool, player);
                 
-                if (willCreateEntityGroup && wrapped.isRootResolver() && ServerConfig.ALLOW_BLOCK_GROUP_CREATION.get()) {
-                    // Store in map keyed by dimension and position
-                    capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>()).put(pos, state);
-                    
+                if (willCreateEntityGroup && wrapped.isRootResolver()) {
+                    // Store in map keyed by dimension and position; only capture/clear piston-pushable blocks
+                    capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>());
                     double aoeBuff = event.spellStats.getAoeMultiplier();
                     int pierceBuff = event.spellStats.getBuffCount(com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce.INSTANCE);
                     List<BlockPos> posList = SpellUtil.calcAOEBlocks(player, pos, blockHit, aoeBuff, pierceBuff);
                     for (BlockPos aoePos : posList) {
                         if (!event.world.isOutsideBuildHeight(aoePos)) {
                             var aoeState = event.world.getBlockState(aoePos);
-                            if (!aoeState.isAir() && !BlockImmutabilityUtil.isBlockImmutable(aoeState)) {
+                            if (!aoeState.isAir() && !BlockImmutabilityUtil.isBlockImmutable(aoeState) && BlockImmutabilityUtil.isPistonPushable(aoeState)) {
                                 capturedBlockStates.get(dimensionKey).put(aoePos, aoeState);
-                                
                                 event.world.setBlock(aoePos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                             }
                         }
                     }
-                    
-                    if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
+                    if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state) && BlockImmutabilityUtil.isPistonPushable(state)) {
+                        capturedBlockStates.get(dimensionKey).put(pos, state);
                         event.world.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                     }
                 }
@@ -113,177 +112,169 @@ public class ArsZeroResolverEvents {
         if (event.world.isClientSide) {
             return;
         }
-        
         if (!(event.resolver instanceof WrappedSpellResolver wrapped)) {
             return;
         }
-        
-        if (wrapped.getPhase() != SpellPhase.BEGIN) {
+
+        ServerLevel serverLevel = event.world instanceof ServerLevel level ? level : null;
+        ResourceKey<Level> dimensionKey = serverLevel != null ? serverLevel.dimension() : null;
+
+        ResolveContext resolveCtx = getResolveContext(event, wrapped, serverLevel);
+        if (resolveCtx == null) {
+            cleanupCapturedState(dimensionKey);
             return;
         }
-        
-        ServerLevel serverLevel = null;
-        ResourceKey<Level> dimensionKey = null;
-        if (event.world instanceof ServerLevel level) {
-            serverLevel = level;
-            dimensionKey = level.dimension();
-        }
-        
-        MultiPhaseCastContext context = null;
-        Player player = null;
-        
-        IMultiPhaseCaster multiPhaseCaster = IMultiPhaseCaster.from(event.resolver.spellContext, null);
-        if (multiPhaseCaster != null) {
-            context = multiPhaseCaster.getCastContext();
-            if (context != null) {
-                if (serverLevel != null) {
-                    player = serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId());
-                }
-            } else {
-                ArsZero.LOGGER.warn("[ArsZeroResolverEvents] IMultiPhaseCaster has no cast context!");
-                if (dimensionKey != null) {
-                    capturedBlockStates.remove(dimensionKey);
-                    blockGroupCreated.remove(dimensionKey);
-                }
-                return;
-            }
-        } else {
-            player = serverLevel != null ? serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId()) : null;
-            if (player == null) {
-                ArsZero.LOGGER.debug("[ArsZeroResolverEvents] No player found for resolver");
-                if (dimensionKey != null) {
-                    capturedBlockStates.remove(dimensionKey);
-                    blockGroupCreated.remove(dimensionKey);
-                }
-                return;
-            }
-            
-            IMultiPhaseCaster caster = IMultiPhaseCaster.from(event.resolver.spellContext, player);
-            if (caster == null) {
-                ArsZero.LOGGER.debug("[ArsZeroResolverEvents] No IMultiPhaseCaster found");
-                if (dimensionKey != null) {
-                    capturedBlockStates.remove(dimensionKey);
-                    blockGroupCreated.remove(dimensionKey);
-                }
-                return;
-            }
-            context = caster.getCastContext();
-            if (context == null) {
-                ArsZero.LOGGER.debug("[ArsZeroResolverEvents] No context found for player");
-                if (dimensionKey != null) {
-                    capturedBlockStates.remove(dimensionKey);
-                    blockGroupCreated.remove(dimensionKey);
-                }
-                return;
-            }
-        }
-        
-        HitResult hitResult = event.rayTraceResult;
-        SpellResult result = null;
-        boolean cleanedUp = false;
-        
-        if (hitResult instanceof BlockHitResult blockHit && serverLevel != null && dimensionKey != null && player != null) {
-            BlockPos pos = blockHit.getBlockPos();
-            if (!event.world.isOutsideBuildHeight(pos) && BlockUtil.destroyRespectsClaim(player, event.world, pos)) {
-                BlockPos targetPos = pos;
-                double aoeBuff = event.spellStats.getAoeMultiplier();
-                int pierceBuff = event.spellStats.getBuffCount(com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce.INSTANCE);
-                List<BlockPos> posList = SpellUtil.calcAOEBlocks(player, targetPos, blockHit, aoeBuff, pierceBuff);
-                
-                List<BlockPos> validBlocks = new ArrayList<>();
-                // Use captured states from PRE event
-                Map<BlockPos, BlockState> capturedStates = capturedBlockStates.getOrDefault(dimensionKey, new HashMap<>());
-                
-                for (BlockPos blockPos : posList) {
-                    if (!event.world.isOutsideBuildHeight(blockPos) && BlockUtil.destroyRespectsClaim(player, event.world, blockPos)) {
-                        var state = capturedStates.get(blockPos);
-                        if (state == null) {
-                            state = event.world.getBlockState(blockPos);
-                        }
-                        
-                        if (state != null && !state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
-                            validBlocks.add(blockPos);
-                            capturedStates.put(blockPos, state);
-                        }
-                    }
-                }
-                
-                ItemStack casterTool = event.resolver.spellContext.getCasterTool();
-                if (!validBlocks.isEmpty() && !casterTool.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player) && wrapped.isRootResolver() && ServerConfig.ALLOW_BLOCK_GROUP_CREATION.get()) {
-                    if (!blockGroupCreated.getOrDefault(dimensionKey, false)) {
-                        Vec3 centerPos = calculateCenter(validBlocks);
 
-                        BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), serverLevel);
-                        blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
-                        blockGroup.setCasterUUID(player.getUUID());
-                        
-                        blockGroup.addBlocksWithStates(validBlocks, capturedStates);
-                        
-                        serverLevel.addFreshEntity(blockGroup);
-                        
-                        result = SpellResult.fromBlockGroup(blockGroup, validBlocks, event.resolver.spellContext.getCaster());
-                        
-                        blockGroupCreated.put(dimensionKey, true);
-                    } else {
-                        result = SpellResult.fromHitResultWithCaster(hitResult, SpellEffectType.RESOLVED, event.resolver.spellContext.getCaster());
-                    }
-                    
-                    capturedBlockStates.remove(dimensionKey);
-                } else {
-                    capturedBlockStates.remove(dimensionKey);
-                    cleanedUp = true;
-                }
-            } else {
-                if (dimensionKey != null) {
-                    capturedBlockStates.remove(dimensionKey);
-                    blockGroupCreated.remove(dimensionKey);
-                    cleanedUp = true;
-                }
-            }
+        ResolveResult resolveResult = buildResultsFromEvent(event, wrapped, resolveCtx.player, serverLevel, dimensionKey);
+        cleanupCapturedState(dimensionKey);
+
+        if (resolveResult == null || resolveResult.results.isEmpty()) {
+            return;
         }
-        
-        if (!cleanedUp && dimensionKey != null) {
+
+        applyResults(resolveCtx.context, wrapped.getPhase(), resolveResult);
+    }
+
+    private static void cleanupCapturedState(ResourceKey<Level> dimensionKey) {
+        if (dimensionKey != null) {
             capturedBlockStates.remove(dimensionKey);
             blockGroupCreated.remove(dimensionKey);
         }
-        
-        if (result == null) {
-            result = SpellResult.fromHitResultWithCaster(hitResult, SpellEffectType.RESOLVED, event.resolver.spellContext.getCaster());
+    }
+
+    private static ResolveContext getResolveContext(EffectResolveEvent.Post event, WrappedSpellResolver wrapped,
+            ServerLevel serverLevel) {
+        IMultiPhaseCaster multiPhaseCaster = IMultiPhaseCaster.from(event.resolver.spellContext, null);
+        if (multiPhaseCaster != null) {
+            MultiPhaseCastContext context = multiPhaseCaster.getCastContext();
+            if (context == null) {
+                ArsZero.LOGGER.warn("[ArsZeroResolverEvents] IMultiPhaseCaster has no cast context!");
+                return null;
+            }
+            Player player = serverLevel != null ? serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId()) : null;
+            return new ResolveContext(context, player);
         }
-        
-        switch (wrapped.getPhase()) {
-            case BEGIN -> {
-                if (result != null && result.hitResult instanceof BlockHitResult && !context.beginResults.isEmpty()) {
-                    for (SpellResult existing : context.beginResults) {
-                        if (existing != null && existing.hitResult instanceof EntityHitResult) {
-                            ArsZero.LOGGER.debug("[ArsZeroResolverEvents] BEGIN: Skipping block result, entity result already exists");
-                            return;
-                        }
-                    }
+
+        Player player = serverLevel != null ? serverLevel.getServer().getPlayerList().getPlayer(wrapped.getPlayerId()) : null;
+        if (player == null) {
+            return null;
+        }
+        IMultiPhaseCaster caster = IMultiPhaseCaster.from(event.resolver.spellContext, player);
+        if (caster == null) {
+            return null;
+        }
+        MultiPhaseCastContext context = caster.getCastContext();
+        if (context == null) {
+            return null;
+        }
+        return new ResolveContext(context, player);
+    }
+
+    private static ResolveResult buildResultsFromEvent(EffectResolveEvent.Post event, WrappedSpellResolver wrapped,
+            Player player, ServerLevel serverLevel, ResourceKey<Level> dimensionKey) {
+        List<SpellResult> recorded = TemporalContextRecorder.take(event.resolver.spellContext, event.world);
+        if (recorded != null && !recorded.isEmpty()) {
+            return new ResolveResult(recorded, true);
+        }
+
+        HitResult hitResult = event.rayTraceResult;
+
+        if (hitResult instanceof BlockHitResult blockHit && serverLevel != null && dimensionKey != null && player != null) {
+            SpellResult blockGroupResult = tryCreateBlockGroup(event, blockHit, player, serverLevel, dimensionKey, wrapped);
+            if (blockGroupResult != null) {
+                return new ResolveResult(List.of(blockGroupResult), true);
+            }
+        }
+
+        SpellResult fromHit = SpellResult.fromHitResultWithCaster(hitResult, SpellEffectType.RESOLVED, event.resolver.spellContext.getCaster());
+        return new ResolveResult(List.of(fromHit), false);
+    }
+
+    @Nullable
+    private static SpellResult tryCreateBlockGroup(EffectResolveEvent.Post event, BlockHitResult blockHit,
+            Player player, ServerLevel serverLevel, ResourceKey<Level> dimensionKey, WrappedSpellResolver wrapped) {
+        BlockPos pos = blockHit.getBlockPos();
+        if (event.world.isOutsideBuildHeight(pos) || !BlockUtil.destroyRespectsClaim(player, event.world, pos)) {
+            return null;
+        }
+
+        double aoeBuff = event.spellStats.getAoeMultiplier();
+        int pierceBuff = event.spellStats.getBuffCount(com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce.INSTANCE);
+        List<BlockPos> posList = SpellUtil.calcAOEBlocks(player, pos, blockHit, aoeBuff, pierceBuff);
+
+        Map<BlockPos, BlockState> capturedStates = capturedBlockStates.getOrDefault(dimensionKey, new HashMap<>());
+        List<BlockPos> validBlocks = new ArrayList<>();
+        for (BlockPos blockPos : posList) {
+            if (!event.world.isOutsideBuildHeight(blockPos) && BlockUtil.destroyRespectsClaim(player, event.world, blockPos)) {
+                BlockState state = capturedStates.get(blockPos);
+                if (state == null) {
+                    state = event.world.getBlockState(blockPos);
                 }
-                if (result != null && result.blockGroup != null) {
+                if (state != null && !state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state) && BlockImmutabilityUtil.isPistonPushable(state)) {
+                    validBlocks.add(blockPos);
+                    capturedStates.put(blockPos, state);
+                }
+            }
+        }
+
+        ItemStack casterTool = event.resolver.spellContext.getCasterTool();
+        if (validBlocks.isEmpty() || casterTool.isEmpty() || !requiresEntityGroupForTemporalAnchor(casterTool, player)
+                || !wrapped.isRootResolver()) {
+            return null;
+        }
+        if (blockGroupCreated.getOrDefault(dimensionKey, false)) {
+            return null;
+        }
+
+        Vec3 centerPos = calculateCenter(validBlocks);
+        BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), serverLevel);
+        blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
+        blockGroup.setCasterUUID(player.getUUID());
+        blockGroup.addBlocksWithStates(validBlocks, capturedStates);
+        serverLevel.addFreshEntity(blockGroup);
+        blockGroupCreated.put(dimensionKey, true);
+
+        return SpellResult.fromBlockGroup(blockGroup, validBlocks, event.resolver.spellContext.getCaster());
+    }
+
+    private static void applyResults(MultiPhaseCastContext context, SpellPhase phase, ResolveResult resolveResult) {
+        List<SpellResult> results = resolveResult.results;
+        boolean replace = resolveResult.replace;
+
+        switch (phase) {
+            case BEGIN -> {
+                if (replace) {
                     context.beginResults.clear();
-                    context.beginResults.add(result);
-                    ArsZero.LOGGER.info("[ArsZeroResolverEvents] BEGIN: Added blockGroup result, beginResults.size={}", 
-                        context.beginResults.size());
+                    context.beginResults.addAll(results);
                 } else {
-                    context.beginResults.add(result);
-                    ArsZero.LOGGER.info("[ArsZeroResolverEvents] BEGIN: Added result, beginResults.size={}, result={}", 
-                        context.beginResults.size(), result != null ? result.getClass().getSimpleName() : "null");
+                    for (SpellResult result : results) {
+                        if (result == null) continue;
+                        if (result.hitResult instanceof BlockHitResult && context.beginResults.stream()
+                                .anyMatch(r -> r != null && r.hitResult instanceof EntityHitResult)) {
+                            ArsZero.LOGGER.debug("[ArsZeroResolverEvents] BEGIN: Skipping block result, entity result already exists");
+                            continue;
+                        }
+                        context.beginResults.add(result);
+                    }
                 }
             }
             case TICK -> {
-                context.tickResults.add(result);
-                ArsZero.LOGGER.info("[ArsZeroResolverEvents] TICK: Added result, tickResults.size={}", 
-                    context.tickResults.size());
+                if (replace) {
+                    context.tickResults.clear();
+                }
+                results.stream().filter(r -> r != null).forEach(context.tickResults::add);
             }
             case END -> {
-                context.endResults.add(result);
-                ArsZero.LOGGER.info("[ArsZeroResolverEvents] END: Added result, endResults.size={}", 
-                    context.endResults.size());
+                if (replace) {
+                    context.endResults.clear();
+                }
+                results.stream().filter(r -> r != null).forEach(context.endResults::add);
             }
         }
     }
+
+    private record ResolveContext(MultiPhaseCastContext context, Player player) {}
+    private record ResolveResult(List<SpellResult> results, boolean replace) {}
     
     private static Vec3 calculateCenter(List<BlockPos> positions) {
         if (positions.isEmpty()) return Vec3.ZERO;

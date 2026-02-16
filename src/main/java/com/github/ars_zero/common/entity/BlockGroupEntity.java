@@ -459,6 +459,10 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
                     ArsZero.LOGGER.warn("BlockGroupEntity loaded immutable block {} from NBT, skipping", state.getBlock());
                     continue;
                 }
+                if (!BlockImmutabilityUtil.isPistonPushable(state)) {
+                    ArsZero.LOGGER.warn("BlockGroupEntity loaded non-piston-pushable block {} from NBT, skipping", state.getBlock());
+                    continue;
+                }
                 
                 CompoundTag posTag = blockTag.getCompound("pos");
                 Vec3 relativePos = new Vec3(posTag.getDouble("x"), posTag.getDouble("y"), posTag.getDouble("z"));
@@ -534,6 +538,10 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
                     
                     if (BlockImmutabilityUtil.isBlockImmutable(state)) {
                         ArsZero.LOGGER.warn("BlockGroupEntity synced immutable block {} to client, skipping", state.getBlock());
+                        continue;
+                    }
+                    if (!BlockImmutabilityUtil.isPistonPushable(state)) {
+                        ArsZero.LOGGER.warn("BlockGroupEntity synced non-piston-pushable block {} to client, skipping", state.getBlock());
                         continue;
                     }
                     

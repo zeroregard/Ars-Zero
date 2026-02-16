@@ -1,11 +1,11 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
-import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.spell.SpellResult;
+import com.github.ars_zero.common.spell.TemporalContextRecorder;
 import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
@@ -77,9 +77,10 @@ public class SelectEffect extends AbstractEffect {
         
         List<BlockPos> validBlocks = new ArrayList<>();
         for (BlockPos blockPos : posList) {
-            if (!world.isOutsideBuildHeight(blockPos) 
+            if (!world.isOutsideBuildHeight(blockPos)
                 && BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)
-                && BlockImmutabilityUtil.canBlockBeDestroyed(world, blockPos)) {
+                && BlockImmutabilityUtil.canBlockBeDestroyed(world, blockPos)
+                && BlockImmutabilityUtil.isPistonPushable(world.getBlockState(blockPos))) {
                 validBlocks.add(blockPos);
             }
         }
@@ -93,16 +94,12 @@ public class SelectEffect extends AbstractEffect {
         if (blockPositions.isEmpty()) {
             return;
         }
-        
-        if (!ServerConfig.ALLOW_BLOCK_GROUP_CREATION.get()) {
-            return;
-        }
-        
+
         java.util.Map<BlockPos, BlockState> capturedStates = new java.util.HashMap<>();
         for (BlockPos pos : blockPositions) {
             if (!level.isOutsideBuildHeight(pos)) {
                 BlockState state = level.getBlockState(pos);
-                if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
+                if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state) && BlockImmutabilityUtil.isPistonPushable(state)) {
                     capturedStates.put(pos, state);
                 }
             }
@@ -150,15 +147,7 @@ public class SelectEffect extends AbstractEffect {
         
         level.addFreshEntity(blockGroup);
         
-        if (context != null) {
-            SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, filteredPositions, spellContext.getCaster());
-            boolean hasExistingBlockGroups = context.beginResults.stream()
-                .anyMatch(r -> r != null && r.blockGroup != null);
-            if (!hasExistingBlockGroups) {
-                context.beginResults.clear();
-            }
-            context.beginResults.add(blockResult);
-        }
+        TemporalContextRecorder.record(spellContext, blockGroup, filteredPositions);
     }
     
     

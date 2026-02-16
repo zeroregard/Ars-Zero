@@ -10,11 +10,8 @@ import com.github.ars_zero.common.entity.BlightVoxelEntity;
 import com.github.ars_zero.common.entity.StoneVoxelEntity;
 import com.github.ars_zero.common.entity.WaterVoxelEntity;
 import com.github.ars_zero.common.entity.WindVoxelEntity;
-import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
-import com.github.ars_zero.common.spell.SpellEffectType;
-import com.github.ars_zero.common.spell.SpellResult;
-import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.spell.TemporalContextRecorder;
 import com.github.ars_zero.common.util.MathHelper;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
@@ -168,7 +165,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                     
                     voxel.setCaster(shooter);
                     serverLevel.addFreshEntity(voxel);
-                    updateTemporalContext(shooter, voxel, spellContext);
+                    TemporalContextRecorder.record(spellContext, voxel);
                     
                     resolver.getNewResolver(remainingContext).onResolveEffect(serverLevel, new EntityHitResult(voxel));
                     return;
@@ -187,7 +184,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
                 }
                 
                 serverLevel.addFreshEntity(voxel);
-                updateTemporalContext(shooter, voxel, spellContext);
+                TemporalContextRecorder.record(spellContext, voxel);
             }
         }
     }
@@ -290,7 +287,7 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
             }
         }
         
-        updateTemporalContextMultiple(shooter, createdVoxels, context);
+        TemporalContextRecorder.record(context, createdVoxels);
         
         if (!isArcane && context.hasNextPart()) {
             SpellContext remainingContext = context.makeChildContext();
@@ -384,65 +381,6 @@ public class ConjureVoxelEffect extends AbstractEffect implements ISubsequentEff
             }
         }
         return 0.0f;
-    }
-    
-    private void updateTemporalContext(LivingEntity shooter, BaseVoxelEntity voxel, SpellContext spellContext) {
-        IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
-        if (caster == null) {
-            return;
-        }
-        
-        MultiPhaseCastContext context = caster.getCastContext();
-        if (context == null) {
-            return;
-        }
-        
-        if (!context.beginResults.isEmpty()) {
-            SpellResult oldResult = context.beginResults.get(0);
-            if (oldResult.targetEntity instanceof ArcaneVoxelEntity oldVoxel && oldVoxel.isAlive()) {
-                oldVoxel.discard();
-            }
-        }
-        
-        SpellResult voxelResult = SpellResult.fromHitResultWithCaster(
-            new net.minecraft.world.phys.EntityHitResult(voxel), 
-            SpellEffectType.RESOLVED, 
-            spellContext.getCaster()
-        );
-        
-        context.beginResults.clear();
-        context.beginResults.add(voxelResult);
-    }
-    
-    private void updateTemporalContextMultiple(LivingEntity shooter, java.util.List<BaseVoxelEntity> voxels, SpellContext spellContext) {
-        IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
-        if (caster == null) {
-            return;
-        }
-        
-        MultiPhaseCastContext context = caster.getCastContext();
-        if (context == null) {
-            return;
-        }
-        
-        if (!context.beginResults.isEmpty()) {
-            for (SpellResult oldResult : context.beginResults) {
-                if (oldResult.targetEntity instanceof BaseVoxelEntity oldVoxel && oldVoxel.isAlive()) {
-                    oldVoxel.discard();
-                }
-            }
-        }
-        
-        context.beginResults.clear();
-        
-        for (BaseVoxelEntity voxel : voxels) {
-            SpellResult voxelResult = SpellResult.fromHitResultWithCaster(
-                new net.minecraft.world.phys.EntityHitResult(voxel), 
-                SpellEffectType.RESOLVED, 
-                spellContext.getCaster()
-            );
-            context.beginResults.add(voxelResult);
-        }
     }
     
     private enum VoxelVariant {
