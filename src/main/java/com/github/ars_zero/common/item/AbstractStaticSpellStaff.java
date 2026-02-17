@@ -1,15 +1,20 @@
 package com.github.ars_zero.common.item;
 
 import com.github.ars_zero.client.gui.StaticStaffScreen;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.client.renderer.item.StaticSpellStaffRenderer;
 import com.hollingsworth.arsnouveau.api.mana.IManaDiscountEquipment;
+import com.hollingsworth.arsnouveau.api.registry.GlyphRegistry;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
+import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
+import com.hollingsworth.arsnouveau.api.spell.SpellCaster;
 import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -21,6 +26,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import net.neoforged.api.distmarker.OnlyIn;
 import software.bernie.geckolib.animatable.client.GeoRenderProvider;
@@ -35,6 +41,17 @@ public abstract class AbstractStaticSpellStaff extends AbstractStaff implements 
 
     public AbstractStaticSpellStaff() {
         super(SpellTier.ONE);
+    }
+
+    /** Spell name for the three phases. */
+    protected abstract String getSpellName();
+
+    /** Resource IDs for begin, tick, end phases. Each inner array lists glyph IDs (e.g. "ars_zero:effect_beam"). */
+    protected abstract String[][] getPresetSpellIds();
+
+    /** Tick delay for slot 0. Default 1. */
+    protected int getPresetSlotTickDelay() {
+        return 1;
     }
 
     /**
@@ -57,12 +74,27 @@ public abstract class AbstractStaticSpellStaff extends AbstractStaff implements 
         super.appendHoverText(stack, context, tooltip, flag);
     }
 
-    /**
-     * Called when the staff is crafted and from {@link #ensurePresetSpells(ItemStack)} when
-     * the stack has no spells in the static slot. Override in subclasses to write begin/tick/end
-     * spells to physical slots 0, 1, 2. Default: no-op.
-     */
     protected void applyPresetSpells(ItemStack stack) {
+        String[][] ids = getPresetSpellIds();
+        if (ids == null || ids.length < 3) return;
+
+        Spell[] spells = new Spell[3];
+        for (int phase = 0; phase < 3; phase++) {
+            if (ids[phase] == null || ids[phase].length == 0) return;
+            List<AbstractSpellPart> parts = new ArrayList<>();
+            for (String id : ids[phase]) {
+                AbstractSpellPart part = GlyphRegistry.getSpellPart(ResourceLocation.parse(id));
+                if (part == null) return;
+                parts.add(part);
+            }
+            spells[phase] = new Spell(parts.toArray(AbstractSpellPart[]::new)).withName(getSpellName());
+        }
+
+        SpellCaster caster = (SpellCaster) SpellCasterRegistry.from(stack);
+        if (caster != null) {
+            caster.setSpell(spells[0], 0).setSpell(spells[1], 1).setSpell(spells[2], 2).setCurrentSlot(0).saveToStack(stack);
+            AbstractMultiPhaseCastDevice.setSlotTickDelay(stack, 0, getPresetSlotTickDelay());
+        }
     }
 
     /**
@@ -126,6 +158,9 @@ public abstract class AbstractStaticSpellStaff extends AbstractStaff implements 
     public void inventoryTick(ItemStack stack, Level level, net.minecraft.world.entity.Entity entity, int slotId, boolean isSelected) {
         super.inventoryTick(stack, level, entity, slotId, isSelected);
         ensurePresetSpells(stack);
+        if (!stack.isEmpty() && AbstractMultiPhaseCastDevice.getSlotTickDelay(stack, 0) != getPresetSlotTickDelay()) {
+            AbstractMultiPhaseCastDevice.setSlotTickDelay(stack, 0, getPresetSlotTickDelay());
+        }
     }
 
     @OnlyIn(Dist.CLIENT)

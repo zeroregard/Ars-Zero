@@ -3,8 +3,14 @@ package com.github.ars_zero.client.input;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.gui.AbstractMultiPhaseCastDeviceScreen;
 import com.github.ars_zero.client.gui.StaffSpellClipboardClient;
+import com.github.ars_zero.common.casting.CastingStyle;
+import com.github.ars_zero.common.item.AbstractStaticSpellStaff;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.spell.StaffSpellClipboard;
 import com.github.ars_zero.registry.ModItems;
+import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
+import com.hollingsworth.arsnouveau.api.spell.AbstractCaster;
+import com.hollingsworth.arsnouveau.api.spell.Spell;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -17,9 +23,9 @@ import org.lwjgl.glfw.GLFW;
 import java.util.Optional;
 
 /**
- * When the player holds a multiphase spell parchment and presses Ctrl+C (or Cmd+C on Mac)
- * outside the staff GUI, copies the parchment's slot into the in-memory clipboard so they
- * can open a staff/circlet and Ctrl+V to paste it into a slot.
+ * When the player holds a multiphase spell parchment or an AbstractStaticSpellStaff and presses
+ * Ctrl+C (or Cmd+C on Mac) outside the staff GUI, copies the spells into the in-memory clipboard
+ * so they can open a spell staff/circlet and Ctrl+V to paste into a slot.
  */
 @EventBusSubscriber(modid = ArsZero.MOD_ID, value = Dist.CLIENT)
 public final class ParchmentClipboardKeyHandler {
@@ -52,17 +58,46 @@ public final class ParchmentClipboardKeyHandler {
 
         ItemStack main = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
         ItemStack off = mc.player.getItemInHand(InteractionHand.OFF_HAND);
-        ItemStack parchment = ItemStack.EMPTY;
-        if (main.getItem() == ModItems.MULTIPHASE_SPELL_PARCHMENT.get()) {
-            parchment = main;
-        } else if (off.getItem() == ModItems.MULTIPHASE_SPELL_PARCHMENT.get()) {
-            parchment = off;
-        }
-        if (parchment.isEmpty()) {
+
+        // Prefer parchment if held
+        if (main.getItem() == ModItems.MULTIPHASE_SPELL_PARCHMENT.get() || off.getItem() == ModItems.MULTIPHASE_SPELL_PARCHMENT.get()) {
+            ItemStack parchment = main.getItem() == ModItems.MULTIPHASE_SPELL_PARCHMENT.get() ? main : off;
+            Optional<StaffSpellClipboard> clip = StaffSpellClipboard.readFromStack(parchment, StaffSpellClipboard.PARCHMENT_SLOT_KEY);
+            clip.ifPresent(StaffSpellClipboardClient::set);
             return;
         }
 
-        Optional<StaffSpellClipboard> clip = StaffSpellClipboard.readFromStack(parchment, StaffSpellClipboard.PARCHMENT_SLOT_KEY);
-        clip.ifPresent(StaffSpellClipboardClient::set);
+        // Static staff: copy begin/tick/end spells to clipboard
+        if (main.getItem() instanceof AbstractStaticSpellStaff || off.getItem() instanceof AbstractStaticSpellStaff) {
+            ItemStack staticStaff = main.getItem() instanceof AbstractStaticSpellStaff ? main : off;
+            StaffSpellClipboard clip = createClipboardFromStaticStaff(staticStaff);
+            if (clip != null) {
+                StaffSpellClipboardClient.set(clip);
+            }
+        }
+    }
+
+    private static StaffSpellClipboard createClipboardFromStaticStaff(ItemStack stack) {
+        if (stack.isEmpty() || !(stack.getItem() instanceof AbstractStaticSpellStaff)) {
+            return null;
+        }
+        AbstractCaster<?> caster = SpellCasterRegistry.from(stack);
+        if (caster == null) {
+            return null;
+        }
+        Spell begin = caster.getSpell(0);
+        Spell tick = caster.getSpell(1);
+        Spell end = caster.getSpell(2);
+        String name = caster.getSpellName(0);
+        int delay = AbstractMultiPhaseCastDevice.getSlotTickDelay(stack, 0);
+        CastingStyle style = AbstractMultiPhaseCastDevice.getCastingStyle(stack, 0);
+        return new StaffSpellClipboard(
+            begin != null ? begin : new Spell(),
+            tick != null ? tick : new Spell(),
+            end != null ? end : new Spell(),
+            name != null ? name : "",
+            delay,
+            style != null ? style : new CastingStyle()
+        );
     }
 }
