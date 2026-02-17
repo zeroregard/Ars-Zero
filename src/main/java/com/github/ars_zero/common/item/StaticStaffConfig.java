@@ -59,8 +59,9 @@ public record StaticStaffConfig(
             return this;
         }
 
+        /** Pass no args for an empty end phase. */
         public Builder endSpell(String... glyphIds) {
-            this.endSpellIds = glyphIds;
+            this.endSpellIds = glyphIds != null ? glyphIds : new String[0];
             return this;
         }
 
@@ -91,7 +92,7 @@ public record StaticStaffConfig(
                 rendererSupplier,
                 beginSpellIds,
                 tickSpellIds,
-                endSpellIds,
+                endSpellIds != null ? endSpellIds : new String[0],
                 tickDelay,
                 discountPercent,
                 castingStyle,

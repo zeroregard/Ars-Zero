@@ -80,7 +80,10 @@ public abstract class AbstractStaticSpellStaff extends AbstractStaff implements 
 
         Spell[] spells = new Spell[3];
         for (int phase = 0; phase < 3; phase++) {
-            if (ids[phase] == null || ids[phase].length == 0) return;
+            if (ids[phase] == null || ids[phase].length == 0) {
+                spells[phase] = new Spell().withName(getSpellName());
+                continue;
+            }
             List<AbstractSpellPart> parts = new ArrayList<>();
             for (String id : ids[phase]) {
                 AbstractSpellPart part = GlyphRegistry.getSpellPart(ResourceLocation.parse(id));
