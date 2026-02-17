@@ -256,6 +256,10 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             player.sendSystemMessage(Component.literal("§cError: Device has no spell data! Try crafting a new one."));
             return;
         }
+        // Ending the spell when opening the GUI (same behavior as spell staff)
+        if (player.isUsingItem() && player.getUseItem() == stack) {
+            player.stopUsingItem();
+        }
         Minecraft.getInstance().setScreen(createDeviceScreen(stack, hand));
     }
 

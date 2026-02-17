@@ -22,10 +22,14 @@ public class BlockImmutabilityUtil {
     }
 
     /**
-     * True if a piston can push this block (NORMAL or PUSH_ONLY).
+     * True if a piston can push this block (NORMAL or PUSH_ONLY) and it has no block entity.
      * Used to restrict block group entity creation to blocks that are movable by pistons.
+     * Blocks with block entities (chests, furnaces, etc.) are excluded—pistons destroy them.
      */
     public static boolean isPistonPushable(BlockState state) {
+        if (state.hasBlockEntity()) {
+            return false;
+        }
         PushReaction reaction = state.getPistonPushReaction();
         return reaction == PushReaction.NORMAL || reaction == PushReaction.PUSH_ONLY;
     }

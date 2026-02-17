@@ -32,11 +32,6 @@ public class ModItems {
     public static final ItemRegistryWrapper<com.github.ars_zero.common.item.CreativeSpellStaff> CREATIVE_SPELL_STAFF = ModStaffItems.CREATIVE_SPELL_STAFF;
     public static final ItemRegistryWrapper<com.github.ars_zero.common.item.SpellcastingCirclet> SPELLCASTING_CIRCLET = ModStaffItems.SPELLCASTING_CIRCLET;
     public static final ItemRegistryWrapper<com.github.ars_zero.common.item.StaticStaff> STAFF_TELEKINESIS = ModStaffItems.STAFF_TELEKINESIS;
-    public static final ItemRegistryWrapper<com.github.ars_zero.common.item.StaticStaff> STAFF_DEMONBANE = ModStaffItems.STAFF_DEMONBANE;
-    public static final ItemRegistryWrapper<com.github.ars_zero.common.item.StaticStaff> STAFF_VOXELS = ModStaffItems.STAFF_VOXELS;
-    public static final ItemRegistryWrapper<com.github.ars_zero.common.item.StaticStaff> STAFF_GEOMETRIZE = ModStaffItems.STAFF_GEOMETRIZE;
-    public static final ItemRegistryWrapper<com.github.ars_zero.common.item.StaticStaff> STAFF_CONVERGENCE = ModStaffItems.STAFF_CONVERGENCE;
-    public static final ItemRegistryWrapper<com.github.ars_zero.common.item.StaticStaff> STAFF_LAKES = ModStaffItems.STAFF_LAKES;
 
     public static final ItemRegistryWrapper<DullCirclet> DULL_CIRCLET = register("dull_circlet", () -> new DullCirclet(defaultItemProperties()));
     

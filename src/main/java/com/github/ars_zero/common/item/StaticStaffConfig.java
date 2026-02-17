@@ -19,6 +19,7 @@ public record StaticStaffConfig(
     String[] endSpellIds,
     int tickDelay,
     int discountPercent,
+    boolean devOnly,
     @Nullable CastingStyle castingStyle,
     @Nullable ResourceLocation timelineTypeId
 ) {
@@ -36,12 +37,19 @@ public record StaticStaffConfig(
         private String[] endSpellIds;
         private int tickDelay = 1;
         private int discountPercent = 0;
+        private boolean devOnly = false;
         private CastingStyle castingStyle = null;
         private ResourceLocation timelineTypeId = null;
 
         private Builder(String spellName, String tooltipKey) {
             this.spellName = spellName;
             this.tooltipKey = tooltipKey;
+        }
+
+        /** When true, item is only registered in development (e.g. runClient); not in production builds. */
+        public Builder devOnly() {
+            this.devOnly = true;
+            return this;
         }
 
         public Builder renderer(Supplier<BlockEntityWithoutLevelRenderer> rendererSupplier) {
@@ -95,6 +103,7 @@ public record StaticStaffConfig(
                 endSpellIds != null ? endSpellIds : new String[0],
                 tickDelay,
                 discountPercent,
+                devOnly,
                 castingStyle,
                 timelineTypeId
             );

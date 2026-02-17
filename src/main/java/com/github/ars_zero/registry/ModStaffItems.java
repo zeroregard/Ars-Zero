@@ -14,7 +14,11 @@ import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.setup.registry.ItemRegistryWrapper;
 import net.minecraft.world.item.Item;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Central registration for spell staffs and static staffs. Call {@link #register(DeferredRegister)}
@@ -29,13 +33,10 @@ public final class ModStaffItems {
     public static ItemRegistryWrapper<CreativeSpellStaff> CREATIVE_SPELL_STAFF;
     public static ItemRegistryWrapper<SpellcastingCirclet> SPELLCASTING_CIRCLET;
 
-    // Static staffs
+    // Static staffs (TELEKINESIS always; others devOnly)
     public static ItemRegistryWrapper<StaticStaff> STAFF_TELEKINESIS;
-    public static ItemRegistryWrapper<StaticStaff> STAFF_DEMONBANE;
-    public static ItemRegistryWrapper<StaticStaff> STAFF_VOXELS;
-    public static ItemRegistryWrapper<StaticStaff> STAFF_GEOMETRIZE;
-    public static ItemRegistryWrapper<StaticStaff> STAFF_CONVERGENCE;
-    public static ItemRegistryWrapper<StaticStaff> STAFF_LAKES;
+    /** All static staffs that are registered (TELEKINESIS + dev staffs when !production). */
+    private static final List<ItemRegistryWrapper<StaticStaff>> REGISTERED_STATIC_STAFFS = new ArrayList<>();
 
     private ModStaffItems() {
     }
@@ -47,12 +48,27 @@ public final class ModStaffItems {
         CREATIVE_SPELL_STAFF = wrap(items.register("creative_spell_staff", CreativeSpellStaff::new));
         SPELLCASTING_CIRCLET = wrap(items.register("spellcasting_circlet", SpellcastingCirclet::new));
 
-        STAFF_TELEKINESIS = wrap(items.register("staff_telekinesis", () -> new StaticStaff(staffTelekinesisConfig())));
-        STAFF_DEMONBANE = wrap(items.register("staff_demonbane", () -> new StaticStaff(staffDemonbaneConfig())));
-        STAFF_VOXELS = wrap(items.register("staff_voxels", () -> new StaticStaff(staffVoxelsConfig())));
-        STAFF_GEOMETRIZE = wrap(items.register("staff_geometrize", () -> new StaticStaff(staffGeometrizeConfig())));
-        STAFF_CONVERGENCE = wrap(items.register("staff_convergence", () -> new StaticStaff(staffConvergenceConfig())));
-        STAFF_LAKES = wrap(items.register("staff_lakes", () -> new StaticStaff(staffLakesConfig())));
+        STAFF_TELEKINESIS = registerStaticStaff(items, "staff_telekinesis", staffTelekinesisConfig());
+        registerStaticStaff(items, "staff_demonbane", staffDemonbaneConfig());
+        registerStaticStaff(items, "staff_voxels", staffVoxelsConfig());
+        registerStaticStaff(items, "staff_geometrize", staffGeometrizeConfig());
+        registerStaticStaff(items, "staff_convergence", staffConvergenceConfig());
+        registerStaticStaff(items, "staff_lakes", staffLakesConfig());
+        registerStaticStaff(items, "staff_switcheroo", staffSwitcherooConfig());
+    }
+
+    private static ItemRegistryWrapper<StaticStaff> registerStaticStaff(DeferredRegister<Item> items, String name, StaticStaffConfig config) {
+        if (config.devOnly() && FMLEnvironment.production) {
+            return null;
+        }
+        ItemRegistryWrapper<StaticStaff> holder = wrap(items.register(name, () -> new StaticStaff(config)));
+        REGISTERED_STATIC_STAFFS.add(holder);
+        return holder;
+    }
+
+    /** Static staffs to show in creative tab and register with SpellCasterRegistry. */
+    public static List<ItemRegistryWrapper<StaticStaff>> getRegisteredStaticStaffs() {
+        return REGISTERED_STATIC_STAFFS;
     }
 
     private static StaticStaffConfig staffTelekinesisConfig() {
@@ -73,6 +89,7 @@ public final class ModStaffItems {
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
                 .endSpell()
                 .tickDelay(1)
+                .devOnly()
                 .build();
     }
 
@@ -83,6 +100,7 @@ public final class ModStaffItems {
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
                 .endSpell("ars_zero:temporal_context_form", "ars_nouveau:glyph_explosion")
                 .tickDelay(1)
+                .devOnly()
                 .build();
     }
 
@@ -91,8 +109,9 @@ public final class ModStaffItems {
                 .renderer(TelekinesisStaffRenderer::new)
                 .beginSpell("ars_nouveau:glyph_projectile", "ars_zero:effect_geometrize", "ars_elemental:glyph_conjure_terrain")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
-                .endSpell("ars_zero:temporal_context_form", "ars_nouveau:glyph_explosion")
+                .endSpell("ars_zero:temporal_context_form")
                 .tickDelay(1)
+                .devOnly()
                 .build();
     }
 
@@ -103,6 +122,7 @@ public final class ModStaffItems {
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:sustain_effect")
                 .endSpell()
                 .tickDelay(1)
+                .devOnly()
                 .build();
     }
 
@@ -113,6 +133,18 @@ public final class ModStaffItems {
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:sustain_effect")
                 .endSpell()
                 .tickDelay(1)
+                .devOnly()
+                .build();
+    }
+
+    private static StaticStaffConfig staffSwitcherooConfig() {
+        return StaticStaffConfig.builder("Staff of Switcheroo", "item.ars_zero.staff_switcheroo.desc")
+                .renderer(TelekinesisStaffRenderer::new)
+                .beginSpell("ars_zero:near_form", "ars_zero:conjure_voxel_effect")
+                .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect", "ars_nouveau:glyph_extract")
+                .endSpell("ars_zero:temporal_context_form", "ars_nouveau:glyph_exchange", "ars_zero:discard_effect")
+                .tickDelay(1)
+                .devOnly()
                 .build();
     }
 
@@ -126,12 +158,9 @@ public final class ModStaffItems {
         registerStaff(MAGE_SPELL_STAFF.get());
         registerStaff(ARCHMAGE_SPELL_STAFF.get());
         registerStaff(CREATIVE_SPELL_STAFF.get());
-        registerStaff(STAFF_TELEKINESIS.get());
-        registerStaff(STAFF_DEMONBANE.get());
-        registerStaff(STAFF_VOXELS.get());
-        registerStaff(STAFF_GEOMETRIZE.get());
-        registerStaff(STAFF_CONVERGENCE.get());
-        registerStaff(STAFF_LAKES.get());
+        for (ItemRegistryWrapper<StaticStaff> holder : REGISTERED_STATIC_STAFFS) {
+            registerStaff(holder.get());
+        }
         registerDevice(SPELLCASTING_CIRCLET.get());
         ArsZero.LOGGER.debug("SpellCasterRegistry registration completed");
     }
