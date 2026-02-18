@@ -120,6 +120,18 @@ public class TemporalContextForm extends AbstractCastMethod {
         return "A form that acts as a marker for temporal context usage. When used in Tick or End phases, it will target the entity or block that was stored in the temporal context from previous phases.";
     }
 
+    /**
+     * Resolves the spell from stored temporal context. Called by WrappedSpellResolver when
+     * entering via onResolveEffect (e.g. Chaining, Burst, Wall) so the form runs before effects.
+     */
+    public CastResolveType resolve(Level level, SpellContext spellContext, SpellResolver resolver) {
+        LivingEntity caster = spellContext.getUnwrappedCaster();
+        if (caster == null) {
+            return CastResolveType.FAILURE;
+        }
+        return resolveFromStoredContext(level, caster, spellContext, resolver);
+    }
+
     private CastResolveType resolveFromStoredContext(Level level, LivingEntity caster, SpellContext spellContext,
             SpellResolver resolver) {
         

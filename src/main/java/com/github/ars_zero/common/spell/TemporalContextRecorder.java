@@ -111,6 +111,28 @@ public final class TemporalContextRecorder {
     }
 
     /**
+     * Record block positions only (no block group entity). Propagates positions to later spell phases
+     * without creating a BlockGroupEntity. Used e.g. with AugmentExtract on Select.
+     */
+    public static void recordBlockPositionsOnly(SpellContext context, List<BlockPos> blockPositions) {
+        if (context == null || blockPositions == null || blockPositions.isEmpty()) {
+            return;
+        }
+        ensureTag(context);
+        context.tag.remove(KEY_ENTITY);
+        context.tag.remove(KEY_ENTITY_COUNT);
+        for (int i = 0; context.tag.contains(KEY_ENTITY_PREFIX + i); i++) {
+            context.tag.remove(KEY_ENTITY_PREFIX + i);
+        }
+        context.tag.remove(KEY_BLOCK_GROUP);
+        long[] longs = new long[blockPositions.size()];
+        for (int i = 0; i < blockPositions.size(); i++) {
+            longs[i] = blockPositions.get(i).asLong();
+        }
+        context.tag.putLongArray(KEY_BLOCK_POSITIONS, longs);
+    }
+
+    /**
      * Take any recorded results from the context. Returns null if nothing was recorded.
      * Clears the recorded data after consumption.
      */
@@ -175,6 +197,19 @@ public final class TemporalContextRecorder {
             }
             context.tag.remove(KEY_BLOCK_GROUP);
             context.tag.remove(KEY_BLOCK_POSITIONS);
+            return results.isEmpty() ? null : results;
+        }
+
+        if (context.tag.contains(KEY_BLOCK_POSITIONS, Tag.TAG_LONG_ARRAY)) {
+            long[] longs = context.tag.getLongArray(KEY_BLOCK_POSITIONS);
+            List<BlockPos> positions = new ArrayList<>();
+            for (long l : longs) {
+                positions.add(BlockPos.of(l));
+            }
+            context.tag.remove(KEY_BLOCK_POSITIONS);
+            if (!positions.isEmpty()) {
+                results.add(SpellResult.fromBlockPositions(positions, caster));
+            }
             return results.isEmpty() ? null : results;
         }
 

@@ -110,6 +110,7 @@
   "ars_nouveau.augment_desc.select_effect_glyph_aoe": "Increases the area of blocks that can be selected",
   "ars_nouveau.augment_desc.select_effect_glyph_pierce": "Increases the depth of blocks that can be selected",
   "ars_nouveau.augment_desc.select_effect_glyph_sensitive": "Only selects entities, ignoring blocks.",
+  "ars_nouveau.augment_desc.select_effect_glyph_extract": "Propagates block positions to later phases without creating a block group entity.",
 
   "ars_nouveau.augment_desc.conjure_voxel_effect_glyph_extend_time": "Increases the duration the voxel remains.",
   "ars_nouveau.augment_desc.conjure_voxel_effect_glyph_sensitive": "Places a voxel at a target entity's position.",
@@ -289,7 +290,7 @@
   "ars_zero.examples.ekusupuroshon": "Ekusupuroshon",
   "ars_zero.examples.ekusupuroshon.quote": "\"Darkness blacker than black, and darker than dark\"",
   "ars_zero.examples.mage_march": "Mage's March",
-  "ars_zero.examples.mage_march.quote": "\"Never touch the ground againâ€”or at least not until the blocks expire.\"",
+  "ars_zero.examples.mage_march.quote": "\"Never touch the ground againâÿÿor at least not until the blocks expire.\"",
   "ars_zero.tooltip.begin_phase": "Begin phase",
   "ars_zero.tooltip.tick_phase": "Tick phase",
   "ars_zero.tooltip.end_phase": "End phase"

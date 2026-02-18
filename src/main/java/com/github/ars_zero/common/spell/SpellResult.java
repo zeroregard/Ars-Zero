@@ -167,6 +167,44 @@ public class SpellResult {
                 blockGroup, blockPositions);
     }
 
+    /**
+     * Creates a result that carries block positions only (no BlockGroupEntity).
+     * Used when Select is augmented with Extract: blocks are propagated to later phases but not turned into a group.
+     */
+    public static SpellResult fromBlockPositions(List<BlockPos> blockPositions, IWrappedCaster caster) {
+        if (blockPositions == null || blockPositions.isEmpty()) {
+            throw new IllegalArgumentException("blockPositions must be non-empty");
+        }
+        BlockPos first = blockPositions.get(0);
+        Vec3 center = Vec3.atCenterOf(first);
+        if (blockPositions.size() > 1) {
+            double x = 0, y = 0, z = 0;
+            for (BlockPos pos : blockPositions) {
+                x += pos.getX() + 0.5;
+                y += pos.getY() + 0.5;
+                z += pos.getZ() + 0.5;
+            }
+            int n = blockPositions.size();
+            center = new Vec3(x / n, y / n, z / n);
+        }
+        Vec3 relativeOffset = null;
+        float casterYaw = 0;
+        float casterPitch = 0;
+        Vec3 casterPosition = null;
+        if (caster != null) {
+            CasterInfo casterInfo = extractCasterInfo(caster);
+            casterPosition = casterInfo.position;
+            casterYaw = casterInfo.yaw;
+            casterPitch = casterInfo.pitch;
+            relativeOffset = calculateRelativeOffsetInLocalSpace(
+                    casterPosition, center, casterYaw, casterPitch);
+        }
+        BlockHitResult blockHit = new BlockHitResult(center, Direction.UP, first, false);
+        return new SpellResult(null, first, blockHit, SpellEffectType.RESOLVED,
+                relativeOffset, casterYaw, casterPitch, casterPosition,
+                null, blockPositions);
+    }
+
     private static Vec3 calculateRelativeOffsetInLocalSpace(Vec3 casterPos, Vec3 targetPos, float yaw, float pitch) {
         Vec3 worldOffset = targetPos.subtract(casterPos);
 

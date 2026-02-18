@@ -19,6 +19,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.api.util.BlockUtil;
 import com.hollingsworth.arsnouveau.api.util.SpellUtil;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAOE;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtract;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import net.minecraft.core.BlockPos;
@@ -86,16 +87,22 @@ public class SelectEffect extends AbstractEffect {
         }
         
         if (!validBlocks.isEmpty()) {
-            createBlockGroup(serverLevel, validBlocks, player, spellContext, shooter);
+            FilteredBlocks filtered = getFilteredBlocks(serverLevel, validBlocks, spellContext, shooter);
+            if (filtered.positions().isEmpty()) {
+                return;
+            }
+            if (spellStats.hasBuff(AugmentExtract.INSTANCE)) {
+                TemporalContextRecorder.recordBlockPositionsOnly(spellContext, filtered.positions());
+            } else {
+                createBlockGroup(serverLevel, filtered.positions(), filtered.states(), player, spellContext, shooter);
+            }
         }
     }
-    
-    private void createBlockGroup(ServerLevel level, List<BlockPos> blockPositions, Player player, SpellContext spellContext, LivingEntity shooter) {
-        if (blockPositions.isEmpty()) {
-            return;
-        }
 
-        java.util.Map<BlockPos, BlockState> capturedStates = new java.util.HashMap<>();
+    private record FilteredBlocks(List<BlockPos> positions, Map<BlockPos, BlockState> states) {}
+
+    private FilteredBlocks getFilteredBlocks(ServerLevel level, List<BlockPos> blockPositions, SpellContext spellContext, LivingEntity shooter) {
+        Map<BlockPos, BlockState> capturedStates = new java.util.HashMap<>();
         for (BlockPos pos : blockPositions) {
             if (!level.isOutsideBuildHeight(pos)) {
                 BlockState state = level.getBlockState(pos);
@@ -104,49 +111,48 @@ public class SelectEffect extends AbstractEffect {
                 }
             }
         }
-        
         List<BlockPos> validPositions = new ArrayList<>(capturedStates.keySet());
-        
+
         IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
         MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;
-        
+
         List<BlockPos> filteredPositions = validPositions;
         if (context != null) {
-            java.util.Set<BlockPos> claimedBlocks = new java.util.HashSet<>();
+            Set<BlockPos> claimedBlocks = new java.util.HashSet<>();
             for (SpellResult result : context.beginResults) {
                 if (result != null && result.blockGroup != null && result.blockPositions != null) {
                     claimedBlocks.addAll(result.blockPositions);
                 }
             }
-            
             filteredPositions = validPositions.stream()
                 .filter(pos -> !claimedBlocks.contains(pos))
                 .toList();
-            
-            java.util.Map<BlockPos, BlockState> filteredStates = new java.util.HashMap<>();
-            for (BlockPos pos : filteredPositions) {
-                BlockState state = capturedStates.get(pos);
-                if (state != null) {
-                    filteredStates.put(pos, state);
-                }
-            }
-            capturedStates = filteredStates;
         }
-        
+
+        Map<BlockPos, BlockState> filteredStates = new java.util.HashMap<>();
+        for (BlockPos pos : filteredPositions) {
+            BlockState state = capturedStates.get(pos);
+            if (state != null) {
+                filteredStates.put(pos, state);
+            }
+        }
+        return new FilteredBlocks(filteredPositions, filteredStates);
+    }
+
+    private void createBlockGroup(ServerLevel level, List<BlockPos> filteredPositions, Map<BlockPos, BlockState> capturedStates, Player player, SpellContext spellContext, LivingEntity shooter) {
         if (filteredPositions.isEmpty()) {
             return;
         }
-        
         Vec3 centerPos = calculateCenter(filteredPositions);
-        
+
         BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), level);
         blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
         blockGroup.setCasterUUID(player.getUUID());
-        
+
         blockGroup.addBlocksWithStates(filteredPositions, capturedStates);
-        
+
         level.addFreshEntity(blockGroup);
-        
+
         TemporalContextRecorder.record(spellContext, blockGroup, filteredPositions);
     }
     
@@ -175,6 +181,7 @@ public class SelectEffect extends AbstractEffect {
     public Set<AbstractAugment> getCompatibleAugments() {
         return augmentSetOf(
             AugmentAOE.INSTANCE,
+            AugmentExtract.INSTANCE,
             AugmentPierce.INSTANCE,
             AugmentSensitive.INSTANCE
         );
@@ -184,13 +191,14 @@ public class SelectEffect extends AbstractEffect {
     public void addAugmentDescriptions(Map<AbstractAugment, String> map) {
         super.addAugmentDescriptions(map);
         map.put(AugmentAOE.INSTANCE, "Increases the area of blocks that can be selected");
+        map.put(AugmentExtract.INSTANCE, "Propagates block positions to later phases without creating a block group entity.");
         map.put(AugmentPierce.INSTANCE, "Increases the depth of blocks that can be selected");
         map.put(AugmentSensitive.INSTANCE, "Only selects entities, ignoring blocks.");
     }
 
     @Override
     public String getBookDescription() {
-        return "Selects a target entity or block without performing any action. Use this to choose targets for future operations. AOE and Pierce allow selecting multiple blocks. For block translation, selected blocks are converted to a block group entity. Sensitive restricts selection to entities only.";
+        return "Selects a target entity or block without performing any action. Use this to choose targets for future operations. AOE and Pierce allow selecting multiple blocks. For block translation, selected blocks are converted to a block group entity. Extract propagates block positions without creating a group. Sensitive restricts selection to entities only.";
     }
 
     @Override
