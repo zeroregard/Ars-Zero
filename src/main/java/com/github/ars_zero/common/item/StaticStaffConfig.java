@@ -3,6 +3,7 @@ package com.github.ars_zero.common.item;
 import com.github.ars_zero.common.casting.CastingStyle;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.world.item.DyeColor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
@@ -20,6 +21,7 @@ public record StaticStaffConfig(
     int tickDelay,
     int discountPercent,
     boolean devOnly,
+    @Nullable DyeColor defaultDyeColor,
     @Nullable CastingStyle castingStyle,
     @Nullable ResourceLocation timelineTypeId
 ) {
@@ -38,6 +40,7 @@ public record StaticStaffConfig(
         private int tickDelay = 1;
         private int discountPercent = 0;
         private boolean devOnly = false;
+        private DyeColor defaultDyeColor = null;
         private CastingStyle castingStyle = null;
         private ResourceLocation timelineTypeId = null;
 
@@ -83,6 +86,11 @@ public record StaticStaffConfig(
             return this;
         }
 
+        public Builder defaultDyeColor(DyeColor color) {
+            this.defaultDyeColor = color;
+            return this;
+        }
+
         public Builder castingStyle(CastingStyle castingStyle) {
             this.castingStyle = castingStyle;
             return this;
@@ -104,6 +112,7 @@ public record StaticStaffConfig(
                 tickDelay,
                 discountPercent,
                 devOnly,
+                defaultDyeColor,
                 castingStyle,
                 timelineTypeId
             );

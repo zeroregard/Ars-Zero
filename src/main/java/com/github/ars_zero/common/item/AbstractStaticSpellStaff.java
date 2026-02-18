@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.item;
 
+import net.minecraft.core.component.DataComponents;
 import com.github.ars_zero.client.gui.StaticStaffScreen;
 import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.client.renderer.item.StaticSpellStaffRenderer;
@@ -164,6 +165,20 @@ public abstract class AbstractStaticSpellStaff extends AbstractStaff implements 
         if (!stack.isEmpty() && AbstractMultiPhaseCastDevice.getSlotTickDelay(stack, 0) != getPresetSlotTickDelay()) {
             AbstractMultiPhaseCastDevice.setSlotTickDelay(stack, 0, getPresetSlotTickDelay());
         }
+        ensureDefaultDye(stack);
+    }
+
+    /** If this staff has a default dye from config, apply it to the stack. Override {@link #getDefaultDyeColor()} to provide one. */
+    protected void ensureDefaultDye(ItemStack stack) {
+        var dye = getDefaultDyeColor();
+        if (dye != null) {
+            stack.set(DataComponents.BASE_COLOR, dye);
+        }
+    }
+
+    /** Default dye color for this staff, or null to use the item's default (purple). */
+    protected net.minecraft.world.item.DyeColor getDefaultDyeColor() {
+        return null;
     }
 
     @OnlyIn(Dist.CLIENT)

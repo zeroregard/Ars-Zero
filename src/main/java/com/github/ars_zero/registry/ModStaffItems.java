@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.client.renderer.item.SpellStaffStyleRenderer;
 import com.github.ars_zero.client.renderer.item.TelekinesisStaffRenderer;
 import com.github.ars_zero.common.item.AbstractStaff;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
@@ -13,7 +14,10 @@ import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.setup.registry.ItemRegistryWrapper;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
+
+import java.util.Set;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -139,11 +143,13 @@ public final class ModStaffItems {
 
     private static StaticStaffConfig staffSwitcherooConfig() {
         return StaticStaffConfig.builder("Staff of Switcheroo", "item.ars_zero.staff_switcheroo.desc")
-                .renderer(TelekinesisStaffRenderer::new)
+                .renderer(() -> new SpellStaffStyleRenderer(Set.of("tier3")))
                 .beginSpell("ars_zero:near_form", "ars_zero:conjure_voxel_effect")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect", "ars_nouveau:glyph_extract")
                 .endSpell("ars_zero:temporal_context_form", "ars_nouveau:glyph_exchange", "ars_zero:discard_effect")
                 .tickDelay(1)
+                .discountPercent(100)
+                .defaultDyeColor(DyeColor.ORANGE)
                 .devOnly()
                 .build();
     }

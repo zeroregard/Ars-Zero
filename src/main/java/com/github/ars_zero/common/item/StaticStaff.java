@@ -46,6 +46,11 @@ public final class StaticStaff extends AbstractStaticSpellStaff {
     }
 
     @Override
+    protected net.minecraft.world.item.DyeColor getDefaultDyeColor() {
+        return config.defaultDyeColor();
+    }
+
+    @Override
     public void appendHoverText(@NotNull ItemStack stack, @NotNull Item.TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
         if (config.tooltipKey() != null && !config.tooltipKey().isEmpty()) {
