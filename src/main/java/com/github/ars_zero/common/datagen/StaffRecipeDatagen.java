@@ -86,7 +86,7 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
 
     private void addMageStaffRecipe() {
         JsonObject json = new JsonObject();
-        json.addProperty("type", "minecraft:crafting_shapeless");
+        json.addProperty("type", "ars_zero:staff_upgrade");
         json.addProperty("category", "misc");
 
         JsonArray ingredients = new JsonArray();
@@ -111,7 +111,7 @@ public class StaffRecipeDatagen extends SimpleDataProvider {
 
     private void addArchmageStaffRecipe() {
         JsonObject json = new JsonObject();
-        json.addProperty("type", "minecraft:crafting_shapeless");
+        json.addProperty("type", "ars_zero:staff_upgrade");
         json.addProperty("category", "misc");
 
         JsonArray ingredients = new JsonArray();
