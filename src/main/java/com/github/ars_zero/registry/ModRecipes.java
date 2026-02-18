@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.crafting.recipes.DyeRecipe;
 import com.github.ars_zero.common.crafting.recipes.ExtendableShapelessSerializer;
 import com.github.ars_zero.common.crafting.recipes.ProtectionUpgradeRecipe;
+import com.github.ars_zero.common.crafting.recipes.StaffUpgradeRecipe;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Recipe;
@@ -27,6 +28,10 @@ public class ModRecipes {
     
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<DyeRecipe>> DYE_RECIPE =
         RECIPE_SERIALIZERS.register(DYE_RECIPE_ID, () -> ExtendableShapelessSerializer.create(DyeRecipe::new));
+
+    public static final String STAFF_UPGRADE_ID = "staff_upgrade";
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<StaffUpgradeRecipe>> STAFF_UPGRADE_RECIPE =
+        RECIPE_SERIALIZERS.register(STAFF_UPGRADE_ID, () -> ExtendableShapelessSerializer.create(StaffUpgradeRecipe::new));
 
     public static final String PROTECTION_UPGRADE_ID = "protection_upgrade";
     public static final DeferredHolder<RecipeType<?>, RecipeType<ProtectionUpgradeRecipe>> PROTECTION_UPGRADE_TYPE =
