@@ -211,6 +211,11 @@ public class TemporalContextForm extends AbstractCastMethod {
                 } else {
                     hitResultToUse = new EntityHitResult(result.targetEntity);
                 }
+            } else if (hitResultToUse instanceof BlockHitResult blockHit && !blockHit.isInside()) {
+                // Normalize to inside=true so effects (Mageblock, Break, etc.) target the block itself,
+                // not pos.relative(direction) which would place on the face normal (e.g. on top)
+                hitResultToUse = new BlockHitResult(
+                    blockHit.getLocation(), blockHit.getDirection(), blockHit.getBlockPos(), true);
             }
             
             SpellResolver perTargetResolver = resolver.getNewResolver(baseContext.clone());

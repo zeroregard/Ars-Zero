@@ -199,7 +199,9 @@ public class SpellResult {
             relativeOffset = calculateRelativeOffsetInLocalSpace(
                     casterPosition, center, casterYaw, casterPitch);
         }
-        BlockHitResult blockHit = new BlockHitResult(center, Direction.UP, first, false);
+        // Use inside=true so effects (e.g. Conjure Mageblock, Break) target the block directly
+        // instead of pos.relative(direction) which would place on top when direction is UP
+        BlockHitResult blockHit = new BlockHitResult(center, Direction.UP, first, true);
         return new SpellResult(null, first, blockHit, SpellEffectType.RESOLVED,
                 relativeOffset, casterYaw, casterPitch, casterPosition,
                 null, blockPositions);
