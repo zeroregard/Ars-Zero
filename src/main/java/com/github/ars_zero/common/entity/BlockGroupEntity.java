@@ -30,7 +30,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
@@ -190,8 +189,8 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
                     if (caster != null && !BlockUtil.destroyRespectsClaim(caster, level(), originalPos)) {
                         continue;
                     }
-                    
-                    level().setBlock(originalPos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                    // Remove without drops: we're moving the block into the group, not breaking it
+                    serverLevel.destroyBlock(originalPos, false);
                 }
             }
         }
@@ -459,6 +458,10 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
                     ArsZero.LOGGER.warn("BlockGroupEntity loaded immutable block {} from NBT, skipping", state.getBlock());
                     continue;
                 }
+                if (!BlockImmutabilityUtil.isPistonPushable(state)) {
+                    ArsZero.LOGGER.warn("BlockGroupEntity loaded non-piston-pushable block {} from NBT, skipping", state.getBlock());
+                    continue;
+                }
                 
                 CompoundTag posTag = blockTag.getCompound("pos");
                 Vec3 relativePos = new Vec3(posTag.getDouble("x"), posTag.getDouble("y"), posTag.getDouble("z"));
@@ -534,6 +537,10 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
                     
                     if (BlockImmutabilityUtil.isBlockImmutable(state)) {
                         ArsZero.LOGGER.warn("BlockGroupEntity synced immutable block {} to client, skipping", state.getBlock());
+                        continue;
+                    }
+                    if (!BlockImmutabilityUtil.isPistonPushable(state)) {
+                        ArsZero.LOGGER.warn("BlockGroupEntity synced non-piston-pushable block {} to client, skipping", state.getBlock());
                         continue;
                     }
                     

@@ -1,11 +1,11 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
-import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
+import com.github.ars_zero.common.spell.SpellResult;
+import com.github.ars_zero.common.spell.TemporalContextRecorder;
 import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
@@ -19,6 +19,7 @@ import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.api.util.BlockUtil;
 import com.hollingsworth.arsnouveau.api.util.SpellUtil;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAOE;
+import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtract;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentPierce;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
 import net.minecraft.core.BlockPos;
@@ -34,6 +35,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,110 +57,165 @@ public class SelectEffect extends AbstractEffect {
 
     @Override
     public void onResolveBlock(BlockHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        if (world.isClientSide) return;
-        if (!(shooter instanceof Player player)) return;
-        if (!(world instanceof ServerLevel serverLevel)) return;
-        
-        if (spellStats.isSensitive()) {
-            return;
-        }
-        
+        if (world.isClientSide || !(shooter instanceof Player player) || !(world instanceof ServerLevel serverLevel)) return;
+        if (spellStats.isSensitive()) return;
+
+        List<BlockPos> validBlocks = computeValidBlocksFromHit(world, serverLevel, shooter, rayTraceResult, spellStats);
+        if (validBlocks.isEmpty()) return;
+
+        if (tryMergeChainingAndRecord(serverLevel, world, player, shooter, validBlocks, spellStats, spellContext)) return;
+
+        FilteredBlocks filtered = getFilteredBlocks(serverLevel, validBlocks, spellContext, shooter);
+        if (filtered.positions().isEmpty()) return;
+        recordSelection(serverLevel, filtered, player, spellContext, shooter, spellStats.hasBuff(AugmentExtract.INSTANCE));
+    }
+
+    /** AOE from hit, then filter to valid selectable blocks. */
+    private List<BlockPos> computeValidBlocksFromHit(Level world, ServerLevel serverLevel, LivingEntity shooter,
+            BlockHitResult rayTraceResult, SpellStats spellStats) {
         BlockPos pos = rayTraceResult.getBlockPos();
-        if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, pos)) {
-            return;
-        }
-        
-        if (!BlockImmutabilityUtil.canBlockBeDestroyed(world, pos)) {
-            return;
-        }
-        double aoeBuff = spellStats.getAoeMultiplier();
-        int pierceBuff = spellStats.getBuffCount(AugmentPierce.INSTANCE);
-        List<BlockPos> posList = SpellUtil.calcAOEBlocks(shooter, pos, rayTraceResult, aoeBuff, pierceBuff);
-        
-        List<BlockPos> validBlocks = new ArrayList<>();
+        if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, pos)) return List.of();
+        if (!BlockImmutabilityUtil.canBlockBeDestroyed(world, pos)) return List.of();
+
+        List<BlockPos> posList = SpellUtil.calcAOEBlocks(shooter, pos, rayTraceResult,
+                spellStats.getAoeMultiplier(), spellStats.getBuffCount(AugmentPierce.INSTANCE));
+        List<BlockPos> valid = new ArrayList<>();
         for (BlockPos blockPos : posList) {
-            if (!world.isOutsideBuildHeight(blockPos) 
-                && BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)
-                && BlockImmutabilityUtil.canBlockBeDestroyed(world, blockPos)) {
-                validBlocks.add(blockPos);
+            if (world.isOutsideBuildHeight(blockPos)) continue;
+            if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)) continue;
+            if (!BlockImmutabilityUtil.canBlockBeDestroyed(world, blockPos)) continue;
+            if (!BlockImmutabilityUtil.isPistonPushable(world.getBlockState(blockPos))) continue;
+            valid.add(blockPos);
+        }
+        return valid;
+    }
+
+    /** Chaining + Select: merge existing block results with current hit into one group and record. Returns true if handled. */
+    private boolean tryMergeChainingAndRecord(ServerLevel serverLevel, Level world, Player player, LivingEntity shooter,
+            List<BlockPos> validBlocks, SpellStats spellStats, SpellContext spellContext) {
+        // With Extract we want one result per block so Temporal Context runs the continuation per block; do not merge.
+        if (spellStats.hasBuff(AugmentExtract.INSTANCE)) return false;
+
+        IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
+        MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;
+        if (context == null || context.beginResults.isEmpty()) return false;
+        if (!context.beginResults.stream().allMatch(r -> r != null && isBlockResult(r))) return false;
+
+        List<BlockPos> merged = new ArrayList<>(new LinkedHashSet<>(collectBlockPositionsFromResults(context.beginResults)));
+        merged.addAll(validBlocks);
+        merged = new ArrayList<>(new LinkedHashSet<>(merged));
+
+        FilteredBlocks validMerged = filterAndValidateBlockPositions(serverLevel, shooter, world, merged);
+        if (validMerged.positions().isEmpty()) return true;
+
+        // Discard any BlockGroupEntities from previous sub-resolutions so only the merged entity remains and removes blocks.
+        for (SpellResult r : context.beginResults) {
+            if (r != null && r.blockGroup != null && r.blockGroup.isAlive()) {
+                r.blockGroup.discard();
             }
         }
-        
-        if (!validBlocks.isEmpty()) {
-            createBlockGroup(serverLevel, validBlocks, player, spellContext, shooter);
+        context.beginResults.clear();
+        recordSelection(serverLevel, validMerged, player, spellContext, shooter, false);
+        return true;
+    }
+
+    /** Filter positions to in-world, claimable, destroyable, piston-pushable; return positions + states. */
+    private FilteredBlocks filterAndValidateBlockPositions(ServerLevel serverLevel, LivingEntity shooter, Level world, List<BlockPos> positions) {
+        List<BlockPos> valid = new ArrayList<>();
+        Map<BlockPos, BlockState> states = new java.util.HashMap<>();
+        for (BlockPos p : positions) {
+            if (serverLevel.isOutsideBuildHeight(p)) continue;
+            if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, p)) continue;
+            if (!BlockImmutabilityUtil.canBlockBeDestroyed(world, p)) continue;
+            BlockState state = serverLevel.getBlockState(p);
+            if (state.isAir() || BlockImmutabilityUtil.isBlockImmutable(state) || !BlockImmutabilityUtil.isPistonPushable(state)) continue;
+            valid.add(p);
+            states.put(p, state);
+        }
+        return new FilteredBlocks(valid, states);
+    }
+
+    private void recordSelection(ServerLevel serverLevel, FilteredBlocks filtered, Player player, SpellContext spellContext,
+            LivingEntity shooter, boolean useExtract) {
+        if (useExtract) {
+            TemporalContextRecorder.recordBlockPositionsOnly(spellContext, filtered.positions());
+        } else {
+            createBlockGroup(serverLevel, filtered.positions(), filtered.states(), player, spellContext, shooter);
         }
     }
-    
-    private void createBlockGroup(ServerLevel level, List<BlockPos> blockPositions, Player player, SpellContext spellContext, LivingEntity shooter) {
-        if (blockPositions.isEmpty()) {
-            return;
+
+    private static boolean isBlockResult(SpellResult r) {
+        return (r.blockPositions != null && !r.blockPositions.isEmpty()) || r.targetPosition != null || r.blockGroup != null;
+    }
+
+    private static List<BlockPos> collectBlockPositionsFromResults(List<SpellResult> results) {
+        List<BlockPos> out = new ArrayList<>();
+        for (SpellResult r : results) {
+            if (r == null) continue;
+            if (r.blockPositions != null) {
+                out.addAll(r.blockPositions);
+            } else if (r.targetPosition != null) {
+                out.add(r.targetPosition);
+            }
         }
-        
-        if (!ServerConfig.ALLOW_BLOCK_GROUP_CREATION.get()) {
-            return;
-        }
-        
-        java.util.Map<BlockPos, BlockState> capturedStates = new java.util.HashMap<>();
+        return out;
+    }
+
+    private record FilteredBlocks(List<BlockPos> positions, Map<BlockPos, BlockState> states) {}
+
+    private FilteredBlocks getFilteredBlocks(ServerLevel level, List<BlockPos> blockPositions, SpellContext spellContext, LivingEntity shooter) {
+        Map<BlockPos, BlockState> capturedStates = new java.util.HashMap<>();
         for (BlockPos pos : blockPositions) {
             if (!level.isOutsideBuildHeight(pos)) {
                 BlockState state = level.getBlockState(pos);
-                if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
+                if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state) && BlockImmutabilityUtil.isPistonPushable(state)) {
                     capturedStates.put(pos, state);
                 }
             }
         }
-        
         List<BlockPos> validPositions = new ArrayList<>(capturedStates.keySet());
-        
+
         IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
         MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;
-        
+
         List<BlockPos> filteredPositions = validPositions;
         if (context != null) {
-            java.util.Set<BlockPos> claimedBlocks = new java.util.HashSet<>();
+            Set<BlockPos> claimedBlocks = new java.util.HashSet<>();
             for (SpellResult result : context.beginResults) {
                 if (result != null && result.blockGroup != null && result.blockPositions != null) {
                     claimedBlocks.addAll(result.blockPositions);
                 }
             }
-            
             filteredPositions = validPositions.stream()
                 .filter(pos -> !claimedBlocks.contains(pos))
                 .toList();
-            
-            java.util.Map<BlockPos, BlockState> filteredStates = new java.util.HashMap<>();
-            for (BlockPos pos : filteredPositions) {
-                BlockState state = capturedStates.get(pos);
-                if (state != null) {
-                    filteredStates.put(pos, state);
-                }
-            }
-            capturedStates = filteredStates;
         }
-        
+
+        Map<BlockPos, BlockState> filteredStates = new java.util.HashMap<>();
+        for (BlockPos pos : filteredPositions) {
+            BlockState state = capturedStates.get(pos);
+            if (state != null) {
+                filteredStates.put(pos, state);
+            }
+        }
+        return new FilteredBlocks(filteredPositions, filteredStates);
+    }
+
+    private void createBlockGroup(ServerLevel level, List<BlockPos> filteredPositions, Map<BlockPos, BlockState> capturedStates, Player player, SpellContext spellContext, LivingEntity shooter) {
         if (filteredPositions.isEmpty()) {
             return;
         }
-        
         Vec3 centerPos = calculateCenter(filteredPositions);
-        
+
         BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), level);
         blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
         blockGroup.setCasterUUID(player.getUUID());
-        
+
         blockGroup.addBlocksWithStates(filteredPositions, capturedStates);
-        
+
         level.addFreshEntity(blockGroup);
-        
-        if (context != null) {
-            SpellResult blockResult = SpellResult.fromBlockGroup(blockGroup, filteredPositions, spellContext.getCaster());
-            boolean hasExistingBlockGroups = context.beginResults.stream()
-                .anyMatch(r -> r != null && r.blockGroup != null);
-            if (!hasExistingBlockGroups) {
-                context.beginResults.clear();
-            }
-            context.beginResults.add(blockResult);
-        }
+
+        TemporalContextRecorder.record(spellContext, blockGroup, filteredPositions);
     }
     
     
@@ -186,6 +243,7 @@ public class SelectEffect extends AbstractEffect {
     public Set<AbstractAugment> getCompatibleAugments() {
         return augmentSetOf(
             AugmentAOE.INSTANCE,
+            AugmentExtract.INSTANCE,
             AugmentPierce.INSTANCE,
             AugmentSensitive.INSTANCE
         );
@@ -195,13 +253,14 @@ public class SelectEffect extends AbstractEffect {
     public void addAugmentDescriptions(Map<AbstractAugment, String> map) {
         super.addAugmentDescriptions(map);
         map.put(AugmentAOE.INSTANCE, "Increases the area of blocks that can be selected");
+        map.put(AugmentExtract.INSTANCE, "Propagates block positions to later phases without creating a block group entity.");
         map.put(AugmentPierce.INSTANCE, "Increases the depth of blocks that can be selected");
         map.put(AugmentSensitive.INSTANCE, "Only selects entities, ignoring blocks.");
     }
 
     @Override
     public String getBookDescription() {
-        return "Selects a target entity or block without performing any action. Use this to choose targets for future operations. AOE and Pierce allow selecting multiple blocks. For block translation, selected blocks are converted to a block group entity. Sensitive restricts selection to entities only.";
+        return "Selects a target entity or block without performing any action. Use this to choose targets for future operations. AOE and Pierce allow selecting multiple blocks. For block translation, selected blocks are converted to a block group entity. Extract propagates block positions without creating a group. Sensitive restricts selection to entities only.";
     }
 
     @Override

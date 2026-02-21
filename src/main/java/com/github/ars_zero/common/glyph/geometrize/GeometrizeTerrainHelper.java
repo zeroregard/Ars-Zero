@@ -2,6 +2,7 @@ package com.github.ars_zero.common.glyph.geometrize;
 
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
 import com.github.ars_zero.common.entity.terrain.GeometryTerrainEntity;
+import com.github.ars_zero.common.spell.TemporalContextRecorder;
 import com.github.ars_zero.common.shape.GeometryDescription;
 import com.github.ars_zero.common.spell.SpellAugmentExtractor;
 import com.github.ars_zero.registry.ModEntities;
@@ -70,7 +71,7 @@ public final class GeometrizeTerrainHelper {
             AbstractSpellPart next = iterator.nextPart();
             if (next instanceof EffectConjureTerrain conjureTerrainEffect) {
                 serverLevel.addFreshEntity(entity);
-                geometrize.updateTemporalContext(shooter, entity, spellContext);
+                TemporalContextRecorder.record(spellContext, entity);
                 geometrize.consumeEffect(spellContext, conjureTerrainEffect);
                 if (result.modifierEffect != null) {
                     geometrize.consumeEffect(spellContext, result.modifierEffect);

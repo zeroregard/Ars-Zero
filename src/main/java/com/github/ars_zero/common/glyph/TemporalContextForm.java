@@ -120,6 +120,18 @@ public class TemporalContextForm extends AbstractCastMethod {
         return "A form that acts as a marker for temporal context usage. When used in Tick or End phases, it will target the entity or block that was stored in the temporal context from previous phases.";
     }
 
+    /**
+     * Resolves the spell from stored temporal context. Called by WrappedSpellResolver when
+     * entering via onResolveEffect (e.g. Chaining, Burst, Wall) so the form runs before effects.
+     */
+    public CastResolveType resolve(Level level, SpellContext spellContext, SpellResolver resolver) {
+        LivingEntity caster = spellContext.getUnwrappedCaster();
+        if (caster == null) {
+            return CastResolveType.FAILURE;
+        }
+        return resolveFromStoredContext(level, caster, spellContext, resolver);
+    }
+
     private CastResolveType resolveFromStoredContext(Level level, LivingEntity caster, SpellContext spellContext,
             SpellResolver resolver) {
         
@@ -199,6 +211,11 @@ public class TemporalContextForm extends AbstractCastMethod {
                 } else {
                     hitResultToUse = new EntityHitResult(result.targetEntity);
                 }
+            } else if (hitResultToUse instanceof BlockHitResult blockHit && !blockHit.isInside()) {
+                // Normalize to inside=true so effects (Mageblock, Break, etc.) target the block itself,
+                // not pos.relative(direction) which would place on the face normal (e.g. on top)
+                hitResultToUse = new BlockHitResult(
+                    blockHit.getLocation(), blockHit.getDirection(), blockHit.getBlockPos(), true);
             }
             
             SpellResolver perTargetResolver = resolver.getNewResolver(baseContext.clone());

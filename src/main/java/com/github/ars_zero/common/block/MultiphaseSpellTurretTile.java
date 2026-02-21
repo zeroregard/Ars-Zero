@@ -63,6 +63,8 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
     private int tickCooldown;
     private int tickCount = 0;
     private int tickDelayOffset = 0;
+    /** True after the first TICK has fired this cast; used so first tick always fires, delay applies only to subsequent ticks. */
+    private boolean hasFiredFirstTick = false;
 
     private MultiPhaseCastContext castContext;
     private UUID ownerUUID;
@@ -193,6 +195,7 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
     private void startCasting() {
         casting = true;
         tickCount = 0;
+        hasFiredFirstTick = false;
         tickCooldown = calculateTickCooldown(tickSpell) + tickDelayOffset;
         initializeCastContext();
         castPhase(SpellPhase.BEGIN);
@@ -210,10 +213,12 @@ public class MultiphaseSpellTurretTile extends BasicSpellTurretTile implements I
         
         tickCount++;
         
-        if (tickCooldown > 0 && (tickCount - 1) % tickCooldown != 0) {
+        // First tick after BEGIN always fires; delay applies only to subsequent ticks
+        if (hasFiredFirstTick && tickCooldown > 0 && (tickCount - 1) % tickCooldown != 0) {
             return;
         }
         
+        hasFiredFirstTick = true;
         castPhase(SpellPhase.TICK);
     }
 

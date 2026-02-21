@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph.geometrize;
 
 import com.github.ars_zero.common.entity.GeometryEntity;
+import com.github.ars_zero.common.spell.TemporalContextRecorder;
 import com.github.ars_zero.common.shape.GeometryDescription;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
@@ -60,7 +61,7 @@ public final class GeometrizeMageBlockHelper {
     entity.setSpellContext(spellContext, resolver);
 
     serverLevel.addFreshEntity(entity);
-    geometrize.updateTemporalContext(shooter, entity, spellContext);
+    TemporalContextRecorder.record(spellContext, entity);
     spellContext.setCanceled(true);
     geometrize.triggerResolveEffects(spellContext, serverLevel, center);
   }

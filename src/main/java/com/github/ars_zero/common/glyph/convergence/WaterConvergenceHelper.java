@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph.convergence;
 
 import com.github.ars_zero.common.entity.water.WaterConvergenceControllerEntity;
+import com.github.ars_zero.common.spell.TemporalContextRecorder;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.common.spell.SpellAugmentExtractor;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
@@ -52,7 +53,7 @@ public final class WaterConvergenceHelper {
 
     entity.setLifespan(DEFAULT_LIFESPAN);
     serverLevel.addFreshEntity(entity);
-    convergence.updateTemporalContext(shooter, entity, spellContext, resolver);
+    TemporalContextRecorder.record(spellContext, entity);
     convergence.consumeFirstConjureWaterEffect(spellContext);
     convergence.triggerResolveEffects(spellContext, serverLevel, airPos);
   }

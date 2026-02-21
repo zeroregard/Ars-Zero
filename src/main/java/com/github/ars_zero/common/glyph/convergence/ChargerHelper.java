@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.glyph.convergence;
 
 import com.github.ars_zero.common.entity.PlayerChargerEntity;
+import com.github.ars_zero.common.spell.TemporalContextRecorder;
 import com.github.ars_zero.common.entity.SourceJarChargerEntity;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -34,7 +35,7 @@ public final class ChargerHelper {
             SoundEvent resolveSound = convergence.getResolveSoundFromStyle(spellContext);
             chargerEntity.setResolveSound(resolveSound);
             serverLevel.addFreshEntity(chargerEntity);
-            convergence.updateTemporalContext(shooter, chargerEntity, spellContext, resolver);
+            TemporalContextRecorder.record(spellContext, chargerEntity);
             convergence.triggerResolveEffects(spellContext, serverLevel, pos);
         }
     }
@@ -55,7 +56,7 @@ public final class ChargerHelper {
             SoundEvent resolveSound = convergence.getResolveSoundFromStyle(spellContext);
             chargerEntity.setResolveSound(resolveSound);
             serverLevel.addFreshEntity(chargerEntity);
-            convergence.updateTemporalContext(shooter, chargerEntity, spellContext, resolver);
+            TemporalContextRecorder.record(spellContext, chargerEntity);
             convergence.triggerResolveEffects(spellContext, serverLevel, pos);
         }
     }

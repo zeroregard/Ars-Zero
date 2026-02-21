@@ -2,7 +2,6 @@ package com.github.ars_zero.common.glyph.geometrize;
 
 import alexthw.ars_elemental.common.glyphs.EffectConjureTerrain;
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.entity.AbstractGeometryProcessEntity;
 import com.github.ars_zero.common.glyph.augment.AugmentCube;
 import com.github.ars_zero.common.glyph.augment.AugmentFlatten;
 import com.github.ars_zero.common.glyph.augment.AugmentHollow;
@@ -10,12 +9,9 @@ import com.github.ars_zero.common.glyph.augment.AugmentSphere;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAccelerate;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDecelerate;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
-import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.shape.GeometryDescription;
 import com.github.ars_zero.common.spell.ISubsequentEffectProvider;
-import com.github.ars_zero.common.spell.MultiPhaseCastContext;
-import com.github.ars_zero.common.spell.SpellEffectType;
-import com.github.ars_zero.common.spell.SpellResult;
+import com.github.ars_zero.common.spell.TemporalContextRecorder;
 import com.github.ars_zero.registry.ModParticleTimelines;
 import com.hollingsworth.arsnouveau.api.particle.ParticleEmitter;
 import com.hollingsworth.arsnouveau.api.particle.configurations.properties.SoundProperty;
@@ -117,31 +113,6 @@ public class EffectGeometrize extends AbstractEffect implements ISubsequentEffec
       GeometrizeMageBlockHelper.handleMageBlock(serverLevel, pos, shooter, spellContext, this,
           rayTraceResult, resolver);
     }
-  }
-
-  public void updateTemporalContext(LivingEntity shooter, Entity entity, SpellContext spellContext) {
-    IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
-    if (caster == null) {
-      return;
-    }
-    
-    MultiPhaseCastContext context = caster.getCastContext();
-    if (context == null) {
-      return;
-    }
-
-    SpellResult entityResult = SpellResult.fromHitResultWithCaster(
-        new net.minecraft.world.phys.EntityHitResult(entity),
-        SpellEffectType.RESOLVED,
-        spellContext.getCaster());
-
-    if (entity instanceof AbstractGeometryProcessEntity geometryEntity) {
-      entityResult.userOffset = geometryEntity.getUserOffset();
-      entityResult.depth = geometryEntity.getDepth();
-    }
-
-    context.beginResults.clear();
-    context.beginResults.add(entityResult);
   }
 
   @Nullable
