@@ -35,6 +35,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,47 +57,108 @@ public class SelectEffect extends AbstractEffect {
 
     @Override
     public void onResolveBlock(BlockHitResult rayTraceResult, Level world, @NotNull LivingEntity shooter, SpellStats spellStats, SpellContext spellContext, SpellResolver resolver) {
-        if (world.isClientSide) return;
-        if (!(shooter instanceof Player player)) return;
-        if (!(world instanceof ServerLevel serverLevel)) return;
-        
-        if (spellStats.isSensitive()) {
-            return;
-        }
-        
+        if (world.isClientSide || !(shooter instanceof Player player) || !(world instanceof ServerLevel serverLevel)) return;
+        if (spellStats.isSensitive()) return;
+
+        List<BlockPos> validBlocks = computeValidBlocksFromHit(world, serverLevel, shooter, rayTraceResult, spellStats);
+        if (validBlocks.isEmpty()) return;
+
+        if (tryMergeChainingAndRecord(serverLevel, world, player, shooter, validBlocks, spellStats, spellContext)) return;
+
+        FilteredBlocks filtered = getFilteredBlocks(serverLevel, validBlocks, spellContext, shooter);
+        if (filtered.positions().isEmpty()) return;
+        recordSelection(serverLevel, filtered, player, spellContext, shooter, spellStats.hasBuff(AugmentExtract.INSTANCE));
+    }
+
+    /** AOE from hit, then filter to valid selectable blocks. */
+    private List<BlockPos> computeValidBlocksFromHit(Level world, ServerLevel serverLevel, LivingEntity shooter,
+            BlockHitResult rayTraceResult, SpellStats spellStats) {
         BlockPos pos = rayTraceResult.getBlockPos();
-        if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, pos)) {
-            return;
-        }
-        
-        if (!BlockImmutabilityUtil.canBlockBeDestroyed(world, pos)) {
-            return;
-        }
-        double aoeBuff = spellStats.getAoeMultiplier();
-        int pierceBuff = spellStats.getBuffCount(AugmentPierce.INSTANCE);
-        List<BlockPos> posList = SpellUtil.calcAOEBlocks(shooter, pos, rayTraceResult, aoeBuff, pierceBuff);
-        
-        List<BlockPos> validBlocks = new ArrayList<>();
+        if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, pos)) return List.of();
+        if (!BlockImmutabilityUtil.canBlockBeDestroyed(world, pos)) return List.of();
+
+        List<BlockPos> posList = SpellUtil.calcAOEBlocks(shooter, pos, rayTraceResult,
+                spellStats.getAoeMultiplier(), spellStats.getBuffCount(AugmentPierce.INSTANCE));
+        List<BlockPos> valid = new ArrayList<>();
         for (BlockPos blockPos : posList) {
-            if (!world.isOutsideBuildHeight(blockPos)
-                && BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)
-                && BlockImmutabilityUtil.canBlockBeDestroyed(world, blockPos)
-                && BlockImmutabilityUtil.isPistonPushable(world.getBlockState(blockPos))) {
-                validBlocks.add(blockPos);
+            if (world.isOutsideBuildHeight(blockPos)) continue;
+            if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)) continue;
+            if (!BlockImmutabilityUtil.canBlockBeDestroyed(world, blockPos)) continue;
+            if (!BlockImmutabilityUtil.isPistonPushable(world.getBlockState(blockPos))) continue;
+            valid.add(blockPos);
+        }
+        return valid;
+    }
+
+    /** Chaining + Select: merge existing block results with current hit into one group and record. Returns true if handled. */
+    private boolean tryMergeChainingAndRecord(ServerLevel serverLevel, Level world, Player player, LivingEntity shooter,
+            List<BlockPos> validBlocks, SpellStats spellStats, SpellContext spellContext) {
+        // With Extract we want one result per block so Temporal Context runs the continuation per block; do not merge.
+        if (spellStats.hasBuff(AugmentExtract.INSTANCE)) return false;
+
+        IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
+        MultiPhaseCastContext context = caster != null ? caster.getCastContext() : null;
+        if (context == null || context.beginResults.isEmpty()) return false;
+        if (!context.beginResults.stream().allMatch(r -> r != null && isBlockResult(r))) return false;
+
+        List<BlockPos> merged = new ArrayList<>(new LinkedHashSet<>(collectBlockPositionsFromResults(context.beginResults)));
+        merged.addAll(validBlocks);
+        merged = new ArrayList<>(new LinkedHashSet<>(merged));
+
+        FilteredBlocks validMerged = filterAndValidateBlockPositions(serverLevel, shooter, world, merged);
+        if (validMerged.positions().isEmpty()) return true;
+
+        // Discard any BlockGroupEntities from previous sub-resolutions so only the merged entity remains and removes blocks.
+        for (SpellResult r : context.beginResults) {
+            if (r != null && r.blockGroup != null && r.blockGroup.isAlive()) {
+                r.blockGroup.discard();
             }
         }
-        
-        if (!validBlocks.isEmpty()) {
-            FilteredBlocks filtered = getFilteredBlocks(serverLevel, validBlocks, spellContext, shooter);
-            if (filtered.positions().isEmpty()) {
-                return;
-            }
-            if (spellStats.hasBuff(AugmentExtract.INSTANCE)) {
-                TemporalContextRecorder.recordBlockPositionsOnly(spellContext, filtered.positions());
-            } else {
-                createBlockGroup(serverLevel, filtered.positions(), filtered.states(), player, spellContext, shooter);
+        context.beginResults.clear();
+        recordSelection(serverLevel, validMerged, player, spellContext, shooter, false);
+        return true;
+    }
+
+    /** Filter positions to in-world, claimable, destroyable, piston-pushable; return positions + states. */
+    private FilteredBlocks filterAndValidateBlockPositions(ServerLevel serverLevel, LivingEntity shooter, Level world, List<BlockPos> positions) {
+        List<BlockPos> valid = new ArrayList<>();
+        Map<BlockPos, BlockState> states = new java.util.HashMap<>();
+        for (BlockPos p : positions) {
+            if (serverLevel.isOutsideBuildHeight(p)) continue;
+            if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, p)) continue;
+            if (!BlockImmutabilityUtil.canBlockBeDestroyed(world, p)) continue;
+            BlockState state = serverLevel.getBlockState(p);
+            if (state.isAir() || BlockImmutabilityUtil.isBlockImmutable(state) || !BlockImmutabilityUtil.isPistonPushable(state)) continue;
+            valid.add(p);
+            states.put(p, state);
+        }
+        return new FilteredBlocks(valid, states);
+    }
+
+    private void recordSelection(ServerLevel serverLevel, FilteredBlocks filtered, Player player, SpellContext spellContext,
+            LivingEntity shooter, boolean useExtract) {
+        if (useExtract) {
+            TemporalContextRecorder.recordBlockPositionsOnly(spellContext, filtered.positions());
+        } else {
+            createBlockGroup(serverLevel, filtered.positions(), filtered.states(), player, spellContext, shooter);
+        }
+    }
+
+    private static boolean isBlockResult(SpellResult r) {
+        return (r.blockPositions != null && !r.blockPositions.isEmpty()) || r.targetPosition != null || r.blockGroup != null;
+    }
+
+    private static List<BlockPos> collectBlockPositionsFromResults(List<SpellResult> results) {
+        List<BlockPos> out = new ArrayList<>();
+        for (SpellResult r : results) {
+            if (r == null) continue;
+            if (r.blockPositions != null) {
+                out.addAll(r.blockPositions);
+            } else if (r.targetPosition != null) {
+                out.add(r.targetPosition);
             }
         }
+        return out;
     }
 
     private record FilteredBlocks(List<BlockPos> positions, Map<BlockPos, BlockState> states) {}
