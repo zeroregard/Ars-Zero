@@ -49,7 +49,12 @@ import java.util.UUID;
 
 public class BlockGroupEntity extends Entity implements ILifespanExtendable {
     private static final EntityDataAccessor<CompoundTag> BLOCK_DATA = SynchedEntityData.defineId(BlockGroupEntity.class, EntityDataSerializers.COMPOUND_TAG);
-    
+    /** Packed RGB (0xRRGGBB) for outline; default cyan. Synced to client. */
+    private static final EntityDataAccessor<Integer> OUTLINE_COLOR = SynchedEntityData.defineId(BlockGroupEntity.class, EntityDataSerializers.INT);
+    private static final int DEFAULT_OUTLINE_COLOR = 0x33CCFF; // cyan (0.2, 0.8, 1.0)
+    /** Distance moved last tick; set on server, synced to client for renderer lerping. */
+    private static final EntityDataAccessor<Float> TRAVEL_DELTA = SynchedEntityData.defineId(BlockGroupEntity.class, EntityDataSerializers.FLOAT);
+
     private final List<BlockData> blocks = new ArrayList<>();
     private final Map<BlockPos, CompoundTag> blockEntityData = new HashMap<>();
     @Nullable
@@ -58,7 +63,9 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
     private int lifespan = 5;
     private int maxLifeSpan = 5;
     private boolean originalBlocksRemoved = false;
-    
+    /** Server-only: position at start of last tick, for computing travel delta. */
+    private Vec3 lastTickPosition = Vec3.ZERO;
+
     public BlockGroupEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
         this.noCulling = true;
@@ -81,7 +88,22 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
     public float getOriginalYRot() {
         return originalYRot;
     }
-    
+
+    /** Sets outline color from packed RGB (0xRRGGBB). Synced to client. */
+    public void setOutlineColor(int packedRgb) {
+        this.entityData.set(OUTLINE_COLOR, packedRgb);
+    }
+
+    /** Packed RGB (0xRRGGBB) for renderer outline; default cyan. */
+    public int getOutlineColor() {
+        return this.entityData.get(OUTLINE_COLOR);
+    }
+
+    /** Distance the entity moved last tick (server-set, synced to client). Use in renderer for subtle movement-based effects. */
+    public float getTravelDelta() {
+        return this.entityData.get(TRAVEL_DELTA);
+    }
+
     public static BlockGroupEntity create(Level level, List<BlockPos> positions) {
         BlockGroupEntity entity = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), level);
         entity.addBlocks(positions);
@@ -357,6 +379,8 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
         builder.define(BLOCK_DATA, new CompoundTag());
+        builder.define(OUTLINE_COLOR, DEFAULT_OUTLINE_COLOR);
+        builder.define(TRAVEL_DELTA, 0f);
     }
     
     @Override
@@ -368,11 +392,21 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
                 removeOriginalBlocks();
                 originalBlocksRemoved = true;
             }
-            
+
+            Vec3 posBefore = this.position();
+            if (lastTickPosition.equals(Vec3.ZERO)) {
+                lastTickPosition = posBefore;
+            }
+
             age();
             Vec3 deltaMovement = this.getDeltaMovement();
             this.move(MoverType.SELF, deltaMovement);
             this.setDeltaMovement(deltaMovement.scale(0.98));
+
+            Vec3 posAfter = this.position();
+            float distance = (float) posAfter.distanceTo(lastTickPosition);
+            this.entityData.set(TRAVEL_DELTA, distance);
+            lastTickPosition = posAfter;
         }
     }
 
@@ -483,8 +517,11 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
         if (compound.contains("originalYRot", Tag.TAG_FLOAT)) {
             originalYRot = compound.getFloat("originalYRot");
         }
+        if (compound.contains("OutlineColor", Tag.TAG_INT)) {
+            this.entityData.set(OUTLINE_COLOR, compound.getInt("OutlineColor"));
+        }
     }
-    
+
     @Override
     protected void addAdditionalSaveData(CompoundTag compound) {
         ListTag blocksTag = new ListTag();
@@ -514,8 +551,9 @@ public class BlockGroupEntity extends Entity implements ILifespanExtendable {
         }
         
         compound.putFloat("originalYRot", originalYRot);
+        compound.putInt("OutlineColor", this.entityData.get(OUTLINE_COLOR));
     }
-    
+
     public List<BlockData> getBlocks() {
         if (level().isClientSide) {
             return getBlocksFromSyncedData();

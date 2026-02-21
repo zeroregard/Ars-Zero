@@ -6,6 +6,7 @@ import com.github.ars_zero.common.particle.timeline.ConvergenceTimeline;
 import com.github.ars_zero.common.particle.timeline.DiscardTimeline;
 import com.github.ars_zero.common.particle.timeline.GeometrizeTimeline;
 import com.github.ars_zero.common.particle.timeline.NearTimeline;
+import com.github.ars_zero.common.particle.timeline.SelectTimeline;
 import com.github.ars_zero.common.particle.timeline.TemporalContextTimeline;
 import com.hollingsworth.arsnouveau.api.particle.configurations.IParticleMotionType;
 import com.hollingsworth.arsnouveau.api.particle.timelines.IParticleTimelineType;
@@ -55,6 +56,12 @@ public class ModParticleTimelines {
                     "beam",
                     () -> new SimpleParticleTimelineType<>(ModGlyphs.EFFECT_BEAM, BeamTimeline.CODEC,
                             BeamTimeline.STREAM_CODEC, BeamTimeline::new));
+
+    public static final DeferredHolder<IParticleTimelineType<?>, IParticleTimelineType<SelectTimeline>> SELECT_TIMELINE = TIMELINES
+            .register(
+                    "select",
+                    () -> new SimpleParticleTimelineType<>(ModGlyphs.SELECT_EFFECT, SelectTimeline.CODEC,
+                            SelectTimeline.STREAM_CODEC, SelectTimeline::new));
 
     public static void init(IEventBus eventBus) {
         TIMELINES.register(eventBus);

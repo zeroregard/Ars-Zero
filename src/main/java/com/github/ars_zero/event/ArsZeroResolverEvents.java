@@ -10,8 +10,10 @@ import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellPhase;
 import com.github.ars_zero.common.spell.WrappedSpellResolver;
+import com.github.ars_zero.common.particle.timeline.SelectTimeline;
 import com.github.ars_zero.common.util.BlockImmutabilityUtil;
 import com.github.ars_zero.registry.ModEntities;
+import com.github.ars_zero.registry.ModParticleTimelines;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import com.hollingsworth.arsnouveau.api.event.EffectResolveEvent;
@@ -215,7 +217,10 @@ public class ArsZeroResolverEvents {
                         BlockGroupEntity blockGroup = new BlockGroupEntity(ModEntities.BLOCK_GROUP.get(), serverLevel);
                         blockGroup.setPos(centerPos.x, centerPos.y, centerPos.z);
                         blockGroup.setCasterUUID(player.getUUID());
-                        
+                        SelectTimeline selectTimeline = event.resolver.spellContext.getParticleTimeline(ModParticleTimelines.SELECT_TIMELINE.get());
+                        if (selectTimeline != null) {
+                            blockGroup.setOutlineColor(selectTimeline.getColor().getColor());
+                        }
                         blockGroup.addBlocksWithStates(validBlocks, capturedStates);
                         
                         serverLevel.addFreshEntity(blockGroup);
