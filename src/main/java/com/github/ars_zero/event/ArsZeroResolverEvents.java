@@ -1,7 +1,6 @@
 package com.github.ars_zero.event;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.glyph.AnchorEffect;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
@@ -82,7 +81,7 @@ public class ArsZeroResolverEvents {
                 ItemStack casterTool = event.resolver.spellContext.getCasterTool();
                 boolean willCreateEntityGroup = requiresEntityGroupForTemporalAnchor(casterTool, player);
                 
-                if (willCreateEntityGroup && wrapped.isRootResolver() && ServerConfig.ALLOW_BLOCK_GROUP_CREATION.get()) {
+                if (willCreateEntityGroup && wrapped.isRootResolver()) {
                     // Store in map keyed by dimension and position
                     capturedBlockStates.computeIfAbsent(dimensionKey, k -> new HashMap<>()).put(pos, state);
                     
@@ -209,7 +208,7 @@ public class ArsZeroResolverEvents {
                 }
                 
                 ItemStack casterTool = event.resolver.spellContext.getCasterTool();
-                if (!validBlocks.isEmpty() && !casterTool.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player) && wrapped.isRootResolver() && ServerConfig.ALLOW_BLOCK_GROUP_CREATION.get()) {
+                if (!validBlocks.isEmpty() && !casterTool.isEmpty() && requiresEntityGroupForTemporalAnchor(casterTool, player) && wrapped.isRootResolver()) {
                     if (!blockGroupCreated.getOrDefault(dimensionKey, false)) {
                         Vec3 centerPos = calculateCenter(validBlocks);
 

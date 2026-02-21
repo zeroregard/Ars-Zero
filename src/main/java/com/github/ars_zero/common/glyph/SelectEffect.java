@@ -1,7 +1,6 @@
 package com.github.ars_zero.common.glyph;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.SpellResult;
@@ -77,11 +76,11 @@ public class SelectEffect extends AbstractEffect {
         
         List<BlockPos> validBlocks = new ArrayList<>();
         for (BlockPos blockPos : posList) {
-            if (!world.isOutsideBuildHeight(blockPos) 
-                && BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)
-                && BlockImmutabilityUtil.canBlockBeDestroyed(world, blockPos)) {
-                validBlocks.add(blockPos);
-            }
+            if (!world.isOutsideBuildHeight(blockPos)) continue;
+            if (!BlockUtil.destroyRespectsClaim(getPlayer(shooter, serverLevel), world, blockPos)) continue;
+            if (!BlockImmutabilityUtil.canBlockBeDestroyed(world, blockPos)) continue;
+            if (!BlockImmutabilityUtil.isPistonPushable(world.getBlockState(blockPos))) continue;
+            validBlocks.add(blockPos);
         }
         
         if (!validBlocks.isEmpty()) {
@@ -93,16 +92,12 @@ public class SelectEffect extends AbstractEffect {
         if (blockPositions.isEmpty()) {
             return;
         }
-        
-        if (!ServerConfig.ALLOW_BLOCK_GROUP_CREATION.get()) {
-            return;
-        }
-        
+
         java.util.Map<BlockPos, BlockState> capturedStates = new java.util.HashMap<>();
         for (BlockPos pos : blockPositions) {
             if (!level.isOutsideBuildHeight(pos)) {
                 BlockState state = level.getBlockState(pos);
-                if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state)) {
+                if (!state.isAir() && !BlockImmutabilityUtil.isBlockImmutable(state) && BlockImmutabilityUtil.isPistonPushable(state)) {
                     capturedStates.put(pos, state);
                 }
             }
