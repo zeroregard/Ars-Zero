@@ -24,7 +24,9 @@ public class ModCreativeTabs {
                     output.accept(ModItems.MAGE_SPELL_STAFF.get().getDefaultInstance());
                     output.accept(ModItems.ARCHMAGE_SPELL_STAFF.get().getDefaultInstance());
                     output.accept(ModItems.CREATIVE_SPELL_STAFF.get().getDefaultInstance());
-                    output.accept(ModItems.STAFF_TELEKINESIS.get().getDefaultInstance());
+                    for (var holder : ModStaffItems.getRegisteredStaticStaffs()) {
+                        output.accept(holder.get().getDefaultInstance());
+                    }
                     output.accept(ModItems.DULL_CIRCLET.get().getDefaultInstance());
                     output.accept(ModItems.SPELLCASTING_CIRCLET.get().getDefaultInstance());
                     output.accept(ModItems.ARCHWOOD_ROD.get().getDefaultInstance());
