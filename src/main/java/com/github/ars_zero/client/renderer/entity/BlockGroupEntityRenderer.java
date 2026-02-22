@@ -5,6 +5,7 @@ import com.github.ars_zero.common.entity.BlockGroupEntity;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -20,7 +21,6 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.RenderTypeHelper;
 import net.neoforged.neoforge.client.model.data.ModelData;
 
 import java.util.HashMap;
@@ -70,7 +70,7 @@ public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
         
         BlockAndTintGetter level = entity.level() instanceof BlockAndTintGetter getter ? getter : null;
 
-        // One RandomSource per entity so glint phase is identical for all blocks in the group.
+        // Block geometry uses the entity pass buffer and chunk buffer layers so cactus, leaves (cutout), etc. render correctly.
         RandomSource random = RandomSource.create(42L);
         for (var blockData : blocks) {
             BlockState blockState = blockData.blockState;
@@ -88,13 +88,20 @@ public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
             poseStack.translate(blockData.relativePosition.x - 0.5, blockData.relativePosition.y - 0.5, blockData.relativePosition.z - 0.5);
             try {
                 renderBlock(blockState, blockData, entity, level, poseStack, buffer, random, packedLight);
-                if (level != null) {
-                    renderBlockGlint(blockState, level, poseStack, buffer, random);
-                }
             } catch (Exception e) {
                 ArsZero.LOGGER.warn("Failed to render block {} for BlockGroupEntity", blockState, e);
             }
             poseStack.popPose();
+            if (level != null) {
+                poseStack.pushPose();
+                poseStack.translate(blockData.relativePosition.x - 0.5, blockData.relativePosition.y - 0.5, blockData.relativePosition.z - 0.5);
+                try {
+                    renderBlockGlint(blockState, level, poseStack, buffer, random);
+                } catch (Exception e) {
+                    ArsZero.LOGGER.warn("Failed to render glint for block {} in BlockGroupEntity", blockState, e);
+                }
+                poseStack.popPose();
+            }
         }
 
         if (minX != Double.MAX_VALUE) {
@@ -133,11 +140,14 @@ public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
         return current;
     }
 
+    /** Chunk render types used when model returns no render types (e.g. some vanilla blocks). */
+    /** Fallback when model returns no render types (e.g. cactus). Use same layers as terrain. */
+    private static final java.util.List<RenderType> FALLBACK_CHUNK_LAYERS = RenderType.chunkBufferLayers().stream().toList();
+
     /**
-     * Renders a block so leaves (cutout/cutoutMipped) and other layers work in the entity pass.
-     * When level is present we use the block model's render types, map to entity buffers via
-     * RenderTypeHelper.getEntityRenderType, and renderBatched with level/worldPos for biome tint.
-     * Otherwise we fall back to renderSingleBlock.
+     * Renders a block. When level is present we use the game's main buffer source (chunk render types)
+     * so cactus, leaves (cutout/cutoutMipped), and translucent blocks render correctly.
+     * If the model returns no render types we draw to all chunk layers as fallback.
      */
     private void renderBlock(BlockState blockState, BlockGroupEntity.BlockData blockData, BlockGroupEntity entity,
                             BlockAndTintGetter level, PoseStack poseStack, MultiBufferSource buffer, RandomSource random,
@@ -149,9 +159,10 @@ public class BlockGroupEntityRenderer extends EntityRenderer<BlockGroupEntity> {
         );
         if (level != null) {
             var model = blockRenderer.getBlockModel(blockState);
-            for (RenderType chunkType : model.getRenderTypes(blockState, random, ModelData.EMPTY)) {
-                RenderType entityType = RenderTypeHelper.getEntityRenderType(chunkType, false);
-                VertexConsumer consumer = buffer.getBuffer(entityType);
+            var types = model.getRenderTypes(blockState, random, ModelData.EMPTY);
+            Iterable<RenderType> typesToUse = types.isEmpty() ? FALLBACK_CHUNK_LAYERS : types;
+            for (RenderType chunkType : typesToUse) {
+                VertexConsumer consumer = buffer.getBuffer(chunkType);
                 blockRenderer.renderBatched(blockState, worldPos, level, poseStack, consumer, false, random, ModelData.EMPTY, chunkType);
             }
         } else {

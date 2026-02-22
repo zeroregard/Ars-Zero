@@ -34,7 +34,7 @@ public class SelectTimeline extends BaseTimeline<SelectTimeline> {
 
     public SelectTimeline(PropMap propMap) {
         this.propMap = propMap == null ? new PropMap() : propMap;
-        this.propMap.createIfMissing(new ColorProperty(ParticleColor.CYAN, false));
+        this.propMap.createIfMissing(new ColorProperty(ParticleColor.DEFAULT, false));
     }
 
     public ParticleColor getColor() {
@@ -48,7 +48,7 @@ public class SelectTimeline extends BaseTimeline<SelectTimeline> {
 
     @Override
     public List<BaseProperty<?>> getProperties() {
-        BaseProperty<?> colorProp = propMap.createIfMissing(new ColorProperty(ParticleColor.CYAN, false));
+        BaseProperty<?> colorProp = propMap.createIfMissing(new ColorProperty(ParticleColor.DEFAULT, false));
         colorProp.propertyHolder = this.propMap;
         return List.of(colorProp);
     }
