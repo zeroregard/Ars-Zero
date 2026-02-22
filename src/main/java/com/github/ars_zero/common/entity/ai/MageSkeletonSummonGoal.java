@@ -1,9 +1,11 @@
 package com.github.ars_zero.common.entity.ai;
 
 import com.github.ars_zero.common.entity.MageSkeletonEntity;
+import com.github.ars_zero.registry.ModMobEffects;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import alexthw.ars_elemental.common.entity.summon.SummonUndead;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -81,6 +83,7 @@ public class MageSkeletonSummonGoal extends Goal {
         double z = mob.getZ() + dz;
         summon.moveTo(x, y, z, 0.0F, 0.0F);
         summon.finalizeSpawn((ServerLevelAccessor) serverLevel, serverLevel.getCurrentDifficultyAt(summon.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
+        summon.addEffect(new MobEffectInstance(ModMobEffects.WITHER_IMMUNITY, SUMMON_DURATION_TICKS, 0, false, false));
         serverLevel.addFreshEntity(summon);
 
         mob.setOwnedRevenantUuid(summon.getUUID());
