@@ -14,6 +14,14 @@ public interface MobSpellBehaviour {
     int getManaCost();
 
     /**
+     * Whether this behaviour should run right now (e.g. summon only when no summon present).
+     * Default true; override to add conditions.
+     */
+    default boolean canRun(Mob caster, LivingEntity target) {
+        return true;
+    }
+
+    /**
      * Run the cast: spawn circle, spawn voxel, resolve Push, etc.
      * Caller should have already checked canCast (mana + cooldown) and that target is valid.
      *

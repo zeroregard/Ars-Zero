@@ -14,7 +14,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour;
+import com.github.ars_zero.common.entity.ai.MageSkeletonBlinkGoal;
 import com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal;
+import com.github.ars_zero.common.entity.ai.MageSkeletonHoldPositionGoal;
+import com.github.ars_zero.common.entity.ai.MageSkeletonSummonGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -25,12 +28,18 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * A skeleton variant that spawns wearing an Ars Nouveau arcanist hat and holding a spellbook.
@@ -54,6 +63,13 @@ public class MageSkeletonEntity extends Skeleton {
     private int chargeTicks = 0;
     /** Entity id of voxel to push when chargeTicks hits 0. */
     private int pendingVoxelId = -1;
+    /** Ticks until next blink allowed; decremented every tick. */
+    private int blinkCooldownTicks = 0;
+    /** Ticks until next summon allowed (avoids double-summon race); decremented every tick. */
+    private int summonCooldownTicks = 0;
+    /** UUID of the revenant we summoned, if any. Cleared when it dies or is missing. */
+    @Nullable
+    private UUID ownedRevenantUuid = null;
 
     public MageSkeletonEntity(EntityType<? extends Skeleton> entityType, Level level) {
         super(entityType, level);
@@ -63,8 +79,11 @@ public class MageSkeletonEntity extends Skeleton {
     protected void registerGoals() {
         // Do not call super: we want no melee or bow goals, only spell casting
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        this.goalSelector.addGoal(1, new MageSkeletonCastGoal(this, List.of(new BlightVoxelPushSpellBehaviour())));
-        this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0));
+        this.goalSelector.addGoal(0, new MageSkeletonBlinkGoal(this));
+        this.goalSelector.addGoal(1, new MageSkeletonSummonGoal(this));
+        this.goalSelector.addGoal(2, new MageSkeletonCastGoal(this, List.of(new BlightVoxelPushSpellBehaviour())));
+        this.goalSelector.addGoal(3, new MageSkeletonHoldPositionGoal(this));
+        this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, LivingEntity.class, 8.0F));
     }
@@ -87,6 +106,18 @@ public class MageSkeletonEntity extends Skeleton {
         if (!this.level().isClientSide()) {
             if (castCooldownTicks > 0) {
                 castCooldownTicks--;
+            }
+            if (blinkCooldownTicks > 0) {
+                blinkCooldownTicks--;
+            }
+            if (summonCooldownTicks > 0) {
+                summonCooldownTicks--;
+            }
+            if (ownedRevenantUuid != null && level() instanceof net.minecraft.server.level.ServerLevel sl) {
+                Entity e = sl.getEntity(ownedRevenantUuid);
+                if (e == null || !e.isAlive()) {
+                    ownedRevenantUuid = null;
+                }
             }
             if (chargeTicks > 0) {
                 LivingEntity target = getTarget();
@@ -120,6 +151,45 @@ public class MageSkeletonEntity extends Skeleton {
         return castCooldownTicks;
     }
 
+    public void setCastCooldownTicks(int ticks) {
+        this.castCooldownTicks = ticks;
+    }
+
+    public int getBlinkCooldownTicks() {
+        return blinkCooldownTicks;
+    }
+
+    public void setBlinkCooldownTicks(int ticks) {
+        this.blinkCooldownTicks = ticks;
+    }
+
+    public int getSummonCooldownTicks() {
+        return summonCooldownTicks;
+    }
+
+    public void setSummonCooldownTicks(int ticks) {
+        this.summonCooldownTicks = ticks;
+    }
+
+    /** UUID of the revenant this mage summoned; null if none or it died. */
+    @Nullable
+    public UUID getOwnedRevenantUuid() {
+        return ownedRevenantUuid;
+    }
+
+    public void setOwnedRevenantUuid(@Nullable UUID uuid) {
+        this.ownedRevenantUuid = uuid;
+    }
+
+    /** True if we currently have a living revenant we summoned (tracked by UUID). */
+    public boolean hasLivingOwnedRevenant() {
+        if (ownedRevenantUuid == null || !(level() instanceof net.minecraft.server.level.ServerLevel sl)) {
+            return false;
+        }
+        Entity e = sl.getEntity(ownedRevenantUuid);
+        return e != null && e.isAlive();
+    }
+
     public int getChargeTicks() {
         return chargeTicks;
     }
@@ -127,6 +197,22 @@ public class MageSkeletonEntity extends Skeleton {
     public void setPendingPush(int voxelEntityId, int hoverTicks) {
         this.pendingVoxelId = voxelEntityId;
         this.chargeTicks = hoverTicks;
+    }
+
+    private static final String TAG_OWNED_REVENANT = "OwnedRevenantUUID";
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        if (ownedRevenantUuid != null) {
+            tag.putUUID(TAG_OWNED_REVENANT, ownedRevenantUuid);
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        ownedRevenantUuid = tag.hasUUID(TAG_OWNED_REVENANT) ? tag.getUUID(TAG_OWNED_REVENANT) : null;
     }
 
     private void setLookAtTarget(LivingEntity target) {
@@ -147,6 +233,26 @@ public class MageSkeletonEntity extends Skeleton {
     @Override
     public boolean doHurtTarget(Entity target) {
         return false;
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (source.is(DamageTypes.WITHER) || source.is(DamageTypes.WITHER_SKULL)) {
+            return false;
+        }
+        Entity direct = source.getDirectEntity();
+        if (direct instanceof BlightVoxelEntity voxel && voxel.getStoredCaster() == this) {
+            return false;
+        }
+        return super.hurt(source, amount);
+    }
+
+    @Override
+    public boolean canBeAffected(MobEffectInstance effect) {
+        if (effect.getEffect().value() == MobEffects.WITHER) {
+            return false;
+        }
+        return super.canBeAffected(effect);
     }
 
     @Override

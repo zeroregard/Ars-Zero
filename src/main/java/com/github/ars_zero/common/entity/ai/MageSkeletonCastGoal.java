@@ -67,7 +67,7 @@ public class MageSkeletonCastGoal extends Goal {
         }
         for (MobSpellBehaviour behaviour : behaviours) {
             var mana = CapabilityRegistry.getMana(mob);
-            if (mana != null && mana.getCurrentMana() >= behaviour.getManaCost()) {
+            if (mana != null && mana.getCurrentMana() >= behaviour.getManaCost() && behaviour.canRun(mob, target)) {
                 behaviour.run(mob, target);
                 return;
             }

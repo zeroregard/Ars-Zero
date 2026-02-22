@@ -88,7 +88,9 @@ import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.AbstractSkeleton;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.phys.BlockHitResult;
+import com.alexthw.sauce.registry.ModRegistry;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
@@ -374,7 +376,9 @@ public class ArsZero {
     }
 
     private static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
-        event.put(ModEntities.MAGE_SKELETON.get(), AbstractSkeleton.createAttributes().build());
+        AttributeSupplier.Builder builder = AbstractSkeleton.createAttributes();
+        builder.add(ModRegistry.NECROMANCY_POWER, 5.0);
+        event.put(ModEntities.MAGE_SKELETON.get(), builder.build());
     }
 
     private static void onRegisterSpawnPlacements(RegisterSpawnPlacementsEvent event) {
