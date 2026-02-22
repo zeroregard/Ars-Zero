@@ -21,6 +21,7 @@ import com.github.ars_zero.common.entity.break_blocks.GeometryBreakEntity;
 import com.github.ars_zero.common.entity.GeometryEntity;
 import com.github.ars_zero.common.entity.ArcaneCircleEntity;
 import com.github.ars_zero.common.entity.EffectBeamEntity;
+import com.github.ars_zero.common.entity.MageSkeletonEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -259,4 +260,12 @@ public class ModEntities {
                                                         .updateInterval(1)
                                                         .setShouldReceiveVelocityUpdates(false)
                                                         .build(ArsZero.MOD_ID + ":effect_beam"));
+
+        public static final DeferredHolder<EntityType<?>, EntityType<MageSkeletonEntity>> MAGE_SKELETON = ENTITIES
+                        .register(
+                                        "mage_skeleton",
+                                        () -> EntityType.Builder.<MageSkeletonEntity>of(MageSkeletonEntity::new, MobCategory.MONSTER)
+                                                        .sized(0.6F, 1.99F)
+                                                        .clientTrackingRange(8)
+                                                        .build(ArsZero.MOD_ID + ":mage_skeleton"));
 }

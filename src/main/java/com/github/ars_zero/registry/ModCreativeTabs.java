@@ -42,6 +42,7 @@ public class ModCreativeTabs {
                     output.accept(ModItems.STAFF_DISPLAY.get().getDefaultInstance());
                     output.accept(ModFluids.BLIGHT_FLUID_BUCKET.get().getDefaultInstance());
                     output.accept(ModItems.MULTIPHASE_SPELL_TURRET.get().getDefaultInstance());
+                    output.accept(ModItems.MAGE_SKELETON_SPAWN_EGG.get().getDefaultInstance());
                 })
                 .build();
     });

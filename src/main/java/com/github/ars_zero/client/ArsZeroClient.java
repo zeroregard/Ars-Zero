@@ -33,6 +33,7 @@ import com.github.ars_zero.client.renderer.tile.StaffDisplayRenderer;
 import com.github.ars_zero.registry.ModBlockEntities;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModParticles;
+import net.minecraft.client.renderer.entity.SkeletonRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
@@ -83,6 +84,7 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.SOURCE_JAR_CHARGER.get(), SourceJarChargerEntityRenderer::new);
             EntityRenderers.register(ModEntities.PLAYER_CHARGER.get(), PlayerChargerEntityRenderer::new);
             EntityRenderers.register(ModEntities.ARCANE_CIRCLE.get(), ArcaneCircleEntityRenderer::new);
+            EntityRenderers.register(ModEntities.MAGE_SKELETON.get(), SkeletonRenderer::new);
         });
     }
 

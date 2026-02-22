@@ -82,10 +82,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.AbstractSkeleton;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -120,6 +126,8 @@ public class ArsZero {
 
         modEventBus.addListener(Networking::register);
         modEventBus.addListener(this::gatherData);
+        modEventBus.addListener(ArsZero::onEntityAttributeCreation);
+        modEventBus.addListener(ArsZero::onRegisterSpawnPlacements);
 
         modEventBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) -> {
             event.enqueueWork(() -> {
@@ -359,6 +367,19 @@ public class ArsZero {
 
     public static ResourceLocation prefix(String path) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    }
+
+    private static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
+        event.put(ModEntities.MAGE_SKELETON.get(), AbstractSkeleton.createAttributes().build());
+    }
+
+    private static void onRegisterSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+        event.register(
+                ModEntities.MAGE_SKELETON.get(),
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.REPLACE);
     }
 
     public void gatherData(GatherDataEvent event) {

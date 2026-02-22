@@ -3,6 +3,7 @@ package com.github.ars_zero.registry;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.renderer.item.MultiphaseTurretItemRenderer;
 import com.github.ars_zero.common.item.AbstractStaff;
+import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.DullCirclet;
@@ -19,6 +20,7 @@ import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SpawnEggItem;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -120,6 +122,15 @@ public class ModItems {
     //
 
     public static final ItemRegistryWrapper<StaffTelekinesis> STAFF_TELEKINESIS = register("staff_telekinesis", StaffTelekinesis::new);
+
+    /** Spawn egg for the mage skeleton (skeleton with arcanist hat). */
+    public static final DeferredHolder<Item, SpawnEggItem> MAGE_SKELETON_SPAWN_EGG = ITEMS.register(
+            "mage_skeleton_spawn_egg",
+            () -> new SpawnEggItem(
+                    ModEntities.MAGE_SKELETON.get(),
+                    0xC1C1C1,
+                    0x494949,
+                    defaultItemProperties()));
 
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);

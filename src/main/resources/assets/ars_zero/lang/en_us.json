@@ -25,6 +25,9 @@
   "ars_zero.tooltip.multiphase_parchment.tick_delay": "Tick delay: %s",
   "item.ars_zero.multiphase_orb": "Phased Orb",
 
+  "entity.ars_zero.mage_skeleton": "Mage Skeleton",
+  "item.ars_zero.mage_skeleton_spawn_egg": "Mage Skeleton Spawn Egg",
+
   "block.ars_zero.arcane_voxel_spawner": "Arcane Voxel Spawner",
   "block.ars_zero.fire_voxel_spawner": "Fire Voxel Spawner",
   "block.ars_zero.water_voxel_spawner": "Water Voxel Spawner",
