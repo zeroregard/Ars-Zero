@@ -61,6 +61,8 @@ import com.github.ars_zero.registry.ModParticles;
 import com.github.ars_zero.registry.ModRecipes;
 import com.github.ars_zero.registry.ModSounds;
 import com.hollingsworth.arsnouveau.api.ArsNouveauAPI;
+import com.hollingsworth.arsnouveau.common.capability.ManaCap;
+import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import com.hollingsworth.arsnouveau.api.loot.DungeonLootTables;
 import com.hollingsworth.arsnouveau.api.spell.ITurretBehavior;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
@@ -90,6 +92,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.neoforged.fml.ModContainer;
@@ -128,6 +131,7 @@ public class ArsZero {
         modEventBus.addListener(this::gatherData);
         modEventBus.addListener(ArsZero::onEntityAttributeCreation);
         modEventBus.addListener(ArsZero::onRegisterSpawnPlacements);
+        modEventBus.addListener(ArsZero::registerCapabilities);
 
         modEventBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) -> {
             event.enqueueWork(() -> {
@@ -380,6 +384,10 @@ public class ArsZero {
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Monster::checkMonsterSpawnRules,
                 RegisterSpawnPlacementsEvent.Operation.REPLACE);
+    }
+
+    private static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerEntity(CapabilityRegistry.MANA_CAPABILITY, ModEntities.MAGE_SKELETON.get(), (entity, ctx) -> new ManaCap(entity));
     }
 
     public void gatherData(GatherDataEvent event) {

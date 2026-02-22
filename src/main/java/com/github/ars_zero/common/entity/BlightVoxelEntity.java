@@ -429,7 +429,8 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
         LivingEntity sender = this.getStoredCaster();
         net.minecraft.world.damagesource.DamageSource damageSource;
         if (sender != null) {
-            damageSource = this.level().damageSources().indirectMagic(this, sender);
+            // Use mobProjectile so damage is blockable with a shield (indirectMagic is not).
+            damageSource = this.level().damageSources().mobProjectile(this, sender);
             target.setLastHurtByMob(sender);
             if (sender instanceof net.minecraft.world.entity.player.Player) {
                 target.setLastHurtByPlayer((net.minecraft.world.entity.player.Player) sender);
