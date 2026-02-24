@@ -99,6 +99,11 @@ public class ModItems {
         () -> new BlockItem(ModBlocks.STAFF_DISPLAY.get(), defaultItemProperties())
     );
 
+    public static final DeferredHolder<Item, BlockItem> BLIGHT_ARCHWOOD_LOG = ITEMS.register(
+        "blight_archwood_log",
+        () -> new BlockItem(ModBlocks.BLIGHT_ARCHWOOD_LOG.get(), defaultItemProperties())
+    );
+
     public static final DeferredHolder<Item, RendererBlockItem> MULTIPHASE_SPELL_TURRET = ITEMS.register(
         "multiphase_spell_turret",
         () -> {

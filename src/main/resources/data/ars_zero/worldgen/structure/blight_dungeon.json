@@ -1,0 +1,13 @@
+{
+  "type": "ars_zero:blight_dungeon",
+  "start_pool": "ars_zero:blight_dungeon/start",
+  "size": 3,
+  "max_distance_from_center": 48,
+  "biomes": ["ars_zero:blight_forest", "minecraft:forest"],
+  "step": "surface_structures",
+  "terrain_adaptation": "beard_thin",
+  "start_height": {
+    "absolute": 200
+  },
+  "spawn_overrides": {}
+}

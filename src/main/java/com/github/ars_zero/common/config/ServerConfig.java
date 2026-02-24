@@ -9,6 +9,8 @@ public class ServerConfig {
     public static ModConfigSpec.IntValue LARGE_EXPLOSION_MAX_BLOCKS_PER_TICK;
     public static ModConfigSpec.BooleanValue ALLOW_BLOCK_GROUP_CREATION;
     public static ModConfigSpec.IntValue DEFAULT_MULTIPHASE_DEVICE_TICK_DELAY;
+    /** Weight for blight forest biome when using Terrablender. ~25% of archwood forest when set to 1 and archwood weight is 3. */
+    public static ModConfigSpec.IntValue BLIGHT_FOREST_WEIGHT;
 
     static {
         ModConfigSpec.Builder SERVER_BUILDER = new ModConfigSpec.Builder();
@@ -39,6 +41,12 @@ public class ServerConfig {
         DEFAULT_MULTIPHASE_DEVICE_TICK_DELAY = SERVER_BUILDER.comment(
                 "Default tick delay (in ticks) for multiphase device slots. Minimum 1 (20 times per second).")
                 .defineInRange("defaultTickDelay", 10, 1, 20);
+        SERVER_BUILDER.pop();
+
+        SERVER_BUILDER.comment("Blight forest biome (Terrablender). Set to 0 to disable.").push("blight_forest");
+        BLIGHT_FOREST_WEIGHT = SERVER_BUILDER.comment(
+                "Region weight for blight forest. Use 1 for ~25%% when Ars Nouveau archwood forest weight is 3.")
+                .defineInRange("weight", 1, 0, Integer.MAX_VALUE);
         SERVER_BUILDER.pop();
 
         SERVER_CONFIG = SERVER_BUILDER.build();

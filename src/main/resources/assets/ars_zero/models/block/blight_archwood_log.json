@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "ars_zero:block/blight_archwood_log_top",
+    "side": "ars_zero:block/blight_archwood_log"
+  }
+}

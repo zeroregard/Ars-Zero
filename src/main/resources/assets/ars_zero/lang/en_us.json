@@ -37,6 +37,8 @@
   "block.ars_zero.blight_cauldron": "Blight Cauldron",
   "block.ars_zero.frozen_blight": "Frozen Blight",
   "block.ars_zero.multiphase_spell_turret": "Multiphase Spell Turret",
+  "biome.ars_zero.blight_forest": "Blight Forest",
+  "block.ars_zero.blight_archwood_log": "Blight Archwood Log",
   "block.ars_zero.staff_display": "Spellcaster Pedestal",
 
   "item.ars_zero.blight_fluid_bucket": "Blight Fluid Bucket",
@@ -86,7 +88,7 @@
   "ars_zero.alert.multiphase_turret.spell_set": "Multiphase turret spells updated.",
 
   "ars_zero.glyph_name.conjure_voxel_effect": "Conjure Voxel",
-  "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity. §6[Lifespan-based]",
+  "ars_zero.glyph_desc.conjure_voxel_effect": "Conjures a small block-like entity. ?6[Lifespan-based]",
   "ars_zero.glyph_name.effect_windshear": "Wind Shear",
   "ars_zero.glyph_desc.effect_windshear": "Conjures a wind voxel when used with Conjure Voxel",
   "ars_zero.glyph_name.effect_conjure_blight": "Conjure Blight",
@@ -127,13 +129,13 @@
   "ars_nouveau.augment_desc.effect_beam_glyph_dampen": "Stops the beam from hurting entities",
   "ars_nouveau.augment_desc.effect_beam_glyph_aoe": "Increases the radius of the circle when using Split",
   "ars_zero.glyph_name.effect_beam": "Beam",
-  "ars_zero.glyph_desc.effect_beam": "Compresses mana into a violent beam; resolves the remainder of the spell on each hit, draining mana per hit. §6[Lifespan-based]",
+  "ars_zero.glyph_desc.effect_beam": "Compresses mana into a violent beam; resolves the remainder of the spell on each hit, draining mana per hit. ?6[Lifespan-based]",
 
   "item.ars_zero.sustain_effect": "Sustain",
   "ars_zero.glyph_name.sustain_effect": "Sustain",
-  "ars_zero.glyph_desc.sustain_effect": "Extends the lifespan of a target. §6[Extends lifespan]",
+  "ars_zero.glyph_desc.sustain_effect": "Extends the lifespan of a target. ?6[Extends lifespan]",
   "ars_zero.glyph_name.glyph_sustain_effect": "Sustain",
-  "ars_zero.glyph_desc.glyph_sustain_effect": "Extends the lifespan of a target. §6[Extends lifespan]",
+  "ars_zero.glyph_desc.glyph_sustain_effect": "Extends the lifespan of a target. ?6[Extends lifespan]",
   "ars_nouveau.glyph_name.sustain_effect": "Sustain",
   "ars_nouveau.augment_desc.sustain_effect_glyph_extend_time": "Adds an additional tick per level",
 
@@ -161,9 +163,9 @@
 
   "item.ars_zero.anchor_effect": "Anchor",
   "ars_zero.glyph_name.anchor_effect": "Anchor",
-  "ars_zero.glyph_desc.anchor_effect": "Maintains the relative position of the target(s) to the caster. §6[Extends lifespan]",
+  "ars_zero.glyph_desc.anchor_effect": "Maintains the relative position of the target(s) to the caster. ?6[Extends lifespan]",
   "ars_zero.glyph_name.glyph_anchor_effect": "Anchor",
-  "ars_zero.glyph_desc.glyph_anchor_effect": "Maintains the relative position of the target(s) to the caster. §6[Extends lifespan]",
+  "ars_zero.glyph_desc.glyph_anchor_effect": "Maintains the relative position of the target(s) to the caster. ?6[Extends lifespan]",
   "ars_nouveau.glyph_name.anchor_effect": "Anchor",
 
   "ars_zero.glyph_name.push_effect": "Push",
@@ -186,7 +188,7 @@
   "effect.ars_zero.zero_gravity.description": "Temporarily removes gravity from the entity",
 
   "ars_zero.glyph_name.effect_convergence": "Convergence",
-  "ars_zero.glyph_desc.effect_convergence": "Concentrates a large amount of mana into a single point. §6[Lifespan-based]",
+  "ars_zero.glyph_desc.effect_convergence": "Concentrates a large amount of mana into a single point. ?6[Lifespan-based]",
   "ars_zero.glyph_name.glyph_effect_convergence": "Convergence",
   "ars_zero.glyph_desc.glyph_effect_convergence": "Creates a powerful convergence point that can be augmented with other effects.",
   "ars_nouveau.glyph_name.effect_convergence": "Convergence",
@@ -194,7 +196,7 @@
   "ars_zero.effect_augment_desc.effect_convergence_glyph_conjure_water": "Sacred Conjure Water: Fills a large area with water from bottom to top. Water Power affects placement speed. AOE determines radius. Drains mana per block placed.",
 
   "ars_zero.glyph_name.effect_geometrize": "Geometrize",
-  "ars_zero.glyph_desc.effect_geometrize": "Resolve forwarded spell in a geometric structure pattern. Needs to be combined with other glyphs. §6[Lifespan-based]",
+  "ars_zero.glyph_desc.effect_geometrize": "Resolve forwarded spell in a geometric structure pattern. Needs to be combined with other glyphs. ?6[Lifespan-based]",
   "ars_zero.glyph_name.glyph_effect_geometrize": "Geometrize",
   "ars_zero.glyph_desc.glyph_effect_geometrize": "Resolve forwarded spell in a geometric structure pattern. Needs to be combined with other glyphs",
   "ars_nouveau.glyph_name.effect_geometrize": "Geometrize",
@@ -202,13 +204,13 @@
   "ars_zero.effect_augment_desc.effect_geometrize_glyph_break": "Break Structure: Breaks blocks in a geometric pattern. Drains mana per block broken.",
 
   "ars_zero.glyph_name.augment_aoe_two": "AOE II",
-  "ars_zero.glyph_desc.augment_aoe_two": "Spells will affect a huge area around a targeted block.§9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
+  "ars_zero.glyph_desc.augment_aoe_two": "Spells will affect a huge area around a targeted block.?9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
   "ars_zero.glyph_name.augment_aoe_three": "AOE III",
-  "ars_zero.glyph_desc.augment_aoe_three": "Spells will affect a gargantuan area around a targeted block. §9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
+  "ars_zero.glyph_desc.augment_aoe_three": "Spells will affect a gargantuan area around a targeted block. ?9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
   "ars_zero.glyph_name.augment_amplify_two": "Amplify II",
-  "ars_zero.glyph_desc.augment_amplify_two": "Greatly increases the power of most spell effects. §9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
+  "ars_zero.glyph_desc.augment_amplify_two": "Greatly increases the power of most spell effects. ?9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
   "ars_zero.glyph_name.augment_amplify_three": "Amplify III",
-  "ars_zero.glyph_desc.augment_amplify_three": "Massively increases the power of most spell effects. §9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
+  "ars_zero.glyph_desc.augment_amplify_three": "Massively increases the power of most spell effects. ?9Note: This is copied from Adam's Ars Plus and will be removed when it has been updated to 1.21.1.",
   "ars_zero.augment_desc.aoe_two_generic": "Increases the area of effect (stronger than AOE).",
   "ars_zero.augment_desc.aoe_three_generic": "Increases the area of effect (stronger than AOE II).",
   "ars_zero.augment_desc.amplify_two_generic": "Increases the power of the effect (stronger than Amplify).",
@@ -277,7 +279,7 @@
   "ars_zero.examples.ekusupuroshon": "Ekusupuroshon",
   "ars_zero.examples.ekusupuroshon.quote": "\"Darkness blacker than black, and darker than dark\"",
   "ars_zero.examples.mage_march": "Mage's March",
-  "ars_zero.examples.mage_march.quote": "\"Never touch the ground again—or at least not until the blocks expire.\"",
+  "ars_zero.examples.mage_march.quote": "\"Never touch the ground again���or at least not until the blocks expire.\"",
   "ars_zero.tooltip.begin_phase": "Begin phase",
   "ars_zero.tooltip.tick_phase": "Tick phase",
   "ars_zero.tooltip.end_phase": "End phase"
