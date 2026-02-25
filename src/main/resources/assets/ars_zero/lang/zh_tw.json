@@ -10,6 +10,8 @@
 
   "item.ars_zero.creative_spell_staff": "創造法術杖",
   "item.ars_zero.creative_spell_staff.desc": "一柄創造魔杖，它的施法分為三個階段：開始、執行、結束。所有魔符均可用。",
+  "item.ars_zero.staff_telekinesis": "心靈遙感之杖",
+  "item.ars_zero.staff_telekinesis.desc": "將一個實體抬起，並把它推離你",
   "item.ars_zero.dull_circlet": "無趣飾冠",
   "item.ars_zero.dull_circlet.desc": "一個平凡無趣的飾品，無法佩戴。用於進一步合成。",
   "ars_zero.tooltip.dull": "一個平凡無趣的飾品，無法佩戴。用於進一步合成。",
@@ -17,6 +19,10 @@
   "item.ars_zero.spellcasting_circlet.desc": "能在頭部槽位施法的飾冠，它的施法分為三個階段：開始、執行、結束。",
 
   "item.ars_zero.archwood_rod": "至高木棍",
+  "item.ars_zero.multiphase_spell_parchment": "多階段法術羊皮紙",
+  "ars_zero.tooltip.multiphase_parchment.empty": "空的。手持此物品時，複製法杖或飾冠的槽位以儲存。",
+  "ars_zero.tooltip.multiphase_parchment.slot_name": "槽位：%s",
+  "ars_zero.tooltip.multiphase_parchment.tick_delay": "Tick 延遲：%s",
   "item.ars_zero.multiphase_orb": "多階段寶珠",
 
   "block.ars_zero.arcane_voxel_spawner": "奧術方體生成器",
@@ -31,6 +37,7 @@
   "block.ars_zero.blight_cauldron": "裝有劇毒液的煉藥鍋",
   "block.ars_zero.frozen_blight": "劇毒冰",
   "block.ars_zero.multiphase_spell_turret": "多階段法術炮塔",
+  "block.ars_zero.staff_display": "施法者基座",
 
   "item.ars_zero.blight_fluid_bucket": "劇毒液桶",
 
@@ -51,9 +58,16 @@
   "entity.ars_zero.effect_beam": "能量束",
 
   "gui.ars_zero.staff_title": "創造法術杖",
+  "gui.ars_zero.static_staff_title": "靜態法杖",
+  "gui.ars_zero.static_staff.no_data": "沒有法術資料",
+  "gui.ars_zero.static_staff.empty": "空",
   "gui.ars_zero.phase.begin": "開始",
+  "gui.ars_zero.phase.begin.tooltip": "開始階段",
   "gui.ars_zero.phase.tick": "執行",
+  "gui.ars_zero.phase.tick.tooltip": "執行階段",
   "gui.ars_zero.phase.end": "結束",
+  "gui.ars_zero.phase.end.tooltip": "結束階段",
+  "gui.ars_zero.static_staff.tick_delay": "延遲：%s tick",
   "gui.ars_zero.current_phase": "當前階段：%s",
 
   "ars_affinity.gui.affinities": "親和能力",
@@ -63,6 +77,7 @@
 
   "itemGroup.ars_zero": "Ars Zero",
 
+  "ars_zero.tooltip.static_staff.discount": "使法術消耗降低 %s%%.",
   "ars_zero.tooltip.circlet.cast": "按下%s以引導飾冠",
   "ars_zero.tooltip.circlet.radial": "按下%s以開啟法術圓盤選單",
   "ars_zero.alert.multiphase_turret.multi_phase_required": "多階段炮塔需要一個多階段法術裝置。",
@@ -266,5 +281,4 @@
   "ars_zero.tooltip.begin_phase": "開始階段",
   "ars_zero.tooltip.tick_phase": "執行階段",
   "ars_zero.tooltip.end_phase": "結束階段"
-
 }
