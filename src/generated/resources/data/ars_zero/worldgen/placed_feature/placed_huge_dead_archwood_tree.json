@@ -1,9 +1,9 @@
 {
-  "feature": "ars_zero:big_dead_archwood_tree",
+  "feature": "ars_zero:huge_dead_archwood_tree",
   "placement": [
     {
       "type": "minecraft:rarity_filter",
-      "chance": 3
+      "chance": 12
     },
     {
       "type": "minecraft:in_square"

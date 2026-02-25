@@ -100,6 +100,10 @@ public class DeadArchwoodTrunkPlacer extends TrunkPlacer {
                 placeTrunkLogWithVariation(world, consumer, rand, blockpos1.south(), config);
                 placeTrunkLogWithVariation(world, consumer, rand, blockpos1.east().south(), config);
             }
+            // Cobwebs in the upper part of the tree (top half)
+            if (i >= foliageHeight / 2 && rand.nextFloat() < 0.175f) {
+                tryPlaceCobwebAround(world, consumer, rand, blockpos1);
+            }
 
             if (i == 0) {
                 BlockPos abovePos = pos.above(i);
@@ -147,6 +151,30 @@ public class DeadArchwoodTrunkPlacer extends TrunkPlacer {
 
         list.add(new FoliagePlacer.FoliageAttachment(new BlockPos(curX, yOffset, curZ), 0, true));
         return list;
+    }
+
+    /** Tries to place a cobweb in air beside the 2x2 trunk (never inside or above the trunk column). */
+    private void tryPlaceCobwebAround(LevelSimulatedReader world, BiConsumer<BlockPos, BlockState> consumer,
+                                     RandomSource random, BlockPos trunkBase) {
+        // Only positions outside the 2x2: west/north of NW corner, and diagonals; never .above() (next trunk level)
+        BlockPos[] candidates = {
+            trunkBase.west(),
+            trunkBase.north(),
+            trunkBase.west().north(),
+            trunkBase.east(2),           // east of the 2x2
+            trunkBase.south(2),          // south of the 2x2
+            trunkBase.east(2).north(),
+            trunkBase.east(2).south(),
+            trunkBase.south(2).west(),
+            trunkBase.south(2).east()
+        };
+        for (int k = 0; k < 3; k++) {
+            BlockPos p = candidates[random.nextInt(candidates.length)];
+            if (TreeFeature.isAirOrLeaves(world, p)) {
+                consumer.accept(p, Blocks.COBWEB.defaultBlockState());
+                break;
+            }
+        }
     }
 
     /** Places a trunk log; occasionally uses a horizontal axis for a twisted, crooked look. */

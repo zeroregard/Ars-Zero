@@ -38,7 +38,8 @@
   "block.ars_zero.frozen_blight": "Frozen Blight",
   "block.ars_zero.multiphase_spell_turret": "Multiphase Spell Turret",
   "biome.ars_zero.blight_forest": "Blight Forest",
-  "block.ars_zero.blight_archwood_log": "Blight Archwood Log",
+  "block.ars_zero.blight_archwood_log": "Dead Archwood Log",
+  "block.ars_zero.blight_archwood_leaves": "Dead Archwood Leaves",
   "block.ars_zero.staff_display": "Spellcaster Pedestal",
 
   "item.ars_zero.blight_fluid_bucket": "Blight Fluid Bucket",

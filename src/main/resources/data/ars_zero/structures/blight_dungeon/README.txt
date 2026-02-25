@@ -38,6 +38,12 @@ rooms with Jigsaw blocks, etc.) built in creative with Structure Blocks; save
 and copy the .nbt into this folder (or data/ars_zero/structure/blight_dungeon/
 if your version uses the singular path).
 
+Important: Structure template .nbt files must be GZIP-compressed NBT. The game
+loads them with NbtIo.readCompressed(), so uncompressed NBT causes
+"Not in GZIP format" and "failed to place template". Exporting from in-game
+Structure Blocks produces the correct format; if you generate NBT by script,
+compress the raw NBT with gzip before writing the .nbt file.
+
 Troubleshooting (structure not found / nothing at /locate coords):
 - Rebuild the mod (./gradlew build) so the NBT files are in the jar or run
   resources; then use a NEW world or travel to chunks that have never been

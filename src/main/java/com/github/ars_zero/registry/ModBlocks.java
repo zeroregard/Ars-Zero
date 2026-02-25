@@ -8,10 +8,12 @@ import com.github.ars_zero.common.block.StaffDisplayBlock;
 import com.github.ars_zero.common.block.VoxelSpawnerBlock;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -116,5 +118,20 @@ public class ModBlocks {
     public static final DeferredHolder<Block, RotatedPillarBlock> BLIGHT_ARCHWOOD_LOG = BLOCKS.register(
         "blight_archwood_log",
         () -> new RotatedPillarBlock(BLIGHT_LOG_PROP)
+    );
+
+    /** Dead archwood leaves for blight forest trees; sparse foliage. */
+    public static final BlockBehaviour.Properties BLIGHT_LEAVES_PROP = BlockBehaviour.Properties.of()
+        .mapColor(MapColor.COLOR_GRAY)
+        .strength(0.2F)
+        .randomTicks()
+        .sound(SoundType.GRASS)
+        .noOcclusion()
+        .pushReaction(PushReaction.DESTROY)
+        .ignitedByLava();
+
+    public static final DeferredHolder<Block, LeavesBlock> BLIGHT_ARCHWOOD_LEAVES = BLOCKS.register(
+        "blight_archwood_leaves",
+        () -> new LeavesBlock(BLIGHT_LEAVES_PROP)
     );
 }

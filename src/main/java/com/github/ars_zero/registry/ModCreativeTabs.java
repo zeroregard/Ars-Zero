@@ -40,6 +40,7 @@ public class ModCreativeTabs {
                     output.accept(ModItems.BLIGHT_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.FROZEN_BLIGHT.get().getDefaultInstance());
                     output.accept(ModItems.BLIGHT_ARCHWOOD_LOG.get().getDefaultInstance());
+                    output.accept(ModItems.BLIGHT_ARCHWOOD_LEAVES.get().getDefaultInstance());
                     output.accept(ModItems.STAFF_DISPLAY.get().getDefaultInstance());
                     output.accept(ModFluids.BLIGHT_FLUID_BUCKET.get().getDefaultInstance());
                     output.accept(ModItems.MULTIPHASE_SPELL_TURRET.get().getDefaultInstance());

@@ -23,25 +23,26 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 /**
- * Larger variant of dead archwood: taller trunk (via config), longer branches, same 2x2 trunk and roots.
+ * Huge variant of dead archwood: 3x3 hollow trunk (center is air), 2x1 entrance at bottom for spawns,
+ * very tall (via config), very long branches, roots, and cobwebs.
  */
-public class BigDeadArchwoodTrunkPlacer extends TrunkPlacer {
+public class HugeDeadArchwoodTrunkPlacer extends TrunkPlacer {
 
-    public BigDeadArchwoodTrunkPlacer(int baseHeight, int heightRandA, int heightRandB) {
+    public HugeDeadArchwoodTrunkPlacer(int baseHeight, int heightRandA, int heightRandB) {
         super(baseHeight, heightRandA, heightRandB);
     }
 
     @Override
     protected TrunkPlacerType<?> type() {
-        return ModWorldgen.BIG_DEAD_ARCHWOOD_TRUNK_PLACER.get();
+        return ModWorldgen.HUGE_DEAD_ARCHWOOD_TRUNK_PLACER.get();
     }
 
-    public static final MapCodec<BigDeadArchwoodTrunkPlacer> CODEC = RecordCodecBuilder.mapCodec(builder ->
+    public static final MapCodec<HugeDeadArchwoodTrunkPlacer> CODEC = RecordCodecBuilder.mapCodec(builder ->
         builder.group(
             Codec.intRange(0, 32).fieldOf("base_height").forGetter(placer -> placer.baseHeight),
             Codec.intRange(0, 24).fieldOf("height_rand_a").forGetter(placer -> placer.heightRandA),
             Codec.intRange(0, 24).fieldOf("height_rand_b").forGetter(placer -> placer.heightRandB)
-        ).apply(builder, BigDeadArchwoodTrunkPlacer::new));
+        ).apply(builder, HugeDeadArchwoodTrunkPlacer::new));
 
     protected static void setDirtAt(LevelSimulatedReader level, BiConsumer<BlockPos, BlockState> blockSetter,
                                     RandomSource random, BlockPos pos, TreeConfiguration config, boolean isTreeOrigin) {
@@ -54,20 +55,28 @@ public class BigDeadArchwoodTrunkPlacer extends TrunkPlacer {
     public List<FoliagePlacer.FoliageAttachment> placeTrunk(LevelSimulatedReader world, BiConsumer<BlockPos, BlockState> consumer,
                                                           RandomSource rand, int foliageHeight, BlockPos pos, TreeConfiguration config) {
         List<FoliagePlacer.FoliageAttachment> list = Lists.newArrayList();
-        BlockPos blockpos = pos.below();
-        setDirtAt(world, consumer, rand, blockpos, config, true);
-        setDirtAt(world, consumer, rand, blockpos.east(), config, false);
-        setDirtAt(world, consumer, rand, blockpos.south(), config, false);
-        setDirtAt(world, consumer, rand, blockpos.south().east(), config, false);
         int x = pos.getX();
         int y = pos.getY();
         int z = pos.getZ();
-        int yOffset = y + foliageHeight - 1;
 
-        int curX = x;
-        int curZ = z;
-        final int driftInterval = 4;
+        // 3x3 trunk centered on (x,z): min corner curX, curZ with curX+1, curZ+1 = center (hollow)
+        int curX = x - 1;
+        int curZ = z - 1;
+
+        // Dirt under entire 3x3 footprint
+        BlockPos ground = pos.below();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                setDirtAt(world, consumer, rand, ground.offset(dx, 0, dz), config, dx == 0 && dz == 0);
+            }
+        }
+
+        int yOffset = y + foliageHeight - 1;
+        final int driftInterval = 5;
         final double driftChance = 0.4;
+
+        // 2x1 entrance at bottom: pick one of four sides, leave two adjacent blocks of the ring as air
+        Direction entranceSide = Direction.Plane.HORIZONTAL.getRandomDirection(rand);
 
         int numBranches = 0;
         int lastBranch = 0;
@@ -81,8 +90,8 @@ public class BigDeadArchwoodTrunkPlacer extends TrunkPlacer {
             if (i > 0 && i % driftInterval == 0 && rand.nextDouble() < driftChance) {
                 int dx = rand.nextInt(3) - 1;
                 int dz = rand.nextInt(3) - 1;
-                int nextX = Math.max(x - 1, Math.min(x + 1, curX + dx));
-                int nextZ = Math.max(z - 1, Math.min(z + 1, curZ + dz));
+                int nextX = Math.max(x - 2, Math.min(x, curX + dx));
+                int nextZ = Math.max(z - 2, Math.min(z, curZ + dz));
                 if (nextX != curX || nextZ != curZ) {
                     curX = nextX;
                     curZ = nextZ;
@@ -90,82 +99,118 @@ public class BigDeadArchwoodTrunkPlacer extends TrunkPlacer {
             }
 
             int j2 = y + i;
-            BlockPos blockpos1 = new BlockPos(curX, j2, curZ);
-            if (TreeFeature.isAirOrLeaves(world, blockpos1)) {
-                placeTrunkLogWithVariation(world, consumer, rand, blockpos1, config);
-                placeTrunkLogWithVariation(world, consumer, rand, blockpos1.east(), config);
-                placeTrunkLogWithVariation(world, consumer, rand, blockpos1.south(), config);
-                placeTrunkLogWithVariation(world, consumer, rand, blockpos1.east().south(), config);
-            }
+            BlockPos base = new BlockPos(curX, j2, curZ);
+            boolean isEntranceLevel = (i == 0);
+
+            // 3x3 ring (8 logs), center (base.east().south()) stays air = hollow
+            placeHollowTrunkRing(world, consumer, rand, base, config, isEntranceLevel, entranceSide);
+
             // Cobwebs in the upper part of the tree (top half)
             if (i >= foliageHeight / 2 && rand.nextFloat() < 0.175f) {
-                tryPlaceCobwebAround(world, consumer, rand, blockpos1);
+                tryPlaceCobwebAround3x3(world, consumer, rand, base);
             }
 
             if (i == 0) {
-                BlockPos abovePos = pos.above(i);
-                addRoots(world, rand, abovePos.west(), consumer, config, new Direction[]{Direction.NORTH, Direction.WEST});
-                addRoots(world, rand, abovePos.south(2), consumer, config, new Direction[]{Direction.SOUTH, Direction.WEST});
-                addRoots(world, rand, abovePos.south().west(), consumer, config, new Direction[]{Direction.WEST});
-                addRoots(world, rand, abovePos.south(2).east(), consumer, config, new Direction[]{Direction.EAST, Direction.SOUTH});
-                addRoots(world, rand, abovePos.east(2), consumer, config, new Direction[]{Direction.EAST, Direction.NORTH});
-                addRoots(world, rand, abovePos.east(2).south(), consumer, config, new Direction[]{Direction.EAST});
-                addRoots(world, rand, abovePos.east().north(), consumer, config, new Direction[]{Direction.NORTH});
-                addRoots(world, rand, abovePos.north(), consumer, config, new Direction[]{Direction.NORTH, Direction.EAST});
+                addRoots3x3(world, rand, curX, y, curZ, consumer, config);
             }
 
-            if (i > 1 && i > lastBranch) {
-                BlockPos trunkAtHeight = new BlockPos(curX, y, curZ);
+            // Branches only in the upper half of the tree (halfway up and above)
+            if (i >= foliageHeight / 2 && i > lastBranch) {
+                BlockPos northFace = new BlockPos(curX + 1, y, curZ);
+                BlockPos southFace = new BlockPos(curX + 1, y, curZ + 2);
+                BlockPos eastFace = new BlockPos(curX + 2, y, curZ + 1);
+                BlockPos westFace = new BlockPos(curX, y, curZ + 1);
                 if (northB) {
-                    addBranchLogsOnlyBig(world, trunkAtHeight, i, Direction.NORTH, rand, config, consumer);
+                    addBranchLogsOnlyHuge(world, northFace, i, Direction.NORTH, rand, config, consumer);
                     lastBranch = i;
                     numBranches++;
                     northB = false;
                 } else if (southB) {
-                    addBranchLogsOnlyBig(world, trunkAtHeight.relative(Direction.SOUTH), i, Direction.SOUTH, rand, config, consumer);
+                    addBranchLogsOnlyHuge(world, southFace, i, Direction.SOUTH, rand, config, consumer);
                     lastBranch = i;
                     numBranches++;
                     southB = false;
                 } else if (eastB) {
-                    addBranchLogsOnlyBig(world, trunkAtHeight.relative(Direction.EAST).south(), i, Direction.EAST, rand, config, consumer);
+                    addBranchLogsOnlyHuge(world, eastFace, i, Direction.EAST, rand, config, consumer);
                     lastBranch = i;
                     numBranches++;
                     eastB = false;
                 } else if (westB) {
-                    addBranchLogsOnlyBig(world, trunkAtHeight, i, Direction.WEST, rand, config, consumer);
+                    addBranchLogsOnlyHuge(world, westFace, i, Direction.WEST, rand, config, consumer);
                     lastBranch = i;
                     numBranches++;
                     westB = false;
                 } else if (numBranches == 0) {
-                    addBranchLogsOnlyBig(world, trunkAtHeight, i, Direction.NORTH, rand, config, consumer);
+                    addBranchLogsOnlyHuge(world, northFace, i, Direction.NORTH, rand, config, consumer);
                     lastBranch = i;
                     numBranches++;
-                    addBranchLogsOnlyBig(world, trunkAtHeight, i, Direction.SOUTH, rand, config, consumer);
+                    addBranchLogsOnlyHuge(world, southFace, i, Direction.SOUTH, rand, config, consumer);
                     numBranches++;
                 }
             }
         }
 
-        list.add(new FoliagePlacer.FoliageAttachment(new BlockPos(curX, yOffset, curZ), 0, true));
+        list.add(new FoliagePlacer.FoliageAttachment(new BlockPos(curX + 1, yOffset, curZ + 1), 0, true));
         return list;
     }
 
-    /** Tries to place a cobweb in air beside the 2x2 trunk (never inside or above the trunk column). */
-    private void tryPlaceCobwebAround(LevelSimulatedReader world, BiConsumer<BlockPos, BlockState> consumer,
-                                     RandomSource random, BlockPos trunkBase) {
-        // Only positions outside the 2x2: west/north of NW corner, and diagonals; never .above() (next trunk level)
-        BlockPos[] candidates = {
-            trunkBase.west(),
-            trunkBase.north(),
-            trunkBase.west().north(),
-            trunkBase.east(2),
-            trunkBase.south(2),
-            trunkBase.east(2).north(),
-            trunkBase.east(2).south(),
-            trunkBase.south(2).west(),
-            trunkBase.south(2).east()
+    /** Places the 8 log blocks of a 3x3 ring; skips center and (at i==0) the 2x1 entrance on entranceSide. */
+    private void placeHollowTrunkRing(LevelSimulatedReader world, BiConsumer<BlockPos, BlockState> consumer,
+                                      RandomSource rand, BlockPos base, TreeConfiguration config,
+                                      boolean isEntranceLevel, Direction entranceSide) {
+        // Ring: (0,0),(1,0),(2,0), (0,1),(2,1), (0,2),(1,2),(2,2) relative to base. Skip (1,1) = center.
+        for (int rx = 0; rx < 3; rx++) {
+            for (int rz = 0; rz < 3; rz++) {
+                if (rx == 1 && rz == 1) continue; // hollow center
+                if (isEntranceLevel && isEntranceBlock(rx, rz, entranceSide)) continue; // 2x1 entrance
+                BlockPos p = base.offset(rx, 0, rz);
+                if (TreeFeature.isAirOrLeaves(world, p)) {
+                    placeTrunkLogWithVariation(world, consumer, rand, p, config);
+                }
+            }
+        }
+    }
+
+    /** True if (rx,rz) in 0..2 is one of the two blocks that form the 2x1 entrance on the given side. */
+    private static boolean isEntranceBlock(int rx, int rz, Direction side) {
+        return switch (side) {
+            case NORTH -> rz == 0 && (rx == 1 || rx == 2); // front row, two blocks
+            case SOUTH -> rz == 2 && (rx == 0 || rx == 1);
+            case EAST -> rx == 2 && (rz == 1 || rz == 2);
+            case WEST -> rx == 0 && (rz == 0 || rz == 1);
+            default -> false;
         };
-        for (int k = 0; k < 3; k++) {
+    }
+
+    /** Roots around the 3x3 trunk footprint. */
+    private void addRoots3x3(LevelSimulatedReader world, RandomSource rand, int curX, int y, int curZ,
+                            BiConsumer<BlockPos, BlockState> consumer, TreeConfiguration config) {
+        BlockPos center = new BlockPos(curX + 1, y, curZ + 1);
+        addRoots(world, rand, center.west(2), consumer, config, new Direction[]{Direction.NORTH, Direction.WEST});
+        addRoots(world, rand, center.west(2).south(), consumer, config, new Direction[]{Direction.WEST});
+        addRoots(world, rand, center.west(2).south(2), consumer, config, new Direction[]{Direction.SOUTH, Direction.WEST});
+        addRoots(world, rand, center.north(), consumer, config, new Direction[]{Direction.NORTH, Direction.EAST});
+        addRoots(world, rand, center.north(2), consumer, config, new Direction[]{Direction.NORTH});
+        addRoots(world, rand, center.east(2).north(), consumer, config, new Direction[]{Direction.EAST, Direction.NORTH});
+        addRoots(world, rand, center.east(2), consumer, config, new Direction[]{Direction.EAST, Direction.SOUTH});
+        addRoots(world, rand, center.east(2).south(), consumer, config, new Direction[]{Direction.EAST});
+        addRoots(world, rand, center.south(2).east(), consumer, config, new Direction[]{Direction.SOUTH});
+        addRoots(world, rand, center.south(2), consumer, config, new Direction[]{Direction.SOUTH, Direction.EAST});
+        addRoots(world, rand, center.south(2).west(), consumer, config, new Direction[]{Direction.WEST});
+        addRoots(world, rand, center.north().west(), consumer, config, new Direction[]{Direction.NORTH});
+    }
+
+    /** Cobweb candidates around the 3x3 trunk: hollow center above, or outside the ring (never in the log ring). */
+    private void tryPlaceCobwebAround3x3(LevelSimulatedReader world, BiConsumer<BlockPos, BlockState> consumer,
+                                         RandomSource random, BlockPos base) {
+        BlockPos center = base.offset(1, 0, 1);
+        // Hollow at next level is safe; same-level positions outside the 3x3 ring are safe
+        BlockPos[] candidates = {
+            center.above(),           // hollow at next level
+            base.west(), base.north(), base.east(3), base.south(3),
+            base.west().north(), base.east(3).north(), base.east(3).south(3), base.west().south(3)
+        };
+        for (int k = 0; k < 4; k++) {
             BlockPos p = candidates[random.nextInt(candidates.length)];
             if (TreeFeature.isAirOrLeaves(world, p)) {
                 consumer.accept(p, Blocks.COBWEB.defaultBlockState());
@@ -185,9 +230,9 @@ public class BigDeadArchwoodTrunkPlacer extends TrunkPlacer {
         }
     }
 
-    /** Longer branches for big trees: more horizontal and vertical extent. */
-    private void addBranchLogsOnlyBig(LevelSimulatedReader world, BlockPos pos, int height, Direction d,
-                                      RandomSource random, TreeConfiguration config, BiConsumer<BlockPos, BlockState> consumer) {
+    /** Very long branches for huge trees: extends further out and higher than big variant. */
+    private void addBranchLogsOnlyHuge(LevelSimulatedReader world, BlockPos pos, int height, Direction d,
+                                       RandomSource random, TreeConfiguration config, BiConsumer<BlockPos, BlockState> consumer) {
         pos = pos.above(height);
         addLog(world, pos.relative(d), random, config, consumer);
         addLog(world, pos.relative(d).above(1), random, config, consumer);
@@ -196,9 +241,13 @@ public class BigDeadArchwoodTrunkPlacer extends TrunkPlacer {
         addLog(world, pos.relative(d, 3).above(2), random, config, consumer);
         addLog(world, pos.relative(d, 3).above(3), random, config, consumer);
         addLog(world, pos.relative(d, 4).above(3), random, config, consumer);
-        addLog(world, pos.relative(d, 4).above(2), random, config, consumer);
-        addLog(world, pos.relative(d, 5).above(2), random, config, consumer);
-        addLog(world, pos.relative(d, 5).above(1), random, config, consumer);
+        addLog(world, pos.relative(d, 4).above(4), random, config, consumer);
+        addLog(world, pos.relative(d, 5).above(4), random, config, consumer);
+        addLog(world, pos.relative(d, 5).above(3), random, config, consumer);
+        addLog(world, pos.relative(d, 6).above(3), random, config, consumer);
+        addLog(world, pos.relative(d, 6).above(2), random, config, consumer);
+        addLog(world, pos.relative(d, 7).above(2), random, config, consumer);
+        addLog(world, pos.relative(d, 7).above(1), random, config, consumer);
     }
 
     private boolean addLog(LevelSimulatedReader world, BlockPos pos, RandomSource random, TreeConfiguration config,
