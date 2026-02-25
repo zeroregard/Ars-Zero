@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.block.BlightCauldronBlock;
 import com.github.ars_zero.common.block.FrozenBlightBlock;
 import com.github.ars_zero.common.block.MultiphaseSpellTurret;
+import com.github.ars_zero.common.block.StaffDisplayBlock;
 import com.github.ars_zero.common.block.VoxelSpawnerBlock;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
@@ -96,5 +97,10 @@ public class ModBlocks {
         () -> new FrozenBlightBlock(BlockBehaviour.Properties.of()
             .strength(0.5f)
             .sound(SoundType.GLASS))
+    );
+
+    public static final DeferredHolder<Block, StaffDisplayBlock> STAFF_DISPLAY = BLOCKS.register(
+        "staff_display",
+        StaffDisplayBlock::new
     );
 }

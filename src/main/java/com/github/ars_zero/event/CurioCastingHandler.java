@@ -1,6 +1,6 @@
 package com.github.ars_zero.event;
 
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;

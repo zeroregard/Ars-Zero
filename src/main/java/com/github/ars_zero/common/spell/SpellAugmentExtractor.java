@@ -1,5 +1,9 @@
 package com.github.ars_zero.common.spell;
 
+import com.github.ars_zero.common.glyph.augment.AugmentAmplifyThree;
+import com.github.ars_zero.common.glyph.augment.AugmentAmplifyTwo;
+import com.github.ars_zero.common.glyph.augment.AugmentAOEThree;
+import com.github.ars_zero.common.glyph.augment.AugmentAOETwo;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.AbstractSpellPart;
@@ -29,11 +33,12 @@ public final class SpellAugmentExtractor {
     /**
      * Extracts augments that are applicable to a target effect from a spell context.
      * Collects augments that appear after the target effect until another effect is found.
-     * Returns a structured object with counts for common augments.
+     * Returns a structured object with AOE level, Amplify level (sum of tier contributions:
+     * AOE/Amplify = 1, AOE II/Amplify II = 2, AOE III/Amplify III = 4), and Dampen count.
      *
      * @param context The spell context to extract from
      * @param targetEffect The target effect to extract augments for
-     * @return AugmentData containing counts for AOE, Amplify, and Dampen
+     * @return AugmentData containing aoeLevel, amplifyLevel (levels, not counts), and dampenLevel (count)
      */
     @NotNull
     public static AugmentData extractApplicableAugments(SpellContext context, AbstractEffect targetEffect) {
@@ -62,9 +67,17 @@ public final class SpellAugmentExtractor {
             
             if (part instanceof AbstractAugment augment) {
                 if (augment == AugmentAOE.INSTANCE) {
-                    aoeLevel++;
+                    aoeLevel += 1;
+                } else if (augment == AugmentAOETwo.INSTANCE) {
+                    aoeLevel += 2;
+                } else if (augment == AugmentAOEThree.INSTANCE) {
+                    aoeLevel += 4;
                 } else if (augment == AugmentAmplify.INSTANCE) {
-                    amplifyLevel++;
+                    amplifyLevel += 1;
+                } else if (augment == AugmentAmplifyTwo.INSTANCE) {
+                    amplifyLevel += 2;
+                } else if (augment == AugmentAmplifyThree.INSTANCE) {
+                    amplifyLevel += 4;
                 } else if (augment == AugmentDampen.INSTANCE) {
                     dampenLevel++;
                 }

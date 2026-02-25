@@ -1,7 +1,7 @@
 package com.github.ars_zero.client.renderer;
 
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
-import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.AbstractStaff;
 import com.github.ars_zero.common.spell.IMultiPhaseCaster;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.spell.SpellPhase;
@@ -42,7 +42,7 @@ public class StaffDebugHUD {
         Player player = mc.player;
         ItemStack mainHandItem = player.getMainHandItem();
         
-        if (!(mainHandItem.getItem() instanceof AbstractSpellStaff staff)) {
+        if (!(mainHandItem.getItem() instanceof AbstractStaff staff)) {
             if (wasHolding) {
                 reset();
             }

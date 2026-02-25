@@ -36,6 +36,10 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         addAugmentHollowRecipe();
         addAugmentFlattenRecipe();
         addConjureBlightRecipe();
+        addAugmentAoeTwoRecipe();
+        addAugmentAoeThreeRecipe();
+        addAugmentAmplifyTwoRecipe();
+        addAugmentAmplifyThreeRecipe();
 
         for (FileObj fileObj : files) {
             saveStable(pOutput, fileObj.element, fileObj.path);
@@ -388,6 +392,90 @@ public class GlyphRecipeDatagen extends SimpleDataProvider {
         json.add("output", outputObj);
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_effect_conjure_blight.json"), json));
+    }
+
+    private void addAugmentAoeTwoRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 100);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("minecraft:diamond_block"));
+        inputsArray.add(item("ars_nouveau:source_gem_block"));
+        inputsArray.add(item("ars_nouveau:earth_essence"));
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("ars_nouveau:conjuration_essence"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:augment_aoe_two");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_augment_aoe_two.json"), json));
+    }
+
+    private void addAugmentAoeThreeRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 160);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("minecraft:netherite_block"));
+        inputsArray.add(item("ars_nouveau:source_gem_block"));
+        inputsArray.add(item("ars_nouveau:earth_essence"));
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("ars_nouveau:conjuration_essence"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:augment_aoe_three");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_augment_aoe_three.json"), json));
+    }
+
+    private void addAugmentAmplifyTwoRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 100);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("minecraft:diamond_block"));
+        inputsArray.add(item("ars_nouveau:source_gem_block"));
+        inputsArray.add(item("ars_nouveau:earth_essence"));
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("ars_nouveau:conjuration_essence"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:augment_amplify_two");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_augment_amplify_two.json"), json));
+    }
+
+    private void addAugmentAmplifyThreeRecipe() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "ars_nouveau:glyph");
+        json.addProperty("exp", 160);
+
+        JsonArray inputsArray = new JsonArray();
+        inputsArray.add(item("minecraft:netherite_block"));
+        inputsArray.add(item("ars_nouveau:source_gem_block"));
+        inputsArray.add(item("ars_nouveau:earth_essence"));
+        inputsArray.add(item("ars_nouveau:manipulation_essence"));
+        inputsArray.add(item("ars_nouveau:conjuration_essence"));
+        json.add("inputs", inputsArray);
+
+        JsonObject outputObj = new JsonObject();
+        outputObj.addProperty("count", 1);
+        outputObj.addProperty("id", "ars_zero:augment_amplify_three");
+        json.add("output", outputObj);
+
+        files.add(new FileObj(resolvePath("data/ars_zero/recipe/glyph_augment_amplify_three.json"), json));
     }
 
     private static JsonObject item(String id) {

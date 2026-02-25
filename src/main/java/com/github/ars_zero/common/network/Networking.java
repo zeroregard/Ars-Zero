@@ -16,9 +16,14 @@ public class Networking {
                                 PacketSetMultiPhaseSpellCastingSlot::handle);
 
                 registrar.playToServer(
-                                PacketSetStaffClipboard.TYPE,
-                                PacketSetStaffClipboard.CODEC,
-                                PacketSetStaffClipboard::handle);
+                                PacketSetParchmentClipboard.TYPE,
+                                PacketSetParchmentClipboard.CODEC,
+                                PacketSetParchmentClipboard::handle);
+
+                registrar.playToServer(
+                                PacketConvertParchmentToMultiphase.TYPE,
+                                PacketConvertParchmentToMultiphase.CODEC,
+                                PacketConvertParchmentToMultiphase::handle);
 
                 registrar.playToServer(
                                 PacketSetStaffSound.TYPE,
@@ -113,7 +118,11 @@ public class Networking {
                 PacketDistributor.sendToServer(packet);
         }
 
-        public static void sendToServer(PacketSetStaffClipboard packet) {
+        public static void sendToServer(PacketSetParchmentClipboard packet) {
+                PacketDistributor.sendToServer(packet);
+        }
+
+        public static void sendToServer(PacketConvertParchmentToMultiphase packet) {
                 PacketDistributor.sendToServer(packet);
         }
 

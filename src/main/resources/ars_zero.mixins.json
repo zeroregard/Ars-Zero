@@ -4,7 +4,7 @@
   "package": "com.github.ars_zero.mixin",
   "compatibilityLevel": "JAVA_21",
   "refmap": "ars_zero.refmap.json",
-  "mixins": ["ScribesBlockMixin"],
+  "mixins": ["BlankParchmentItemMixin","ScribesBlockMixin"],
   "client": ["EnchantingApparatusRecipeCategoryMixin", "GlyphButtonMixin", "GuiSpellBookMixin", "RecipeLayoutMixin"],
   "server": []
 }

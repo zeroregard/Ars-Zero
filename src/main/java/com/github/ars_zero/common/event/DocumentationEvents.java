@@ -6,11 +6,18 @@ import com.github.ars_zero.registry.ModItems;
 import com.hollingsworth.arsnouveau.api.documentation.DocCategory;
 import com.hollingsworth.arsnouveau.api.documentation.ReloadDocumentationEvent;
 import com.hollingsworth.arsnouveau.api.documentation.entry.DocEntry;
+import com.hollingsworth.arsnouveau.api.documentation.entry.TextEntry;
 import com.hollingsworth.arsnouveau.api.documentation.builder.DocEntryBuilder;
 import com.hollingsworth.arsnouveau.api.registry.DocumentationRegistry;
 import com.hollingsworth.arsnouveau.setup.registry.Documentation;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.loading.FMLEnvironment;
+
+import java.util.List;
 
 @EventBusSubscriber(modid = ArsZero.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
 public class DocumentationEvents {
@@ -43,6 +50,34 @@ public class DocumentationEvents {
 
         spellPhasesEntry.withRelation(phaseTargetingEntry.id());
 
+        DocEntryBuilder lifespanBuilder = new DocEntryBuilder(ArsZero.MOD_ID, category, "lifespan_based_effects")
+                .withIcon(ModGlyphs.EFFECT_BEAM.getGlyph())
+                .withSortNum(4);
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            List<ItemStack> lifespanStacks = lifespanGlyphStacks();
+            lifespanBuilder
+                    .withPage(com.github.ars_zero.client.gui.documentation.LifespanIntroWithGlyphsPage.create(
+                            "ars_zero.page.lifespan_based_effects",
+                            "ars_zero.page.lifespan_based_effects.intro",
+                            lifespanStacks))
+                    .withPage(com.github.ars_zero.client.gui.documentation.LifespanGlyphsOnlyPage.create(lifespanStacks));
+        } else {
+            lifespanBuilder.withPage(TextEntry.create(
+                    Component.translatable("ars_zero.page.lifespan_based_effects.intro"),
+                    Component.translatable("ars_zero.page.lifespan_based_effects"),
+                    ModGlyphs.EFFECT_BEAM.getGlyph()));
+        }
+        Documentation.addPage(lifespanBuilder);
+
         Documentation.addPage(ExamplesDocHelper.buildEntry(category));
+    }
+
+    private static List<ItemStack> lifespanGlyphStacks() {
+        return List.of(
+                ModGlyphs.EFFECT_BEAM.getGlyph().getDefaultInstance(),
+                ModGlyphs.EFFECT_CONVERGENCE.getGlyph().getDefaultInstance(),
+                ModGlyphs.EFFECT_GEOMETRIZE.getGlyph().getDefaultInstance(),
+                ModGlyphs.CONJURE_VOXEL_EFFECT.getGlyph().getDefaultInstance()
+        );
     }
 }

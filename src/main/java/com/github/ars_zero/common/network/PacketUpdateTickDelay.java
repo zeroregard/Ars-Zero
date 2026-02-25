@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;

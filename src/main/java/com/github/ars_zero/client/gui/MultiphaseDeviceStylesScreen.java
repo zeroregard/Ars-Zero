@@ -201,20 +201,20 @@ public class MultiphaseDeviceStylesScreen extends BaseBook {
                 
                 ItemStack freshStack = ItemStack.EMPTY;
                 
-                if (staffStack != null && !staffStack.isEmpty() && staffStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
+                if (staffStack != null && !staffStack.isEmpty() && staffStack.getItem() instanceof com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice) {
                     freshStack = staffStack;
                 } else if (hand != null) {
                     freshStack = player.getItemInHand(hand);
-                    if (!(freshStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice)) {
+                    if (!(freshStack.getItem() instanceof com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice)) {
                         freshStack = ItemStack.EMPTY;
                     }
                 } else {
                     ItemStack mainStack = player.getMainHandItem();
-                    if (mainStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
+                    if (mainStack.getItem() instanceof com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice) {
                         freshStack = mainStack;
                     } else {
                         ItemStack offStack = player.getOffhandItem();
-                        if (offStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice) {
+                        if (offStack.getItem() instanceof com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice) {
                             freshStack = offStack;
                         }
                     }
@@ -223,14 +223,14 @@ public class MultiphaseDeviceStylesScreen extends BaseBook {
                 if (freshStack.isEmpty() && isForCirclet) {
                     freshStack = top.theillusivec4.curios.api.CuriosApi.getCuriosHelper()
                         .findEquippedCurio(
-                            equipped -> equipped.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice,
+                            equipped -> equipped.getItem() instanceof com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice,
                             player
                         )
                         .map(result -> result.getRight())
                         .orElse(ItemStack.EMPTY);
                 }
                 
-                if (freshStack.isEmpty() || !(freshStack.getItem() instanceof com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice)) {
+                if (freshStack.isEmpty() || !(freshStack.getItem() instanceof com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice)) {
                     return;
                 }
                 

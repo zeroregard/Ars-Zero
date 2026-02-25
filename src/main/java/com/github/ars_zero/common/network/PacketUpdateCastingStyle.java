@@ -2,7 +2,7 @@ package com.github.ars_zero.common.network;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.casting.CastingStyle;
-import com.github.ars_zero.common.item.AbstractMultiPhaseCastDevice;
+import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;

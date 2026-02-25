@@ -1,0 +1,80 @@
+{
+    "credit": "Made with Blockbench",
+    "parent": "builtin/entity",
+    "texture_size": [
+        128,
+        128
+    ],
+    "textures": {
+        "0": "ars_zero:item/telekinesis_staff"
+    },
+    "display": {
+        "thirdperson_righthand": {
+            "translation": [
+                0,
+                -11.5,
+                0
+            ]
+        },
+        "thirdperson_lefthand": {
+            "translation": [
+                0,
+                -11.5,
+                0
+            ]
+        },
+        "firstperson_righthand": {
+            "rotation": [
+                -12,
+                -9,
+                0
+            ],
+            "translation": [
+                1.5,
+                -12,
+                0.5
+            ]
+        },
+        "firstperson_lefthand": {
+            "rotation": [
+                -12,
+                -9,
+                0
+            ],
+            "translation": [
+                1.5,
+                -12,
+                0.5
+            ]
+        },
+        "ground": {
+            "rotation": [
+                90,
+                0,
+                0
+            ],
+            "translation": [
+                0,
+                0,
+                -8
+            ]
+        },
+        "fixed": {
+            "rotation": [
+                4,
+                0,
+                45
+            ],
+            "translation": [
+                0,
+                0,
+                0
+            ],
+            "scale": [
+                0.75,
+                0.75,
+                0.75
+            ]
+        }
+    }
+}
