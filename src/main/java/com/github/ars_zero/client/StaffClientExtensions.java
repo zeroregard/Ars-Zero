@@ -1,6 +1,8 @@
 package com.github.ars_zero.client;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.client.renderer.item.StaticStaffRendererProvider;
+import com.github.ars_zero.common.item.StaticStaffRendererRegistry;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
@@ -18,6 +20,8 @@ public class StaffClientExtensions {
 
     @SubscribeEvent
     public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
+        StaticStaffRendererRegistry.RENDERER_FACTORY = StaticStaffRendererProvider::create;
+
         IClientItemExtensions staffExtensions = new IClientItemExtensions() {
             @Nullable
             @Override
@@ -29,12 +33,14 @@ public class StaffClientExtensions {
             }
         };
         
-        event.registerItem(staffExtensions, 
+        event.registerItem(staffExtensions,
             com.github.ars_zero.registry.ModItems.NOVICE_SPELL_STAFF.get(),
             com.github.ars_zero.registry.ModItems.MAGE_SPELL_STAFF.get(),
             com.github.ars_zero.registry.ModItems.ARCHMAGE_SPELL_STAFF.get(),
-            com.github.ars_zero.registry.ModItems.CREATIVE_SPELL_STAFF.get(),
-            com.github.ars_zero.registry.ModItems.STAFF_TELEKINESIS.get()
+            com.github.ars_zero.registry.ModItems.CREATIVE_SPELL_STAFF.get()
         );
+        for (var holder : com.github.ars_zero.registry.ModStaffItems.getRegisteredStaticStaffs()) {
+            event.registerItem(staffExtensions, holder.get());
+        }
     }
 }
