@@ -90,6 +90,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.AbstractSkeleton;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.BlockHitResult;
 import com.alexthw.sauce.registry.ModRegistry;
 import net.minecraft.world.phys.EntityHitResult;
@@ -378,14 +379,40 @@ public class ArsZero {
     }
 
     private static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
-        AttributeSupplier.Builder builder = AbstractSkeleton.createAttributes();
-        builder.add(ModRegistry.NECROMANCY_POWER, 5.0);
-        event.put(ModEntities.MAGE_SKELETON.get(), builder.build());
+        // Acolyte: 20 HP (vanilla skeleton default)
+        AttributeSupplier.Builder acolyte = AbstractSkeleton.createAttributes();
+        acolyte.add(ModRegistry.NECROMANCY_POWER, 5.0);
+        event.put(ModEntities.ACOLYTE.get(), acolyte.build());
+
+        // Necromancer: 30 HP
+        AttributeSupplier.Builder necromancer = AbstractSkeleton.createAttributes();
+        necromancer.add(ModRegistry.NECROMANCY_POWER, 5.0);
+        necromancer.add(Attributes.MAX_HEALTH, 30.0);
+        event.put(ModEntities.NECROMANCER.get(), necromancer.build());
+
+        // Lich: 40 HP + flying speed
+        AttributeSupplier.Builder lich = AbstractSkeleton.createAttributes();
+        lich.add(ModRegistry.NECROMANCY_POWER, 5.0);
+        lich.add(Attributes.MAX_HEALTH, 40.0);
+        lich.add(Attributes.FLYING_SPEED, 0.4);
+        event.put(ModEntities.LICH.get(), lich.build());
     }
 
     private static void onRegisterSpawnPlacements(RegisterSpawnPlacementsEvent event) {
         event.register(
-                ModEntities.MAGE_SKELETON.get(),
+                ModEntities.ACOLYTE.get(),
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        event.register(
+                ModEntities.NECROMANCER.get(),
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        event.register(
+                ModEntities.LICH.get(),
                 SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Monster::checkMonsterSpawnRules,
@@ -393,7 +420,9 @@ public class ArsZero {
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerEntity(CapabilityRegistry.MANA_CAPABILITY, ModEntities.MAGE_SKELETON.get(), (entity, ctx) -> new ManaCap(entity));
+        event.registerEntity(CapabilityRegistry.MANA_CAPABILITY, ModEntities.ACOLYTE.get(), (entity, ctx) -> new ManaCap(entity));
+        event.registerEntity(CapabilityRegistry.MANA_CAPABILITY, ModEntities.NECROMANCER.get(), (entity, ctx) -> new ManaCap(entity));
+        event.registerEntity(CapabilityRegistry.MANA_CAPABILITY, ModEntities.LICH.get(), (entity, ctx) -> new ManaCap(entity));
     }
 
     public void gatherData(GatherDataEvent event) {

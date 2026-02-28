@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.entity.ai;
 
-import com.github.ars_zero.common.entity.MageSkeletonEntity;
+import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
 import com.hollingsworth.arsnouveau.common.spell.effect.EffectBlink;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.core.BlockPos;
@@ -23,8 +23,7 @@ public class MageSkeletonBlinkGoal extends Goal {
 
     /** Mana cost matching EffectBlink default. */
     private static final int BLINK_MANA_COST = 50;
-    /** Cooldown after blinking so he doesn't spam. */
-    public static final int BLINK_COOLDOWN_TICKS = 40;
+    /** Cooldown after blinking; per-tier value is set from mob.getBlinkCooldownTicksMax(). */
     /** Trigger when target is within this distance (blocks). */
     private static final double TRIGGER_DISTANCE = 3.0;
     /** Min/max distance to search for blink destination from current position. */
@@ -35,9 +34,9 @@ public class MageSkeletonBlinkGoal extends Goal {
     /** Y offset steps to try (current, above, below). */
     private static final int[] Y_OFFSETS = { 0, 1, -1, 2, -2 };
 
-    private final MageSkeletonEntity mob;
+    private final AbstractBlightedSkeleton mob;
 
-    public MageSkeletonBlinkGoal(MageSkeletonEntity mob) {
+    public MageSkeletonBlinkGoal(AbstractBlightedSkeleton mob) {
         this.mob = mob;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
     }
@@ -89,7 +88,7 @@ public class MageSkeletonBlinkGoal extends Goal {
         spawnBlinkParticles(serverLevel, origin.x, origin.y + 1, origin.z);
         EffectBlink.warpEntity(mob, serverLevel, dest);
         spawnBlinkParticles(serverLevel, mob.getX(), mob.getY() + 1, mob.getZ());
-        mob.setBlinkCooldownTicks(BLINK_COOLDOWN_TICKS);
+        mob.setBlinkCooldownTicks(mob.getBlinkCooldownTicksMax());
     }
 
     /**

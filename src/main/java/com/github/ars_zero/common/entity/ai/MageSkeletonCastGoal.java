@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.entity.ai;
 
 import com.github.ars_zero.api.spell.MobSpellBehaviour;
-import com.github.ars_zero.common.entity.MageSkeletonEntity;
+import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -19,10 +19,10 @@ public class MageSkeletonCastGoal extends Goal {
     private static final float MIN_CAST_DISTANCE = 4.0f;
     private static final float MAX_CAST_DISTANCE = 22.0f;
 
-    private final MageSkeletonEntity mob;
+    private final AbstractBlightedSkeleton mob;
     private final List<MobSpellBehaviour> behaviours;
 
-    public MageSkeletonCastGoal(MageSkeletonEntity mob, List<MobSpellBehaviour> behaviours) {
+    public MageSkeletonCastGoal(AbstractBlightedSkeleton mob, List<MobSpellBehaviour> behaviours) {
         this.mob = mob;
         this.behaviours = List.copyOf(behaviours);
         this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));

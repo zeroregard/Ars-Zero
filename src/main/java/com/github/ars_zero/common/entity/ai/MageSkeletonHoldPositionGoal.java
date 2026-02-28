@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.entity.ai;
 
-import com.github.ars_zero.common.entity.MageSkeletonEntity;
+import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 
@@ -14,9 +14,9 @@ public class MageSkeletonHoldPositionGoal extends Goal {
 
     private static final double STAY_WITHIN_BLOCKS = 20.0;
 
-    private final MageSkeletonEntity mob;
+    private final AbstractBlightedSkeleton mob;
 
-    public MageSkeletonHoldPositionGoal(MageSkeletonEntity mob) {
+    public MageSkeletonHoldPositionGoal(AbstractBlightedSkeleton mob) {
         this.mob = mob;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
     }

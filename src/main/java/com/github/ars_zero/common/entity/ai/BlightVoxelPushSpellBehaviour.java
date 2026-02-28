@@ -5,7 +5,7 @@ import com.github.ars_zero.api.spell.MobSpellResolver;
 import com.github.ars_zero.common.casting.CastingStyle;
 import com.github.ars_zero.common.entity.ArcaneCircleEntity;
 import com.github.ars_zero.common.entity.BlightVoxelEntity;
-import com.github.ars_zero.common.entity.MageSkeletonEntity;
+import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModGlyphs;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
@@ -80,7 +80,7 @@ public class BlightVoxelPushSpellBehaviour implements MobSpellBehaviour {
         serverLevel.addFreshEntity(voxel);
 
         // 3) Schedule Push after HOVER_TICKS (2 seconds); mob will call executePush when chargeTicks hits 0
-        if (caster instanceof MageSkeletonEntity mage) {
+        if (caster instanceof AbstractBlightedSkeleton mage) {
             mage.setPendingPush(voxel.getId(), HOVER_TICKS);
             return true;
         }
@@ -88,10 +88,10 @@ public class BlightVoxelPushSpellBehaviour implements MobSpellBehaviour {
     }
 
     /**
-     * Executes the Push on the voxel toward the target. Called by MageSkeletonEntity when hover delay ends.
+     * Executes the Push on the voxel toward the target. Called by blighted skeleton when hover delay ends.
      * Deducts mana via the resolver.
      */
-    public static void executePush(MageSkeletonEntity caster, LivingEntity target, BlightVoxelEntity voxel) {
+    public static void executePush(AbstractBlightedSkeleton caster, LivingEntity target, BlightVoxelEntity voxel) {
         if (!(caster.level() instanceof ServerLevel serverLevel) || !voxel.isAlive()) {
             return;
         }

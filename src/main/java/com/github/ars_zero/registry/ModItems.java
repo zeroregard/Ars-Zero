@@ -123,14 +123,16 @@ public class ModItems {
 
     public static final ItemRegistryWrapper<StaffTelekinesis> STAFF_TELEKINESIS = register("staff_telekinesis", StaffTelekinesis::new);
 
-    /** Spawn egg for the mage skeleton (skeleton with arcanist hat). */
-    public static final DeferredHolder<Item, SpawnEggItem> MAGE_SKELETON_SPAWN_EGG = ITEMS.register(
-            "mage_skeleton_spawn_egg",
-            () -> new SpawnEggItem(
-                    ModEntities.MAGE_SKELETON.get(),
-                    0xC1C1C1,
-                    0x494949,
-                    defaultItemProperties()));
+    /** Spawn eggs for blighted skeleton tiers. */
+    public static final DeferredHolder<Item, SpawnEggItem> ACOLYTE_SPAWN_EGG = ITEMS.register(
+            "acolyte_spawn_egg",
+            () -> new SpawnEggItem(ModEntities.ACOLYTE.get(), 0x8B7355, 0x494949, defaultItemProperties()));
+    public static final DeferredHolder<Item, SpawnEggItem> NECROMANCER_SPAWN_EGG = ITEMS.register(
+            "necromancer_spawn_egg",
+            () -> new SpawnEggItem(ModEntities.NECROMANCER.get(), 0xC1C1C1, 0x494949, defaultItemProperties()));
+    public static final DeferredHolder<Item, SpawnEggItem> LICH_SPAWN_EGG = ITEMS.register(
+            "lich_spawn_egg",
+            () -> new SpawnEggItem(ModEntities.LICH.get(), 0xE8DCC8, 0x2D2D2D, defaultItemProperties()));
 
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);

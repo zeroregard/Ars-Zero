@@ -84,7 +84,9 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.SOURCE_JAR_CHARGER.get(), SourceJarChargerEntityRenderer::new);
             EntityRenderers.register(ModEntities.PLAYER_CHARGER.get(), PlayerChargerEntityRenderer::new);
             EntityRenderers.register(ModEntities.ARCANE_CIRCLE.get(), ArcaneCircleEntityRenderer::new);
-            EntityRenderers.register(ModEntities.MAGE_SKELETON.get(), MageSkeletonRenderer::new);
+            EntityRenderers.register(ModEntities.ACOLYTE.get(), MageSkeletonRenderer::new);
+            EntityRenderers.register(ModEntities.NECROMANCER.get(), MageSkeletonRenderer::new);
+            EntityRenderers.register(ModEntities.LICH.get(), MageSkeletonRenderer::new);
         });
     }
 

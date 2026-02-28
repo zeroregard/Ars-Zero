@@ -1,6 +1,6 @@
 package com.github.ars_zero.common.entity.ai;
 
-import com.github.ars_zero.common.entity.MageSkeletonEntity;
+import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
 import com.github.ars_zero.registry.ModMobEffects;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import alexthw.ars_elemental.common.entity.summon.SummonUndead;
@@ -29,9 +29,9 @@ public class MageSkeletonSummonGoal extends Goal {
     /** Ticks to block summoning after a spawn so the new entity is registered before we can consider summoning again. */
     private static final int SUMMON_COOLDOWN_TICKS = 60;
 
-    private final MageSkeletonEntity mob;
+    private final AbstractBlightedSkeleton mob;
 
-    public MageSkeletonSummonGoal(MageSkeletonEntity mob) {
+    public MageSkeletonSummonGoal(AbstractBlightedSkeleton mob) {
         this.mob = mob;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
     }
@@ -44,7 +44,7 @@ public class MageSkeletonSummonGoal extends Goal {
         if (mob.getTarget() == null || !mob.getTarget().isAlive()) {
             return false;
         }
-        if (mob.hasLivingOwnedRevenant()) {
+        if (mob.countLivingOwnedRevenants() >= mob.getMaxSummons()) {
             return false;
         }
         var mana = CapabilityRegistry.getMana(mob);
@@ -86,7 +86,7 @@ public class MageSkeletonSummonGoal extends Goal {
         summon.addEffect(new MobEffectInstance(ModMobEffects.WITHER_IMMUNITY, SUMMON_DURATION_TICKS, 0, false, false));
         serverLevel.addFreshEntity(summon);
 
-        mob.setOwnedRevenantUuid(summon.getUUID());
+        mob.addOwnedRevenantUuid(summon.getUUID());
         mana.setMana(mana.getCurrentMana() - MANA_COST);
         mob.setCastCooldownTicks(MageSkeletonCastGoal.COOLDOWN_TICKS);
         mob.setSummonCooldownTicks(SUMMON_COOLDOWN_TICKS);

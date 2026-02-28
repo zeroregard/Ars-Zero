@@ -1,7 +1,7 @@
 package com.github.ars_zero.common.entity.ai;
 
 import com.github.ars_zero.api.spell.MobSpellBehaviour;
-import com.github.ars_zero.common.entity.MageSkeletonEntity;
+import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
 import com.hollingsworth.arsnouveau.api.entity.ISummon;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import alexthw.ars_elemental.common.entity.summon.SummonUndead;
@@ -67,7 +67,7 @@ public class SummonUndeadSpellBehaviour implements MobSpellBehaviour {
         serverLevel.addFreshEntity(summon);
 
         mana.setMana(mana.getCurrentMana() - MANA_COST);
-        if (caster instanceof MageSkeletonEntity mage) {
+        if (caster instanceof AbstractBlightedSkeleton mage) {
             mage.setCastCooldownTicks(MageSkeletonCastGoal.COOLDOWN_TICKS);
         }
         return true;
