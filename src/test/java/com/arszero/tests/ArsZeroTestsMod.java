@@ -35,6 +35,9 @@ public final class ArsZeroTestsMod {
         if (TestRegistrationFilter.shouldRegister(VoxelDamageAttributionTests.class)) {
             modEventBus.addListener(VoxelDamageAttributionTests::registerGameTests);
         }
+        if (TestRegistrationFilter.shouldRegister(BlightDungeonStructureTests.class)) {
+            modEventBus.addListener(BlightDungeonStructureTests::registerGameTests);
+        }
         modEventBus.addListener(ArsZeroTestsMod::onCommonSetup);
     }
 

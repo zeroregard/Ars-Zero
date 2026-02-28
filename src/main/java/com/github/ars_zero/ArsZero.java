@@ -120,6 +120,7 @@ public class ArsZero {
         ModRecipes.RECIPE_TYPES.register(modEventBus);
         ModWorldgen.FEATURES.register(modEventBus);
         ModWorldgen.TRUNK_PLACER_TYPES.register(modEventBus);
+        ModWorldgen.PLACEMENT_MODIFIER_TYPES.register(modEventBus);
         ModStructures.STRUCTURES.register(modEventBus);
         ModParticleTimelines.init(modEventBus);
 

@@ -5,6 +5,7 @@ import com.github.ars_zero.common.world.tree.BigDeadArchwoodTrunkPlacer;
 import com.github.ars_zero.common.world.tree.DeadArchwoodTrunkPlacer;
 import com.github.ars_zero.common.world.tree.HugeDeadArchwoodTrunkPlacer;
 import com.github.ars_zero.common.world.feature.BlightPoolFeature;
+import com.github.ars_zero.common.world.placement.NoBlightLogNearbyFilter;
 import com.github.ars_zero.registry.ModBlocks;
 import com.github.ars_zero.registry.ModFluids;
 import com.github.ars_zero.registry.ModWorldgen;
@@ -32,17 +33,22 @@ import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.configurations.DiskConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
+import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSize;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.BlobFoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.levelgen.feature.stateproviders.RuleBasedBlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
 import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+import net.minecraft.world.level.levelgen.placement.PlacementModifier;
 import net.minecraft.world.level.levelgen.placement.RarityFilter;
 import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -106,16 +112,14 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
                     new SimpleBlockConfiguration(BlockStateProvider.simple(Blocks.SHORT_GRASS)),
                     List.of(Blocks.GRASS_BLOCK, Blocks.DIRT))));
 
-        context.register(ModWorldgen.CONFIGURED_BLIGHT_FOREST_ROCK,
-            new ConfiguredFeature<>(Feature.SIMPLE_BLOCK,
-                new SimpleBlockConfiguration(BlockStateProvider.simple(Blocks.STONE))));
-
+        // Coarse dirt disk replaces grass_block/dirt with coarse_dirt (surface patches), not placed on top
         context.register(ModWorldgen.CONFIGURED_DISK_COARSE_DIRT,
-            new ConfiguredFeature<>(Feature.RANDOM_PATCH,
-                FeatureUtils.simplePatchConfiguration(
-                    Feature.SIMPLE_BLOCK,
-                    new SimpleBlockConfiguration(BlockStateProvider.simple(Blocks.COARSE_DIRT)),
-                    List.of(Blocks.GRASS_BLOCK, Blocks.DIRT))));
+            new ConfiguredFeature<>(Feature.DISK,
+                new DiskConfiguration(
+                    RuleBasedBlockStateProvider.simple(Blocks.COARSE_DIRT),
+                    BlockPredicate.matchesBlocks(List.of(Blocks.GRASS_BLOCK, Blocks.DIRT)),
+                    UniformInt.of(1, 3),
+                    1)));
 
         context.register(ModWorldgen.CONFIGURED_DISK_GRAVEL_SURFACE,
             new ConfiguredFeature<>(Feature.RANDOM_PATCH,
@@ -144,10 +148,13 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
                 features.getOrThrow(ModWorldgen.CONFIGURED_BIG_DEAD_ARCHWOOD_TREE),
                 VegetationPlacements.treePlacement(RarityFilter.onAverageOnceEvery(3))
             ));
+        List<PlacementModifier> hugeTreeModifiers = new ArrayList<>();
+        hugeTreeModifiers.add(NoBlightLogNearbyFilter.INSTANCE);
+        hugeTreeModifiers.addAll(VegetationPlacements.treePlacement(RarityFilter.onAverageOnceEvery(12)));
         context.register(ModWorldgen.PLACED_HUGE_DEAD_ARCHWOOD_TREE,
             new PlacedFeature(
                 features.getOrThrow(ModWorldgen.CONFIGURED_HUGE_DEAD_ARCHWOOD_TREE),
-                VegetationPlacements.treePlacement(RarityFilter.onAverageOnceEvery(12))
+                hugeTreeModifiers
             ));
         context.register(ModWorldgen.PLACED_PATCH_DEAD_BUSH,
             new PlacedFeature(
@@ -162,14 +169,6 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
                 features.getOrThrow(ModWorldgen.CONFIGURED_PATCH_GRASS),
                 List.of(
                     RarityFilter.onAverageOnceEvery(2),
-                    InSquarePlacement.spread(),
-                    PlacementUtils.HEIGHTMAP_WORLD_SURFACE,
-                    BiomeFilter.biome())));
-        context.register(ModWorldgen.PLACED_BLIGHT_FOREST_ROCK,
-            new PlacedFeature(
-                features.getOrThrow(ModWorldgen.CONFIGURED_BLIGHT_FOREST_ROCK),
-                List.of(
-                    RarityFilter.onAverageOnceEvery(14),
                     InSquarePlacement.spread(),
                     PlacementUtils.HEIGHTMAP_WORLD_SURFACE,
                     BiomeFilter.biome())));
@@ -221,7 +220,7 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_HUGE_DEAD_ARCHWOOD_TREE));
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_PATCH_DEAD_BUSH));
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_PATCH_GRASS));
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_BLIGHT_FOREST_ROCK));
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_DISK_COARSE_DIRT));
         generation.addFeature(GenerationStep.Decoration.FLUID_SPRINGS, placedFeatures.getOrThrow(ModWorldgen.PLACED_BLIGHT_POOL));
         BiomeDefaultFeatures.addDefaultMushrooms(generation);
         BiomeDefaultFeatures.addDefaultExtraVegetation(generation);
