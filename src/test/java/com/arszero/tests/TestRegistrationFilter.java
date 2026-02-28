@@ -25,8 +25,7 @@ public final class TestRegistrationFilter {
         ZeroGravityEffectTests.class,
         MultiphaseSpellTurretPhasesTest.class,
         WindVoxelWorldInteractionBehaviour.class,
-        WindVoxelInteractionBehaviour.class,
-        BlightDungeonStructureTests.class
+        WindVoxelInteractionBehaviour.class
     );
 
     private static final Map<String, Class<?>> NAME_LOOKUP = buildNameLookup();

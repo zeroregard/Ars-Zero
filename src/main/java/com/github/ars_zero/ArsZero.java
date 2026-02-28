@@ -59,7 +59,6 @@ import com.github.ars_zero.registry.ModMobEffects;
 import com.github.ars_zero.registry.ModParticleTimelines;
 import com.github.ars_zero.registry.ModParticles;
 import com.github.ars_zero.registry.ModRecipes;
-import com.github.ars_zero.registry.ModStructures;
 import com.github.ars_zero.common.world.biome.BlightForestRegion;
 import com.github.ars_zero.registry.ModWorldgen;
 import com.github.ars_zero.registry.ModSounds;
@@ -121,7 +120,6 @@ public class ArsZero {
         ModWorldgen.FEATURES.register(modEventBus);
         ModWorldgen.TRUNK_PLACER_TYPES.register(modEventBus);
         ModWorldgen.PLACEMENT_MODIFIER_TYPES.register(modEventBus);
-        ModStructures.STRUCTURES.register(modEventBus);
         ModParticleTimelines.init(modEventBus);
 
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
