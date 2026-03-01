@@ -37,6 +37,13 @@
   "ars_zero.tooltip.multiphase_parchment.tick_delay": "Tick delay: %s",
   "item.ars_zero.multiphase_orb": "Phased Orb",
 
+  "entity.ars_zero.acolyte": "Acolyte",
+  "entity.ars_zero.necromancer": "Necromancer",
+  "entity.ars_zero.lich": "Lich",
+  "item.ars_zero.acolyte_spawn_egg": "Acolyte Spawn Egg",
+  "item.ars_zero.necromancer_spawn_egg": "Necromancer Spawn Egg",
+  "item.ars_zero.lich_spawn_egg": "Lich Spawn Egg",
+
   "block.ars_zero.arcane_voxel_spawner": "Arcane Voxel Spawner",
   "block.ars_zero.fire_voxel_spawner": "Fire Voxel Spawner",
   "block.ars_zero.water_voxel_spawner": "Water Voxel Spawner",
@@ -49,6 +56,9 @@
   "block.ars_zero.blight_cauldron": "Blight Cauldron",
   "block.ars_zero.frozen_blight": "Frozen Blight",
   "block.ars_zero.multiphase_spell_turret": "Multiphase Spell Turret",
+  "biome.ars_zero.blight_forest": "Blight Forest",
+  "block.ars_zero.blight_archwood_log": "Dead Archwood Log",
+  "block.ars_zero.blight_archwood_leaves": "Dead Archwood Leaves",
   "block.ars_zero.staff_display": "Spellcaster Pedestal",
 
   "item.ars_zero.blight_fluid_bucket": "Blight Fluid Bucket",
@@ -289,7 +299,7 @@
   "ars_zero.examples.ekusupuroshon": "Ekusupuroshon",
   "ars_zero.examples.ekusupuroshon.quote": "\"Darkness blacker than black, and darker than dark\"",
   "ars_zero.examples.mage_march": "Mage's March",
-  "ars_zero.examples.mage_march.quote": "\"Never touch the ground again?or at least not until the blocks expire.\"",
+  "ars_zero.examples.mage_march.quote": "\"Never touch the ground again - or at least not until the blocks expire.\"",
   "ars_zero.tooltip.begin_phase": "Begin phase",
   "ars_zero.tooltip.tick_phase": "Tick phase",
   "ars_zero.tooltip.end_phase": "End phase"
