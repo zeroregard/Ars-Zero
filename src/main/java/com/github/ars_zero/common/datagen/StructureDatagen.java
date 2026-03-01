@@ -37,23 +37,28 @@ public class StructureDatagen implements DataProvider {
     @NotNull
     public CompletableFuture<?> run(@NotNull CachedOutput cachedOutput) {
         return lookupProvider.thenCompose(provider -> {
-            Path path = output.getOutputFolder()
-                    .resolve("data/" + MOD_ID + "/structure/single_block.nbt");
-            CompoundTag root = buildSingleBlockStructure();
-            byte[] bytes;
-            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                NbtIo.writeCompressed(root, baos);
-                bytes = baos.toByteArray();
-            } catch (Exception e) {
-                return CompletableFuture.failedFuture(e);
-            }
-            try {
-                cachedOutput.writeIfNeeded(path, bytes, Hashing.sha1().hashBytes(bytes));
-                return CompletableFuture.completedFuture(null);
-            } catch (IOException e) {
-                return CompletableFuture.failedFuture(e);
-            }
+            CompletableFuture<?> singleBlock = writeStructure(cachedOutput, "single_block", buildSingleBlockStructure());
+            CompletableFuture<?> simpleRoom = writeStructure(cachedOutput, "simple_room", buildSimpleRoomStructure());
+            return CompletableFuture.allOf(singleBlock, simpleRoom);
         });
+    }
+
+    private CompletableFuture<?> writeStructure(CachedOutput cachedOutput, String name, CompoundTag root) {
+        Path path = output.getOutputFolder()
+                .resolve("data/" + MOD_ID + "/structure/" + name + ".nbt");
+        byte[] bytes;
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            NbtIo.writeCompressed(root, baos);
+            bytes = baos.toByteArray();
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(e);
+        }
+        try {
+            cachedOutput.writeIfNeeded(path, bytes, Hashing.sha1().hashBytes(bytes));
+            return CompletableFuture.completedFuture(null);
+        } catch (IOException e) {
+            return CompletableFuture.failedFuture(e);
+        }
     }
 
     /**
@@ -92,6 +97,53 @@ public class StructureDatagen implements DataProvider {
         root.put("palettes", palettes);
         root.put("entities", new ListTag());
         return root;
+    }
+
+    /**
+     * Build NBT for a simple room: 5x4x5 box, stone brick floor/walls/ceiling, hollow inside.
+     */
+    private static CompoundTag buildSimpleRoomStructure() {
+        BlockState stoneBricks = Blocks.STONE_BRICKS.defaultBlockState();
+        CompoundTag blockStateTag = NbtUtils.writeBlockState(stoneBricks);
+
+        ListTag paletteList = new ListTag();
+        paletteList.add(blockStateTag);
+
+        int sizeX = 5, sizeY = 4, sizeZ = 5;
+        ListTag blocksAtRoot = new ListTag();
+        for (int x = 0; x < sizeX; x++) {
+            for (int z = 0; z < sizeZ; z++) {
+                blocksAtRoot.add(blockEntry(0, x, 0, z));           // floor (y=0)
+                blocksAtRoot.add(blockEntry(0, x, sizeY - 1, z));   // ceiling (y=3)
+            }
+        }
+        for (int y = 1; y < sizeY - 1; y++) {
+            for (int x = 0; x < sizeX; x++) {
+                blocksAtRoot.add(blockEntry(0, x, y, 0));           // wall z=0
+                if (sizeZ > 1) blocksAtRoot.add(blockEntry(0, x, y, sizeZ - 1)); // wall z=4
+            }
+            for (int z = 1; z < sizeZ - 1; z++) {
+                blocksAtRoot.add(blockEntry(0, 0, y, z));           // wall x=0
+                if (sizeX > 1) blocksAtRoot.add(blockEntry(0, sizeX - 1, y, z)); // wall x=4
+            }
+        }
+
+        ListTag palettes = new ListTag();
+        palettes.add(paletteList);
+
+        CompoundTag root = new CompoundTag();
+        root.put("size", newIntegerList(sizeX, sizeY, sizeZ));
+        root.put("blocks", blocksAtRoot);
+        root.put("palettes", palettes);
+        root.put("entities", new ListTag());
+        return root;
+    }
+
+    private static CompoundTag blockEntry(int stateId, int x, int y, int z) {
+        CompoundTag entry = new CompoundTag();
+        entry.put("pos", newIntegerList(x, y, z));
+        entry.putInt("state", stateId);
+        return entry;
     }
 
     private static ListTag newIntegerList(int... values) {
