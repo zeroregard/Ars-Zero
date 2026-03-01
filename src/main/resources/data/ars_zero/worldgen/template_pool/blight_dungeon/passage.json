@@ -1,0 +1,17 @@
+{
+  "name": "ars_zero:blight_dungeon/passage",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:hallway_short", "processors": "minecraft:empty", "projection": "rigid"}},
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:hallway_medium", "processors": "minecraft:empty", "projection": "rigid"}},
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:hallway_long", "processors": "minecraft:empty", "projection": "rigid"}},
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:hallway_ns_short", "processors": "minecraft:empty", "projection": "rigid"}},
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:hallway_ns_medium", "processors": "minecraft:empty", "projection": "rigid"}},
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:hallway_ns_long", "processors": "minecraft:empty", "projection": "rigid"}},
+    {"weight": 4, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:small_room", "processors": "minecraft:empty", "projection": "rigid"}},
+    {"weight": 4, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:small_room_2", "processors": "minecraft:empty", "projection": "rigid"}},
+    {"weight": 2, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:large_room", "processors": "minecraft:empty", "projection": "rigid"}},
+    {"weight": 2, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:large_room_2", "processors": "minecraft:empty", "projection": "rigid"}},
+    {"weight": 4, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:dead_end", "processors": "minecraft:empty", "projection": "rigid"}}
+  ]
+}

@@ -49,9 +49,23 @@ public class StructureDatagen implements DataProvider {
                     .flatMap(reg -> reg.get(ResourceKey.create(Registries.BLOCK, ResourceLocation.parse("ars_nouveau:sourcestone_large_bricks"))))
                     .map(h -> h.value().defaultBlockState())
                     .orElse(Blocks.STONE_BRICKS.defaultBlockState());
-            CompletableFuture<?> roomConnector = writeStructure(cachedOutput, "room_connector", buildRoomConnectorStructure(wallBlock));
-            CompletableFuture<?> roomConnectorBack = writeStructure(cachedOutput, "room_connector_back", buildRoomConnectorBackStructure(wallBlock));
-            return CompletableFuture.allOf(roomConnector, roomConnectorBack);
+            BlockState floorBlock = provider.lookup(Registries.BLOCK)
+                    .flatMap(reg -> reg.get(ResourceKey.create(Registries.BLOCK, ResourceLocation.parse("ars_nouveau:smooth_sourcestone_small_bricks"))))
+                    .map(h -> h.value().defaultBlockState())
+                    .orElse(wallBlock);
+            CompletableFuture<?> roomConnector = writeStructure(cachedOutput, "room_connector", buildRoomConnectorStructure(wallBlock, floorBlock));
+            CompletableFuture<?> smallRoom = writeStructure(cachedOutput, "small_room", buildSmallRoomStructure(wallBlock, floorBlock));
+            CompletableFuture<?> hallwayShort = writeStructure(cachedOutput, "hallway_short", buildHallwayShortStructure(wallBlock, floorBlock));
+            CompletableFuture<?> hallwayLong = writeStructure(cachedOutput, "hallway_long", buildHallwayLongStructure(wallBlock, floorBlock));
+            CompletableFuture<?> largeRoom = writeStructure(cachedOutput, "large_room", buildLargeRoomStructure(wallBlock, floorBlock));
+            CompletableFuture<?> deadEnd = writeStructure(cachedOutput, "dead_end", buildDeadEndStructure(wallBlock, floorBlock));
+            CompletableFuture<?> smallRoom2 = writeStructure(cachedOutput, "small_room_2", buildSmallRoom2Structure(wallBlock, floorBlock));
+            CompletableFuture<?> largeRoom2 = writeStructure(cachedOutput, "large_room_2", buildLargeRoom2Structure(wallBlock, floorBlock));
+            CompletableFuture<?> hallwayMedium = writeStructure(cachedOutput, "hallway_medium", buildHallwayMediumStructure(wallBlock, floorBlock));
+            CompletableFuture<?> hallwayNsShort = writeStructure(cachedOutput, "hallway_ns_short", buildHallwayNsShortStructure(wallBlock, floorBlock));
+            CompletableFuture<?> hallwayNsMedium = writeStructure(cachedOutput, "hallway_ns_medium", buildHallwayNsMediumStructure(wallBlock, floorBlock));
+            CompletableFuture<?> hallwayNsLong = writeStructure(cachedOutput, "hallway_ns_long", buildHallwayNsLongStructure(wallBlock, floorBlock));
+            return CompletableFuture.allOf(roomConnector, smallRoom, hallwayShort, hallwayLong, largeRoom, deadEnd, smallRoom2, largeRoom2, hallwayMedium, hallwayNsShort, hallwayNsMedium, hallwayNsLong);
         });
     }
 
@@ -87,8 +101,10 @@ public class StructureDatagen implements DataProvider {
         return entry;
     }
 
-    private static final String JIGSAW_NAME = "ars_zero:room_connector";
-    private static final String JIGSAW_POOL = "ars_zero:blight_dungeon/connector";
+    /** Shared by all pieces so they can connect to each other. */
+    private static final String JIGSAW_NAME = "ars_zero:blight_dungeon";
+    private static final String JIGSAW_TARGET = "ars_zero:blight_dungeon";
+    private static final String JIGSAW_POOL = "ars_zero:blight_dungeon/passage";
     private static final String JIGSAW_FINAL_STATE = "minecraft:air";
 
     private static CompoundTag jigsawNbt(String name, String target, String pool) {
@@ -102,20 +118,33 @@ public class StructureDatagen implements DataProvider {
     }
 
     /**
-     * Room with jigsaw on east wall (x=4) at (4,1,2), facing east. Tunnel opening at (4,1,2) and (4,2,2).
+     * Start room 9x6x9 with jigsaws east (8,1,4), north (4,1,0), south (4,1,8). Tunnel openings at y=1,2 for floor alignment. Three exits for maze branching.
      */
-    private static CompoundTag buildRoomConnectorStructure(BlockState wallBlock) {
+    private static CompoundTag buildRoomConnectorStructure(BlockState wallBlock, BlockState floorBlock) {
         BlockState jigsawEast = Blocks.JIGSAW.defaultBlockState()
                 .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.EAST_UP);
+        BlockState jigsawNorth = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.NORTH_UP);
+        BlockState jigsawSouth = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP);
 
         ListTag paletteList = new ListTag();
         paletteList.add(NbtUtils.writeBlockState(wallBlock));
+        paletteList.add(NbtUtils.writeBlockState(floorBlock));
         paletteList.add(NbtUtils.writeBlockState(jigsawEast));
+        paletteList.add(NbtUtils.writeBlockState(jigsawNorth));
+        paletteList.add(NbtUtils.writeBlockState(jigsawSouth));
 
-        int sizeX = 5, sizeY = 4, sizeZ = 5;
+        int sizeX = 9, sizeY = 6, sizeZ = 9;
+        Set<BlockPos> skips = Set.of(
+                new BlockPos(8, 1, 4), new BlockPos(8, 2, 4),
+                new BlockPos(4, 1, 0), new BlockPos(4, 2, 0),
+                new BlockPos(4, 1, 8), new BlockPos(4, 2, 8));
         ListTag blocksAtRoot = new ListTag();
-        addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, Set.of(new BlockPos(4, 1, 2), new BlockPos(4, 2, 2)));
-        blocksAtRoot.add(blockEntry(1, 4, 1, 2, jigsawNbt(JIGSAW_NAME, JIGSAW_NAME, JIGSAW_POOL)));
+        addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
+        blocksAtRoot.add(blockEntry(2, 8, 1, 4, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(3, 4, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(4, 4, 1, 8, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
 
         ListTag palettes = new ListTag();
         palettes.add(paletteList);
@@ -128,20 +157,38 @@ public class StructureDatagen implements DataProvider {
     }
 
     /**
-     * Room with jigsaw on west wall (x=0) at (0,1,2), facing west. Tunnel opening at (0,1,2) and (0,2,2).
+     * Small room 9x6x9 with jigsaws west (0,1,4), east (8,1,4), north (4,1,0), south (4,1,8). Four-way exits for maze branching.
      */
-    private static CompoundTag buildRoomConnectorBackStructure(BlockState wallBlock) {
+    private static CompoundTag buildSmallRoomStructure(BlockState wallBlock, BlockState floorBlock) {
         BlockState jigsawWest = Blocks.JIGSAW.defaultBlockState()
                 .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.WEST_UP);
+        BlockState jigsawEast = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.EAST_UP);
+        BlockState jigsawNorth = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.NORTH_UP);
+        BlockState jigsawSouth = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP);
 
         ListTag paletteList = new ListTag();
         paletteList.add(NbtUtils.writeBlockState(wallBlock));
+        paletteList.add(NbtUtils.writeBlockState(floorBlock));
         paletteList.add(NbtUtils.writeBlockState(jigsawWest));
+        paletteList.add(NbtUtils.writeBlockState(jigsawEast));
+        paletteList.add(NbtUtils.writeBlockState(jigsawNorth));
+        paletteList.add(NbtUtils.writeBlockState(jigsawSouth));
 
-        int sizeX = 5, sizeY = 4, sizeZ = 5;
+        int sizeX = 9, sizeY = 6, sizeZ = 9;
+        Set<BlockPos> skips = Set.of(
+                new BlockPos(0, 1, 4), new BlockPos(0, 2, 4),
+                new BlockPos(8, 1, 4), new BlockPos(8, 2, 4),
+                new BlockPos(4, 1, 0), new BlockPos(4, 2, 0),
+                new BlockPos(4, 1, 8), new BlockPos(4, 2, 8));
         ListTag blocksAtRoot = new ListTag();
-        addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, Set.of(new BlockPos(0, 1, 2), new BlockPos(0, 2, 2)));
-        blocksAtRoot.add(blockEntry(1, 0, 1, 2, jigsawNbt(JIGSAW_NAME, JIGSAW_NAME, JIGSAW_POOL)));
+        addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
+        blocksAtRoot.add(blockEntry(2, 0, 1, 4, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(3, 8, 1, 4, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(4, 4, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(5, 4, 1, 8, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
 
         ListTag palettes = new ListTag();
         palettes.add(paletteList);
@@ -153,21 +200,306 @@ public class StructureDatagen implements DataProvider {
         return root;
     }
 
-    private static void addRoomWallsAndFloorCeiling(ListTag blocksAtRoot, int sizeX, int sizeY, int sizeZ, Set<BlockPos> skipPositions) {
+    /**
+     * Small room variant (same 9x6x9, west + east jigsaws) for pool variance.
+     */
+    private static CompoundTag buildSmallRoom2Structure(BlockState wallBlock, BlockState floorBlock) {
+        return buildSmallRoomStructure(wallBlock, floorBlock);
+    }
+
+    /**
+     * Hallway 3x4x7 with jigsaws west (0,1,3), east (2,1,3).
+     */
+    private static CompoundTag buildHallwayShortStructure(BlockState wallBlock, BlockState floorBlock) {
+        BlockState jigsawWest = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.WEST_UP);
+        BlockState jigsawEast = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.EAST_UP);
+
+        ListTag paletteList = new ListTag();
+        paletteList.add(NbtUtils.writeBlockState(wallBlock));
+        paletteList.add(NbtUtils.writeBlockState(floorBlock));
+        paletteList.add(NbtUtils.writeBlockState(jigsawWest));
+        paletteList.add(NbtUtils.writeBlockState(jigsawEast));
+
+        int sizeX = 3, sizeY = 4, sizeZ = 7;
+        Set<BlockPos> skips = Set.of(
+                new BlockPos(0, 1, 3), new BlockPos(0, 2, 3),
+                new BlockPos(2, 1, 3), new BlockPos(2, 2, 3));
+        ListTag blocksAtRoot = new ListTag();
+        addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
+        blocksAtRoot.add(blockEntry(2, 0, 1, 3, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(3, 2, 1, 3, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+
+        ListTag palettes = new ListTag();
+        palettes.add(paletteList);
+        CompoundTag root = new CompoundTag();
+        root.put("size", newIntegerList(sizeX, sizeY, sizeZ));
+        root.put("blocks", blocksAtRoot);
+        root.put("palettes", palettes);
+        root.put("entities", new ListTag());
+        return root;
+    }
+
+    /**
+     * Hallway 3x4x11 with jigsaws west (0,1,5), east (2,1,5).
+     */
+    private static CompoundTag buildHallwayLongStructure(BlockState wallBlock, BlockState floorBlock) {
+        BlockState jigsawWest = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.WEST_UP);
+        BlockState jigsawEast = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.EAST_UP);
+
+        ListTag paletteList = new ListTag();
+        paletteList.add(NbtUtils.writeBlockState(wallBlock));
+        paletteList.add(NbtUtils.writeBlockState(floorBlock));
+        paletteList.add(NbtUtils.writeBlockState(jigsawWest));
+        paletteList.add(NbtUtils.writeBlockState(jigsawEast));
+
+        int sizeX = 3, sizeY = 4, sizeZ = 11;
+        Set<BlockPos> skips = Set.of(
+                new BlockPos(0, 1, 5), new BlockPos(0, 2, 5),
+                new BlockPos(2, 1, 5), new BlockPos(2, 2, 5));
+        ListTag blocksAtRoot = new ListTag();
+        addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
+        blocksAtRoot.add(blockEntry(2, 0, 1, 5, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(3, 2, 1, 5, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+
+        ListTag palettes = new ListTag();
+        palettes.add(paletteList);
+        CompoundTag root = new CompoundTag();
+        root.put("size", newIntegerList(sizeX, sizeY, sizeZ));
+        root.put("blocks", blocksAtRoot);
+        root.put("palettes", palettes);
+        root.put("entities", new ListTag());
+        return root;
+    }
+
+    /**
+     * Hallway 3x4x9 (medium length) with jigsaws west (0,1,4), east (2,1,4).
+     */
+    private static CompoundTag buildHallwayMediumStructure(BlockState wallBlock, BlockState floorBlock) {
+        BlockState jigsawWest = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.WEST_UP);
+        BlockState jigsawEast = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.EAST_UP);
+
+        ListTag paletteList = new ListTag();
+        paletteList.add(NbtUtils.writeBlockState(wallBlock));
+        paletteList.add(NbtUtils.writeBlockState(floorBlock));
+        paletteList.add(NbtUtils.writeBlockState(jigsawWest));
+        paletteList.add(NbtUtils.writeBlockState(jigsawEast));
+
+        int sizeX = 3, sizeY = 4, sizeZ = 9;
+        Set<BlockPos> skips = Set.of(
+                new BlockPos(0, 1, 4), new BlockPos(0, 2, 4),
+                new BlockPos(2, 1, 4), new BlockPos(2, 2, 4));
+        ListTag blocksAtRoot = new ListTag();
+        addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
+        blocksAtRoot.add(blockEntry(2, 0, 1, 4, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(3, 2, 1, 4, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+
+        ListTag palettes = new ListTag();
+        palettes.add(paletteList);
+        CompoundTag root = new CompoundTag();
+        root.put("size", newIntegerList(sizeX, sizeY, sizeZ));
+        root.put("blocks", blocksAtRoot);
+        root.put("palettes", palettes);
+        root.put("entities", new ListTag());
+        return root;
+    }
+
+    /**
+     * Hallway N-S 3x4x7 with jigsaws north (1,1,0), south (1,1,6). Runs along Z for maze turns.
+     */
+    private static CompoundTag buildHallwayNsShortStructure(BlockState wallBlock, BlockState floorBlock) {
+        BlockState jigsawNorth = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.NORTH_UP);
+        BlockState jigsawSouth = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP);
+
+        ListTag paletteList = new ListTag();
+        paletteList.add(NbtUtils.writeBlockState(wallBlock));
+        paletteList.add(NbtUtils.writeBlockState(floorBlock));
+        paletteList.add(NbtUtils.writeBlockState(jigsawNorth));
+        paletteList.add(NbtUtils.writeBlockState(jigsawSouth));
+
+        int sizeX = 3, sizeY = 4, sizeZ = 7;
+        Set<BlockPos> skips = Set.of(
+                new BlockPos(1, 1, 0), new BlockPos(1, 2, 0),
+                new BlockPos(1, 1, 6), new BlockPos(1, 2, 6));
+        ListTag blocksAtRoot = new ListTag();
+        addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
+        blocksAtRoot.add(blockEntry(2, 1, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(3, 1, 1, 6, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+
+        ListTag palettes = new ListTag();
+        palettes.add(paletteList);
+        CompoundTag root = new CompoundTag();
+        root.put("size", newIntegerList(sizeX, sizeY, sizeZ));
+        root.put("blocks", blocksAtRoot);
+        root.put("palettes", palettes);
+        root.put("entities", new ListTag());
+        return root;
+    }
+
+    /**
+     * Hallway N-S 3x4x9 with jigsaws north (1,1,0), south (1,1,8).
+     */
+    private static CompoundTag buildHallwayNsMediumStructure(BlockState wallBlock, BlockState floorBlock) {
+        BlockState jigsawNorth = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.NORTH_UP);
+        BlockState jigsawSouth = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP);
+
+        ListTag paletteList = new ListTag();
+        paletteList.add(NbtUtils.writeBlockState(wallBlock));
+        paletteList.add(NbtUtils.writeBlockState(floorBlock));
+        paletteList.add(NbtUtils.writeBlockState(jigsawNorth));
+        paletteList.add(NbtUtils.writeBlockState(jigsawSouth));
+
+        int sizeX = 3, sizeY = 4, sizeZ = 9;
+        Set<BlockPos> skips = Set.of(
+                new BlockPos(1, 1, 0), new BlockPos(1, 2, 0),
+                new BlockPos(1, 1, 8), new BlockPos(1, 2, 8));
+        ListTag blocksAtRoot = new ListTag();
+        addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
+        blocksAtRoot.add(blockEntry(2, 1, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(3, 1, 1, 8, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+
+        ListTag palettes = new ListTag();
+        palettes.add(paletteList);
+        CompoundTag root = new CompoundTag();
+        root.put("size", newIntegerList(sizeX, sizeY, sizeZ));
+        root.put("blocks", blocksAtRoot);
+        root.put("palettes", palettes);
+        root.put("entities", new ListTag());
+        return root;
+    }
+
+    /**
+     * Hallway N-S 3x4x11 with jigsaws north (1,1,0), south (1,1,10).
+     */
+    private static CompoundTag buildHallwayNsLongStructure(BlockState wallBlock, BlockState floorBlock) {
+        BlockState jigsawNorth = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.NORTH_UP);
+        BlockState jigsawSouth = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP);
+
+        ListTag paletteList = new ListTag();
+        paletteList.add(NbtUtils.writeBlockState(wallBlock));
+        paletteList.add(NbtUtils.writeBlockState(floorBlock));
+        paletteList.add(NbtUtils.writeBlockState(jigsawNorth));
+        paletteList.add(NbtUtils.writeBlockState(jigsawSouth));
+
+        int sizeX = 3, sizeY = 4, sizeZ = 11;
+        Set<BlockPos> skips = Set.of(
+                new BlockPos(1, 1, 0), new BlockPos(1, 2, 0),
+                new BlockPos(1, 1, 10), new BlockPos(1, 2, 10));
+        ListTag blocksAtRoot = new ListTag();
+        addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
+        blocksAtRoot.add(blockEntry(2, 1, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(3, 1, 1, 10, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+
+        ListTag palettes = new ListTag();
+        palettes.add(paletteList);
+        CompoundTag root = new CompoundTag();
+        root.put("size", newIntegerList(sizeX, sizeY, sizeZ));
+        root.put("blocks", blocksAtRoot);
+        root.put("palettes", palettes);
+        root.put("entities", new ListTag());
+        return root;
+    }
+
+    /**
+     * Large room 13x7x13 with jigsaws west (0,1,6), east (12,1,6), north (6,1,0), south (6,1,12). Four-way exits for maze branching.
+     */
+    private static CompoundTag buildLargeRoomStructure(BlockState wallBlock, BlockState floorBlock) {
+        BlockState jigsawWest = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.WEST_UP);
+        BlockState jigsawEast = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.EAST_UP);
+        BlockState jigsawNorth = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.NORTH_UP);
+        BlockState jigsawSouth = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.SOUTH_UP);
+
+        ListTag paletteList = new ListTag();
+        paletteList.add(NbtUtils.writeBlockState(wallBlock));
+        paletteList.add(NbtUtils.writeBlockState(floorBlock));
+        paletteList.add(NbtUtils.writeBlockState(jigsawWest));
+        paletteList.add(NbtUtils.writeBlockState(jigsawEast));
+        paletteList.add(NbtUtils.writeBlockState(jigsawNorth));
+        paletteList.add(NbtUtils.writeBlockState(jigsawSouth));
+
+        int sizeX = 13, sizeY = 7, sizeZ = 13;
+        Set<BlockPos> skips = Set.of(
+                new BlockPos(0, 1, 6), new BlockPos(0, 2, 6),
+                new BlockPos(12, 1, 6), new BlockPos(12, 2, 6),
+                new BlockPos(6, 1, 0), new BlockPos(6, 2, 0),
+                new BlockPos(6, 1, 12), new BlockPos(6, 2, 12));
+        ListTag blocksAtRoot = new ListTag();
+        addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
+        blocksAtRoot.add(blockEntry(2, 0, 1, 6, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(3, 12, 1, 6, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(4, 6, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(5, 6, 1, 12, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+
+        ListTag palettes = new ListTag();
+        palettes.add(paletteList);
+        CompoundTag root = new CompoundTag();
+        root.put("size", newIntegerList(sizeX, sizeY, sizeZ));
+        root.put("blocks", blocksAtRoot);
+        root.put("palettes", palettes);
+        root.put("entities", new ListTag());
+        return root;
+    }
+
+    /**
+     * Large room variant (same 11x6x11) for pool variance.
+     */
+    private static CompoundTag buildLargeRoom2Structure(BlockState wallBlock, BlockState floorBlock) {
+        return buildLargeRoomStructure(wallBlock, floorBlock);
+    }
+
+    /**
+     * Dead-end room 9x6x9 with no jigsaw blocks (terminates a branch).
+     */
+    private static CompoundTag buildDeadEndStructure(BlockState wallBlock, BlockState floorBlock) {
+        ListTag paletteList = new ListTag();
+        paletteList.add(NbtUtils.writeBlockState(wallBlock));
+        paletteList.add(NbtUtils.writeBlockState(floorBlock));
+
+        int sizeX = 9, sizeY = 6, sizeZ = 9;
+        ListTag blocksAtRoot = new ListTag();
+        addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, Set.of(), 0, 1);
+
+        ListTag palettes = new ListTag();
+        palettes.add(paletteList);
+        CompoundTag root = new CompoundTag();
+        root.put("size", newIntegerList(sizeX, sizeY, sizeZ));
+        root.put("blocks", blocksAtRoot);
+        root.put("palettes", palettes);
+        root.put("entities", new ListTag());
+        return root;
+    }
+
+    /** @param wallStateId palette index for walls and ceiling; @param floorStateId palette index for floor (y=0) */
+    private static void addRoomWallsAndFloorCeiling(ListTag blocksAtRoot, int sizeX, int sizeY, int sizeZ, Set<BlockPos> skipPositions, int wallStateId, int floorStateId) {
         for (int x = 0; x < sizeX; x++) {
             for (int z = 0; z < sizeZ; z++) {
-                if (!skipPositions.contains(new BlockPos(x, 0, z))) blocksAtRoot.add(blockEntry(0, x, 0, z));
-                if (!skipPositions.contains(new BlockPos(x, sizeY - 1, z))) blocksAtRoot.add(blockEntry(0, x, sizeY - 1, z));
+                if (!skipPositions.contains(new BlockPos(x, 0, z))) blocksAtRoot.add(blockEntry(floorStateId, x, 0, z));
+                if (!skipPositions.contains(new BlockPos(x, sizeY - 1, z))) blocksAtRoot.add(blockEntry(wallStateId, x, sizeY - 1, z));
             }
         }
         for (int y = 1; y < sizeY - 1; y++) {
             for (int x = 0; x < sizeX; x++) {
-                if (!skipPositions.contains(new BlockPos(x, y, 0))) blocksAtRoot.add(blockEntry(0, x, y, 0));
-                if (sizeZ > 1 && !skipPositions.contains(new BlockPos(x, y, sizeZ - 1))) blocksAtRoot.add(blockEntry(0, x, y, sizeZ - 1));
+                if (!skipPositions.contains(new BlockPos(x, y, 0))) blocksAtRoot.add(blockEntry(wallStateId, x, y, 0));
+                if (sizeZ > 1 && !skipPositions.contains(new BlockPos(x, y, sizeZ - 1))) blocksAtRoot.add(blockEntry(wallStateId, x, y, sizeZ - 1));
             }
             for (int z = 1; z < sizeZ - 1; z++) {
-                if (!skipPositions.contains(new BlockPos(0, y, z))) blocksAtRoot.add(blockEntry(0, 0, y, z));
-                if (sizeX > 1 && !skipPositions.contains(new BlockPos(sizeX - 1, y, z))) blocksAtRoot.add(blockEntry(0, sizeX - 1, y, z));
+                if (!skipPositions.contains(new BlockPos(0, y, z))) blocksAtRoot.add(blockEntry(wallStateId, 0, y, z));
+                if (sizeX > 1 && !skipPositions.contains(new BlockPos(sizeX - 1, y, z))) blocksAtRoot.add(blockEntry(wallStateId, sizeX - 1, y, z));
             }
         }
     }
