@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "ars_zero:single_block",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 184739284,
+    "separation": 8,
+    "spacing": 24
+  }
+}
