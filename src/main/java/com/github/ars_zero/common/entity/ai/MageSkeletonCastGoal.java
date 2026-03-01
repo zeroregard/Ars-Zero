@@ -3,6 +3,9 @@ package com.github.ars_zero.common.entity.ai;
 import com.github.ars_zero.api.spell.MobSpellBehaviour;
 import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 
@@ -68,7 +71,13 @@ public class MageSkeletonCastGoal extends Goal {
         for (MobSpellBehaviour behaviour : behaviours) {
             var mana = CapabilityRegistry.getMana(mob);
             if (mana != null && mana.getCurrentMana() >= behaviour.getManaCost() && behaviour.canRun(mob, target)) {
+                mob.swing(InteractionHand.MAIN_HAND);
+                mob.setSpellCastArmsUpTicks(AbstractBlightedSkeleton.SPELL_CAST_ARMS_UP_TICKS);
                 behaviour.run(mob, target);
+                if (mob.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                    serverLevel.playSound(null, mob.getX(), mob.getY(), mob.getZ(),
+                            SoundEvents.EVOKER_CAST_SPELL, SoundSource.HOSTILE, 0.8f, 0.9f + mob.getRandom().nextFloat() * 0.2f);
+                }
                 return;
             }
         }

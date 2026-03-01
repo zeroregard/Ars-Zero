@@ -5,6 +5,9 @@ import com.hollingsworth.arsnouveau.common.spell.effect.EffectBlink;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -83,10 +86,16 @@ public class MageSkeletonBlinkGoal extends Goal {
         if (mana == null || mana.getCurrentMana() < BLINK_MANA_COST) {
             return;
         }
+        mob.swing(InteractionHand.MAIN_HAND);
+        mob.setSpellCastArmsUpTicks(com.github.ars_zero.common.entity.AbstractBlightedSkeleton.SPELL_CAST_ARMS_UP_TICKS);
         Vec3 origin = mob.position();
         mana.setMana(mana.getCurrentMana() - BLINK_MANA_COST);
+        serverLevel.playSound(null, origin.x, origin.y + 1, origin.z,
+                SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 0.6f, 1.0f);
         spawnBlinkParticles(serverLevel, origin.x, origin.y + 1, origin.z);
         EffectBlink.warpEntity(mob, serverLevel, dest);
+        serverLevel.playSound(null, mob.getX(), mob.getY() + 1, mob.getZ(),
+                SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 0.6f, 1.0f);
         spawnBlinkParticles(serverLevel, mob.getX(), mob.getY() + 1, mob.getZ());
         mob.setBlinkCooldownTicks(mob.getBlinkCooldownTicksMax());
     }

@@ -4,7 +4,10 @@ import com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.MageSkeletonBlinkGoal;
 import com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal;
 import com.github.ars_zero.common.entity.ai.MageSkeletonSummonGoal;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.level.Level;
 
@@ -21,6 +24,12 @@ public class NecromancerBlightedSkeleton extends AbstractBlightedSkeleton {
 
     public NecromancerBlightedSkeleton(EntityType<? extends Skeleton> entityType, Level level) {
         super(entityType, level);
+    }
+
+    @Override
+    protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
+        super.populateDefaultEquipmentSlots(random, difficulty);
+        setArmorSlot(EquipmentSlot.CHEST, ARCANIST_ROBES_ID);
     }
 
     @Override

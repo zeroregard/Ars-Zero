@@ -1,8 +1,8 @@
 package com.github.ars_zero.client.renderer.entity;
 
 import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
+import com.github.ars_zero.client.renderer.entity.model.BlightedSkeletonModel;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.model.SkeletonModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
@@ -14,9 +14,9 @@ import net.minecraft.world.entity.monster.Skeleton;
  * Renders the skeleton body model with the enchanted glint overlay (same as armor/item glint).
  * Only applied for AbstractBlightedSkeleton (Acolyte, Necromancer, Lich); armor/held items are unchanged.
  */
-public class MageSkeletonGlintLayer extends RenderLayer<Skeleton, SkeletonModel<Skeleton>> {
+public class MageSkeletonGlintLayer extends RenderLayer<Skeleton, BlightedSkeletonModel> {
 
-    public MageSkeletonGlintLayer(RenderLayerParent<Skeleton, SkeletonModel<Skeleton>> parent) {
+    public MageSkeletonGlintLayer(RenderLayerParent<Skeleton, BlightedSkeletonModel> parent) {
         super(parent);
     }
 

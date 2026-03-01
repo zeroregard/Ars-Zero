@@ -4,7 +4,10 @@ import com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.BlightedSkeletonFleeGoal;
 import com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.level.Level;
 
@@ -27,6 +30,12 @@ public class AcolyteBlightedSkeleton extends AbstractBlightedSkeleton {
         super.registerGoals();
         this.goalSelector.addGoal(1, new BlightedSkeletonFleeGoal(this));
         this.goalSelector.addGoal(2, new MageSkeletonCastGoal(this, List.of(new BlightVoxelPushSpellBehaviour())));
+    }
+
+    @Override
+    protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
+        super.populateDefaultEquipmentSlots(random, difficulty);
+        setArmorSlot(EquipmentSlot.CHEST, SORCERER_ROBES_ID);
     }
 
     @Override

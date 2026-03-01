@@ -34,6 +34,9 @@ import com.github.ars_zero.registry.ModBlockEntities;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModParticles;
 import com.github.ars_zero.client.renderer.entity.MageSkeletonRenderer;
+import com.github.ars_zero.client.renderer.entity.model.BlightedSkeletonModel;
+import net.minecraft.client.model.SkeletonModel;
+import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
@@ -50,6 +53,7 @@ public class ArsZeroClient {
         modEventBus.addListener(ArsZeroClient::onClientSetup);
         modEventBus.addListener(ArsZeroClient::registerGuiLayers);
         modEventBus.addListener(ArsZeroClient::registerRenderers);
+        modEventBus.addListener(ArsZeroClient::registerLayerDefinitions);
         modEventBus.addListener(ArsZeroClient::registerParticleProviders);
         modEventBus.addListener(ClientNetworking::register);
 
@@ -88,6 +92,13 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.NECROMANCER.get(), MageSkeletonRenderer::new);
             EntityRenderers.register(ModEntities.LICH.get(), MageSkeletonRenderer::new);
         });
+    }
+
+    public static final ModelLayerLocation BLIGHTED_SKELETON_LAYER =
+            new ModelLayerLocation(ArsZero.prefix("blighted_skeleton"), "main");
+
+    public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(MageSkeletonRenderer.BLIGHTED_SKELETON_LAYER, SkeletonModel::createBodyLayer);
     }
 
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {

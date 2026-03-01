@@ -5,6 +5,9 @@ import com.github.ars_zero.registry.ModMobEffects;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import alexthw.ars_elemental.common.entity.summon.SummonUndead;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
@@ -67,6 +70,8 @@ public class MageSkeletonSummonGoal extends Goal {
             return;
         }
 
+        mob.swing(InteractionHand.MAIN_HAND);
+        mob.setSpellCastArmsUpTicks(com.github.ars_zero.common.entity.AbstractBlightedSkeleton.SPELL_CAST_ARMS_UP_TICKS);
         SummonUndead summon = new SummonUndead(serverLevel);
         summon.setWeapon(new ItemStack(Items.IRON_SWORD));
         summon.setOwner(mob);
@@ -85,6 +90,9 @@ public class MageSkeletonSummonGoal extends Goal {
         summon.finalizeSpawn((ServerLevelAccessor) serverLevel, serverLevel.getCurrentDifficultyAt(summon.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
         summon.addEffect(new MobEffectInstance(ModMobEffects.WITHER_IMMUNITY, SUMMON_DURATION_TICKS, 0, false, false));
         serverLevel.addFreshEntity(summon);
+
+        serverLevel.playSound(null, mob.getX(), mob.getY(), mob.getZ(),
+                SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.HOSTILE, 0.7f, 0.9f + mob.getRandom().nextFloat() * 0.2f);
 
         mob.addOwnedRevenantUuid(summon.getUUID());
         mana.setMana(mana.getCurrentMana() - MANA_COST);

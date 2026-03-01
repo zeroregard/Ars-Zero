@@ -6,6 +6,8 @@ import com.github.ars_zero.common.casting.CastingStyle;
 import com.github.ars_zero.common.entity.ArcaneCircleEntity;
 import com.github.ars_zero.common.entity.BlightVoxelEntity;
 import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
+import com.github.ars_zero.common.entity.LichBlightedSkeleton;
+import com.github.ars_zero.common.util.MathHelper;
 import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModGlyphs;
 import com.hollingsworth.arsnouveau.api.spell.Spell;
@@ -56,11 +58,12 @@ public class BlightVoxelPushSpellBehaviour implements MobSpellBehaviour {
         caster.setYRot(yaw);
         caster.setXRot(pitch);
 
-        // 1) Casting circle "near" (in front of mob), dark green, Anima symbol
+        // 1) Casting circle "near" (in front of mob), dark green, Anima symbol only (no outer circle)
         CastingStyle style = new CastingStyle();
         style.setEnabled(true);
         style.setPlacement(CastingStyle.Placement.NEAR);
         style.setColor(0x1B5E20);
+        style.setActiveBones(java.util.Set.of()); // no outer circle / alphabet, just the anima symbol
 
         Vec3 spawnPos = caster.getEyePosition(1.0f).add(caster.getLookAngle().scale(1.0));
 
@@ -74,14 +77,28 @@ public class BlightVoxelPushSpellBehaviour implements MobSpellBehaviour {
             serverLevel.addFreshEntity(circleEntity);
         }
 
-        // 2) Blight voxel at same spot as the circle (in front of mob); no gravity so it hovers during the delay
-        BlightVoxelEntity voxel = new BlightVoxelEntity(serverLevel, spawnPos.x, spawnPos.y, spawnPos.z, BLIGHT_VOXEL_LIFETIME_TICKS);
-        voxel.setNoGravityCustom(true);
-        serverLevel.addFreshEntity(voxel);
+        // 2) Blight voxel(s): Lich uses Split (3 voxels in a circle), others use 1
+        boolean isLich = caster instanceof LichBlightedSkeleton;
+        int voxelCount = isLich ? 3 : 1;
+        java.util.List<Vec3> voxelPositions = voxelCount == 1
+                ? java.util.List.of(spawnPos)
+                : MathHelper.getCirclePositions(spawnPos, caster.getLookAngle(), 0.35, voxelCount);
+        java.util.List<Integer> voxelIds = new java.util.ArrayList<>();
+
+        for (Vec3 pos : voxelPositions) {
+            BlightVoxelEntity voxel = new BlightVoxelEntity(serverLevel, pos.x, pos.y, pos.z, BLIGHT_VOXEL_LIFETIME_TICKS);
+            voxel.setNoGravityCustom(true);
+            serverLevel.addFreshEntity(voxel);
+            voxelIds.add(voxel.getId());
+        }
 
         // 3) Schedule Push after HOVER_TICKS (2 seconds); mob will call executePush when chargeTicks hits 0
         if (caster instanceof AbstractBlightedSkeleton mage) {
-            mage.setPendingPush(voxel.getId(), HOVER_TICKS);
+            if (voxelIds.size() == 1) {
+                mage.setPendingPush(voxelIds.get(0), HOVER_TICKS);
+            } else {
+                mage.setPendingPushMultiple(voxelIds, HOVER_TICKS);
+            }
             return true;
         }
         return false;

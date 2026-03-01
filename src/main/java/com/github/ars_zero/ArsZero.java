@@ -39,6 +39,7 @@ import com.github.ars_zero.common.entity.interaction.WindWaterInteraction;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.event.AnchorEffectEvents;
 import com.github.ars_zero.common.event.GravitySuppressionEvents;
+import com.github.ars_zero.common.event.BlightedSkeletonSummonEvents;
 import com.github.ars_zero.common.event.WitherImmunityEffectEvents;
 import com.github.ars_zero.common.event.ZeroGravityMobEffectEvents;
 import com.github.ars_zero.common.event.discount.AirPowerCostReductionEvents;
@@ -160,6 +161,7 @@ public class ArsZero {
         NeoForge.EVENT_BUS.register(CurioCastingHandler.class);
         NeoForge.EVENT_BUS.register(AnchorEffectEvents.class);
         NeoForge.EVENT_BUS.register(WitherImmunityEffectEvents.class);
+        NeoForge.EVENT_BUS.register(BlightedSkeletonSummonEvents.class);
 
         if (FMLEnvironment.dist.isClient()) {
             ArsZeroClient.init(modEventBus);
