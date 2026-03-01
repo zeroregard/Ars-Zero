@@ -1,12 +1,12 @@
 {
-  "name": "ars_zero:simple_room/start",
+  "name": "ars_zero:blight_dungeon/connector",
   "fallback": "minecraft:empty",
   "elements": [
     {
       "weight": 1,
       "element": {
         "element_type": "minecraft:single_pool_element",
-        "location": "ars_zero:simple_room",
+        "location": "ars_zero:room_connector_back",
         "processors": "minecraft:empty",
         "projection": "rigid"
       }
