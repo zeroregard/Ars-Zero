@@ -1,9 +1,9 @@
 {
-  "feature": "ars_zero:blight_forest_rock",
+  "feature": "ars_zero:patch_grass",
   "placement": [
     {
       "type": "minecraft:rarity_filter",
-      "chance": 14
+      "chance": 2
     },
     {
       "type": "minecraft:in_square"

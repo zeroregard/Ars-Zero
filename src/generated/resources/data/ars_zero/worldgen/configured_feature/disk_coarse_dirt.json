@@ -1,47 +1,27 @@
 {
-  "type": "minecraft:random_patch",
+  "type": "minecraft:disk",
   "config": {
-    "feature": {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "config": {
-          "to_place": {
-            "type": "minecraft:simple_state_provider",
-            "state": {
-              "Name": "minecraft:coarse_dirt"
-            }
-          }
+    "half_height": 1,
+    "radius": {
+      "type": "minecraft:uniform",
+      "max_inclusive": 3,
+      "min_inclusive": 1
+    },
+    "state_provider": {
+      "fallback": {
+        "type": "minecraft:simple_state_provider",
+        "state": {
+          "Name": "minecraft:coarse_dirt"
         }
       },
-      "placement": [
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:all_of",
-            "predicates": [
-              {
-                "type": "minecraft:matching_blocks",
-                "blocks": "minecraft:air"
-              },
-              {
-                "type": "minecraft:matching_blocks",
-                "blocks": [
-                  "minecraft:grass_block",
-                  "minecraft:dirt"
-                ],
-                "offset": [
-                  0,
-                  -1,
-                  0
-                ]
-              }
-            ]
-          }
-        }
-      ]
+      "rules": []
     },
-    "tries": 96,
-    "xz_spread": 7,
-    "y_spread": 3
+    "target": {
+      "type": "minecraft:matching_blocks",
+      "blocks": [
+        "minecraft:grass_block",
+        "minecraft:dirt"
+      ]
+    }
   }
 }

@@ -28,7 +28,7 @@
         "Name": "ars_zero:blight_archwood_leaves",
         "Properties": {
           "distance": "7",
-          "persistent": "false",
+          "persistent": "true",
           "waterlogged": "false"
         }
       }

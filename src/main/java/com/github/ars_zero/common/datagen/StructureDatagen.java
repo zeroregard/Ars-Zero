@@ -2,6 +2,7 @@ package com.github.ars_zero.common.datagen;
 
 import com.google.common.hash.Hashing;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -13,6 +14,7 @@ import net.minecraft.core.FrontAndTop;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
@@ -65,7 +67,8 @@ public class StructureDatagen implements DataProvider {
             CompletableFuture<?> hallwayNsShort = writeStructure(cachedOutput, "hallway_ns_short", buildHallwayNsShortStructure(wallBlock, floorBlock));
             CompletableFuture<?> hallwayNsMedium = writeStructure(cachedOutput, "hallway_ns_medium", buildHallwayNsMediumStructure(wallBlock, floorBlock));
             CompletableFuture<?> hallwayNsLong = writeStructure(cachedOutput, "hallway_ns_long", buildHallwayNsLongStructure(wallBlock, floorBlock));
-            return CompletableFuture.allOf(roomConnector, smallRoom, hallwayShort, hallwayLong, largeRoom, deadEnd, smallRoom2, largeRoom2, hallwayMedium, hallwayNsShort, hallwayNsMedium, hallwayNsLong);
+            CompletableFuture<?> entranceStairs = writeStructure(cachedOutput, "entrance_stairs", buildEntranceStairsStructure(wallBlock, floorBlock));
+            return CompletableFuture.allOf(roomConnector, smallRoom, hallwayShort, hallwayLong, largeRoom, deadEnd, smallRoom2, largeRoom2, hallwayMedium, hallwayNsShort, hallwayNsMedium, hallwayNsLong, entranceStairs);
         });
     }
 
@@ -105,6 +108,7 @@ public class StructureDatagen implements DataProvider {
     private static final String JIGSAW_NAME = "ars_zero:blight_dungeon";
     private static final String JIGSAW_TARGET = "ars_zero:blight_dungeon";
     private static final String JIGSAW_POOL = "ars_zero:blight_dungeon/passage";
+    private static final String JIGSAW_POOL_ENTRANCE = "ars_zero:blight_dungeon/entrance";
     private static final String JIGSAW_FINAL_STATE = "minecraft:air";
 
     private static CompoundTag jigsawNbt(String name, String target, String pool) {
@@ -118,9 +122,11 @@ public class StructureDatagen implements DataProvider {
     }
 
     /**
-     * Start room 9x6x9 with jigsaws east (8,1,4), north (4,1,0), south (4,1,8). Tunnel openings at y=1,2 for floor alignment. Three exits for maze branching.
+     * Start room 9x6x9 with jigsaws west (entrance), east, north, south. West points to entrance pool (staircase); others to passage.
      */
     private static CompoundTag buildRoomConnectorStructure(BlockState wallBlock, BlockState floorBlock) {
+        BlockState jigsawWest = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.WEST_UP);
         BlockState jigsawEast = Blocks.JIGSAW.defaultBlockState()
                 .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.EAST_UP);
         BlockState jigsawNorth = Blocks.JIGSAW.defaultBlockState()
@@ -131,20 +137,77 @@ public class StructureDatagen implements DataProvider {
         ListTag paletteList = new ListTag();
         paletteList.add(NbtUtils.writeBlockState(wallBlock));
         paletteList.add(NbtUtils.writeBlockState(floorBlock));
+        paletteList.add(NbtUtils.writeBlockState(jigsawWest));
         paletteList.add(NbtUtils.writeBlockState(jigsawEast));
         paletteList.add(NbtUtils.writeBlockState(jigsawNorth));
         paletteList.add(NbtUtils.writeBlockState(jigsawSouth));
+        paletteList.add(NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
 
         int sizeX = 9, sizeY = 6, sizeZ = 9;
         Set<BlockPos> skips = Set.of(
+                new BlockPos(0, 1, 4), new BlockPos(0, 2, 4),
                 new BlockPos(8, 1, 4), new BlockPos(8, 2, 4),
                 new BlockPos(4, 1, 0), new BlockPos(4, 2, 0),
                 new BlockPos(4, 1, 8), new BlockPos(4, 2, 8));
         ListTag blocksAtRoot = new ListTag();
         addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
-        blocksAtRoot.add(blockEntry(2, 8, 1, 4, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
-        blocksAtRoot.add(blockEntry(3, 4, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
-        blocksAtRoot.add(blockEntry(4, 4, 1, 8, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(2, 0, 1, 4, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL_ENTRANCE)));
+        blocksAtRoot.add(blockEntry(3, 8, 1, 4, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(4, 4, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        blocksAtRoot.add(blockEntry(5, 4, 1, 8, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        addInteriorAir(blocksAtRoot, sizeX, sizeY, sizeZ, 6);
+
+        ListTag palettes = new ListTag();
+        palettes.add(paletteList);
+        CompoundTag root = new CompoundTag();
+        root.put("size", newIntegerList(sizeX, sizeY, sizeZ));
+        root.put("blocks", blocksAtRoot);
+        root.put("palettes", palettes);
+        root.put("entities", new ListTag());
+        return root;
+    }
+
+    /**
+     * Entrance staircase 5×100×3: diagonal stairs from dungeon (y=30) up toward surface. Reaches y=129 so it clears surface in most terrain.
+     * East jigsaw at (0,0,1) connects to room_connector west. Entrance is always on the WEST side of the start room.
+     */
+    private static CompoundTag buildEntranceStairsStructure(BlockState wallBlock, BlockState floorBlock) {
+        BlockState jigsawEast = Blocks.JIGSAW.defaultBlockState()
+                .setValue(BlockStateProperties.ORIENTATION, FrontAndTop.EAST_UP);
+        BlockState stairBlock = Blocks.STONE_STAIRS.defaultBlockState()
+                .setValue(BlockStateProperties.HALF, Half.BOTTOM)
+                .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.WEST);
+
+        ListTag paletteList = new ListTag();
+        paletteList.add(NbtUtils.writeBlockState(wallBlock));
+        paletteList.add(NbtUtils.writeBlockState(stairBlock));
+        paletteList.add(NbtUtils.writeBlockState(jigsawEast));
+        paletteList.add(NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
+
+        int sizeX = 5, sizeY = 100, sizeZ = 3;
+        ListTag blocksAtRoot = new ListTag();
+        // Walls at z=0 and z=2
+        for (int y = 0; y < sizeY; y++) {
+            for (int x = 0; x < sizeX; x++) {
+                blocksAtRoot.add(blockEntry(0, x, y, 0));
+                blocksAtRoot.add(blockEntry(0, x, y, 2));
+            }
+        }
+        // East jigsaw at bottom (0,0,1); pool empty so no further pieces attach
+        blocksAtRoot.add(blockEntry(2, 0, 0, 1, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, "minecraft:empty")));
+        // Diagonal stairs: at each y=1..59 place stair at (y % sizeX, y, 1)
+        for (int y = 1; y < sizeY; y++) {
+            int x = y % sizeX;
+            blocksAtRoot.add(blockEntry(1, x, y, 1));
+        }
+        // Hollow corridor at z=1: air everywhere except jigsaw (0,0,1) and stairs (y%5, y, 1)
+        for (int y = 0; y < sizeY; y++) {
+            for (int x = 0; x < sizeX; x++) {
+                if (y == 0 && x == 0) continue; // jigsaw
+                if (y >= 1 && x == y % sizeX) continue; // stair
+                blocksAtRoot.add(blockEntry(3, x, y, 1));
+            }
+        }
 
         ListTag palettes = new ListTag();
         palettes.add(paletteList);
@@ -176,6 +239,7 @@ public class StructureDatagen implements DataProvider {
         paletteList.add(NbtUtils.writeBlockState(jigsawEast));
         paletteList.add(NbtUtils.writeBlockState(jigsawNorth));
         paletteList.add(NbtUtils.writeBlockState(jigsawSouth));
+        paletteList.add(NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
 
         int sizeX = 9, sizeY = 6, sizeZ = 9;
         Set<BlockPos> skips = Set.of(
@@ -189,6 +253,7 @@ public class StructureDatagen implements DataProvider {
         blocksAtRoot.add(blockEntry(3, 8, 1, 4, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
         blocksAtRoot.add(blockEntry(4, 4, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
         blocksAtRoot.add(blockEntry(5, 4, 1, 8, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        addInteriorAir(blocksAtRoot, sizeX, sizeY, sizeZ, 6);
 
         ListTag palettes = new ListTag();
         palettes.add(paletteList);
@@ -221,6 +286,7 @@ public class StructureDatagen implements DataProvider {
         paletteList.add(NbtUtils.writeBlockState(floorBlock));
         paletteList.add(NbtUtils.writeBlockState(jigsawWest));
         paletteList.add(NbtUtils.writeBlockState(jigsawEast));
+        paletteList.add(NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
 
         int sizeX = 3, sizeY = 4, sizeZ = 7;
         Set<BlockPos> skips = Set.of(
@@ -230,6 +296,7 @@ public class StructureDatagen implements DataProvider {
         addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
         blocksAtRoot.add(blockEntry(2, 0, 1, 3, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
         blocksAtRoot.add(blockEntry(3, 2, 1, 3, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        addInteriorAir(blocksAtRoot, sizeX, sizeY, sizeZ, 4);
 
         ListTag palettes = new ListTag();
         palettes.add(paletteList);
@@ -255,6 +322,7 @@ public class StructureDatagen implements DataProvider {
         paletteList.add(NbtUtils.writeBlockState(floorBlock));
         paletteList.add(NbtUtils.writeBlockState(jigsawWest));
         paletteList.add(NbtUtils.writeBlockState(jigsawEast));
+        paletteList.add(NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
 
         int sizeX = 3, sizeY = 4, sizeZ = 11;
         Set<BlockPos> skips = Set.of(
@@ -264,6 +332,7 @@ public class StructureDatagen implements DataProvider {
         addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
         blocksAtRoot.add(blockEntry(2, 0, 1, 5, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
         blocksAtRoot.add(blockEntry(3, 2, 1, 5, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        addInteriorAir(blocksAtRoot, sizeX, sizeY, sizeZ, 4);
 
         ListTag palettes = new ListTag();
         palettes.add(paletteList);
@@ -289,6 +358,7 @@ public class StructureDatagen implements DataProvider {
         paletteList.add(NbtUtils.writeBlockState(floorBlock));
         paletteList.add(NbtUtils.writeBlockState(jigsawWest));
         paletteList.add(NbtUtils.writeBlockState(jigsawEast));
+        paletteList.add(NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
 
         int sizeX = 3, sizeY = 4, sizeZ = 9;
         Set<BlockPos> skips = Set.of(
@@ -298,6 +368,7 @@ public class StructureDatagen implements DataProvider {
         addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
         blocksAtRoot.add(blockEntry(2, 0, 1, 4, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
         blocksAtRoot.add(blockEntry(3, 2, 1, 4, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        addInteriorAir(blocksAtRoot, sizeX, sizeY, sizeZ, 4);
 
         ListTag palettes = new ListTag();
         palettes.add(paletteList);
@@ -323,6 +394,7 @@ public class StructureDatagen implements DataProvider {
         paletteList.add(NbtUtils.writeBlockState(floorBlock));
         paletteList.add(NbtUtils.writeBlockState(jigsawNorth));
         paletteList.add(NbtUtils.writeBlockState(jigsawSouth));
+        paletteList.add(NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
 
         int sizeX = 3, sizeY = 4, sizeZ = 7;
         Set<BlockPos> skips = Set.of(
@@ -332,6 +404,7 @@ public class StructureDatagen implements DataProvider {
         addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
         blocksAtRoot.add(blockEntry(2, 1, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
         blocksAtRoot.add(blockEntry(3, 1, 1, 6, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        addInteriorAir(blocksAtRoot, sizeX, sizeY, sizeZ, 4);
 
         ListTag palettes = new ListTag();
         palettes.add(paletteList);
@@ -357,6 +430,7 @@ public class StructureDatagen implements DataProvider {
         paletteList.add(NbtUtils.writeBlockState(floorBlock));
         paletteList.add(NbtUtils.writeBlockState(jigsawNorth));
         paletteList.add(NbtUtils.writeBlockState(jigsawSouth));
+        paletteList.add(NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
 
         int sizeX = 3, sizeY = 4, sizeZ = 9;
         Set<BlockPos> skips = Set.of(
@@ -366,6 +440,7 @@ public class StructureDatagen implements DataProvider {
         addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
         blocksAtRoot.add(blockEntry(2, 1, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
         blocksAtRoot.add(blockEntry(3, 1, 1, 8, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        addInteriorAir(blocksAtRoot, sizeX, sizeY, sizeZ, 4);
 
         ListTag palettes = new ListTag();
         palettes.add(paletteList);
@@ -391,6 +466,7 @@ public class StructureDatagen implements DataProvider {
         paletteList.add(NbtUtils.writeBlockState(floorBlock));
         paletteList.add(NbtUtils.writeBlockState(jigsawNorth));
         paletteList.add(NbtUtils.writeBlockState(jigsawSouth));
+        paletteList.add(NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
 
         int sizeX = 3, sizeY = 4, sizeZ = 11;
         Set<BlockPos> skips = Set.of(
@@ -400,6 +476,7 @@ public class StructureDatagen implements DataProvider {
         addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, skips, 0, 1);
         blocksAtRoot.add(blockEntry(2, 1, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
         blocksAtRoot.add(blockEntry(3, 1, 1, 10, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        addInteriorAir(blocksAtRoot, sizeX, sizeY, sizeZ, 4);
 
         ListTag palettes = new ListTag();
         palettes.add(paletteList);
@@ -431,6 +508,7 @@ public class StructureDatagen implements DataProvider {
         paletteList.add(NbtUtils.writeBlockState(jigsawEast));
         paletteList.add(NbtUtils.writeBlockState(jigsawNorth));
         paletteList.add(NbtUtils.writeBlockState(jigsawSouth));
+        paletteList.add(NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
 
         int sizeX = 13, sizeY = 7, sizeZ = 13;
         Set<BlockPos> skips = Set.of(
@@ -444,6 +522,7 @@ public class StructureDatagen implements DataProvider {
         blocksAtRoot.add(blockEntry(3, 12, 1, 6, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
         blocksAtRoot.add(blockEntry(4, 6, 1, 0, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
         blocksAtRoot.add(blockEntry(5, 6, 1, 12, jigsawNbt(JIGSAW_NAME, JIGSAW_TARGET, JIGSAW_POOL)));
+        addInteriorAir(blocksAtRoot, sizeX, sizeY, sizeZ, 6);
 
         ListTag palettes = new ListTag();
         palettes.add(paletteList);
@@ -469,10 +548,12 @@ public class StructureDatagen implements DataProvider {
         ListTag paletteList = new ListTag();
         paletteList.add(NbtUtils.writeBlockState(wallBlock));
         paletteList.add(NbtUtils.writeBlockState(floorBlock));
+        paletteList.add(NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
 
         int sizeX = 9, sizeY = 6, sizeZ = 9;
         ListTag blocksAtRoot = new ListTag();
         addRoomWallsAndFloorCeiling(blocksAtRoot, sizeX, sizeY, sizeZ, Set.of(), 0, 1);
+        addInteriorAir(blocksAtRoot, sizeX, sizeY, sizeZ, 2);
 
         ListTag palettes = new ListTag();
         palettes.add(paletteList);
@@ -482,6 +563,17 @@ public class StructureDatagen implements DataProvider {
         root.put("palettes", palettes);
         root.put("entities", new ListTag());
         return root;
+    }
+
+    /** Fills interior (all positions not on the boundary) with air so rooms are hollow when placed in the world. */
+    private static void addInteriorAir(ListTag blocksAtRoot, int sizeX, int sizeY, int sizeZ, int airStateId) {
+        for (int x = 1; x < sizeX - 1; x++) {
+            for (int y = 1; y < sizeY - 1; y++) {
+                for (int z = 1; z < sizeZ - 1; z++) {
+                    blocksAtRoot.add(blockEntry(airStateId, x, y, z));
+                }
+            }
+        }
     }
 
     /** @param wallStateId palette index for walls and ceiling; @param floorStateId palette index for floor (y=0) */

@@ -2,6 +2,9 @@
   "feature": "ars_zero:huge_dead_archwood_tree",
   "placement": [
     {
+      "type": "ars_zero:no_blight_log_nearby"
+    },
+    {
       "type": "minecraft:rarity_filter",
       "chance": 12
     },
