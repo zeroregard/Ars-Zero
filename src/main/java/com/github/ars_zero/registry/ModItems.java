@@ -2,7 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.renderer.item.MultiphaseTurretItemRenderer;
-import com.github.ars_zero.common.item.AbstractStaff;
+import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.DullCirclet;
@@ -11,14 +11,13 @@ import com.github.ars_zero.common.item.MultiphaseOrbItem;
 import com.github.ars_zero.common.item.MultiphaseSpellParchment;
 import com.github.ars_zero.common.item.NoviceSpellStaff;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
-import com.github.ars_zero.common.item.StaffTelekinesis;
-import com.hollingsworth.arsnouveau.api.registry.SpellCasterRegistry;
 import com.hollingsworth.arsnouveau.common.items.RendererBlockItem;
 import com.hollingsworth.arsnouveau.setup.registry.ItemRegistryWrapper;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SpawnEggItem;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -28,18 +27,18 @@ import java.util.function.Supplier;
 
 public class ModItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Registries.ITEM, ArsZero.MOD_ID);
-    
+
     public static boolean SPELL_CASTERS_REGISTERED = false;
-    
-    public static final ItemRegistryWrapper<NoviceSpellStaff> NOVICE_SPELL_STAFF = register("novice_spell_staff", NoviceSpellStaff::new);
-    
-    public static final ItemRegistryWrapper<MageSpellStaff> MAGE_SPELL_STAFF = register("mage_spell_staff", MageSpellStaff::new);
-    
-    public static final ItemRegistryWrapper<ArchmageSpellStaff> ARCHMAGE_SPELL_STAFF = register("archmage_spell_staff", ArchmageSpellStaff::new);
-    
-    public static final ItemRegistryWrapper<CreativeSpellStaff> CREATIVE_SPELL_STAFF = register("creative_spell_staff", CreativeSpellStaff::new);
-    
-    public static final ItemRegistryWrapper<SpellcastingCirclet> SPELLCASTING_CIRCLET = register("spellcasting_circlet", SpellcastingCirclet::new);
+
+    static {
+        ModStaffItems.register(ITEMS);
+    }
+
+    public static final ItemRegistryWrapper<NoviceSpellStaff> NOVICE_SPELL_STAFF = ModStaffItems.NOVICE_SPELL_STAFF;
+    public static final ItemRegistryWrapper<MageSpellStaff> MAGE_SPELL_STAFF = ModStaffItems.MAGE_SPELL_STAFF;
+    public static final ItemRegistryWrapper<ArchmageSpellStaff> ARCHMAGE_SPELL_STAFF = ModStaffItems.ARCHMAGE_SPELL_STAFF;
+    public static final ItemRegistryWrapper<CreativeSpellStaff> CREATIVE_SPELL_STAFF = ModStaffItems.CREATIVE_SPELL_STAFF;
+    public static final ItemRegistryWrapper<SpellcastingCirclet> SPELLCASTING_CIRCLET = ModStaffItems.SPELLCASTING_CIRCLET;
     
     public static final ItemRegistryWrapper<DullCirclet> DULL_CIRCLET = register("dull_circlet", () -> new DullCirclet(defaultItemProperties()));
     
@@ -125,11 +124,18 @@ public class ModItems {
         }
     );
 
-    //
-    // "Static" staff items
-    //
+    public static final ItemRegistryWrapper<com.github.ars_zero.common.item.StaticStaff> STAFF_TELEKINESIS = ModStaffItems.STAFF_TELEKINESIS;
 
-    public static final ItemRegistryWrapper<StaffTelekinesis> STAFF_TELEKINESIS = register("staff_telekinesis", StaffTelekinesis::new);
+    /** Spawn eggs for blighted skeleton tiers. */
+    public static final DeferredHolder<Item, SpawnEggItem> ACOLYTE_SPAWN_EGG = ITEMS.register(
+            "acolyte_spawn_egg",
+            () -> new SpawnEggItem(ModEntities.ACOLYTE.get(), 0x8B7355, 0x494949, defaultItemProperties()));
+    public static final DeferredHolder<Item, SpawnEggItem> NECROMANCER_SPAWN_EGG = ITEMS.register(
+            "necromancer_spawn_egg",
+            () -> new SpawnEggItem(ModEntities.NECROMANCER.get(), 0xC1C1C1, 0x494949, defaultItemProperties()));
+    public static final DeferredHolder<Item, SpawnEggItem> LICH_SPAWN_EGG = ITEMS.register(
+            "lich_spawn_egg",
+            () -> new SpawnEggItem(ModEntities.LICH.get(), 0xE8DCC8, 0x2D2D2D, defaultItemProperties()));
 
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);
@@ -141,25 +147,6 @@ public class ModItems {
     }
 
     public static void registerSpellCasters() {
-        ArsZero.LOGGER.debug("Registering Ars Zero staves with SpellCasterRegistry");
-        registerStaff(NOVICE_SPELL_STAFF.get());
-        registerStaff(MAGE_SPELL_STAFF.get());
-        registerStaff(ARCHMAGE_SPELL_STAFF.get());
-        registerStaff(CREATIVE_SPELL_STAFF.get());
-        registerStaff(STAFF_TELEKINESIS.get());
-        registerDevice(SPELLCASTING_CIRCLET.get());
-        ArsZero.LOGGER.debug("SpellCasterRegistry registration completed");
-    }
-    
-    private static void registerStaff(AbstractStaff staff) {
-        SpellCasterRegistry.register(staff, (stack) -> {
-            return stack.get(com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry.SPELL_CASTER);
-        });
-    }
-    
-    private static void registerDevice(com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice device) {
-        SpellCasterRegistry.register(device, (stack) -> {
-            return stack.get(com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry.SPELL_CASTER);
-        });
+        ModStaffItems.registerSpellCasters();
     }
 }

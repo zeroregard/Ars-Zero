@@ -24,7 +24,9 @@ public class ModCreativeTabs {
                     output.accept(ModItems.MAGE_SPELL_STAFF.get().getDefaultInstance());
                     output.accept(ModItems.ARCHMAGE_SPELL_STAFF.get().getDefaultInstance());
                     output.accept(ModItems.CREATIVE_SPELL_STAFF.get().getDefaultInstance());
-                    output.accept(ModItems.STAFF_TELEKINESIS.get().getDefaultInstance());
+                    for (var holder : ModStaffItems.getRegisteredStaticStaffs()) {
+                        output.accept(holder.get().getDefaultInstance());
+                    }
                     output.accept(ModItems.DULL_CIRCLET.get().getDefaultInstance());
                     output.accept(ModItems.SPELLCASTING_CIRCLET.get().getDefaultInstance());
                     output.accept(ModItems.ARCHWOOD_ROD.get().getDefaultInstance());
@@ -44,6 +46,9 @@ public class ModCreativeTabs {
                     output.accept(ModItems.STAFF_DISPLAY.get().getDefaultInstance());
                     output.accept(ModFluids.BLIGHT_FLUID_BUCKET.get().getDefaultInstance());
                     output.accept(ModItems.MULTIPHASE_SPELL_TURRET.get().getDefaultInstance());
+                    output.accept(ModItems.ACOLYTE_SPAWN_EGG.get().getDefaultInstance());
+                    output.accept(ModItems.NECROMANCER_SPAWN_EGG.get().getDefaultInstance());
+                    output.accept(ModItems.LICH_SPAWN_EGG.get().getDefaultInstance());
                 })
                 .build();
     });

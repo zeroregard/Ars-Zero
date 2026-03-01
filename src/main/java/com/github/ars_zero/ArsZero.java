@@ -39,6 +39,8 @@ import com.github.ars_zero.common.entity.interaction.WindWaterInteraction;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.event.AnchorEffectEvents;
 import com.github.ars_zero.common.event.GravitySuppressionEvents;
+import com.github.ars_zero.common.event.BlightedSkeletonSummonEvents;
+import com.github.ars_zero.common.event.WitherImmunityEffectEvents;
 import com.github.ars_zero.common.event.ZeroGravityMobEffectEvents;
 import com.github.ars_zero.common.event.discount.AirPowerCostReductionEvents;
 import com.github.ars_zero.common.event.discount.AnimaPowerCostReductionEvents;
@@ -63,6 +65,8 @@ import com.github.ars_zero.common.world.biome.BlightForestRegion;
 import com.github.ars_zero.registry.ModWorldgen;
 import com.github.ars_zero.registry.ModSounds;
 import com.hollingsworth.arsnouveau.api.ArsNouveauAPI;
+import com.hollingsworth.arsnouveau.common.capability.ManaCap;
+import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import com.hollingsworth.arsnouveau.api.loot.DungeonLootTables;
 import com.hollingsworth.arsnouveau.api.spell.ITurretBehavior;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
@@ -84,10 +88,20 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.AbstractSkeleton;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.BlockHitResult;
+import com.alexthw.sauce.registry.ModRegistry;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -126,6 +140,9 @@ public class ArsZero {
 
         modEventBus.addListener(Networking::register);
         modEventBus.addListener(this::gatherData);
+        modEventBus.addListener(ArsZero::onEntityAttributeCreation);
+        modEventBus.addListener(ArsZero::onRegisterSpawnPlacements);
+        modEventBus.addListener(ArsZero::registerCapabilities);
 
         modEventBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) -> {
             event.enqueueWork(() -> {
@@ -150,6 +167,8 @@ public class ArsZero {
         NeoForge.EVENT_BUS.register(GravitySuppressionEvents.class);
         NeoForge.EVENT_BUS.register(CurioCastingHandler.class);
         NeoForge.EVENT_BUS.register(AnchorEffectEvents.class);
+        NeoForge.EVENT_BUS.register(WitherImmunityEffectEvents.class);
+        NeoForge.EVENT_BUS.register(BlightedSkeletonSummonEvents.class);
 
         if (FMLEnvironment.dist.isClient()) {
             ArsZeroClient.init(modEventBus);
@@ -383,6 +402,53 @@ public class ArsZero {
 
     public static ResourceLocation prefix(String path) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    }
+
+    private static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
+        // Acolyte: 20 HP (vanilla skeleton default)
+        AttributeSupplier.Builder acolyte = AbstractSkeleton.createAttributes();
+        acolyte.add(ModRegistry.NECROMANCY_POWER, 5.0);
+        event.put(ModEntities.ACOLYTE.get(), acolyte.build());
+
+        // Necromancer: 30 HP
+        AttributeSupplier.Builder necromancer = AbstractSkeleton.createAttributes();
+        necromancer.add(ModRegistry.NECROMANCY_POWER, 5.0);
+        necromancer.add(Attributes.MAX_HEALTH, 30.0);
+        event.put(ModEntities.NECROMANCER.get(), necromancer.build());
+
+        // Lich: 40 HP + flying speed
+        AttributeSupplier.Builder lich = AbstractSkeleton.createAttributes();
+        lich.add(ModRegistry.NECROMANCY_POWER, 5.0);
+        lich.add(Attributes.MAX_HEALTH, 40.0);
+        lich.add(Attributes.FLYING_SPEED, 0.4);
+        event.put(ModEntities.LICH.get(), lich.build());
+    }
+
+    private static void onRegisterSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+        event.register(
+                ModEntities.ACOLYTE.get(),
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        event.register(
+                ModEntities.NECROMANCER.get(),
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        event.register(
+                ModEntities.LICH.get(),
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.REPLACE);
+    }
+
+    private static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerEntity(CapabilityRegistry.MANA_CAPABILITY, ModEntities.ACOLYTE.get(), (entity, ctx) -> new ManaCap(entity));
+        event.registerEntity(CapabilityRegistry.MANA_CAPABILITY, ModEntities.NECROMANCER.get(), (entity, ctx) -> new ManaCap(entity));
+        event.registerEntity(CapabilityRegistry.MANA_CAPABILITY, ModEntities.LICH.get(), (entity, ctx) -> new ManaCap(entity));
     }
 
     public void gatherData(GatherDataEvent event) {
