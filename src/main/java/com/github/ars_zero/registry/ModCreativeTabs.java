@@ -44,6 +44,9 @@ public class ModCreativeTabs {
                     output.accept(ModItems.STAFF_DISPLAY.get().getDefaultInstance());
                     output.accept(ModFluids.BLIGHT_FLUID_BUCKET.get().getDefaultInstance());
                     output.accept(ModItems.MULTIPHASE_SPELL_TURRET.get().getDefaultInstance());
+                    output.accept(ModItems.ACOLYTE_SPAWN_EGG.get().getDefaultInstance());
+                    output.accept(ModItems.NECROMANCER_SPAWN_EGG.get().getDefaultInstance());
+                    output.accept(ModItems.LICH_SPAWN_EGG.get().getDefaultInstance());
                 })
                 .build();
     });

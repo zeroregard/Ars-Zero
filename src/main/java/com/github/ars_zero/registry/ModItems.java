@@ -2,6 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.renderer.item.MultiphaseTurretItemRenderer;
+import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.DullCirclet;
@@ -16,6 +17,7 @@ import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SpawnEggItem;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -113,6 +115,17 @@ public class ModItems {
     );
 
     public static final ItemRegistryWrapper<com.github.ars_zero.common.item.StaticStaff> STAFF_TELEKINESIS = ModStaffItems.STAFF_TELEKINESIS;
+
+    /** Spawn eggs for blighted skeleton tiers. */
+    public static final DeferredHolder<Item, SpawnEggItem> ACOLYTE_SPAWN_EGG = ITEMS.register(
+            "acolyte_spawn_egg",
+            () -> new SpawnEggItem(ModEntities.ACOLYTE.get(), 0x8B7355, 0x494949, defaultItemProperties()));
+    public static final DeferredHolder<Item, SpawnEggItem> NECROMANCER_SPAWN_EGG = ITEMS.register(
+            "necromancer_spawn_egg",
+            () -> new SpawnEggItem(ModEntities.NECROMANCER.get(), 0xC1C1C1, 0x494949, defaultItemProperties()));
+    public static final DeferredHolder<Item, SpawnEggItem> LICH_SPAWN_EGG = ITEMS.register(
+            "lich_spawn_egg",
+            () -> new SpawnEggItem(ModEntities.LICH.get(), 0xE8DCC8, 0x2D2D2D, defaultItemProperties()));
 
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);
