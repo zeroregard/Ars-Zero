@@ -2,6 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.world.feature.BlightPoolFeature;
+import com.github.ars_zero.common.world.structure.BlightDungeonStructure;
 import com.github.ars_zero.common.world.placement.NoBlightLogNearbyFilter;
 import com.github.ars_zero.common.world.tree.BigDeadArchwoodTrunkPlacer;
 import com.github.ars_zero.common.world.tree.DeadArchwoodTrunkPlacer;
@@ -14,6 +15,7 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.trunkplacers.TrunkPlacerType;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.placement.PlacementModifierType;
+import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -21,6 +23,12 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * Worldgen registries: trunk placer type, features, configured/placed features, and biome for blight forest.
  */
 public final class ModWorldgen {
+
+    public static final DeferredRegister<StructureType<?>> STRUCTURE_TYPES =
+        DeferredRegister.create(BuiltInRegistries.STRUCTURE_TYPE, ArsZero.MOD_ID);
+
+    public static final DeferredHolder<StructureType<?>, StructureType<BlightDungeonStructure>> BLIGHT_DUNGEON_STRUCTURE =
+        STRUCTURE_TYPES.register("blight_dungeon", () -> () -> BlightDungeonStructure.CODEC);
 
     public static final DeferredRegister<Feature<?>> FEATURES =
         DeferredRegister.create(BuiltInRegistries.FEATURE, ArsZero.MOD_ID);

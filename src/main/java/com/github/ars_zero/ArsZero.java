@@ -131,6 +131,7 @@ public class ArsZero {
         ModAttachments.ATTACHMENT_TYPES.register(modEventBus);
         ModRecipes.RECIPE_SERIALIZERS.register(modEventBus);
         ModRecipes.RECIPE_TYPES.register(modEventBus);
+        ModWorldgen.STRUCTURE_TYPES.register(modEventBus);
         ModWorldgen.FEATURES.register(modEventBus);
         ModWorldgen.TRUNK_PLACER_TYPES.register(modEventBus);
         ModWorldgen.PLACEMENT_MODIFIER_TYPES.register(modEventBus);
