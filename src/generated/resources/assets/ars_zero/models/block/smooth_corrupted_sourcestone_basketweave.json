@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "ars_zero:block/smooth_corrupted_sourcestone_basketweave"
+  }
+}

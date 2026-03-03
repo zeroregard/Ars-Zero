@@ -27,8 +27,8 @@ public final class ModWorldgen {
     public static final DeferredRegister<StructureType<?>> STRUCTURE_TYPES =
         DeferredRegister.create(BuiltInRegistries.STRUCTURE_TYPE, ArsZero.MOD_ID);
 
-    public static final DeferredHolder<StructureType<?>, StructureType<BlightDungeonStructure>> BLIGHT_DUNGEON_STRUCTURE =
-        STRUCTURE_TYPES.register("blight_dungeon", () -> () -> BlightDungeonStructure.CODEC);
+    public static final DeferredHolder<StructureType<?>, StructureType<BlightDungeonStructure>> NECROPOLIS_STRUCTURE =
+        STRUCTURE_TYPES.register("necropolis", () -> () -> BlightDungeonStructure.CODEC);
 
     public static final DeferredRegister<Feature<?>> FEATURES =
         DeferredRegister.create(BuiltInRegistries.FEATURE, ArsZero.MOD_ID);

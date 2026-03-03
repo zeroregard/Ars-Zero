@@ -3,6 +3,8 @@ package com.github.ars_zero.registry;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.renderer.item.MultiphaseTurretItemRenderer;
 import com.github.ars_zero.registry.ModEntities;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.DullCirclet;
@@ -125,6 +127,25 @@ public class ModItems {
     );
 
     public static final ItemRegistryWrapper<com.github.ars_zero.common.item.StaticStaff> STAFF_TELEKINESIS = ModStaffItems.STAFF_TELEKINESIS;
+
+    // -------------------------------------------------------------------------
+    // Corrupted Sourcestone block items
+    // -------------------------------------------------------------------------
+
+    public static final Map<String, DeferredHolder<Item, BlockItem>> CORRUPTED_BLOCK_ITEMS = new LinkedHashMap<>();
+    public static final Map<String, DeferredHolder<Item, BlockItem>> CORRUPTED_STAIR_ITEMS = new LinkedHashMap<>();
+    public static final Map<String, DeferredHolder<Item, BlockItem>> CORRUPTED_SLAB_ITEMS = new LinkedHashMap<>();
+
+    static {
+        for (String name : ModBlocks.CORRUPTED_BASE_NAMES) {
+            CORRUPTED_BLOCK_ITEMS.put(name, ITEMS.register(name,
+                    () -> new BlockItem(ModBlocks.CORRUPTED_BLOCKS.get(name).get(), defaultItemProperties())));
+            CORRUPTED_STAIR_ITEMS.put(name, ITEMS.register(name + "_stairs",
+                    () -> new BlockItem(ModBlocks.CORRUPTED_STAIRS.get(name).get(), defaultItemProperties())));
+            CORRUPTED_SLAB_ITEMS.put(name, ITEMS.register(name + "_slab",
+                    () -> new BlockItem(ModBlocks.CORRUPTED_SLABS.get(name).get(), defaultItemProperties())));
+        }
+    }
 
     /** Spawn eggs for blighted skeleton tiers. */
     public static final DeferredHolder<Item, SpawnEggItem> ACOLYTE_SPAWN_EGG = ITEMS.register(

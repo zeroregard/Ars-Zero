@@ -2,8 +2,11 @@ package com.github.ars_zero;
 
 import com.github.ars_zero.client.ArsZeroClient;
 import com.github.ars_zero.common.block.BlightCauldronBlock;
+import com.github.ars_zero.common.datagen.BlockStatesDatagen;
+import com.github.ars_zero.common.datagen.BlockTagDatagen;
 import com.github.ars_zero.common.datagen.DyeRecipeDatagen;
 import com.github.ars_zero.common.datagen.GlyphRecipeDatagen;
+import com.github.ars_zero.common.datagen.ItemModelDatagen;
 import com.github.ars_zero.common.datagen.StaffRecipeDatagen;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
@@ -455,6 +458,11 @@ public class ArsZero {
     public void gatherData(GatherDataEvent event) {
         var generator = event.getGenerator();
 
+        if (event.includeClient()) {
+            generator.addProvider(true, new BlockStatesDatagen(generator.getPackOutput(), event.getExistingFileHelper()));
+            generator.addProvider(true, new ItemModelDatagen(generator.getPackOutput(), event.getExistingFileHelper()));
+        }
+
         if (event.includeServer()) {
             generator.addProvider(true, new com.github.ars_zero.common.datagen.WorldgenProvider(generator.getPackOutput(), event.getLookupProvider()));
             generator.addProvider(true, new DyeRecipeDatagen(generator));
@@ -462,6 +470,7 @@ public class ArsZero {
             generator.addProvider(true, new GlyphRecipeDatagen(generator));
             generator.addProvider(true, new com.github.ars_zero.common.datagen.StructureDatagen(
                     generator.getPackOutput(), event.getLookupProvider()));
+            generator.addProvider(true, new BlockTagDatagen(generator.getPackOutput(), event.getLookupProvider(), event.getExistingFileHelper()));
         }
     }
 

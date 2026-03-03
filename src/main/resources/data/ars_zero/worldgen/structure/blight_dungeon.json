@@ -1,1 +1,0 @@
-{"type":"ars_zero:blight_dungeon","start_pool":"ars_zero:blight_dungeon/start","start_jigsaw_name":"ars_zero:blight_dungeon","size":20,"biomes":"#ars_zero:has_structure/blight_dungeon","step":"surface_structures","start_height":{"absolute":30},"max_distance_from_center":128,"use_expansion_hack":true,"spawn_overrides":{}}

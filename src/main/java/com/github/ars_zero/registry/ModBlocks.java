@@ -10,12 +10,17 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ModBlocks {
     
@@ -134,4 +139,45 @@ public class ModBlocks {
         "blight_archwood_leaves",
         () -> new LeavesBlock(BLIGHT_LEAVES_PROP)
     );
+
+    // -------------------------------------------------------------------------
+    // Corrupted Sourcestone family (base + stairs + slab per variant)
+    // -------------------------------------------------------------------------
+
+    public static final String[] CORRUPTED_BASE_NAMES = {
+        "corrupted_sourcestone",
+        "corrupted_sourcestone_mosaic",
+        "corrupted_sourcestone_basketweave",
+        "corrupted_sourcestone_alternating",
+        "corrupted_sourcestone_large_bricks",
+        "corrupted_sourcestone_small_bricks",
+        "smooth_corrupted_sourcestone",
+        "smooth_corrupted_sourcestone_mosaic",
+        "smooth_corrupted_sourcestone_basketweave",
+        "smooth_corrupted_sourcestone_alternating",
+        "smooth_corrupted_sourcestone_large_bricks",
+        "smooth_corrupted_sourcestone_small_bricks",
+    };
+
+    public static final Map<String, DeferredHolder<Block, Block>> CORRUPTED_BLOCKS = new LinkedHashMap<>();
+    public static final Map<String, DeferredHolder<Block, StairBlock>> CORRUPTED_STAIRS = new LinkedHashMap<>();
+    public static final Map<String, DeferredHolder<Block, SlabBlock>> CORRUPTED_SLABS = new LinkedHashMap<>();
+
+    static {
+        BlockBehaviour.Properties props = BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_PURPLE)
+                .strength(1.5f, 6.0f)
+                .sound(SoundType.STONE);
+
+        for (String name : CORRUPTED_BASE_NAMES) {
+            DeferredHolder<Block, Block> base = BLOCKS.register(name, () -> new Block(props));
+            CORRUPTED_BLOCKS.put(name, base);
+
+            CORRUPTED_STAIRS.put(name, BLOCKS.register(name + "_stairs",
+                    () -> new StairBlock(CORRUPTED_BLOCKS.get(name).get().defaultBlockState(), props)));
+
+            CORRUPTED_SLABS.put(name, BLOCKS.register(name + "_slab",
+                    () -> new SlabBlock(props)));
+        }
+    }
 }
