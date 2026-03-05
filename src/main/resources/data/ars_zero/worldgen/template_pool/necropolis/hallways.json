@@ -1,0 +1,10 @@
+{
+  "name": "ars_zero:necropolis/hallways",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/hallway", "processors": "ars_zero:necropolis_cobweb", "projection": "rigid"}},
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/small_room_1", "processors": "ars_zero:necropolis_cobweb", "projection": "rigid"}},
+    {"weight": 2, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/dead_end_small", "processors": "ars_zero:necropolis_cobweb", "projection": "rigid"}},
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/small_to_medium", "processors": "ars_zero:necropolis_cobweb", "projection": "rigid"}}
+  ]
+}

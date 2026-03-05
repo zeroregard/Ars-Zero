@@ -1,7 +1,0 @@
-{
-  "name": "ars_zero:necropolis/entrance",
-  "fallback": "minecraft:empty",
-  "elements": [
-    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:spiral_staircase", "processors": "minecraft:empty", "projection": "rigid"}}
-  ]
-}

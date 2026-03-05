@@ -3,7 +3,9 @@ package com.github.ars_zero.registry;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.world.feature.BlightPoolFeature;
 import com.github.ars_zero.common.world.structure.BlightDungeonStructure;
+import com.github.ars_zero.common.world.structure.CobwebProcessor;
 import com.github.ars_zero.common.world.placement.NoBlightLogNearbyFilter;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType;
 import com.github.ars_zero.common.world.tree.BigDeadArchwoodTrunkPlacer;
 import com.github.ars_zero.common.world.tree.DeadArchwoodTrunkPlacer;
 import com.github.ars_zero.common.world.tree.HugeDeadArchwoodTrunkPlacer;
@@ -29,6 +31,12 @@ public final class ModWorldgen {
 
     public static final DeferredHolder<StructureType<?>, StructureType<BlightDungeonStructure>> NECROPOLIS_STRUCTURE =
         STRUCTURE_TYPES.register("necropolis", () -> () -> BlightDungeonStructure.CODEC);
+
+    public static final DeferredRegister<StructureProcessorType<?>> STRUCTURE_PROCESSOR_TYPES =
+        DeferredRegister.create(BuiltInRegistries.STRUCTURE_PROCESSOR, ArsZero.MOD_ID);
+
+    public static final DeferredHolder<StructureProcessorType<?>, StructureProcessorType<CobwebProcessor>> COBWEB_PROCESSOR =
+        STRUCTURE_PROCESSOR_TYPES.register("cobweb", () -> () -> CobwebProcessor.CODEC);
 
     public static final DeferredRegister<Feature<?>> FEATURES =
         DeferredRegister.create(BuiltInRegistries.FEATURE, ArsZero.MOD_ID);

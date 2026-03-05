@@ -2,6 +2,7 @@
   "name": "ars_zero:necropolis/rooms",
   "fallback": "minecraft:empty",
   "elements": [
-    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/entrance_staircase", "processors": "minecraft:empty", "projection": "rigid"}}
+    {"weight": 5, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/entrance_staircase", "processors": "minecraft:empty", "projection": "rigid"}},
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/entrance_bottom", "processors": "minecraft:empty", "projection": "rigid"}}
   ]
 }

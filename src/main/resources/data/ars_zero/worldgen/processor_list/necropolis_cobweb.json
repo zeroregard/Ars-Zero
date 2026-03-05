@@ -1,0 +1,5 @@
+{
+  "processors": [
+    {"processor_type": "ars_zero:cobweb"}
+  ]
+}
