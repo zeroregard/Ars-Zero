@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.registry.ModItems;
 import com.hollingsworth.arsnouveau.api.entity.ISummon;
 import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.common.items.data.ArmorPerkHolder;
@@ -361,6 +362,20 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
 
     @Override
     protected boolean isSunBurnTick() { return false; }
+
+    protected void setTatteredArcanistSlot(EquipmentSlot slot) {
+        net.minecraft.world.item.Item item = switch (slot) {
+            case HEAD -> ModItems.TATTERED_ARCANIST_HELMET.get();
+            case CHEST -> ModItems.TATTERED_ARCANIST_CHESTPLATE.get();
+            case LEGS -> ModItems.TATTERED_ARCANIST_LEGGINGS.get();
+            case FEET -> ModItems.TATTERED_ARCANIST_BOOTS.get();
+            default -> null;
+        };
+        if (item != null) {
+            setItemSlot(slot, new ItemStack(item));
+            setDropChance(slot, 0.0f);
+        }
+    }
 
     protected void setSpellbookInHand() {
         Item spellbook = BuiltInRegistries.ITEM.get(NOVICE_SPELL_BOOK_ID);

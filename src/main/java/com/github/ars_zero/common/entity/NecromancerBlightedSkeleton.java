@@ -28,8 +28,10 @@ public class NecromancerBlightedSkeleton extends AbstractBlightedSkeleton {
 
     @Override
     protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
-        super.populateDefaultEquipmentSlots(random, difficulty);
-        setArmorSlot(EquipmentSlot.CHEST, ARCANIST_ROBES_ID);
+        setTatteredArcanistSlot(EquipmentSlot.HEAD);
+        setTatteredArcanistSlot(EquipmentSlot.CHEST);
+        setTatteredArcanistSlot(EquipmentSlot.LEGS);
+        setTatteredArcanistSlot(EquipmentSlot.FEET);
     }
 
     @Override

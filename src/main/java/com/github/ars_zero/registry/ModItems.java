@@ -2,6 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.renderer.item.MultiphaseTurretItemRenderer;
+import com.github.ars_zero.common.item.armor.TatteredArcanistArmor;
 import com.github.ars_zero.registry.ModEntities;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -17,13 +18,18 @@ import com.hollingsworth.arsnouveau.common.items.RendererBlockItem;
 import com.hollingsworth.arsnouveau.setup.registry.ItemRegistryWrapper;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.List;
 
 import java.util.function.Supplier;
 
@@ -157,6 +163,47 @@ public class ModItems {
     public static final DeferredHolder<Item, SpawnEggItem> LICH_SPAWN_EGG = ITEMS.register(
             "lich_spawn_egg",
             () -> new SpawnEggItem(ModEntities.LICH.get(), 0xE8DCC8, 0x2D2D2D, defaultItemProperties()));
+
+    // -------------------------------------------------------------------------
+    // Tattered Arcanist Armor
+    // -------------------------------------------------------------------------
+
+    public static final DeferredRegister<ArmorMaterial> ARMOR_MATERIALS =
+            DeferredRegister.create(Registries.ARMOR_MATERIAL, ArsZero.MOD_ID);
+
+    public static final DeferredHolder<ArmorMaterial, ArmorMaterial> TATTERED_ARCANIST_MATERIAL =
+            ARMOR_MATERIALS.register("tattered_arcanist", () -> {
+                java.util.EnumMap<ArmorItem.Type, Integer> defense = new java.util.EnumMap<>(ArmorItem.Type.class);
+                defense.put(ArmorItem.Type.HELMET,     2);
+                defense.put(ArmorItem.Type.CHESTPLATE, 4);
+                defense.put(ArmorItem.Type.LEGGINGS,   3);
+                defense.put(ArmorItem.Type.BOOTS,      1);
+                defense.put(ArmorItem.Type.BODY,       4);
+                return new ArmorMaterial(
+                        defense,
+                        12,
+                        net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_LEATHER,
+                        () -> Ingredient.EMPTY,
+                        List.of(new ArmorMaterial.Layer(ArsZero.prefix("tattered_arcanist"))),
+                        0.0f, 0.0f
+                );
+            });
+
+    public static final DeferredHolder<Item, TatteredArcanistArmor> TATTERED_ARCANIST_HELMET =
+            ITEMS.register("tattered_arcanist_helmet",
+                    () -> new TatteredArcanistArmor(TATTERED_ARCANIST_MATERIAL, ArmorItem.Type.HELMET));
+
+    public static final DeferredHolder<Item, TatteredArcanistArmor> TATTERED_ARCANIST_CHESTPLATE =
+            ITEMS.register("tattered_arcanist_chestplate",
+                    () -> new TatteredArcanistArmor(TATTERED_ARCANIST_MATERIAL, ArmorItem.Type.CHESTPLATE));
+
+    public static final DeferredHolder<Item, TatteredArcanistArmor> TATTERED_ARCANIST_LEGGINGS =
+            ITEMS.register("tattered_arcanist_leggings",
+                    () -> new TatteredArcanistArmor(TATTERED_ARCANIST_MATERIAL, ArmorItem.Type.LEGGINGS));
+
+    public static final DeferredHolder<Item, TatteredArcanistArmor> TATTERED_ARCANIST_BOOTS =
+            ITEMS.register("tattered_arcanist_boots",
+                    () -> new TatteredArcanistArmor(TATTERED_ARCANIST_MATERIAL, ArmorItem.Type.BOOTS));
 
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);

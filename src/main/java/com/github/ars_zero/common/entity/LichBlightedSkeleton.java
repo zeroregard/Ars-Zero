@@ -65,9 +65,9 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
     protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
         setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.NETHERITE_HELMET));
         setDropChance(EquipmentSlot.HEAD, 0.0f);
-        setArcanistSlotTier3Enchanted(EquipmentSlot.CHEST, ARCANIST_ROBES_ID);
-        setArcanistSlotTier3Enchanted(EquipmentSlot.LEGS, ARCANIST_LEGGINGS_ID);
-        setArcanistSlotTier3Enchanted(EquipmentSlot.FEET, ARCANIST_BOOTS_ID);
+        setTatteredArcanistSlot(EquipmentSlot.CHEST);
+        setTatteredArcanistSlot(EquipmentSlot.LEGS);
+        setTatteredArcanistSlot(EquipmentSlot.FEET);
     }
 
     @Override

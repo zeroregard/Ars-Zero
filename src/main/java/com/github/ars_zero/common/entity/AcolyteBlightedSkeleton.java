@@ -3,7 +3,6 @@ package com.github.ars_zero.common.entity;
 import com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.BlightedSkeletonFleeGoal;
 import com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
@@ -34,13 +33,9 @@ public class AcolyteBlightedSkeleton extends AbstractBlightedSkeleton {
 
     @Override
     protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
-        super.populateDefaultEquipmentSlots(random, difficulty);
-        setArmorSlot(EquipmentSlot.CHEST, SORCERER_ROBES_ID);
-    }
-
-    @Override
-    protected ResourceLocation getHeadItemId() {
-        return SORCERER_HOOD_ID;
+        setTatteredArcanistSlot(EquipmentSlot.CHEST);
+        setTatteredArcanistSlot(EquipmentSlot.LEGS);
+        setTatteredArcanistSlot(EquipmentSlot.FEET);
     }
 
     @Override
