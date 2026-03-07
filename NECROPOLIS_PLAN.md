@@ -35,18 +35,17 @@ Built manually as NBT pieces in-game, wired together via template pools.
 - Top jigsaw: `name=necropolis/connector`, `target=necropolis/entrance`, `pool=minecraft:empty`
 - 4 side jigsaws (N/S/E/W): `name=necropolis/passage`, `target=necropolis/passage`, `pool=necropolis/hallways`
 
-### 🔲 hallway
+### ✅ hallway
 - Straight connecting corridor between rooms
-- Short / medium / long variants
-- Jigsaws at both ends
+- Jigsaws at both ends, cobweb processor applied
 
-### 🔲 small_room
-- Basic filler room, ~9×6×9
-- 1–2 exits, minor loot chest, basic mob spawner
+### ✅ small_room_1
+- 19×14×19, loot chest (necropolis_small), cobweb placeholders
+- 4 side jigsaws → necropolis/hallways pool
 
-### 🔲 medium_room
-- Mid-sized room, ~13×7×13
-- 2–3 exits, more decoration, possible puzzle element
+### 🔲 medium_room_1 (WIP)
+- 21×13×19, in progress
+- 1 entrance jigsaw (passage_medium), reached via small_to_medium connector
 
 ### 🔲 large_room
 - Big open chamber, ~17×9×17
@@ -65,43 +64,14 @@ Built manually as NBT pieces in-game, wired together via template pools.
 
 ---
 
-## Suggested Additional Rooms
-
-### 🔲 barracks
-- Long room with alcoves/bunks, many mob spawners
-- Feels like a guard quarters
-
-### 🔲 ritual_chamber
-- Circular or octagonal, central altar with soul fire / candles
-- Boss-adjacent or mini-boss spawn
-
-### 🔲 flooded_crypt
-- Partially waterlogged, coffin-style blocks lining walls
-- Drowned / undead themed
-
-### 🔲 library
-- Tall room with bookshelves, ladders, a lectern
-- Lore drop / spell scroll loot
-
-### 🔲 collapsed_hall
-- Partially destroyed hallway — rubble, exposed cave behind broken wall
-- Connects optionally to a side cave or dead end
-
-### 🔲 prison_cells
-- Two rows of small cells along a corridor
-- Mob spawners behind bars
-
----
-
 ## Template Pools
 
 | Pool | Purpose |
 |------|---------|
 | `necropolis/start` | Start piece → entrance_staircase |
-| `necropolis/rooms` | Chaining pool → entrance_staircase (expand later) |
-| `necropolis/hallways` | Hallway variants |
-| `necropolis/dead_ends` | Treasure room, staff room, flooded crypt, collapsed hall |
-| `necropolis/large_rooms` | Large room, ritual chamber, barracks |
+| `necropolis/rooms` | Chaining pool → entrance_staircase + entrance_bottom |
+| `necropolis/hallways` | hallway, small_room_1, dead_end_small, small_to_medium |
+| `necropolis/medium_rooms` | medium_room_1 (more to come) |
 
 ---
 

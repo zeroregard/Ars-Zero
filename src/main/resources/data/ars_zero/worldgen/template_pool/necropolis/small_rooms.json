@@ -1,0 +1,7 @@
+{
+  "name": "ars_zero:necropolis/small_rooms",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/small_room_1", "processors": "ars_zero:necropolis_cobweb", "projection": "rigid"}}
+  ]
+}
