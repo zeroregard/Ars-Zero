@@ -45,4 +45,20 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> SPLASH_FAST = SOUNDS.register(
             "splash_fast",
             () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("splash_fast")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> UNDEAD_MAGE_AMBIENT = SOUNDS.register(
+            "undead_mage.ambient",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("undead_mage.ambient")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> UNDEAD_MAGE_HURT = SOUNDS.register(
+            "undead_mage.hurt",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("undead_mage.hurt")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> UNDEAD_MAGE_DEATH = SOUNDS.register(
+            "undead_mage.death",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("undead_mage.death")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> UNDEAD_MAGE_STEP = SOUNDS.register(
+            "undead_mage.step",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("undead_mage.step")));
 }

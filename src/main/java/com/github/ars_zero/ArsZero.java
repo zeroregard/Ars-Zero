@@ -139,6 +139,7 @@ public class ArsZero {
         ModWorldgen.STRUCTURE_PROCESSOR_TYPES.register(modEventBus);
         ModWorldgen.FEATURES.register(modEventBus);
         ModWorldgen.TRUNK_PLACER_TYPES.register(modEventBus);
+        ModWorldgen.FOLIAGE_PLACER_TYPES.register(modEventBus);
         ModWorldgen.PLACEMENT_MODIFIER_TYPES.register(modEventBus);
         ModParticleTimelines.init(modEventBus);
 

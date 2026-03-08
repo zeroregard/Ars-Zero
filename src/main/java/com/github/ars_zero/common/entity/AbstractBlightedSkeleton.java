@@ -2,6 +2,7 @@ package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.registry.ModItems;
+import com.github.ars_zero.registry.ModSounds;
 import com.hollingsworth.arsnouveau.api.entity.ISummon;
 import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.common.items.data.ArmorPerkHolder;
@@ -9,6 +10,7 @@ import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry;
 import com.hollingsworth.arsnouveau.common.util.HolderHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -362,6 +364,28 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
 
     @Override
     protected boolean isSunBurnTick() { return false; }
+
+    @Override
+    public boolean checkSpawnRules(@javax.annotation.Nonnull net.minecraft.world.level.LevelAccessor level, @javax.annotation.Nonnull MobSpawnType spawnType) {
+        net.minecraft.core.BlockPos below = blockPosition().below();
+        net.minecraft.resources.ResourceLocation id = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                .getKey(level.getBlockState(below).getBlock());
+        return id != null
+                && id.getNamespace().equals(ArsZero.MOD_ID)
+                && id.getPath().equals("smooth_corrupted_sourcestone");
+    }
+
+    @Override
+    protected SoundEvent getAmbientSound() { return ModSounds.UNDEAD_MAGE_AMBIENT.get(); }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) { return ModSounds.UNDEAD_MAGE_HURT.get(); }
+
+    @Override
+    protected SoundEvent getDeathSound() { return ModSounds.UNDEAD_MAGE_DEATH.get(); }
+
+    @Override
+    protected SoundEvent getStepSound() { return ModSounds.UNDEAD_MAGE_STEP.get(); }
 
     protected void setTatteredArcanistSlot(EquipmentSlot slot) {
         net.minecraft.world.item.Item item = switch (slot) {

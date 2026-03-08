@@ -65,14 +65,36 @@
   },
   "splash_fast": {
     "sounds": [
-      {
-        "name": "ars_zero:splash_fast_1",
-        "stream": false
-      },
-      {
-        "name": "ars_zero:splash_fast_2",
-        "stream": false
-      }
+      {"name": "ars_zero:splash_fast_1", "stream": false},
+      {"name": "ars_zero:splash_fast_2", "stream": false}
+    ]
+  },
+  "undead_mage.ambient": {
+    "sounds": [
+      {"name": "ars_zero:undead_mage/say1"},
+      {"name": "ars_zero:undead_mage/say2"},
+      {"name": "ars_zero:undead_mage/say3"}
+    ]
+  },
+  "undead_mage.hurt": {
+    "sounds": [
+      {"name": "ars_zero:undead_mage/hurt1"},
+      {"name": "ars_zero:undead_mage/hurt2"},
+      {"name": "ars_zero:undead_mage/hurt3"},
+      {"name": "ars_zero:undead_mage/hurt4"}
+    ]
+  },
+  "undead_mage.death": {
+    "sounds": [
+      {"name": "ars_zero:undead_mage/death1"}
+    ]
+  },
+  "undead_mage.step": {
+    "sounds": [
+      {"name": "ars_zero:undead_mage/step1"},
+      {"name": "ars_zero:undead_mage/step2"},
+      {"name": "ars_zero:undead_mage/step3"},
+      {"name": "ars_zero:undead_mage/step5"}
     ]
   }
 }

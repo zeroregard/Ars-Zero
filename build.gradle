@@ -225,3 +225,15 @@ tasks.named("runGameTestServer").configure {
     }
 }
 
+tasks.register('generateStructureWorld', Exec) {
+    group = 'ars zero'
+    description = 'Generate run/saves/Structure Layout world from structure_layout.json'
+    commandLine 'python3', 'scripts/generate_structure_world.py'
+}
+
+tasks.register('syncStructures', Exec) {
+    group = 'ars zero'
+    description = 'Copy saved structure NBTs from Structure Layout world back to mod resources'
+    commandLine 'python3', 'scripts/sync_structures.py'
+}
+

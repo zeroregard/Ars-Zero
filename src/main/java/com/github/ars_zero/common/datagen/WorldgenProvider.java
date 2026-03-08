@@ -38,10 +38,12 @@ import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConf
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSize;
+import com.github.ars_zero.common.world.tree.FlatBlobFoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.BlobFoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.RuleBasedBlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
+import net.minecraft.world.level.levelgen.placement.CountPlacement;
 import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.placement.PlacementModifier;
@@ -69,7 +71,7 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
             BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LOG.get()),
             new DeadArchwoodTrunkPlacer(9, 1, 0),
             BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LEAVES.get().defaultBlockState().setValue(LeavesBlock.PERSISTENT, true)),
-            new BlobFoliagePlacer(UniformInt.of(2, 4), UniformInt.of(0, 2), 3),
+            new FlatBlobFoliagePlacer(UniformInt.of(5, 7), UniformInt.of(0, 1), 3, 4),
             new TwoLayersFeatureSize(2, 0, 2)
         ).build();
 
@@ -80,7 +82,7 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
             BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LOG.get()),
             new BigDeadArchwoodTrunkPlacer(16, 4, 4),
             BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LEAVES.get().defaultBlockState().setValue(LeavesBlock.PERSISTENT, true)),
-            new BlobFoliagePlacer(UniformInt.of(2, 4), UniformInt.of(0, 2), 3),
+            new FlatBlobFoliagePlacer(UniformInt.of(6, 8), UniformInt.of(0, 1), 3, 5),
             new TwoLayersFeatureSize(2, 0, 2)
         ).build();
 
@@ -91,7 +93,7 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
             BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LOG.get()),
             new HugeDeadArchwoodTrunkPlacer(24, 6, 6),
             BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LEAVES.get().defaultBlockState().setValue(LeavesBlock.PERSISTENT, true)),
-            new BlobFoliagePlacer(UniformInt.of(2, 4), UniformInt.of(0, 2), 3),
+            new FlatBlobFoliagePlacer(UniformInt.of(7, 9), UniformInt.of(0, 1), 4, 6),
             new TwoLayersFeatureSize(3, 0, 3)
         ).build();
 
@@ -138,19 +140,24 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
 
     private static void bootstrapPlacedFeatures(BootstrapContext<PlacedFeature> context) {
         HolderGetter<ConfiguredFeature<?, ?>> features = context.lookup(Registries.CONFIGURED_FEATURE);
+        List<PlacementModifier> smallTreeModifiers = new ArrayList<>();
+        smallTreeModifiers.add(CountPlacement.of(6));
+        smallTreeModifiers.add(InSquarePlacement.spread());
+        smallTreeModifiers.add(PlacementUtils.HEIGHTMAP_OCEAN_FLOOR);
+        smallTreeModifiers.add(BiomeFilter.biome());
         context.register(ModWorldgen.PLACED_DEAD_ARCHWOOD_TREE,
             new PlacedFeature(
                 features.getOrThrow(ModWorldgen.CONFIGURED_DEAD_ARCHWOOD_TREE),
-                VegetationPlacements.treePlacement(RarityFilter.onAverageOnceEvery(1))
+                smallTreeModifiers
             ));
         context.register(ModWorldgen.PLACED_BIG_DEAD_ARCHWOOD_TREE,
             new PlacedFeature(
                 features.getOrThrow(ModWorldgen.CONFIGURED_BIG_DEAD_ARCHWOOD_TREE),
-                VegetationPlacements.treePlacement(RarityFilter.onAverageOnceEvery(3))
+                VegetationPlacements.treePlacement(RarityFilter.onAverageOnceEvery(1))
             ));
         List<PlacementModifier> hugeTreeModifiers = new ArrayList<>();
         hugeTreeModifiers.add(NoBlightLogNearbyFilter.INSTANCE);
-        hugeTreeModifiers.addAll(VegetationPlacements.treePlacement(RarityFilter.onAverageOnceEvery(12)));
+        hugeTreeModifiers.addAll(VegetationPlacements.treePlacement(RarityFilter.onAverageOnceEvery(5)));
         context.register(ModWorldgen.PLACED_HUGE_DEAD_ARCHWOOD_TREE,
             new PlacedFeature(
                 features.getOrThrow(ModWorldgen.CONFIGURED_HUGE_DEAD_ARCHWOOD_TREE),
@@ -221,7 +228,7 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_PATCH_DEAD_BUSH));
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_PATCH_GRASS));
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_DISK_COARSE_DIRT));
-        generation.addFeature(GenerationStep.Decoration.FLUID_SPRINGS, placedFeatures.getOrThrow(ModWorldgen.PLACED_BLIGHT_POOL));
+        generation.addFeature(GenerationStep.Decoration.LOCAL_MODIFICATIONS, placedFeatures.getOrThrow(ModWorldgen.PLACED_BLIGHT_POOL));
         BiomeDefaultFeatures.addDefaultMushrooms(generation);
         BiomeDefaultFeatures.addDefaultExtraVegetation(generation);
 

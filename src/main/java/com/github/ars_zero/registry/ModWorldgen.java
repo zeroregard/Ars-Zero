@@ -8,12 +8,14 @@ import com.github.ars_zero.common.world.placement.NoBlightLogNearbyFilter;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType;
 import com.github.ars_zero.common.world.tree.BigDeadArchwoodTrunkPlacer;
 import com.github.ars_zero.common.world.tree.DeadArchwoodTrunkPlacer;
+import com.github.ars_zero.common.world.tree.FlatBlobFoliagePlacer;
 import com.github.ars_zero.common.world.tree.HugeDeadArchwoodTrunkPlacer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.foliageplacers.FoliagePlacerType;
 import net.minecraft.world.level.levelgen.feature.trunkplacers.TrunkPlacerType;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.placement.PlacementModifierType;
@@ -58,6 +60,13 @@ public final class ModWorldgen {
     public static final DeferredHolder<TrunkPlacerType<?>, TrunkPlacerType<HugeDeadArchwoodTrunkPlacer>> HUGE_DEAD_ARCHWOOD_TRUNK_PLACER =
         TRUNK_PLACER_TYPES.register("huge_dead_archwood_trunk_placer",
             () -> new TrunkPlacerType<>(HugeDeadArchwoodTrunkPlacer.CODEC));
+
+    public static final DeferredRegister<FoliagePlacerType<?>> FOLIAGE_PLACER_TYPES =
+        DeferredRegister.create(BuiltInRegistries.FOLIAGE_PLACER_TYPE, ArsZero.MOD_ID);
+
+    public static final DeferredHolder<FoliagePlacerType<?>, FoliagePlacerType<FlatBlobFoliagePlacer>> FLAT_BLOB_FOLIAGE_PLACER =
+        FOLIAGE_PLACER_TYPES.register("flat_blob_foliage_placer",
+            () -> new FoliagePlacerType<>(FlatBlobFoliagePlacer.CODEC));
 
     public static final DeferredRegister<PlacementModifierType<?>> PLACEMENT_MODIFIER_TYPES =
         DeferredRegister.create(BuiltInRegistries.PLACEMENT_MODIFIER_TYPE, ArsZero.MOD_ID);
