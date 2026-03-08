@@ -2,6 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.block.BlightCauldronBlock;
+import com.github.ars_zero.common.block.BlightedSoilBlock;
 import com.github.ars_zero.common.block.FrozenBlightBlock;
 import com.github.ars_zero.common.block.MultiphaseSpellTurret;
 import com.github.ars_zero.common.block.StaffDisplayBlock;
@@ -101,6 +102,15 @@ public class ModBlocks {
             .noOcclusion())
     );
     
+    public static final DeferredHolder<Block, BlightedSoilBlock> BLIGHTED_SOIL = BLOCKS.register(
+        "blighted_soil",
+        () -> new BlightedSoilBlock(BlockBehaviour.Properties.of()
+            .mapColor(MapColor.DIRT)
+            .strength(0.5f)
+            .sound(SoundType.GRAVEL)
+            .requiresCorrectToolForDrops())
+    );
+
     public static final DeferredHolder<Block, FrozenBlightBlock> FROZEN_BLIGHT = BLOCKS.register(
         "frozen_blight",
         () -> new FrozenBlightBlock(BlockBehaviour.Properties.of()

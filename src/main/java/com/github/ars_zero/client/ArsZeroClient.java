@@ -24,6 +24,8 @@ import com.github.ars_zero.client.renderer.entity.WaterConvergenceControllerEnti
 import com.github.ars_zero.client.renderer.entity.SourceJarChargerEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.PlayerChargerEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.ArcaneCircleEntityRenderer;
+import com.github.ars_zero.client.color.BlightedSoilBlockColor;
+import com.github.ars_zero.client.color.BlightedSoilItemColor;
 import com.github.ars_zero.client.particle.BlightSplashParticle;
 import com.github.ars_zero.client.particle.ExplosiveChargeParticle;
 import com.github.ars_zero.client.particle.FastPoofParticle;
@@ -31,7 +33,9 @@ import com.github.ars_zero.client.particle.SourceJarChargeParticle;
 import com.github.ars_zero.client.renderer.tile.MultiphaseTurretRenderer;
 import com.github.ars_zero.client.renderer.tile.StaffDisplayRenderer;
 import com.github.ars_zero.registry.ModBlockEntities;
+import com.github.ars_zero.registry.ModBlocks;
 import com.github.ars_zero.registry.ModEntities;
+import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.registry.ModParticles;
 import com.github.ars_zero.client.renderer.entity.MageSkeletonRenderer;
 import com.github.ars_zero.client.renderer.entity.model.BlightedSkeletonModel;
@@ -41,6 +45,7 @@ import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
@@ -55,6 +60,8 @@ public class ArsZeroClient {
         modEventBus.addListener(ArsZeroClient::registerRenderers);
         modEventBus.addListener(ArsZeroClient::registerLayerDefinitions);
         modEventBus.addListener(ArsZeroClient::registerParticleProviders);
+        modEventBus.addListener(ArsZeroClient::registerBlockColors);
+        modEventBus.addListener(ArsZeroClient::registerItemColors);
         modEventBus.addListener(ClientNetworking::register);
 
         NeoForge.EVENT_BUS.register(StaffScrollHandler.class);
@@ -114,6 +121,14 @@ public class ArsZeroClient {
                 GeometryEntityOverlayHelper.OVERLAY);
         event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("mana_drain_overlay"),
                 GuiManaDrainOverlay.OVERLAY);
+    }
+
+    public static void registerBlockColors(RegisterColorHandlersEvent.Block event) {
+        event.register(BlightedSoilBlockColor.INSTANCE, ModBlocks.BLIGHTED_SOIL.get());
+    }
+
+    public static void registerItemColors(RegisterColorHandlersEvent.Item event) {
+        event.register(BlightedSoilItemColor.INSTANCE, ModItems.BLIGHTED_SOIL.get());
     }
 
     public static void registerParticleProviders(RegisterParticleProvidersEvent event) {

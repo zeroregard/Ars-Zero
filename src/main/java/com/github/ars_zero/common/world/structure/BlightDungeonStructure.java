@@ -27,7 +27,7 @@ public class BlightDungeonStructure extends Structure {
             instance.group(settingsCodec(instance),
                     StructureTemplatePool.CODEC.fieldOf("start_pool").forGetter(s -> s.startPool),
                     ResourceLocation.CODEC.optionalFieldOf("start_jigsaw_name").forGetter(s -> s.startJigsawName),
-                    Codec.intRange(0, 30).fieldOf("size").forGetter(s -> s.size),
+                    Codec.intRange(0, 128).fieldOf("size").forGetter(s -> s.size),
                     HeightProvider.CODEC.fieldOf("start_height").forGetter(s -> s.startHeight),
                     Heightmap.Types.CODEC.optionalFieldOf("project_start_to_heightmap").forGetter(s -> s.projectStartToHeightmap),
                     Codec.intRange(1, 128).fieldOf("max_distance_from_center").forGetter(s -> s.maxDistanceFromCenter),

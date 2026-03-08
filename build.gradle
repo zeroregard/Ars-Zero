@@ -237,3 +237,10 @@ tasks.register('syncStructures', Exec) {
     commandLine 'python3', 'scripts/sync_structures.py'
 }
 
+tasks.register('runDataClient') {
+    group = 'ars zero'
+    description = 'Run datagen then launch the client (./gradlew runDataClient)'
+    dependsOn 'runData'
+    finalizedBy 'runClient'
+}
+

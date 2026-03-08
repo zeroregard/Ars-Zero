@@ -35,7 +35,8 @@
       "minecraft:lake_lava_surface"
     ],
     [
-      "minecraft:amethyst_geode"
+      "minecraft:amethyst_geode",
+      "ars_zero:placed_blight_pool"
     ],
     [],
     [],
@@ -75,8 +76,7 @@
     [],
     [
       "minecraft:spring_water",
-      "minecraft:spring_lava",
-      "ars_zero:placed_blight_pool"
+      "minecraft:spring_lava"
     ],
     [
       "minecraft:glow_lichen",
@@ -84,7 +84,6 @@
       "ars_zero:placed_big_dead_archwood_tree",
       "ars_zero:placed_huge_dead_archwood_tree",
       "ars_zero:placed_patch_dead_bush",
-      "ars_zero:placed_patch_grass",
       "ars_zero:placed_disk_coarse_dirt",
       "minecraft:brown_mushroom_normal",
       "minecraft:red_mushroom_normal",
@@ -92,7 +91,8 @@
       "minecraft:patch_pumpkin"
     ],
     [
-      "minecraft:freeze_top_layer"
+      "minecraft:freeze_top_layer",
+      "ars_zero:placed_replace_grass_with_blighted_soil"
     ]
   ],
   "has_precipitation": true,

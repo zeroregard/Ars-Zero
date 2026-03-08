@@ -40,6 +40,7 @@ public class ModCreativeTabs {
                     output.accept(ModItems.ICE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.LIGHTNING_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.BLIGHT_VOXEL_SPAWNER.get().getDefaultInstance());
+                    output.accept(ModItems.BLIGHTED_SOIL.get().getDefaultInstance());
                     output.accept(ModItems.FROZEN_BLIGHT.get().getDefaultInstance());
                     output.accept(ModItems.BLIGHT_ARCHWOOD_LOG.get().getDefaultInstance());
                     output.accept(ModItems.BLIGHT_ARCHWOOD_LEAVES.get().getDefaultInstance());

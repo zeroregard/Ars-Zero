@@ -9,17 +9,18 @@
       }
     },
     "foliage_placer": {
-      "type": "minecraft:blob_foliage_placer",
-      "height": 3,
+      "type": "ars_zero:flat_blob_foliage_placer",
+      "layer_count": 3,
       "offset": {
         "type": "minecraft:uniform",
-        "max_inclusive": 2,
+        "max_inclusive": 1,
         "min_inclusive": 0
       },
+      "outer_radius": 5,
       "radius": {
         "type": "minecraft:uniform",
-        "max_inclusive": 4,
-        "min_inclusive": 2
+        "max_inclusive": 8,
+        "min_inclusive": 6
       }
     },
     "foliage_provider": {

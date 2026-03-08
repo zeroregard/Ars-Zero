@@ -96,6 +96,11 @@ public class ModItems {
         () -> new BlockItem(ModBlocks.BLIGHT_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
     
+    public static final DeferredHolder<Item, BlockItem> BLIGHTED_SOIL = ITEMS.register(
+        "blighted_soil",
+        () -> new BlockItem(ModBlocks.BLIGHTED_SOIL.get(), defaultItemProperties())
+    );
+
     public static final DeferredHolder<Item, BlockItem> FROZEN_BLIGHT = ITEMS.register(
         "frozen_blight",
         () -> new BlockItem(ModBlocks.FROZEN_BLIGHT.get(), defaultItemProperties())

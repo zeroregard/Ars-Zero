@@ -39,7 +39,6 @@ import net.minecraft.world.level.levelgen.feature.configurations.TreeConfigurati
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSize;
 import com.github.ars_zero.common.world.tree.FlatBlobFoliagePlacer;
-import net.minecraft.world.level.levelgen.feature.foliageplacers.BlobFoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.RuleBasedBlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
@@ -130,6 +129,11 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
                     new SimpleBlockConfiguration(BlockStateProvider.simple(Blocks.GRAVEL)),
                     List.of(Blocks.GRASS_BLOCK, Blocks.DIRT))));
 
+        // Replace grass_block with blighted_soil using noise-based selective placement
+        context.register(ModWorldgen.CONFIGURED_REPLACE_GRASS_WITH_BLIGHTED_SOIL,
+            new ConfiguredFeature<>(ModWorldgen.BLIGHTED_SOIL_SURFACE_FEATURE.get(),
+                net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.INSTANCE));
+
         BlightPoolFeature.Configuration blightPoolConfig = new BlightPoolFeature.Configuration(
             BlockStateProvider.simple(ModFluids.BLIGHT_FLUID_BLOCK.get().defaultBlockState()),
             BlockStateProvider.simple(Blocks.STONE),
@@ -140,15 +144,10 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
 
     private static void bootstrapPlacedFeatures(BootstrapContext<PlacedFeature> context) {
         HolderGetter<ConfiguredFeature<?, ?>> features = context.lookup(Registries.CONFIGURED_FEATURE);
-        List<PlacementModifier> smallTreeModifiers = new ArrayList<>();
-        smallTreeModifiers.add(CountPlacement.of(6));
-        smallTreeModifiers.add(InSquarePlacement.spread());
-        smallTreeModifiers.add(PlacementUtils.HEIGHTMAP_OCEAN_FLOOR);
-        smallTreeModifiers.add(BiomeFilter.biome());
         context.register(ModWorldgen.PLACED_DEAD_ARCHWOOD_TREE,
             new PlacedFeature(
                 features.getOrThrow(ModWorldgen.CONFIGURED_DEAD_ARCHWOOD_TREE),
-                smallTreeModifiers
+                VegetationPlacements.treePlacement(CountPlacement.of(4))
             ));
         context.register(ModWorldgen.PLACED_BIG_DEAD_ARCHWOOD_TREE,
             new PlacedFeature(
@@ -195,6 +194,14 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
                     InSquarePlacement.spread(),
                     PlacementUtils.HEIGHTMAP_WORLD_SURFACE,
                     BiomeFilter.biome())));
+        context.register(ModWorldgen.PLACED_REPLACE_GRASS_WITH_BLIGHTED_SOIL,
+            new PlacedFeature(
+                features.getOrThrow(ModWorldgen.CONFIGURED_REPLACE_GRASS_WITH_BLIGHTED_SOIL),
+                List.of(
+                    CountPlacement.of(25),
+                    InSquarePlacement.spread(),
+                    PlacementUtils.HEIGHTMAP_WORLD_SURFACE,
+                    BiomeFilter.biome())));
         context.register(ModWorldgen.PLACED_BLIGHT_POOL,
             new PlacedFeature(
                 features.getOrThrow(ModWorldgen.CONFIGURED_BLIGHT_POOL),
@@ -226,8 +233,8 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_BIG_DEAD_ARCHWOOD_TREE));
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_HUGE_DEAD_ARCHWOOD_TREE));
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_PATCH_DEAD_BUSH));
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_PATCH_GRASS));
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_DISK_COARSE_DIRT));
+        generation.addFeature(GenerationStep.Decoration.TOP_LAYER_MODIFICATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_REPLACE_GRASS_WITH_BLIGHTED_SOIL));
         generation.addFeature(GenerationStep.Decoration.LOCAL_MODIFICATIONS, placedFeatures.getOrThrow(ModWorldgen.PLACED_BLIGHT_POOL));
         BiomeDefaultFeatures.addDefaultMushrooms(generation);
         BiomeDefaultFeatures.addDefaultExtraVegetation(generation);

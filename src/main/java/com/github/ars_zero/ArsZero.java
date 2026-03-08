@@ -471,8 +471,6 @@ public class ArsZero {
             generator.addProvider(true, new DyeRecipeDatagen(generator));
             generator.addProvider(true, new StaffRecipeDatagen(generator));
             generator.addProvider(true, new GlyphRecipeDatagen(generator));
-            generator.addProvider(true, new com.github.ars_zero.common.datagen.StructureDatagen(
-                    generator.getPackOutput(), event.getLookupProvider()));
             generator.addProvider(true, new BlockTagDatagen(generator.getPackOutput(), event.getLookupProvider(), event.getExistingFileHelper()));
         }
     }

@@ -2,6 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.world.feature.BlightPoolFeature;
+import com.github.ars_zero.common.world.feature.BlightedSoilSurfaceFeature;
 import com.github.ars_zero.common.world.structure.BlightDungeonStructure;
 import com.github.ars_zero.common.world.structure.CobwebProcessor;
 import com.github.ars_zero.common.world.placement.NoBlightLogNearbyFilter;
@@ -45,6 +46,9 @@ public final class ModWorldgen {
 
     public static final DeferredHolder<Feature<?>, BlightPoolFeature> BLIGHT_POOL_FEATURE =
         FEATURES.register("blight_pool", () -> new BlightPoolFeature(BlightPoolFeature.Configuration.CODEC));
+
+    public static final DeferredHolder<Feature<?>, BlightedSoilSurfaceFeature> BLIGHTED_SOIL_SURFACE_FEATURE =
+        FEATURES.register("blighted_soil_surface", () -> new BlightedSoilSurfaceFeature(BlightedSoilSurfaceFeature.CODEC));
 
     public static final DeferredRegister<TrunkPlacerType<?>> TRUNK_PLACER_TYPES =
         DeferredRegister.create(BuiltInRegistries.TRUNK_PLACER_TYPE, ArsZero.MOD_ID);
@@ -122,6 +126,11 @@ public final class ModWorldgen {
         ResourceKey.create(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE, ArsZero.prefix("patch_grass"));
     public static final ResourceKey<PlacedFeature> PLACED_PATCH_GRASS =
         ResourceKey.create(net.minecraft.core.registries.Registries.PLACED_FEATURE, ArsZero.prefix("placed_patch_grass"));
+
+    public static final ResourceKey<ConfiguredFeature<?, ?>> CONFIGURED_REPLACE_GRASS_WITH_BLIGHTED_SOIL =
+        ResourceKey.create(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE, ArsZero.prefix("replace_grass_with_blighted_soil"));
+    public static final ResourceKey<PlacedFeature> PLACED_REPLACE_GRASS_WITH_BLIGHTED_SOIL =
+        ResourceKey.create(net.minecraft.core.registries.Registries.PLACED_FEATURE, ArsZero.prefix("placed_replace_grass_with_blighted_soil"));
 
     /** Blight forest biome (dead archwood trees, skeletons, no Ars Nouveau critters). */
     public static final ResourceKey<Biome> BLIGHT_FOREST =

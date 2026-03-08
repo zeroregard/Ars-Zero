@@ -32,11 +32,11 @@ WORLD_DIR    = PROJECT_ROOT / "run/saves/Structure Layout"
 WORLD_NAME   = "Structure Layout"
 DONOR_WORLD  = PROJECT_ROOT / "run/saves/Building Blocks"   # existing world to borrow level.dat from
 
-# Y level for the command block floor
+# Y levels
 FLOOR_Y   = 63   # stone floor
-CMD_Y     = 64   # command block sits on stone
-BTN_Y     = 65   # button on top of command block
-SIGN_Y    = 66   # sign above button
+CMD_Y     = 64   # command block / structure block row
+BTN_Y     = 65   # button on top
+SIGN_Y    = 65   # wall sign at same Y as button, on side face
 
 # Gap between pieces (in blocks, added to the widest piece's X)
 GAP = 8  # blocks between pieces (after the widest piece's X)
@@ -288,64 +288,113 @@ def make_region(chunks: dict) -> bytes:
 # Block entity (command block, sign) builders
 # ---------------------------------------------------------------------------
 
+def _sign_fields(x: int, y: int, z: int, lines: list) -> dict:
+    """Build block entity fields for a wall sign. lines = up to 4 strings."""
+    while len(lines) < 4:
+        lines.append("")
+    messages = [json.dumps({"text": l}) for l in lines]
+    return {
+        "id": (TAG_STRING, "minecraft:sign"),
+        "x":  (TAG_INT, x),
+        "y":  (TAG_INT, y),
+        "z":  (TAG_INT, z),
+        "front_text": (TAG_COMPOUND, {
+            "color":            (TAG_STRING, "black"),
+            "has_glowing_text": (TAG_BYTE, 0),
+            "messages": (TAG_LIST, (TAG_STRING, messages)),
+        }),
+        "back_text": (TAG_COMPOUND, {
+            "color":            (TAG_STRING, "black"),
+            "has_glowing_text": (TAG_BYTE, 0),
+            "messages": (TAG_LIST, (TAG_STRING, [
+                '{"text":""}', '{"text":""}', '{"text":""}', '{"text":""}',
+            ])),
+        }),
+        "is_waxed": (TAG_BYTE, 0),
+    }
+
+
 def make_block_entities(pieces: list, x_positions: list) -> list:
     """
-    Return list of block entity NBT field dicts to embed in chunks.
-    Command blocks and signs are placed at cmd_x = bx - 2 (just outside the frame).
+    Per piece, place at (bx, CMD_Y, 0):
+      - LOAD command block: /place structure ars_zero:necropolis/<nbt> <bx> <CMD_Y> <0>
+        (absolute coords so the structure lands inside the frame)
+      - button on top (BTN_Y)
+      - wall sign on its -Z face labelled "LOAD / <nbt>"
+    At (bx - 2, CMD_Y, 0):
+      - Structure block pre-configured in SAVE mode
+      - button on top
+      - wall sign labelled "SAVE / <nbt>"
     """
     entities = []
     for piece, bx in zip(pieces, x_positions):
-        sz = piece["sizeXYZ"][2]
-        cmd_x = bx - 2
-        cmd_z = sz // 2
-        cmd = f"/place structure ars_zero:necropolis/{piece['nbt']} ~ ~ ~"
-        # Command block just outside the -X side of the frame
+        sx, sy, sz = piece["sizeXYZ"]
+        nbt = piece["nbt"]
+        full_name = f"ars_zero:necropolis/{nbt}"
+
+        # --- LOAD command block (2 blocks left of frame) ---
+        # Command uses absolute coords so structure spawns at the frame origin (bx, CMD_Y, 0)
+        load_x, load_y, load_z = bx - 2, CMD_Y, 0
+        cmd = f"/place template {full_name} {bx} {CMD_Y} {0} none none 1.0 0"
         entities.append({
-            "pos": (cmd_x, CMD_Y, cmd_z),
+            "pos": (load_x, load_y, load_z),
             "fields": {
                 "id":        (TAG_STRING, "minecraft:command_block"),
-                "x":         (TAG_INT, cmd_x),
-                "y":         (TAG_INT, CMD_Y),
-                "z":         (TAG_INT, cmd_z),
+                "x":         (TAG_INT, load_x),
+                "y":         (TAG_INT, load_y),
+                "z":         (TAG_INT, load_z),
                 "Command":   (TAG_STRING, cmd),
                 "auto":      (TAG_BYTE, 0),
                 "powered":   (TAG_BYTE, 0),
-                "conditionMet": (TAG_BYTE, 0),
-                "UpdateLastExecution": (TAG_BYTE, 1),
-                "LastExecution": (TAG_LONG, 0),
-                "SuccessCount": (TAG_INT, 0),
-                "LastOutput": (TAG_STRING, ""),
-                "TrackOutput": (TAG_BYTE, 1),
-                "CustomName": (TAG_STRING, '""'),
+                "conditionMet":          (TAG_BYTE, 0),
+                "UpdateLastExecution":   (TAG_BYTE, 1),
+                "LastExecution":         (TAG_LONG, 0),
+                "SuccessCount":          (TAG_INT, 0),
+                "LastOutput":            (TAG_STRING, ""),
+                "TrackOutput":           (TAG_BYTE, 1),
+                "CustomName":            (TAG_STRING, '""'),
             }
         })
-        # Sign above the button
-        label = piece["nbt"]
-        sign_text = json.dumps({"text": label, "color": "white"})
+        # Sign on -Z face of the LOAD block (facing south = towards +Z = player view)
         entities.append({
-            "pos": (cmd_x, SIGN_Y, cmd_z),
+            "pos": (load_x, SIGN_Y, load_z - 1),
+            "fields": _sign_fields(load_x, SIGN_Y, load_z - 1, ["LOAD", nbt, "", ""]),
+        })
+
+        # --- SAVE structure block (4 blocks to the -X side of frame) ---
+        save_x, save_y, save_z = bx - 4, CMD_Y, 0
+        entities.append({
+            "pos": (save_x, save_y, save_z),
             "fields": {
-                "id": (TAG_STRING, "minecraft:sign"),
-                "x":  (TAG_INT, cmd_x),
-                "y":  (TAG_INT, SIGN_Y),
-                "z":  (TAG_INT, cmd_z),
-                "front_text": (TAG_COMPOUND, {
-                    "color":        (TAG_STRING, "black"),
-                    "has_glowing_text": (TAG_BYTE, 0),
-                    "messages": (TAG_LIST, (TAG_STRING, [
-                        sign_text, '{"text":""}', '{"text":""}', '{"text":""}',
-                    ])),
-                }),
-                "back_text": (TAG_COMPOUND, {
-                    "color":        (TAG_STRING, "black"),
-                    "has_glowing_text": (TAG_BYTE, 0),
-                    "messages": (TAG_LIST, (TAG_STRING, [
-                        '{"text":""}', '{"text":""}', '{"text":""}', '{"text":""}',
-                    ])),
-                }),
-                "is_waxed": (TAG_BYTE, 0),
+                "id":    (TAG_STRING, "minecraft:structure_block"),
+                "x":     (TAG_INT, save_x),
+                "y":     (TAG_INT, save_y),
+                "z":     (TAG_INT, save_z),
+                "name":  (TAG_STRING, full_name),
+                "mode":  (TAG_STRING, "SAVE"),
+                "posX":  (TAG_INT, 4),   # structure block is 4 to the -X of frame origin (bx)
+                "posY":  (TAG_INT, 0),
+                "posZ":  (TAG_INT, 0),
+                "sizeX": (TAG_INT, sx),
+                "sizeY": (TAG_INT, sy),
+                "sizeZ": (TAG_INT, sz),
+                "integrity":   (TAG_FLOAT, 1.0),
+                "mirror":      (TAG_STRING, "NONE"),
+                "rotation":    (TAG_STRING, "NONE"),
+                "ignoreEntities": (TAG_BYTE, 1),
+                "showboundingbox": (TAG_BYTE, 1),
+                "author":      (TAG_STRING, ""),
+                "metadata":    (TAG_STRING, ""),
+                "powered":     (TAG_BYTE, 0),
+                "showair":     (TAG_BYTE, 0),
             }
         })
+        # Sign on -Z face of the SAVE block
+        entities.append({
+            "pos": (save_x, SIGN_Y, save_z - 1),
+            "fields": _sign_fields(save_x, SIGN_Y, save_z - 1, ["SAVE", nbt, "", ""]),
+        })
+
     return entities
 
 
@@ -375,8 +424,10 @@ def build_world(pieces: list) -> None:
 
     for piece, bx in zip(pieces, x_positions):
         sx, sy, sz = piece["sizeXYZ"]
-        frame_y_bottom = CMD_Y       # bottom frame sits at floor level
-        frame_y_top    = CMD_Y + sy  # top frame one above the piece ceiling
+        # Structure occupies Y = CMD_Y .. CMD_Y + sy - 1
+        # Bedrock frames sit just outside: one row below (CMD_Y - 1) and one row above (CMD_Y + sy)
+        frame_y_bottom = CMD_Y - 1
+        frame_y_top    = CMD_Y + sy
 
         # Bedrock frames: bottom and top — perimeter only (1 block thick)
         for frame_y in (frame_y_bottom, frame_y_top):
@@ -385,12 +436,17 @@ def build_world(pieces: list) -> None:
                     if dx == 0 or dx == sx - 1 or dz == 0 or dz == sz - 1:
                         all_blocks[(bx + dx, frame_y, dz)] = ("minecraft:bedrock", {})
 
-        # Command block — placed just outside the frame to the -X side
-        cmd_x = bx - 2
-        all_blocks[(cmd_x, CMD_Y, sz // 2)] = ("minecraft:command_block", {"facing": "up", "conditional": "false"})
-        all_blocks[(cmd_x, BTN_Y, sz // 2)] = ("minecraft:oak_button", {"face": "floor", "facing": "north", "powered": "false"})
-        all_blocks[(cmd_x, SIGN_Y, sz // 2)] = ("minecraft:oak_wall_sign", {"facing": "south", "waterlogged": "false"})
-        all_blocks[(cmd_x, FLOOR_Y + 1, sz // 2 - 1)] = ("minecraft:oak_fence", {"east": "false", "north": "false", "south": "false", "waterlogged": "false", "west": "false"})
+        # LOAD command block — 2 blocks to the -X side of frame (outside, not touching the structure area)
+        load_x = bx - 2
+        all_blocks[(load_x, CMD_Y, 0)] = ("minecraft:command_block", {"facing": "up", "conditional": "false"})
+        all_blocks[(load_x, BTN_Y, 0)] = ("minecraft:oak_button", {"face": "floor", "facing": "north", "powered": "false"})
+        all_blocks[(load_x, SIGN_Y, -1)] = ("minecraft:oak_wall_sign", {"facing": "south", "waterlogged": "false"})
+
+        # SAVE structure block — 4 blocks to -X of frame
+        save_x = bx - 4
+        all_blocks[(save_x, CMD_Y, 0)] = ("minecraft:structure_block", {"mode": "save"})
+        all_blocks[(save_x, BTN_Y, 0)] = ("minecraft:oak_button", {"face": "floor", "facing": "north", "powered": "false"})
+        all_blocks[(save_x, SIGN_Y, -1)] = ("minecraft:oak_wall_sign", {"facing": "south", "waterlogged": "false"})
 
     # Group blocks into chunks
     chunk_blocks: dict = {}  # (cx, cz) -> {(lx,y,lz): (name,props)}
@@ -500,6 +556,18 @@ def build_world(pieces: list) -> None:
 # Main
 # ---------------------------------------------------------------------------
 
+def read_nbt_size(nbt_path: Path) -> list:
+    """Read [sizeX, sizeY, sizeZ] directly from a gzip-compressed structure NBT file."""
+    raw = gzip.decompress(nbt_path.read_bytes())
+    key = b'\x09\x00\x04size'
+    idx = raw.find(key)
+    if idx == -1:
+        raise ValueError(f"'size' tag not found in {nbt_path}")
+    pos = idx + len(key)
+    count = struct.unpack(">i", raw[pos + 1:pos + 5])[0]
+    return [struct.unpack(">i", raw[pos + 5 + i * 4:pos + 9 + i * 4])[0] for i in range(count)]
+
+
 def main():
     if not CONFIG_FILE.exists():
         print(f"ERROR: Config not found: {CONFIG_FILE}")
@@ -517,7 +585,9 @@ def main():
             print(f"  WARN: NBT file not found, skipping: {nbt_path}")
             skipped += 1
             continue
-        pieces.append({"nbt": nbt_name, "sizeXYZ": entry["sizeXYZ"]})
+        # Auto-read size from NBT; sizeXYZ in JSON is ignored (kept for reference only)
+        size = read_nbt_size(nbt_path)
+        pieces.append({"nbt": nbt_name, "sizeXYZ": size})
 
     print(f"Loaded {len(pieces)} pieces ({skipped} skipped — NBT missing)")
 

@@ -1,20 +1,16 @@
 {
-  "feature": "ars_zero:dead_archwood_tree",
+  "feature": "ars_zero:replace_grass_with_blighted_soil",
   "placement": [
     {
       "type": "minecraft:count",
-      "count": 4
+      "count": 25
     },
     {
       "type": "minecraft:in_square"
     },
     {
-      "type": "minecraft:surface_water_depth_filter",
-      "max_water_depth": 0
-    },
-    {
       "type": "minecraft:heightmap",
-      "heightmap": "OCEAN_FLOOR"
+      "heightmap": "WORLD_SURFACE_WG"
     },
     {
       "type": "minecraft:biome"

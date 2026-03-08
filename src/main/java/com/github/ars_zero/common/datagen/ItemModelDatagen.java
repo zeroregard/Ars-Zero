@@ -14,6 +14,7 @@ public class ItemModelDatagen extends ItemModelProvider {
 
     @Override
     protected void registerModels() {
+        withExistingParent("blighted_soil", ArsZero.prefix("block/blighted_soil"));
         for (String name : ModBlocks.CORRUPTED_BASE_NAMES) {
             withExistingParent(name, ArsZero.prefix("block/" + name));
             withExistingParent(name + "_stairs", ArsZero.prefix("block/" + name + "_stairs"));
