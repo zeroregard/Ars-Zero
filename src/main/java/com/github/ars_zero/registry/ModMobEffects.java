@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.effect.WitherImmunityMobEffect;
 import com.github.ars_zero.common.effect.ZeroGravityMobEffect;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;
@@ -16,6 +17,11 @@ public final class ModMobEffects {
     public static final DeferredHolder<MobEffect, ZeroGravityMobEffect> ZERO_GRAVITY = MOB_EFFECTS.register(
         "zero_gravity",
         ZeroGravityMobEffect::new
+    );
+
+    public static final DeferredHolder<MobEffect, WitherImmunityMobEffect> WITHER_IMMUNITY = MOB_EFFECTS.register(
+        "wither_immunity",
+        WitherImmunityMobEffect::new
     );
 }
 

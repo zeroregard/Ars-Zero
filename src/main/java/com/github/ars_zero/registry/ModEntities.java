@@ -21,6 +21,9 @@ import com.github.ars_zero.common.entity.break_blocks.GeometryBreakEntity;
 import com.github.ars_zero.common.entity.GeometryEntity;
 import com.github.ars_zero.common.entity.ArcaneCircleEntity;
 import com.github.ars_zero.common.entity.EffectBeamEntity;
+import com.github.ars_zero.common.entity.AcolyteBlightedSkeleton;
+import com.github.ars_zero.common.entity.LichBlightedSkeleton;
+import com.github.ars_zero.common.entity.NecromancerBlightedSkeleton;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -259,4 +262,28 @@ public class ModEntities {
                                                         .updateInterval(1)
                                                         .setShouldReceiveVelocityUpdates(false)
                                                         .build(ArsZero.MOD_ID + ":effect_beam"));
+
+        public static final DeferredHolder<EntityType<?>, EntityType<AcolyteBlightedSkeleton>> ACOLYTE = ENTITIES
+                        .register(
+                                        "acolyte",
+                                        () -> EntityType.Builder.<AcolyteBlightedSkeleton>of(AcolyteBlightedSkeleton::new, MobCategory.MONSTER)
+                                                        .sized(0.6F, 1.99F)
+                                                        .clientTrackingRange(8)
+                                                        .build(ArsZero.MOD_ID + ":acolyte"));
+
+        public static final DeferredHolder<EntityType<?>, EntityType<NecromancerBlightedSkeleton>> NECROMANCER = ENTITIES
+                        .register(
+                                        "necromancer",
+                                        () -> EntityType.Builder.<NecromancerBlightedSkeleton>of(NecromancerBlightedSkeleton::new, MobCategory.MONSTER)
+                                                        .sized(0.6F, 1.99F)
+                                                        .clientTrackingRange(8)
+                                                        .build(ArsZero.MOD_ID + ":necromancer"));
+
+        public static final DeferredHolder<EntityType<?>, EntityType<LichBlightedSkeleton>> LICH = ENTITIES
+                        .register(
+                                        "lich",
+                                        () -> EntityType.Builder.<LichBlightedSkeleton>of(LichBlightedSkeleton::new, MobCategory.MONSTER)
+                                                        .sized(0.6F, 1.99F)
+                                                        .clientTrackingRange(8)
+                                                        .build(ArsZero.MOD_ID + ":lich"));
 }
