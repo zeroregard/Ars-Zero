@@ -2,22 +2,30 @@
   "feature": "ars_zero:huge_dead_archwood_tree",
   "placement": [
     {
-      "type": "ars_zero:no_blight_log_nearby"
+      "type": "minecraft:rarity_filter",
+      "chance": 8
     },
     {
-      "type": "minecraft:rarity_filter",
-      "chance": 5
+      "type": "ars_zero:no_blight_log_nearby"
     },
     {
       "type": "minecraft:in_square"
     },
     {
-      "type": "minecraft:surface_water_depth_filter",
-      "max_water_depth": 0
+      "type": "minecraft:heightmap",
+      "heightmap": "WORLD_SURFACE_WG"
     },
     {
-      "type": "minecraft:heightmap",
-      "heightmap": "OCEAN_FLOOR"
+      "type": "minecraft:block_predicate_filter",
+      "predicate": {
+        "type": "minecraft:would_survive",
+        "state": {
+          "Name": "minecraft:oak_sapling",
+          "Properties": {
+            "stage": "0"
+          }
+        }
+      }
     },
     {
       "type": "minecraft:biome"

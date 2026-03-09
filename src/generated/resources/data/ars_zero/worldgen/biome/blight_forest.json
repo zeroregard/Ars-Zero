@@ -80,6 +80,7 @@
     ],
     [
       "minecraft:glow_lichen",
+      "ars_zero:placed_patch_grass",
       "ars_zero:placed_dead_archwood_tree",
       "ars_zero:placed_big_dead_archwood_tree",
       "ars_zero:placed_huge_dead_archwood_tree",
@@ -91,8 +92,7 @@
       "minecraft:patch_pumpkin"
     ],
     [
-      "minecraft:freeze_top_layer",
-      "ars_zero:placed_replace_grass_with_blighted_soil"
+      "minecraft:freeze_top_layer"
     ]
   ],
   "has_precipitation": true,

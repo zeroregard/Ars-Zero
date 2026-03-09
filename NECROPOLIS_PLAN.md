@@ -51,6 +51,31 @@ After sync, TNT becomes `minecraft:structure_void` so those positions don't over
 
 ---
 
+## Mob Spawning
+
+Acolytes (and other blighted skeletons) spawn inside the structure via `spawn_overrides` in `necropolis.json`.
+
+### Spawn predicate (`ArsZero.java → checkBlightedSpawnRules`)
+- ✅ Not peaceful difficulty
+- ❌ Light level is **NOT checked** — the dungeon is lit with decorative lighting; we don't want it pitch black
+
+### Floor check (`AbstractBlightedSkeleton.checkSpawnRules`)
+- ✅ Block below must be `ars_zero:smooth_corrupted_sourcestone`
+- This restricts spawning to the dungeon floor only, not random terrain outside
+
+### spawn_overrides in `necropolis.json`
+```json
+"spawn_overrides": {
+  "monster": {
+    "bounding_box": "full",
+    "spawns": [{"type": "ars_zero:acolyte", "weight": 2, "minCount": 1, "maxCount": 1}]
+  }
+}
+```
+`minCount`/`maxCount` = how many per spawn **group attempt**, not a global cap.
+
+---
+
 ## Staircase Chain System
 
 ```

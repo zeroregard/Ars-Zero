@@ -10,7 +10,6 @@ import net.minecraft.world.level.biome.Climate;
 import terrablender.api.ParameterUtils;
 import terrablender.api.Region;
 import terrablender.api.RegionType;
-import terrablender.api.VanillaParameterOverlayBuilder;
 
 import java.util.function.Consumer;
 
@@ -30,10 +29,8 @@ public class BlightForestRegion extends Region {
 
     @Override
     public void addBiomes(Registry<Biome> registry, Consumer<Pair<Climate.ParameterPoint, ResourceKey<Biome>>> mapper) {
-        VanillaParameterOverlayBuilder builder = new VanillaParameterOverlayBuilder();
-
-        // Continentalness: MID_INLAND–FAR_INLAND so we never get ocean or coast.
-        // Erosion: EROSION_5 only (flattest band, same idea as swamp). Weirdness ±0.03 = narrowest flat band.
+        // Use mapper directly (no VanillaParameterOverlayBuilder) so the biome is placed
+        // ONLY at the exact parameter points listed — no gap-filling that could bleed into oceans.
         new ParameterUtils.ParameterPointListBuilder()
             .temperature(ParameterUtils.Temperature.COOL, ParameterUtils.Temperature.NEUTRAL)
             .humidity(ParameterUtils.Humidity.WET, ParameterUtils.Humidity.HUMID)
@@ -42,8 +39,6 @@ public class BlightForestRegion extends Region {
             .depth(ParameterUtils.Depth.SURFACE)
             .weirdness(Climate.Parameter.span(-FLAT_WEIRDNESS, FLAT_WEIRDNESS))
             .build()
-            .forEach(point -> builder.add(point, ModWorldgen.BLIGHT_FOREST));
-
-        builder.build().forEach(mapper);
+            .forEach(point -> mapper.accept(new Pair<>(point, ModWorldgen.BLIGHT_FOREST)));
     }
 }

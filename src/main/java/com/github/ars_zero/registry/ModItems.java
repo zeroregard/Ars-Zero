@@ -111,6 +111,11 @@ public class ModItems {
         () -> new BlockItem(ModBlocks.STAFF_DISPLAY.get(), defaultItemProperties())
     );
 
+    public static final DeferredHolder<Item, BlockItem> OSSUARY_BEACON = ITEMS.register(
+        "ossuary_beacon",
+        () -> new BlockItem(ModBlocks.OSSUARY_BEACON.get(), defaultItemProperties())
+    );
+
     public static final DeferredHolder<Item, BlockItem> BLIGHT_ARCHWOOD_LOG = ITEMS.register(
         "blight_archwood_log",
         () -> new BlockItem(ModBlocks.BLIGHT_ARCHWOOD_LOG.get(), defaultItemProperties())

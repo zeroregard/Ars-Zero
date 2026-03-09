@@ -77,6 +77,10 @@ import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
 import com.hollingsworth.arsnouveau.common.spell.method.MethodSelf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.core.Position;
 import net.minecraft.core.cauldron.CauldronInteraction;
 import net.minecraft.resources.ResourceLocation;
@@ -431,24 +435,28 @@ public class ArsZero {
         event.put(ModEntities.LICH.get(), lich.build());
     }
 
+    private static boolean checkBlightedSpawnRules(EntityType<? extends Monster> type, ServerLevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
+        return level.getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL;
+    }
+
     private static void onRegisterSpawnPlacements(RegisterSpawnPlacementsEvent event) {
         event.register(
                 ModEntities.ACOLYTE.get(),
                 SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                Monster::checkMonsterSpawnRules,
+                ArsZero::checkBlightedSpawnRules,
                 RegisterSpawnPlacementsEvent.Operation.REPLACE);
         event.register(
                 ModEntities.NECROMANCER.get(),
                 SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                Monster::checkMonsterSpawnRules,
+                ArsZero::checkBlightedSpawnRules,
                 RegisterSpawnPlacementsEvent.Operation.REPLACE);
         event.register(
                 ModEntities.LICH.get(),
                 SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                Monster::checkMonsterSpawnRules,
+                ArsZero::checkBlightedSpawnRules,
                 RegisterSpawnPlacementsEvent.Operation.REPLACE);
     }
 
