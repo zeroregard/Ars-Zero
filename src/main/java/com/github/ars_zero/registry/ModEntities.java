@@ -22,6 +22,7 @@ import com.github.ars_zero.common.entity.GeometryEntity;
 import com.github.ars_zero.common.entity.ArcaneCircleEntity;
 import com.github.ars_zero.common.entity.EffectBeamEntity;
 import com.github.ars_zero.common.entity.AcolyteBlightedSkeleton;
+import com.github.ars_zero.common.entity.BoneGolem;
 import com.github.ars_zero.common.entity.LichBlightedSkeleton;
 import com.github.ars_zero.common.entity.NecromancerBlightedSkeleton;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -286,4 +287,12 @@ public class ModEntities {
                                                         .sized(0.6F, 1.99F)
                                                         .clientTrackingRange(8)
                                                         .build(ArsZero.MOD_ID + ":lich"));
+
+        public static final DeferredHolder<EntityType<?>, EntityType<BoneGolem>> BONE_GOLEM = ENTITIES
+                        .register(
+                                        "bone_golem",
+                                        () -> EntityType.Builder.<BoneGolem>of(BoneGolem::new, MobCategory.MONSTER)
+                                                        .sized(1.4F, 2.7F)
+                                                        .clientTrackingRange(10)
+                                                        .build(ArsZero.MOD_ID + ":bone_golem"));
 }
