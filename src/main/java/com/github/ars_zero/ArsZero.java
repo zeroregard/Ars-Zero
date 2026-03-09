@@ -9,6 +9,7 @@ import com.github.ars_zero.common.datagen.GlyphRecipeDatagen;
 import com.github.ars_zero.common.datagen.ItemModelDatagen;
 import com.github.ars_zero.common.datagen.StaffRecipeDatagen;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
+import com.github.ars_zero.common.entity.BoneGolem;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
 import com.github.ars_zero.common.entity.LightningVoxelEntity;
@@ -43,6 +44,7 @@ import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.event.AnchorEffectEvents;
 import com.github.ars_zero.common.event.GravitySuppressionEvents;
 import com.github.ars_zero.common.event.BlightedSkeletonSummonEvents;
+import com.github.ars_zero.common.event.BoneGolemConstructionEvents;
 import com.github.ars_zero.common.event.WitherImmunityEffectEvents;
 import com.github.ars_zero.common.event.ZeroGravityMobEffectEvents;
 import com.github.ars_zero.common.event.discount.AirPowerCostReductionEvents;
@@ -176,6 +178,7 @@ public class ArsZero {
         NeoForge.EVENT_BUS.register(AnchorEffectEvents.class);
         NeoForge.EVENT_BUS.register(WitherImmunityEffectEvents.class);
         NeoForge.EVENT_BUS.register(BlightedSkeletonSummonEvents.class);
+        NeoForge.EVENT_BUS.register(BoneGolemConstructionEvents.class);
 
         if (FMLEnvironment.dist.isClient()) {
             ArsZeroClient.init(modEventBus);
@@ -429,6 +432,9 @@ public class ArsZero {
         lich.add(Attributes.MAX_HEALTH, 40.0);
         lich.add(Attributes.FLYING_SPEED, 0.4);
         event.put(ModEntities.LICH.get(), lich.build());
+
+        // Bone Golem: 80 HP (slightly less than Iron Golem's 100)
+        event.put(ModEntities.BONE_GOLEM.get(), BoneGolem.createAttributes().build());
     }
 
     private static void onRegisterSpawnPlacements(RegisterSpawnPlacementsEvent event) {

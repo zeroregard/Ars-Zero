@@ -39,6 +39,7 @@ import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.registry.ModParticles;
 import com.github.ars_zero.client.renderer.entity.MageSkeletonRenderer;
 import com.github.ars_zero.client.renderer.entity.model.BlightedSkeletonModel;
+import net.minecraft.client.renderer.entity.IronGolemRenderer;
 import net.minecraft.client.model.SkeletonModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.EntityRenderers;
@@ -98,6 +99,7 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.ACOLYTE.get(), MageSkeletonRenderer::new);
             EntityRenderers.register(ModEntities.NECROMANCER.get(), MageSkeletonRenderer::new);
             EntityRenderers.register(ModEntities.LICH.get(), MageSkeletonRenderer::new);
+            EntityRenderers.register(ModEntities.BONE_GOLEM.get(), IronGolemRenderer::new);
         });
     }
 
