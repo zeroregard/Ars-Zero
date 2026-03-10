@@ -38,7 +38,6 @@ import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.registry.ModParticles;
 import com.github.ars_zero.client.renderer.entity.MageSkeletonRenderer;
-import com.github.ars_zero.client.renderer.entity.model.BlightedSkeletonModel;
 import com.github.ars_zero.client.renderer.entity.BoneGolemRenderer;
 import com.github.ars_zero.client.renderer.entity.model.BoneGolemModel;
 import net.minecraft.client.model.SkeletonModel;

@@ -1,8 +1,12 @@
 package com.github.ars_zero.common.entity.ai;
 
+import com.github.ars_zero.common.block.OssuaryBeaconBlockEntity;
 import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
 import com.github.ars_zero.registry.ModBlocks;
+import com.hollingsworth.arsnouveau.api.mana.IManaCap;
+import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -13,6 +17,8 @@ import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
@@ -28,6 +34,11 @@ public class NecromancerRitualGoal extends Goal {
     private static final int ALTAR_SCAN_RADIUS = 16;
     private static final int MAX_RAISED = 3;
     private static final double WALK_SPEED = 0.6;
+    /** Stop walking once within 8 blocks (8² = 64). */
+    private static final double RITUAL_DIST_SQ = 64.0;
+    /** Mana consumed each time an undead is raised. */
+    private static final int RITUAL_MANA_COST = 500;
+    private static final Vector3f BLIGHT_COLOR = new Vector3f(0.29f, 0.48f, 0.19f);
 
     private final AbstractBlightedSkeleton mob;
     private final int raiseIntervalTicks;
@@ -50,6 +61,8 @@ public class NecromancerRitualGoal extends Goal {
         if (mob.getTarget() != null && mob.getTarget().isAlive()) return false;
         BlockPos found = findAltar();
         if (found == null) return false;
+        OssuaryBeaconBlockEntity be = getBeaconEntity(found);
+        if (be == null || !be.tryRegister(mob.getUUID())) return false;
         altarPos = found;
         return findBlightedSoilNearAltar() != null;
     }
@@ -59,11 +72,15 @@ public class NecromancerRitualGoal extends Goal {
         if (mob.getTarget() != null && mob.getTarget().isAlive()) return false;
         if (altarPos == null) return false;
         if (!mob.level().getBlockState(altarPos).is(ModBlocks.OSSUARY_BEACON.get())) return false;
-        return findBlightedSoilNearAltar() != null;
+        return getBeaconEntity(altarPos) != null && findBlightedSoilNearAltar() != null;
     }
 
     @Override
     public void stop() {
+        if (altarPos != null) {
+            OssuaryBeaconBlockEntity be = getBeaconEntity(altarPos);
+            if (be != null) be.unregister(mob.getUUID());
+        }
         altarPos = null;
         raiseTicker = 0;
         mob.getNavigation().stop();
@@ -76,12 +93,20 @@ public class NecromancerRitualGoal extends Goal {
         // Keep arms raised continuously during ritual
         mob.setSpellCastArmsUpTicks(AbstractBlightedSkeleton.SPELL_CAST_ARMS_UP_TICKS);
 
-        // Walk toward the altar
         double dist = mob.blockPosition().distSqr(altarPos);
-        if (dist > 9.0) {
+
+        // Walk toward the altar until within 8 blocks
+        if (dist > RITUAL_DIST_SQ) {
             mob.getNavigation().moveTo(altarPos.getX() + 0.5, altarPos.getY(), altarPos.getZ() + 0.5, WALK_SPEED);
         } else {
             mob.getNavigation().stop();
+            // Ambient blight particles drifting from the mage
+            if (mob.level() instanceof ServerLevel sl) {
+                sl.sendParticles(
+                        new DustParticleOptions(BLIGHT_COLOR, 0.8f),
+                        mob.getX(), mob.getY() + 1.0, mob.getZ(),
+                        2, 0.15, 0.15, 0.15, 0.02);
+            }
         }
 
         raiseTicker++;
@@ -96,6 +121,11 @@ public class NecromancerRitualGoal extends Goal {
         if (!(level instanceof ServerLevel serverLevel)) return;
         if (altarPos == null) return;
         if (mob.countLivingOwnedRevenants() >= MAX_RAISED) return;
+
+        // Check and consume mana
+        IManaCap mana = CapabilityRegistry.getMana(mob);
+        if (mana == null || mana.getCurrentMana() < RITUAL_MANA_COST) return;
+        mana.setMana(mana.getCurrentMana() - RITUAL_MANA_COST);
 
         // Spawn near the closest blighted soil to the altar (± small random offset)
         BlockPos soilPos = findBlightedSoilNearAltar();
@@ -119,14 +149,19 @@ public class NecromancerRitualGoal extends Goal {
             serverLevel.addFreshEntity(skeleton);
             mob.addOwnedRevenantUuid(skeleton.getUUID());
         }
-        // Dust particles rising from the spawn position — dark green/grey blight colour
+        // Dust particles rising from the spawn position
         serverLevel.sendParticles(
-                new net.minecraft.core.particles.DustParticleOptions(
-                        new org.joml.Vector3f(0.29f, 0.48f, 0.19f), 1.2f),
+                new DustParticleOptions(BLIGHT_COLOR, 1.2f),
                 spawnPos.getX() + 0.5, spawnPos.getY() + 0.5, spawnPos.getZ() + 0.5,
                 24, 0.4, 0.6, 0.4, 0.05);
         serverLevel.playSound(null, mob.getX(), mob.getY(), mob.getZ(),
                 SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.HOSTILE, 0.6f, 0.8f + mob.getRandom().nextFloat() * 0.4f);
+    }
+
+    @Nullable
+    private OssuaryBeaconBlockEntity getBeaconEntity(BlockPos pos) {
+        BlockEntity be = mob.level().getBlockEntity(pos);
+        return be instanceof OssuaryBeaconBlockEntity beacon ? beacon : null;
     }
 
     @Nullable

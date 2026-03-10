@@ -8,6 +8,7 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceKeyArgument;
+import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
@@ -18,6 +19,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.Structure;
@@ -30,6 +32,9 @@ public class ModCommandHandler {
 
     private static final DynamicCommandExceptionType ERROR_NO_STRUCTURE =
         new DynamicCommandExceptionType(id -> Component.literal("No structure '" + id + "' found within 100 chunks."));
+
+    private static final DynamicCommandExceptionType ERROR_NO_BLOCK =
+        new DynamicCommandExceptionType(id -> Component.literal("Block '" + id + "' not found in loaded chunks."));
 
     private static final DynamicCommandExceptionType ERROR_INVALID_BIOME =
         new DynamicCommandExceptionType(id -> Component.literal("Unknown biome: " + id));
@@ -55,6 +60,14 @@ public class ModCommandHandler {
                 .then(Commands.literal("biome")
                     .then(Commands.argument("biome", ResourceKeyArgument.key(Registries.BIOME))
                         .executes(ctx -> locateBiome(ctx.getSource(), ctx))
+                    )
+                )
+                .then(Commands.literal("block")
+                    .then(Commands.argument("block", BlockStateArgument.block(event.getBuildContext()))
+                        .executes(ctx -> locateBlock(
+                            ctx.getSource(),
+                            BlockStateArgument.getBlock(ctx, "block").getState()
+                        ))
                     )
                 )
         );
@@ -111,6 +124,40 @@ public class ModCommandHandler {
         player.teleportTo(surface.getX() + 0.5, surface.getY(), surface.getZ() + 0.5);
         source.sendSuccess(() -> Component.literal(
             "Found " + id + " at " + surface.toShortString() + ". Teleporting!"
+        ), false);
+        return 1;
+    }
+
+    private static int locateBlock(CommandSourceStack source, BlockState target) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        ServerLevel level = player.serverLevel();
+        String blockName = target.getBlock().getDescriptionId();
+
+        source.sendSuccess(() -> Component.literal("Scanning 512 blocks around you for " + blockName + "..."), false);
+
+        BlockPos playerPos = player.blockPosition();
+        BlockPos nearest = null;
+        double nearestDist = Double.MAX_VALUE;
+        int range = 512;
+
+        for (BlockPos p : BlockPos.betweenClosed(
+                playerPos.offset(-range, level.getMinBuildHeight() - playerPos.getY(), -range),
+                playerPos.offset(range, level.getMaxBuildHeight() - playerPos.getY(), range))) {
+            if (level.isLoaded(p) && level.getBlockState(p).is(target.getBlock())) {
+                double d = p.distSqr(playerPos);
+                if (d < nearestDist) {
+                    nearestDist = d;
+                    nearest = p.immutable();
+                }
+            }
+        }
+
+        if (nearest == null) throw ERROR_NO_BLOCK.create(blockName);
+
+        BlockPos found = nearest;
+        player.teleportTo(found.getX() + 0.5, found.getY(), found.getZ() + 0.5);
+        source.sendSuccess(() -> Component.literal(
+            "Found " + blockName + " at " + found.toShortString() + ". Teleporting!"
         ), false);
         return 1;
     }

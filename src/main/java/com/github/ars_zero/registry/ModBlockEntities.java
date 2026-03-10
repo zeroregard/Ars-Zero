@@ -3,6 +3,7 @@ package com.github.ars_zero.registry;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.block.BlightCauldronBlockEntity;
 import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
+import com.github.ars_zero.common.block.OssuaryBeaconBlockEntity;
 import com.github.ars_zero.common.block.StaffDisplayBlockEntity;
 import com.github.ars_zero.common.block.VoxelSpawnerBlockEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -55,6 +56,14 @@ public class ModBlockEntities {
         () -> BlockEntityType.Builder.of(
             StaffDisplayBlockEntity::new,
             ModBlocks.STAFF_DISPLAY.get()
+        ).build(null)
+    );
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<OssuaryBeaconBlockEntity>> OSSUARY_BEACON = BLOCK_ENTITIES.register(
+        "ossuary_beacon",
+        () -> BlockEntityType.Builder.of(
+            OssuaryBeaconBlockEntity::new,
+            ModBlocks.OSSUARY_BEACON.get()
         ).build(null)
     );
 }
