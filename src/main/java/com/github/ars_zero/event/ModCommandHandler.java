@@ -18,6 +18,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -72,9 +74,10 @@ public class ModCommandHandler {
         if (result == null) throw ERROR_NO_STRUCTURE.create(id);
 
         BlockPos found = result.getFirst();
-        player.teleportTo(found.getX() + 0.5, found.getY(), found.getZ() + 0.5);
+        BlockPos surface = getSurfacePos(level, found);
+        player.teleportTo(surface.getX() + 0.5, surface.getY(), surface.getZ() + 0.5);
         source.sendSuccess(() -> Component.literal(
-            "Found " + id + " at " + found.toShortString() + ". Teleporting!"
+            "Found " + id + " at " + surface.toShortString() + ". Teleporting!"
         ), false);
         return 1;
     }
@@ -104,10 +107,17 @@ public class ModCommandHandler {
         if (result == null) throw ERROR_NO_BIOME.create(id);
 
         BlockPos found = result.getFirst();
-        player.teleportTo(found.getX() + 0.5, found.getY(), found.getZ() + 0.5);
+        BlockPos surface = getSurfacePos(level, found);
+        player.teleportTo(surface.getX() + 0.5, surface.getY(), surface.getZ() + 0.5);
         source.sendSuccess(() -> Component.literal(
-            "Found " + id + " at " + found.toShortString() + ". Teleporting!"
+            "Found " + id + " at " + surface.toShortString() + ". Teleporting!"
         ), false);
         return 1;
+    }
+
+    private static BlockPos getSurfacePos(ServerLevel level, BlockPos pos) {
+        ChunkAccess chunk = level.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+        int y = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos.getX() & 15, pos.getZ() & 15) + 1;
+        return new BlockPos(pos.getX(), y, pos.getZ());
     }
 }

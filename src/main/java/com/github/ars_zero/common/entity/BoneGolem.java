@@ -53,6 +53,13 @@ public class BoneGolem extends IronGolem {
         return !type.is(EntityTypeTags.UNDEAD) && super.canAttackType(type);
     }
 
+    /** Undead mobs (zombies, skeletons, etc.) should not consider the bone golem a valid target. */
+    @Override
+    public boolean isAlliedTo(Entity entity) {
+        if (entity.getType().is(EntityTypeTags.UNDEAD)) return true;
+        return super.isAlliedTo(entity);
+    }
+
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
         return ModSounds.BONE_GOLEM_HURT.get();

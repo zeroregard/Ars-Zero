@@ -8,6 +8,6 @@
   { "nbt": "room_connector",     "sizeXYZ": [19,  8, 19] },
   { "nbt": "hallway_diagonal",   "sizeXYZ": [13, 10, 13] },
   { "nbt": "large_room",         "sizeXYZ": [27, 17, 27] },
-  { "nbt": "treasure_room",      "sizeXYZ": [13, 10, 13] },
+  { "nbt": "treasure_room",      "sizeXYZ": [27, 17, 27] },
   { "nbt": "staff_room",         "sizeXYZ": [13, 10, 13] }
 ]

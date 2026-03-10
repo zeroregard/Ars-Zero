@@ -5,6 +5,7 @@ import com.github.ars_zero.common.world.feature.BlightPoolFeature;
 import com.github.ars_zero.common.world.feature.BlightedSoilSurfaceFeature;
 import com.github.ars_zero.common.world.structure.BlightDungeonStructure;
 import com.github.ars_zero.common.world.structure.CobwebProcessor;
+import com.github.ars_zero.common.world.structure.StripWaterloggedProcessor;
 import com.github.ars_zero.common.world.placement.NoBlightLogNearbyFilter;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType;
 import com.github.ars_zero.common.world.tree.BigDeadArchwoodTrunkPlacer;
@@ -40,6 +41,9 @@ public final class ModWorldgen {
 
     public static final DeferredHolder<StructureProcessorType<?>, StructureProcessorType<CobwebProcessor>> COBWEB_PROCESSOR =
         STRUCTURE_PROCESSOR_TYPES.register("cobweb", () -> () -> CobwebProcessor.CODEC);
+
+    public static final DeferredHolder<StructureProcessorType<?>, StructureProcessorType<StripWaterloggedProcessor>> STRIP_WATERLOGGED_PROCESSOR =
+        STRUCTURE_PROCESSOR_TYPES.register("strip_waterlogged", () -> () -> StripWaterloggedProcessor.CODEC);
 
     public static final DeferredRegister<Feature<?>> FEATURES =
         DeferredRegister.create(BuiltInRegistries.FEATURE, ArsZero.MOD_ID);

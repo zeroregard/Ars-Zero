@@ -9,7 +9,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.WorldGenerationContext;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pools.DimensionPadding;
@@ -73,21 +72,27 @@ public class BlightDungeonStructure extends Structure {
             return Optional.empty();
         }
 
-        int startY = this.startHeight.sample(context.random(), new WorldGenerationContext(context.chunkGenerator(), context.heightAccessor()));
-        BlockPos blockPos = new BlockPos(chunkPos.getMinBlockX(), startY, chunkPos.getMinBlockZ());
+        // The entrance jigsaw is at y=0 (bottom) of the 12-tall staircase piece.
+        // Place it so the top of the piece (y=11) is flush with the surface.
+        // Jigsaw anchors the named connector to blockPos.y, so offset = surfaceY - 11.
+        BlockPos blockPos = new BlockPos(chunkPos.getMinBlockX(), worldSurface - 11, chunkPos.getMinBlockZ());
+
+        // Dynamically size: enough staircase segments to reach Y=30, plus fixed budget for dungeon rooms.
+        int staircaseSegments = Math.max(1, (int) Math.ceil((worldSurface - 30) / 12.0));
+        int dynamicSize = staircaseSegments + 20; // 20 extra slots for dungeon rooms/hallways
 
         return JigsawPlacement.addPieces(
                 context,
                 this.startPool,
                 this.startJigsawName,
-                this.size,
+                dynamicSize,
                 blockPos,
                 this.useExpansionHack,
                 this.projectStartToHeightmap,
                 this.maxDistanceFromCenter,
                 PoolAliasLookup.EMPTY,
                 DimensionPadding.ZERO,
-                LiquidSettings.APPLY_WATERLOGGING);
+                LiquidSettings.IGNORE_WATERLOGGING);
     }
 
     @Override

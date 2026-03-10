@@ -1,7 +1,6 @@
 package com.github.ars_zero.common.entity.ai;
 
 import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
-import com.github.ars_zero.common.entity.NecromancerBlightedSkeleton;
 import com.github.ars_zero.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -19,23 +18,25 @@ import javax.annotation.Nullable;
 import java.util.EnumSet;
 
 /**
- * When undisturbed (no target), the necromancer walks to the nearest ritual altar and
- * periodically raises vanilla undead near it. Yields immediately when a target is acquired.
+ * When undisturbed (no target), walks to the nearest ritual altar and periodically
+ * raises vanilla undead near it. Yields immediately when a target is acquired.
+ *
+ * Pass a custom {@code raiseIntervalTicks} to tune how quickly each tier raises undead.
  */
 public class NecromancerRitualGoal extends Goal {
 
     private static final int ALTAR_SCAN_RADIUS = 16;
-    private static final int RAISE_INTERVAL_TICKS = 200;
     private static final int MAX_RAISED = 3;
     private static final double WALK_SPEED = 0.6;
 
-    private final NecromancerBlightedSkeleton mob;
+    private final AbstractBlightedSkeleton mob;
+    private final int raiseIntervalTicks;
     @Nullable private BlockPos altarPos;
     private int raiseTicker = 0;
-    private int raisedCount = 0;
 
-    public NecromancerRitualGoal(NecromancerBlightedSkeleton mob) {
+    public NecromancerRitualGoal(AbstractBlightedSkeleton mob, int raiseIntervalTicks) {
         this.mob = mob;
+        this.raiseIntervalTicks = raiseIntervalTicks;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
@@ -84,7 +85,7 @@ public class NecromancerRitualGoal extends Goal {
         }
 
         raiseTicker++;
-        if (raiseTicker >= RAISE_INTERVAL_TICKS) {
+        if (raiseTicker >= raiseIntervalTicks) {
             raiseTicker = 0;
             tryRaiseUndead();
         }
@@ -94,10 +95,7 @@ public class NecromancerRitualGoal extends Goal {
         Level level = mob.level();
         if (!(level instanceof ServerLevel serverLevel)) return;
         if (altarPos == null) return;
-        if (raisedCount >= MAX_RAISED) {
-            raisedCount = Math.max(0, raisedCount - 1);
-            return;
-        }
+        if (mob.countLivingOwnedRevenants() >= MAX_RAISED) return;
 
         // Spawn near the closest blighted soil to the altar (± small random offset)
         BlockPos soilPos = findBlightedSoilNearAltar();
@@ -113,14 +111,14 @@ public class NecromancerRitualGoal extends Goal {
             zombie.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, mob.getRandom().nextFloat() * 360f, 0f);
             zombie.finalizeSpawn((ServerLevelAccessor) serverLevel, serverLevel.getCurrentDifficultyAt(spawnPos), MobSpawnType.MOB_SUMMONED, null);
             serverLevel.addFreshEntity(zombie);
+            mob.addOwnedRevenantUuid(zombie.getUUID());
         } else {
             Skeleton skeleton = new Skeleton(EntityType.SKELETON, serverLevel);
             skeleton.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, mob.getRandom().nextFloat() * 360f, 0f);
             skeleton.finalizeSpawn((ServerLevelAccessor) serverLevel, serverLevel.getCurrentDifficultyAt(spawnPos), MobSpawnType.MOB_SUMMONED, null);
             serverLevel.addFreshEntity(skeleton);
+            mob.addOwnedRevenantUuid(skeleton.getUUID());
         }
-
-        raisedCount++;
         // Dust particles rising from the spawn position — dark green/grey blight colour
         serverLevel.sendParticles(
                 new net.minecraft.core.particles.DustParticleOptions(

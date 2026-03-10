@@ -42,7 +42,7 @@ public class NecromancerBlightedSkeleton extends AbstractBlightedSkeleton {
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(1, new NecromancerRitualGoal(this));
+        this.goalSelector.addGoal(1, new NecromancerRitualGoal(this, 200));
         this.goalSelector.addGoal(2, new MageSkeletonBlinkGoal(this));
         this.goalSelector.addGoal(3, new MageSkeletonSummonGoal(this));
         this.goalSelector.addGoal(4, new MageSkeletonCastGoal(this, List.of(new BlightVoxelPushSpellBehaviour())));

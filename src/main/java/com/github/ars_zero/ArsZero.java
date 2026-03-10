@@ -443,8 +443,12 @@ public class ArsZero {
     }
 
     private static boolean checkBlightedSpawnRules(EntityType<? extends Monster> type, ServerLevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
-        return level.getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL;
+        if (level.getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) return false;
+        net.minecraft.world.level.block.Block floor = level.getBlockState(pos.below()).getBlock();
+        return ModBlocks.CORRUPTED_BLOCKS.entrySet().stream()
+                .anyMatch(e -> e.getKey().startsWith("smooth_corrupted_sourcestone") && e.getValue().get() == floor);
     }
+
 
     private static void onRegisterSpawnPlacements(RegisterSpawnPlacementsEvent event) {
         event.register(

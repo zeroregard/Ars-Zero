@@ -2,6 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.renderer.item.MultiphaseTurretItemRenderer;
+import com.github.ars_zero.common.item.armor.RottedArcanistArmor;
 import com.github.ars_zero.common.item.armor.TatteredArcanistArmor;
 import com.github.ars_zero.registry.ModEntities;
 import java.util.LinkedHashMap;
@@ -47,45 +48,45 @@ public class ModItems {
     public static final ItemRegistryWrapper<ArchmageSpellStaff> ARCHMAGE_SPELL_STAFF = ModStaffItems.ARCHMAGE_SPELL_STAFF;
     public static final ItemRegistryWrapper<CreativeSpellStaff> CREATIVE_SPELL_STAFF = ModStaffItems.CREATIVE_SPELL_STAFF;
     public static final ItemRegistryWrapper<SpellcastingCirclet> SPELLCASTING_CIRCLET = ModStaffItems.SPELLCASTING_CIRCLET;
-    
+
     public static final ItemRegistryWrapper<DullCirclet> DULL_CIRCLET = register("dull_circlet", () -> new DullCirclet(defaultItemProperties()));
-    
+
     public static final ItemRegistryWrapper<Item> ARCHWOOD_ROD = register("archwood_rod", () -> new Item(defaultItemProperties()));
 
     public static final ItemRegistryWrapper<MultiphaseSpellParchment> MULTIPHASE_SPELL_PARCHMENT = register("multiphase_spell_parchment", () -> new MultiphaseSpellParchment(defaultItemProperties()));
-    
+
     public static final ItemRegistryWrapper<MultiphaseOrbItem> MULTIPHASE_ORB = register("multiphase_orb", () -> new MultiphaseOrbItem(defaultItemProperties()));
-    
+
     public static final DeferredHolder<Item, BlockItem> ARCANE_VOXEL_SPAWNER = ITEMS.register(
         "arcane_voxel_spawner",
         () -> new BlockItem(ModBlocks.ARCANE_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
-    
+
     public static final DeferredHolder<Item, BlockItem> FIRE_VOXEL_SPAWNER = ITEMS.register(
         "fire_voxel_spawner",
         () -> new BlockItem(ModBlocks.FIRE_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
-    
+
     public static final DeferredHolder<Item, BlockItem> WATER_VOXEL_SPAWNER = ITEMS.register(
         "water_voxel_spawner",
         () -> new BlockItem(ModBlocks.WATER_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
-    
+
     public static final DeferredHolder<Item, BlockItem> WIND_VOXEL_SPAWNER = ITEMS.register(
         "wind_voxel_spawner",
         () -> new BlockItem(ModBlocks.WIND_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
-    
+
     public static final DeferredHolder<Item, BlockItem> STONE_VOXEL_SPAWNER = ITEMS.register(
         "stone_voxel_spawner",
         () -> new BlockItem(ModBlocks.STONE_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
-    
+
     public static final DeferredHolder<Item, BlockItem> ICE_VOXEL_SPAWNER = ITEMS.register(
         "ice_voxel_spawner",
         () -> new BlockItem(ModBlocks.ICE_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
-    
+
     public static final DeferredHolder<Item, BlockItem> LIGHTNING_VOXEL_SPAWNER = ITEMS.register(
         "lightning_voxel_spawner",
         () -> new BlockItem(ModBlocks.LIGHTNING_VOXEL_SPAWNER.get(), defaultItemProperties())
@@ -95,7 +96,7 @@ public class ModItems {
         "blight_voxel_spawner",
         () -> new BlockItem(ModBlocks.BLIGHT_VOXEL_SPAWNER.get(), defaultItemProperties())
     );
-    
+
     public static final DeferredHolder<Item, BlockItem> BLIGHTED_SOIL = ITEMS.register(
         "blighted_soil",
         () -> new BlockItem(ModBlocks.BLIGHTED_SOIL.get(), defaultItemProperties())
@@ -218,6 +219,44 @@ public class ModItems {
     public static final DeferredHolder<Item, TatteredArcanistArmor> TATTERED_ARCANIST_BOOTS =
             ITEMS.register("tattered_arcanist_boots",
                     () -> new TatteredArcanistArmor(TATTERED_ARCANIST_MATERIAL, ArmorItem.Type.BOOTS));
+
+    // -------------------------------------------------------------------------
+    // Rotted Arcanist Armor
+    // -------------------------------------------------------------------------
+
+    public static final DeferredHolder<ArmorMaterial, ArmorMaterial> ROTTED_ARCANIST_MATERIAL =
+            ARMOR_MATERIALS.register("rotted_arcanist", () -> {
+                java.util.EnumMap<ArmorItem.Type, Integer> defense = new java.util.EnumMap<>(ArmorItem.Type.class);
+                defense.put(ArmorItem.Type.HELMET,     2);
+                defense.put(ArmorItem.Type.CHESTPLATE, 4);
+                defense.put(ArmorItem.Type.LEGGINGS,   3);
+                defense.put(ArmorItem.Type.BOOTS,      1);
+                defense.put(ArmorItem.Type.BODY,       4);
+                return new ArmorMaterial(
+                        defense,
+                        12,
+                        net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_LEATHER,
+                        () -> Ingredient.EMPTY,
+                        List.of(new ArmorMaterial.Layer(ArsZero.prefix("rotted_arcanist"))),
+                        0.0f, 0.0f
+                );
+            });
+
+    public static final DeferredHolder<Item, RottedArcanistArmor> ROTTED_ARCANIST_HELMET =
+            ITEMS.register("rotted_arcanist_helmet",
+                    () -> new RottedArcanistArmor(ROTTED_ARCANIST_MATERIAL, ArmorItem.Type.HELMET));
+
+    public static final DeferredHolder<Item, RottedArcanistArmor> ROTTED_ARCANIST_CHESTPLATE =
+            ITEMS.register("rotted_arcanist_chestplate",
+                    () -> new RottedArcanistArmor(ROTTED_ARCANIST_MATERIAL, ArmorItem.Type.CHESTPLATE));
+
+    public static final DeferredHolder<Item, RottedArcanistArmor> ROTTED_ARCANIST_LEGGINGS =
+            ITEMS.register("rotted_arcanist_leggings",
+                    () -> new RottedArcanistArmor(ROTTED_ARCANIST_MATERIAL, ArmorItem.Type.LEGGINGS));
+
+    public static final DeferredHolder<Item, RottedArcanistArmor> ROTTED_ARCANIST_BOOTS =
+            ITEMS.register("rotted_arcanist_boots",
+                    () -> new RottedArcanistArmor(ROTTED_ARCANIST_MATERIAL, ArmorItem.Type.BOOTS));
 
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);

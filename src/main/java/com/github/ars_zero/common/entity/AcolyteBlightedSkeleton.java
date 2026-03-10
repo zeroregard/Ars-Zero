@@ -3,6 +3,7 @@ package com.github.ars_zero.common.entity;
 import com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.BlightedSkeletonFleeGoal;
 import com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal;
+import com.github.ars_zero.common.entity.ai.NecromancerRitualGoal;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
@@ -28,14 +29,15 @@ public class AcolyteBlightedSkeleton extends AbstractBlightedSkeleton {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(1, new BlightedSkeletonFleeGoal(this));
-        this.goalSelector.addGoal(2, new MageSkeletonCastGoal(this, List.of(new BlightVoxelPushSpellBehaviour())));
+        this.goalSelector.addGoal(2, new NecromancerRitualGoal(this, 400));
+        this.goalSelector.addGoal(3, new MageSkeletonCastGoal(this, List.of(new BlightVoxelPushSpellBehaviour())));
     }
 
     @Override
     protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
-        setTatteredArcanistSlot(EquipmentSlot.CHEST);
-        setTatteredArcanistSlot(EquipmentSlot.LEGS);
-        setTatteredArcanistSlot(EquipmentSlot.FEET);
+        setRottedArcanistSlot(EquipmentSlot.CHEST);
+        setRottedArcanistSlot(EquipmentSlot.LEGS);
+        setRottedArcanistSlot(EquipmentSlot.FEET);
     }
 
     @Override
