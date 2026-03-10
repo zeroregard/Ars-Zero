@@ -2,6 +2,6 @@
   "name": "ars_zero:necropolis/medium_rooms",
   "fallback": "minecraft:empty",
   "elements": [
-    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/medium_room_1", "processors": "ars_zero:necropolis_cobweb", "projection": "rigid"}}
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/medium_room_1", "processors": "ars_zero:necropolis", "projection": "rigid"}}
   ]
 }

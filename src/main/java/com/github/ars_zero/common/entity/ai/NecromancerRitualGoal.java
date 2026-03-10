@@ -155,7 +155,7 @@ public class NecromancerRitualGoal extends Goal {
         BlockPos origin = mob.blockPosition();
         for (BlockPos p : BlockPos.betweenClosed(
                 origin.offset(-ALTAR_SCAN_RADIUS, -4, -ALTAR_SCAN_RADIUS),
-                origin.offset(ALTAR_SCAN_RADIUS, 4, ALTAR_SCAN_RADIUS))) {
+                origin.offset(ALTAR_SCAN_RADIUS, 16, ALTAR_SCAN_RADIUS))) {
             if (mob.level().getBlockState(p).is(ModBlocks.OSSUARY_BEACON.get())) {
                 return p.immutable();
             }

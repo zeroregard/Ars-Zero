@@ -174,6 +174,10 @@ public class ModItems {
             "lich_spawn_egg",
             () -> new SpawnEggItem(ModEntities.LICH.get(), 0xE8DCC8, 0x2D2D2D, defaultItemProperties()));
 
+    public static final DeferredHolder<Item, SpawnEggItem> BONE_GOLEM_SPAWN_EGG = ITEMS.register(
+            "bone_golem_spawn_egg",
+            () -> new SpawnEggItem(ModEntities.BONE_GOLEM.get(), 0xE8E8D8, 0x4A3728, defaultItemProperties()));
+
     // -------------------------------------------------------------------------
     // Tattered Arcanist Armor
     // -------------------------------------------------------------------------

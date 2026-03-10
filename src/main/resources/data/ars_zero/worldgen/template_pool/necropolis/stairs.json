@@ -7,7 +7,7 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "ars_zero:necropolis/entrance_staircase",
-        "processors": "minecraft:empty",
+        "processors": "ars_zero:necropolis",
         "projection": "rigid"
       }
     },
@@ -16,7 +16,7 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "ars_zero:necropolis/room_connector",
-        "processors": "minecraft:empty",
+        "processors": "ars_zero:necropolis",
         "projection": "rigid"
       }
     }

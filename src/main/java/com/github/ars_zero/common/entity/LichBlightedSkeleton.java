@@ -3,7 +3,7 @@ package com.github.ars_zero.common.entity;
 import com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.MageSkeletonBlinkGoal;
 import com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal;
-import com.github.ars_zero.common.entity.ai.MageSkeletonSummonGoal;
+import com.github.ars_zero.common.entity.ai.LichSummonGoal;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
@@ -57,7 +57,7 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new MageSkeletonBlinkGoal(this));
-        this.goalSelector.addGoal(1, new MageSkeletonSummonGoal(this));
+        this.goalSelector.addGoal(1, new LichSummonGoal(this));
         this.goalSelector.addGoal(2, new MageSkeletonCastGoal(this, List.of(new BlightVoxelPushSpellBehaviour())));
     }
 
@@ -120,7 +120,7 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
 
     @Override
     public int getMaxSummons() {
-        return 2;
+        return 1;
     }
 
     @Override

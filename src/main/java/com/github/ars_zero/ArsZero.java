@@ -437,8 +437,9 @@ public class ArsZero {
         lich.add(Attributes.FLYING_SPEED, 0.4);
         event.put(ModEntities.LICH.get(), lich.build());
 
-        // Bone Golem: 80 HP (slightly less than Iron Golem's 100)
-        event.put(ModEntities.BONE_GOLEM.get(), BoneGolem.createAttributes().build());
+        AttributeSupplier.Builder boneGolem = BoneGolem.createAttributes();
+        boneGolem.add(Attributes.MAX_HEALTH, 40.0);
+        event.put(ModEntities.BONE_GOLEM.get(), boneGolem.build());
     }
 
     private static boolean checkBlightedSpawnRules(EntityType<? extends Monster> type, ServerLevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
