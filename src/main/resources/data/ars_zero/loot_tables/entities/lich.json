@@ -1,0 +1,39 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": {"min": 1, "max": 3, "type": "minecraft:uniform"},
+      "bonus_rolls": 0.0,
+      "entries": [{"type": "minecraft:item", "name": "minecraft:bone"}]
+    },
+    {
+      "rolls": 2,
+      "bonus_rolls": 0.0,
+      "entries": [
+        {"type": "minecraft:item", "name": "ars_nouveau:source_gem",          "weight": 10, "functions": [{"function": "minecraft:set_count", "count": {"min": 3, "max": 8, "type": "minecraft:uniform"}}]},
+        {"type": "minecraft:item", "name": "ars_nouveau:blank_parchment",     "weight": 6,  "functions": [{"function": "minecraft:set_count", "count": {"min": 2, "max": 4, "type": "minecraft:uniform"}}]},
+        {"type": "minecraft:item", "name": "ars_nouveau:abjuration_essence",  "weight": 6,  "functions": [{"function": "minecraft:set_count", "count": {"min": 1, "max": 3, "type": "minecraft:uniform"}}]},
+        {"type": "minecraft:item", "name": "ars_nouveau:conjuration_essence", "weight": 6,  "functions": [{"function": "minecraft:set_count", "count": {"min": 1, "max": 3, "type": "minecraft:uniform"}}]},
+        {"type": "minecraft:item", "name": "ars_nouveau:manipulation_essence","weight": 5,  "functions": [{"function": "minecraft:set_count", "count": {"min": 1, "max": 2, "type": "minecraft:uniform"}}]},
+        {"type": "minecraft:item", "name": "ars_nouveau:fire_essence",        "weight": 4,  "functions": [{"function": "minecraft:set_count", "count": {"min": 1, "max": 2, "type": "minecraft:uniform"}}]},
+        {"type": "minecraft:item", "name": "ars_elemental:anima_essence",     "weight": 6,  "functions": [{"function": "minecraft:set_count", "count": {"min": 1, "max": 2, "type": "minecraft:uniform"}}]},
+        {"type": "minecraft:item", "name": "ars_nouveau:glyph_harm",          "weight": 6},
+        {"type": "minecraft:item", "name": "ars_nouveau:glyph_ignite",        "weight": 6},
+        {"type": "minecraft:item", "name": "ars_nouveau:glyph_freeze",        "weight": 6},
+        {"type": "minecraft:item", "name": "ars_nouveau:glyph_snare",         "weight": 6},
+        {"type": "minecraft:item", "name": "ars_nouveau:glyph_launch",        "weight": 6},
+        {"type": "minecraft:item", "name": "ars_nouveau:glyph_explosion",     "weight": 4},
+        {"type": "minecraft:item", "name": "ars_nouveau:glyph_heal",          "weight": 4},
+        {"type": "minecraft:item", "name": "ars_nouveau:glyph_gravity",       "weight": 4},
+        {"type": "minecraft:item", "name": "ars_nouveau:glyph_cold_snap",     "weight": 4},
+        {"type": "minecraft:item", "name": "ars_nouveau:glyph_aoe",           "weight": 4},
+        {"type": "minecraft:item", "name": "ars_nouveau:warp_scroll",         "weight": 4,  "functions": [{"function": "minecraft:set_count", "count": {"min": 1, "max": 2, "type": "minecraft:uniform"}}]},
+        {"type": "minecraft:item", "name": "ars_nouveau:amulet_of_mana_regen","weight": 2},
+        {"type": "minecraft:item", "name": "ars_nouveau:ring_of_lesser_discount","weight": 2},
+        {"type": "minecraft:item", "name": "ars_nouveau:experience_gem",      "weight": 5,  "functions": [{"function": "minecraft:set_count", "count": {"min": 1, "max": 2, "type": "minecraft:uniform"}}]},
+        {"type": "minecraft:item", "name": "minecraft:wither_skeleton_skull", "weight": 2},
+        {"type": "minecraft:item", "name": "minecraft:nether_star",           "weight": 1}
+      ]
+    }
+  ]
+}

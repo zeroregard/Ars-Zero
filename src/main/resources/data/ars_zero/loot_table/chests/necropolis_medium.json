@@ -34,6 +34,18 @@
         {"type": "minecraft:item", "name": "minecraft:wither_skeleton_skull", "weight": 2},
         {"type": "minecraft:empty",                                          "weight": 4}
       ]
+    },
+    {
+      "rolls": 1,
+      "bonus_rolls": 0.0,
+      "entries": [
+        {"type": "minecraft:alternatives", "children": [
+          {"type": "minecraft:item", "name": "ars_nouveau:bombegranate_pod", "weight": 10, "functions": [{"function": "minecraft:set_count", "count": {"min": 2, "max": 6, "type": "minecraft:uniform"}}]},
+          {"type": "minecraft:item", "name": "ars_nouveau:frostaya_pod",     "weight": 10, "functions": [{"function": "minecraft:set_count", "count": {"min": 2, "max": 6, "type": "minecraft:uniform"}}]},
+          {"type": "minecraft:item", "name": "ars_nouveau:bastion_pod",      "weight": 10, "functions": [{"function": "minecraft:set_count", "count": {"min": 2, "max": 6, "type": "minecraft:uniform"}}]},
+          {"type": "minecraft:item", "name": "ars_nouveau:mendosteen_pod",   "weight": 10, "functions": [{"function": "minecraft:set_count", "count": {"min": 2, "max": 6, "type": "minecraft:uniform"}}]}
+        ]}
+      ]
     }
   ]
 }

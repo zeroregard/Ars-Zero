@@ -86,7 +86,12 @@ public class BlightDungeonStructure extends Structure {
         int startX = chunkPos.getMinBlockX();
         int startZ = chunkPos.getMinBlockZ();
 
-        BlockPos dungeonStart = new BlockPos(startX, dungeonY, startZ);
+        // Jigsaw start: place room_connector via start_pool=connector, start_jigsaw_name=connector.
+        // Jigsaw subtracts the connector jigsaw local pos (8,7,8) from dungeonStart to get piece origin,
+        // then processes all 4 passage exits automatically.
+        // Staircase bottom jigsaw is at world (startX+4, dungeonY, startZ+4).
+        // Connector jigsaw should sit at (startX+4, dungeonY-1, startZ+4) — one block below, faces touching.
+        BlockPos dungeonStart = new BlockPos(startX + 4, dungeonY, startZ + 4);
 
         return Optional.of(new Structure.GenerationStub(dungeonStart, builder -> {
             // 1. Place exactly staircaseSegments staircase pieces, stacked downward from the surface.
@@ -96,11 +101,12 @@ public class BlightDungeonStructure extends Structure {
                 builder.addPiece(new NecropolisStaircasePiece(context.structureTemplateManager(), piecePos));
             }
 
-            // 2. Use Jigsaw for the dungeon rooms starting at dungeonY, fixed budget of 15 pieces.
+            // 2. Jigsaw places room_connector first (start_pool=connector, start_jigsaw_name=connector),
+            //    then automatically fans out through all 4 passage exits into hallways.
             JigsawPlacement.addPieces(
                     context,
                     this.startPool,
-                    this.startJigsawName,
+                    Optional.of(ResourceLocation.fromNamespaceAndPath("ars_zero", "necropolis/connector")),
                     15,
                     dungeonStart,
                     this.useExpansionHack,

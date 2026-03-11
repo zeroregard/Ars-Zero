@@ -5,6 +5,7 @@ import com.github.ars_zero.common.world.feature.BlightPoolFeature;
 import com.github.ars_zero.common.world.feature.BlightedSoilSurfaceFeature;
 import com.github.ars_zero.common.world.structure.BlightDungeonStructure;
 import com.github.ars_zero.common.world.structure.CobwebProcessor;
+import com.github.ars_zero.common.world.structure.NecropolisConnectorPiece;
 import com.github.ars_zero.common.world.structure.NecropolisStaircasePiece;
 import com.github.ars_zero.common.world.structure.StripWaterloggedProcessor;
 import com.github.ars_zero.common.world.placement.NoBlightLogNearbyFilter;
@@ -53,6 +54,10 @@ public final class ModWorldgen {
     public static final DeferredHolder<StructurePieceType, StructurePieceType> NECROPOLIS_STAIRCASE_PIECE =
         STRUCTURE_PIECE_TYPES.register("necropolis_staircase",
             () -> (StructurePieceType.StructureTemplateType) NecropolisStaircasePiece::new);
+
+    public static final DeferredHolder<StructurePieceType, StructurePieceType> NECROPOLIS_CONNECTOR_PIECE =
+        STRUCTURE_PIECE_TYPES.register("necropolis_connector",
+            () -> (StructurePieceType.StructureTemplateType) NecropolisConnectorPiece::new);
 
     public static final DeferredRegister<Feature<?>> FEATURES =
         DeferredRegister.create(BuiltInRegistries.FEATURE, ArsZero.MOD_ID);

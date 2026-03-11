@@ -1,6 +1,6 @@
 {
   "type": "ars_zero:necropolis",
-  "start_pool": "ars_zero:necropolis/rooms_only",
+  "start_pool": "ars_zero:necropolis/connector",
   "size": 40,
   "biomes": "#ars_zero:has_structure/necropolis",
   "step": "underground_structures",
@@ -21,6 +21,12 @@
         },
         {
           "type": "ars_zero:necromancer",
+          "weight": 1,
+          "minCount": 1,
+          "maxCount": 1
+        },
+        {
+          "type": "ars_zero:bone_golem",
           "weight": 1,
           "minCount": 1,
           "maxCount": 1
