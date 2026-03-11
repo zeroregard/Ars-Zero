@@ -1,14 +1,12 @@
 {
-  "name": "ars_zero:necropolis/hallways",
+  "name": "ars_zero:necropolis/lower_hallways",
   "fallback": "minecraft:empty",
   "elements": [
-    {"weight": 6, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/hallway_down", "processors": "ars_zero:necropolis", "projection": "rigid"}},
-    {"weight": 4, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/hallway_straight", "processors": "ars_zero:necropolis", "projection": "rigid"}},
+    {"weight": 4, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/dead_end_small", "processors": "ars_zero:necropolis", "projection": "rigid"}},
     {"weight": 3, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/hallway_turn", "processors": "ars_zero:necropolis", "projection": "rigid"}},
-    {"weight": 2, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/hallway_split", "processors": "ars_zero:necropolis", "projection": "rigid"}},
+    {"weight": 3, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/hallway_straight", "processors": "ars_zero:necropolis", "projection": "rigid"}},
     {"weight": 2, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/small_room_1", "processors": "ars_zero:necropolis", "projection": "rigid"}},
     {"weight": 2, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/small_room_2", "processors": "ars_zero:necropolis", "projection": "rigid"}},
-    {"weight": 2, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/dead_end_small", "processors": "ars_zero:necropolis", "projection": "rigid"}},
     {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/small_to_medium", "processors": "ars_zero:necropolis", "projection": "rigid"}}
   ]
 }

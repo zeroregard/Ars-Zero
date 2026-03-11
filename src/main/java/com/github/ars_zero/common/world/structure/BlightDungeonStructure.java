@@ -96,12 +96,12 @@ public class BlightDungeonStructure extends Structure {
                 builder.addPiece(new NecropolisStaircasePiece(context.structureTemplateManager(), piecePos));
             }
 
-            // 2. Use Jigsaw for the dungeon rooms starting at dungeonY, fixed budget of 20 pieces.
+            // 2. Use Jigsaw for the dungeon rooms starting at dungeonY, fixed budget of 15 pieces.
             JigsawPlacement.addPieces(
                     context,
                     this.startPool,
                     this.startJigsawName,
-                    20,
+                    15,
                     dungeonStart,
                     this.useExpansionHack,
                     this.projectStartToHeightmap,
