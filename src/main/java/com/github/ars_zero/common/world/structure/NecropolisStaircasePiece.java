@@ -9,7 +9,6 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.TemplateStructurePiece;
-import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 
@@ -18,6 +17,7 @@ public class NecropolisStaircasePiece extends TemplateStructurePiece {
     public static final ResourceLocation TEMPLATE_ID =
             ResourceLocation.fromNamespaceAndPath("ars_zero", "necropolis/entrance_staircase");
 
+    /** Construction constructor — called during world generation. */
     public NecropolisStaircasePiece(StructureTemplateManager mgr, BlockPos pos) {
         super(
                 ModWorldgen.NECROPOLIS_STAIRCASE_PIECE.get(),
@@ -30,9 +30,9 @@ public class NecropolisStaircasePiece extends TemplateStructurePiece {
         );
     }
 
-    public NecropolisStaircasePiece(StructurePieceSerializationContext ctx, CompoundTag tag) {
-        super(ModWorldgen.NECROPOLIS_STAIRCASE_PIECE.get(), tag, ctx.structureTemplateManager(),
-                loc -> makeSettings());
+    /** Deserialization constructor — matches StructurePieceType.StructureTemplateType. */
+    public NecropolisStaircasePiece(StructureTemplateManager mgr, CompoundTag tag) {
+        super(ModWorldgen.NECROPOLIS_STAIRCASE_PIECE.get(), tag, mgr, loc -> makeSettings());
     }
 
     private static StructurePlaceSettings makeSettings() {

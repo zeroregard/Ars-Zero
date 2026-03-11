@@ -12,6 +12,15 @@
       }
     },
     {
+      "weight": 3,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "ars_zero:necropolis/small_room_2",
+        "processors": "ars_zero:necropolis",
+        "projection": "rigid"
+      }
+    },
+    {
       "weight": 2,
       "element": {
         "element_type": "minecraft:single_pool_element",

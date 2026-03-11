@@ -143,6 +143,7 @@ public class ArsZero {
         ModRecipes.RECIPE_TYPES.register(modEventBus);
         ModWorldgen.STRUCTURE_TYPES.register(modEventBus);
         ModWorldgen.STRUCTURE_PROCESSOR_TYPES.register(modEventBus);
+        ModWorldgen.STRUCTURE_PIECE_TYPES.register(modEventBus);
         ModWorldgen.FEATURES.register(modEventBus);
         ModWorldgen.TRUNK_PLACER_TYPES.register(modEventBus);
         ModWorldgen.FOLIAGE_PLACER_TYPES.register(modEventBus);

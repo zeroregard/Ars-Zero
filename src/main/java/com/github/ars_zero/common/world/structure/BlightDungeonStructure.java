@@ -22,6 +22,11 @@ import java.util.Optional;
 
 public class BlightDungeonStructure extends Structure {
 
+    /** Height of one staircase NBT piece in blocks. */
+    private static final int STAIRCASE_HEIGHT = 12;
+    /** Target Y level for the dungeon rooms floor. */
+    private static final int DUNGEON_TARGET_Y = 30;
+
     public static final MapCodec<BlightDungeonStructure> CODEC = RecordCodecBuilder.mapCodec(instance ->
             instance.group(settingsCodec(instance),
                     StructureTemplatePool.CODEC.fieldOf("start_pool").forGetter(s -> s.startPool),
@@ -65,34 +70,47 @@ public class BlightDungeonStructure extends Structure {
         int x = chunkPos.getMiddleBlockX();
         int z = chunkPos.getMiddleBlockZ();
 
-        // Reject placement on water — check ocean floor vs world surface; if they differ, it's liquid
+        // Reject placement on water — if ocean floor differs from world surface, it's liquid
         int oceanFloor = context.chunkGenerator().getFirstOccupiedHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, context.heightAccessor(), context.randomState());
         int worldSurface = context.chunkGenerator().getFirstOccupiedHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), context.randomState());
         if (worldSurface > oceanFloor) {
             return Optional.empty();
         }
 
-        // The entrance jigsaw is at y=0 (bottom) of the 12-tall staircase piece.
-        // Place it so the top of the piece (y=11) is flush with the surface.
-        // Jigsaw anchors the named connector to blockPos.y, so offset = surfaceY - 11.
-        BlockPos blockPos = new BlockPos(chunkPos.getMinBlockX(), worldSurface - 11, chunkPos.getMinBlockZ());
+        // Compute exactly how many staircase pieces are needed to descend from surface to DUNGEON_TARGET_Y.
+        // Each piece is STAIRCASE_HEIGHT blocks tall. The top of piece 0 is at worldSurface.
+        int staircaseSegments = Math.max(1, (int) Math.ceil((double)(worldSurface - DUNGEON_TARGET_Y) / STAIRCASE_HEIGHT));
+        int dungeonY = worldSurface - (staircaseSegments * STAIRCASE_HEIGHT);
 
-        // Dynamically size: enough staircase segments to reach Y=30, plus fixed budget for dungeon rooms.
-        int staircaseSegments = Math.max(1, (int) Math.ceil((worldSurface - 30) / 12.0));
-        int dynamicSize = staircaseSegments + 20; // 20 extra slots for dungeon rooms/hallways
+        // startX/Z for pieces: align to chunk min so the staircase entrance is predictably placed
+        int startX = chunkPos.getMinBlockX();
+        int startZ = chunkPos.getMinBlockZ();
 
-        return JigsawPlacement.addPieces(
-                context,
-                this.startPool,
-                this.startJigsawName,
-                dynamicSize,
-                blockPos,
-                this.useExpansionHack,
-                this.projectStartToHeightmap,
-                this.maxDistanceFromCenter,
-                PoolAliasLookup.EMPTY,
-                DimensionPadding.ZERO,
-                LiquidSettings.IGNORE_WATERLOGGING);
+        BlockPos dungeonStart = new BlockPos(startX, dungeonY, startZ);
+
+        return Optional.of(new Structure.GenerationStub(dungeonStart, builder -> {
+            // 1. Place exactly staircaseSegments staircase pieces, stacked downward from the surface.
+            for (int i = 0; i < staircaseSegments; i++) {
+                int pieceY = worldSurface - ((i + 1) * STAIRCASE_HEIGHT);
+                BlockPos piecePos = new BlockPos(startX, pieceY, startZ);
+                builder.addPiece(new NecropolisStaircasePiece(context.structureTemplateManager(), piecePos));
+            }
+
+            // 2. Use Jigsaw for the dungeon rooms starting at dungeonY, fixed budget of 20 pieces.
+            JigsawPlacement.addPieces(
+                    context,
+                    this.startPool,
+                    this.startJigsawName,
+                    20,
+                    dungeonStart,
+                    this.useExpansionHack,
+                    this.projectStartToHeightmap,
+                    this.maxDistanceFromCenter,
+                    PoolAliasLookup.EMPTY,
+                    DimensionPadding.ZERO,
+                    LiquidSettings.IGNORE_WATERLOGGING)
+                .ifPresent(stub -> stub.getPiecesBuilder().build().pieces().forEach(builder::addPiece));
+        }));
     }
 
     @Override
