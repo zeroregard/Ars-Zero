@@ -1,43 +1,28 @@
 package com.github.ars_zero.common.entity.ai;
 
 import com.github.ars_zero.api.spell.MobSpellBehaviour;
-import com.github.ars_zero.api.spell.MobSpellResolver;
 import com.github.ars_zero.common.casting.CastingStyle;
 import com.github.ars_zero.common.entity.ArcaneCircleEntity;
-import com.github.ars_zero.common.entity.BaseVoxelEntity;
-import com.github.ars_zero.common.entity.BlightVoxelEntity;
 import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
+import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.LichBlightedSkeleton;
 import com.github.ars_zero.common.util.MathHelper;
 import com.github.ars_zero.registry.ModEntities;
-import com.github.ars_zero.registry.ModGlyphs;
-import com.hollingsworth.arsnouveau.api.spell.Spell;
-import com.hollingsworth.arsnouveau.api.spell.SpellContext;
-import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
-import com.hollingsworth.arsnouveau.common.spell.method.MethodTouch;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Spell behaviour: casting circle + blight voxel hover for 2s, then Push toward target.
- * Designed for reuse and for future chance-based spell selection.
+ * Spell behaviour: fire casting circle + fire voxel hover for 2s, then Push toward target.
  */
-public class BlightVoxelPushSpellBehaviour implements MobSpellBehaviour {
+public class FireVoxelPushSpellBehaviour implements MobSpellBehaviour {
 
     /** How long the circle and voxel hover before being pushed (2 seconds). */
-    public static final int HOVER_TICKS = 40;
+    public static final int HOVER_TICKS = BlightVoxelPushSpellBehaviour.HOVER_TICKS;
     public static final int CIRCLE_LIFESPAN_TICKS = HOVER_TICKS;
-    public static final int BLIGHT_VOXEL_LIFETIME_TICKS = 200;
-    /** Touch (5) + Push (25). */
+    public static final int VOXEL_LIFETIME_TICKS = BlightVoxelPushSpellBehaviour.BLIGHT_VOXEL_LIFETIME_TICKS;
     private static final int MANA_COST = 30;
-
-    private static final Spell PUSH_SPELL = new Spell()
-            .add(MethodTouch.INSTANCE)
-            .add(ModGlyphs.PUSH_EFFECT);
 
     @Override
     public int getManaCost() {
@@ -50,7 +35,6 @@ public class BlightVoxelPushSpellBehaviour implements MobSpellBehaviour {
             return false;
         }
 
-        // Point caster at target first so "in front" is toward target
         Vec3 toTarget = target.position().add(0, target.getBbHeight() * 0.5, 0)
                 .subtract(caster.getEyePosition(1.0f)).normalize();
         double horizontalLength = Math.sqrt(toTarget.x * toTarget.x + toTarget.z * toTarget.z);
@@ -59,12 +43,11 @@ public class BlightVoxelPushSpellBehaviour implements MobSpellBehaviour {
         caster.setYRot(yaw);
         caster.setXRot(pitch);
 
-        // 1) Casting circle "near" (in front of mob), dark green, Anima symbol only (no outer circle)
         CastingStyle style = new CastingStyle();
         style.setEnabled(true);
         style.setPlacement(CastingStyle.Placement.NEAR);
-        style.setColor(0x1B5E20);
-        style.setActiveBones(java.util.Set.of()); // no outer circle / alphabet, just the anima symbol
+        style.setColor(0xFF6A00);
+        style.setActiveBones(java.util.Set.of());
 
         Vec3 spawnPos = caster.getEyePosition(1.0f).add(caster.getLookAngle().scale(1.0));
 
@@ -73,12 +56,11 @@ public class BlightVoxelPushSpellBehaviour implements MobSpellBehaviour {
             circleEntity.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
             circleEntity.setSyncedRotation(yaw, pitch);
             circleEntity.initialize(caster, style);
-            circleEntity.setCurrentSchoolId("school_anima");
+            circleEntity.setCurrentSchoolId("school_fire");
             circleEntity.setMaxAliveTicks(CIRCLE_LIFESPAN_TICKS);
             serverLevel.addFreshEntity(circleEntity);
         }
 
-        // 2) Blight voxel(s): Lich uses Split (3 voxels in a circle), others use 1
         boolean isLich = caster instanceof LichBlightedSkeleton;
         int voxelCount = isLich ? 3 : 1;
         java.util.List<Vec3> voxelPositions = voxelCount == 1
@@ -87,13 +69,12 @@ public class BlightVoxelPushSpellBehaviour implements MobSpellBehaviour {
         java.util.List<Integer> voxelIds = new java.util.ArrayList<>();
 
         for (Vec3 pos : voxelPositions) {
-            BlightVoxelEntity voxel = new BlightVoxelEntity(serverLevel, pos.x, pos.y, pos.z, BLIGHT_VOXEL_LIFETIME_TICKS);
+            FireVoxelEntity voxel = new FireVoxelEntity(serverLevel, pos.x, pos.y, pos.z, VOXEL_LIFETIME_TICKS);
             voxel.setNoGravityCustom(true);
             serverLevel.addFreshEntity(voxel);
             voxelIds.add(voxel.getId());
         }
 
-        // 3) Schedule Push after HOVER_TICKS (2 seconds); mob will call executePush when chargeTicks hits 0
         if (caster instanceof AbstractBlightedSkeleton mage) {
             if (voxelIds.size() == 1) {
                 mage.setPendingPush(voxelIds.get(0), HOVER_TICKS);
@@ -103,30 +84,5 @@ public class BlightVoxelPushSpellBehaviour implements MobSpellBehaviour {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Executes the Push on the voxel toward the target. Called by blighted skeleton when hover delay ends.
-     * Deducts mana via the resolver.
-     */
-    public static void executePush(AbstractBlightedSkeleton caster, LivingEntity target, BaseVoxelEntity voxel) {
-        if (!(caster.level() instanceof ServerLevel serverLevel) || !voxel.isAlive()) {
-            return;
-        }
-        Vec3 toTarget = target.position().add(0, target.getBbHeight() * 0.5, 0)
-                .subtract(caster.getEyePosition(1.0f)).normalize();
-        double horizontalLength = Math.sqrt(toTarget.x * toTarget.x + toTarget.z * toTarget.z);
-        float yaw = (float) (Math.atan2(-toTarget.x, toTarget.z) * 180.0 / Math.PI);
-        float pitch = (float) (Math.atan2(-toTarget.y, horizontalLength) * 180.0 / Math.PI);
-        caster.setYRot(yaw);
-        caster.setXRot(pitch);
-
-        SpellContext context = new SpellContext(serverLevel, PUSH_SPELL, caster, LivingCaster.from(caster));
-        MobSpellResolver resolver = new MobSpellResolver(context);
-        if (resolver.canCast(caster)) {
-            resolver.onCastOnEntity(ItemStack.EMPTY, voxel, InteractionHand.MAIN_HAND);
-        } else {
-            voxel.discard();
-        }
     }
 }

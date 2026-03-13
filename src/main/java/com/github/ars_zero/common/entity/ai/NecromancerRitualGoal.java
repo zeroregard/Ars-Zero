@@ -25,7 +25,7 @@ import java.util.EnumSet;
 public class NecromancerRitualGoal extends Goal {
 
     private static final int ALTAR_SCAN_RADIUS = 16;
-    private static final int RAISE_INTERVAL_TICKS = 200;
+    private static final int RAISE_INTERVAL_TICKS = 400;
     private static final int MAX_RAISED = 3;
     private static final double WALK_SPEED = 0.6;
 
