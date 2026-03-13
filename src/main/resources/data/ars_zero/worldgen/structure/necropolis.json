@@ -15,13 +15,13 @@
       "spawns": [
         {
           "type": "ars_zero:acolyte",
-          "weight": 2,
+          "weight": 6,
           "minCount": 1,
           "maxCount": 1
         },
         {
           "type": "ars_zero:necromancer",
-          "weight": 1,
+          "weight": 3,
           "minCount": 1,
           "maxCount": 1
         },

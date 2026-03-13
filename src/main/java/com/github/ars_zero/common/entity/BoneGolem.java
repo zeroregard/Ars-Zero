@@ -8,6 +8,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.MoveTowardsTargetGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
@@ -26,7 +27,8 @@ public class BoneGolem extends IronGolem {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return IronGolem.createAttributes();
+        return IronGolem.createAttributes()
+                .add(Attributes.ATTACK_DAMAGE, 15.0 * 0.75); // 75% of iron golem base (15 → 11.25)
     }
 
     @Override
