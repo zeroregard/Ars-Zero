@@ -2,6 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.renderer.item.MultiphaseTurretItemRenderer;
+import com.github.ars_zero.common.item.armor.NecroCrownArmor;
 import com.github.ars_zero.common.item.armor.RottedArcanistArmor;
 import com.github.ars_zero.common.item.armor.TatteredArcanistArmor;
 import com.github.ars_zero.registry.ModEntities;
@@ -257,6 +258,32 @@ public class ModItems {
     public static final DeferredHolder<Item, RottedArcanistArmor> ROTTED_ARCANIST_BOOTS =
             ITEMS.register("rotted_arcanist_boots",
                     () -> new RottedArcanistArmor(ROTTED_ARCANIST_MATERIAL, ArmorItem.Type.BOOTS));
+
+    // -------------------------------------------------------------------------
+    // Necro Crown (Lich helmet)
+    // -------------------------------------------------------------------------
+
+    public static final DeferredHolder<ArmorMaterial, ArmorMaterial> NECRO_CROWN_MATERIAL =
+            ARMOR_MATERIALS.register("necro_crown", () -> {
+                java.util.EnumMap<ArmorItem.Type, Integer> defense = new java.util.EnumMap<>(ArmorItem.Type.class);
+                defense.put(ArmorItem.Type.HELMET,     3);
+                defense.put(ArmorItem.Type.CHESTPLATE, 0);
+                defense.put(ArmorItem.Type.LEGGINGS,   0);
+                defense.put(ArmorItem.Type.BOOTS,      0);
+                defense.put(ArmorItem.Type.BODY,       0);
+                return new ArmorMaterial(
+                        defense,
+                        0,
+                        net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_LEATHER,
+                        () -> Ingredient.EMPTY,
+                        List.of(new ArmorMaterial.Layer(ArsZero.prefix("necro_crown"))),
+                        0.0f, 0.0f
+                );
+            });
+
+    public static final DeferredHolder<Item, NecroCrownArmor> NECRO_CROWN =
+            ITEMS.register("necro_crown",
+                    () -> new NecroCrownArmor(NECRO_CROWN_MATERIAL));
 
     private static <T extends Item> ItemRegistryWrapper<T> register(String name, java.util.function.Supplier<T> item) {
         ArsZero.LOGGER.debug("Registering item: {}", name);

@@ -16,7 +16,8 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import com.github.ars_zero.registry.ModItems;
+
 import net.minecraft.world.level.Level;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -63,7 +64,7 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
 
     @Override
     protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
-        setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.NETHERITE_HELMET));
+        setItemSlot(EquipmentSlot.HEAD, new ItemStack(ModItems.NECRO_CROWN.get()));
         setDropChance(EquipmentSlot.HEAD, 0.0f);
         setTatteredArcanistSlot(EquipmentSlot.CHEST);
         setTatteredArcanistSlot(EquipmentSlot.LEGS);
