@@ -98,7 +98,8 @@ Only add mixins when no other hook into Ars Nouveau behavior exists.
 ## Scoped Rules
 
 Path-specific guidance lives in `.claude/rules/`:
-- `structures.md` — necropolis NBT pieces, template pools, jigsaw debugging
+- `necropolis.md` — living necropolis design doc (always loaded)
+- `structures.md` — necropolis NBT pieces, template pools, jigsaw debugging (loads when editing structure files)
 - `voxels.md` — voxel entity system
 - `networking.md` — packet conventions
 

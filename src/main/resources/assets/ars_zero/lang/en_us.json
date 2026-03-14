@@ -309,5 +309,7 @@
   "item.ars_zero.rotted_arcanist_helmet": "Rotted Arcanist's Hat",
   "item.ars_zero.rotted_arcanist_chestplate": "Rotted Arcanist's Robes",
   "item.ars_zero.rotted_arcanist_leggings": "Rotted Arcanist's Breeches",
-  "item.ars_zero.rotted_arcanist_boots": "Rotted Arcanist's Boots"
+  "item.ars_zero.rotted_arcanist_boots": "Rotted Arcanist's Boots",
+
+  "config.jade.plugin_ars_zero.entity_mana": "Entity Mana"
 }

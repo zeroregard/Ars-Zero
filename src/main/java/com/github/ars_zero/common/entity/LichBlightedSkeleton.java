@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
 
-    private static final int MAX_MANA = 3000;
+    private static final int MAX_MANA = 1500;
     private static final double MANA_REGEN = 2.0;
     private static final int BLINK_COOLDOWN = 10;
     /** Fake gravity per tick so the Lich slowly drifts down when in the air. */

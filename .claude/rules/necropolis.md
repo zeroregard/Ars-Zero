@@ -14,7 +14,6 @@ All necropolis pieces live in `src/main/resources/data/ars_zero/structure/necrop
 - `entrance_staircase.nbt`
 - `hallway_straight.nbt`
 - `small_room_1.nbt`
-- `small_to_medium.nbt`
 - `medium_room_1.nbt`
 - `dead_end_small.nbt`
 - `room_connector.nbt` ← **needs to be built and saved in-game**
@@ -103,8 +102,7 @@ Jigsaw names used by staircase:
 |------|------|---------|
 | `necropolis/start` | `start.json` | Start piece → entrance_staircase |
 | `necropolis/stairs` | `stairs.json` | Chain: staircase (w3) or room_connector (w1) |
-| `necropolis/hallways` | `hallways.json` | hallway_straight, small_room_1, dead_end_small, small_to_medium |
-| `necropolis/medium_rooms` | `medium_rooms.json` | medium_room_1 |
+| `necropolis/hallways` | `hallways.json` | hallway_straight, small_room_1, dead_end_small, medium_room_1 |
 
 ---
 
@@ -129,13 +127,11 @@ Jigsaw names used by staircase:
 - Hand-built NBT: `structure/necropolis/small_room_1.nbt`
 - 19×14×19, 4 side jigsaws → `necropolis/hallways`
 
-### ✅ small_to_medium
-- Hand-built NBT: `structure/necropolis/small_to_medium.nbt`
-- 19×13×8 connector, bridges to medium rooms
-
 ### 🔲 medium_room_1 (WIP)
 - Hand-built NBT: `structure/necropolis/medium_room_1.nbt`
 - 21×13×19
+- Placed directly from hallways/connector_exits/lower_hallways pools (weight 1)
+- Must have `necropolis/passage` jigsaw on entry face to connect from hallways
 
 ### ✅ dead_end_small
 - Hand-built NBT: `structure/necropolis/dead_end_small.nbt`

@@ -9,7 +9,7 @@ paths:
 
 # Necropolis Structure Rules
 
-Full design doc: `.claude/necropolis.md`
+Full design doc: `.claude/rules/necropolis.md`
 
 ## Critical: NBT pieces are hand-built, not datagen
 

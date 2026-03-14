@@ -2,7 +2,6 @@
   { "nbt": "entrance_staircase", "sizeXYZ": [11, 12, 11] },
   { "nbt": "hallway_straight",   "sizeXYZ": [17, 10, 13] },
   { "nbt": "small_room_1",       "sizeXYZ": [19, 14, 19] },
-  { "nbt": "small_to_medium",    "sizeXYZ": [19, 13,  8] },
   { "nbt": "medium_room_1",      "sizeXYZ": [21, 13, 19] },
   { "nbt": "dead_end_small",     "sizeXYZ": [ 5,  5,  3] },
   { "nbt": "room_connector",     "sizeXYZ": [19,  8, 19] },
