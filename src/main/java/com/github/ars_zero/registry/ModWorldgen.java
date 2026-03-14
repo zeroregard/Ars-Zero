@@ -153,4 +153,5 @@ public final class ModWorldgen {
     /** Blight forest biome (dead archwood trees, skeletons, no Ars Nouveau critters). */
     public static final ResourceKey<Biome> BLIGHT_FOREST =
         ResourceKey.create(net.minecraft.core.registries.Registries.BIOME, ArsZero.prefix("blight_forest"));
+
 }

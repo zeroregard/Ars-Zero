@@ -81,4 +81,8 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> BONE_GOLEM_REPAIR = SOUNDS.register(
             "bone_golem.repair",
             () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("bone_golem.repair")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> NECROPOLIS_AMBIENT = SOUNDS.register(
+            "ambient.necropolis",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("ambient.necropolis")));
 }

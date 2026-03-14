@@ -18,8 +18,8 @@ import java.util.List;
  */
 public class NecromancerBlightedSkeleton extends AbstractBlightedSkeleton {
 
-    private static final int MAX_MANA = 3000;
-    private static final double MANA_REGEN = 2.0;
+    private static final int MAX_MANA = 800;
+    private static final double MANA_REGEN = 1.0;
 
     public NecromancerBlightedSkeleton(EntityType<? extends Skeleton> entityType, Level level) {
         super(entityType, level);

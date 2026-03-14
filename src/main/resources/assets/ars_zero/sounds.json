@@ -128,5 +128,11 @@
     "sounds": [
       {"name": "ars_zero:bone_golem/repair"}
     ]
+  },
+  "ambient.necropolis": {
+    "sounds": [
+      {"name": "ars_zero:necropolis/atmosphere_1", "stream": true},
+      {"name": "ars_zero:necropolis/atmosphere_2", "stream": true}
+    ]
   }
 }

@@ -29,8 +29,8 @@ public class AcolyteBlightedSkeleton extends AbstractBlightedSkeleton {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(1, new BlightedSkeletonFleeGoal(this));
-        this.goalSelector.addGoal(2, new NecromancerRitualGoal(this, 400));
-        this.goalSelector.addGoal(3, new MageSkeletonCastGoal(this, List.of(new BlightVoxelPushSpellBehaviour())));
+        this.goalSelector.addGoal(2, new NecromancerRitualGoal(this));
+        this.goalSelector.addGoal(2, new MageSkeletonCastGoal(this, List.of(new BlightVoxelPushSpellBehaviour())));
     }
 
     @Override

@@ -56,6 +56,8 @@ public class NecromancerRitualGoal extends Goal {
     @Override
     public boolean canUse() {
         if (mob.getTarget() != null && mob.getTarget().isAlive()) return false;
+        IManaCap mana = CapabilityRegistry.getMana(mob);
+        if (mana == null || mana.getCurrentMana() < RITUAL_MANA_COST) return false;
         BlockPos found = findAltar();
         if (found == null) return false;
         OssuaryBeaconBlockEntity be = getBeaconEntity(found);
@@ -67,6 +69,8 @@ public class NecromancerRitualGoal extends Goal {
     @Override
     public boolean canContinueToUse() {
         if (mob.getTarget() != null && mob.getTarget().isAlive()) return false;
+        IManaCap mana = CapabilityRegistry.getMana(mob);
+        if (mana == null || mana.getCurrentMana() < RITUAL_MANA_COST) return false;
         if (altarPos == null) return false;
         if (!mob.level().getBlockState(altarPos).is(ModBlocks.OSSUARY_BEACON.get())) return false;
         return getBeaconEntity(altarPos) != null && findBlightedSoilNearAltar() != null;

@@ -7,6 +7,7 @@ import com.github.ars_zero.common.world.tree.HugeDeadArchwoodTrunkPlacer;
 import com.github.ars_zero.common.world.feature.BlightPoolFeature;
 import com.github.ars_zero.common.world.placement.NoBlightLogNearbyFilter;
 import com.github.ars_zero.registry.ModBlocks;
+import com.github.ars_zero.registry.ModSounds;
 import com.github.ars_zero.registry.ModFluids;
 import com.github.ars_zero.registry.ModWorldgen;
 import net.minecraft.core.HolderGetter;
@@ -279,7 +280,9 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
                 .grassColorModifier(BiomeSpecialEffects.GrassColorModifier.DARK_FOREST)
                 .grassColorOverride(0x5B6656)
                 .foliageColorOverride(0x5B6656)
-                .ambientMoodSound(net.minecraft.world.level.biome.AmbientMoodSettings.LEGACY_CAVE_SETTINGS)
+                .ambientMoodSound(new net.minecraft.world.level.biome.AmbientMoodSettings(
+                    net.minecraft.core.Holder.direct(ModSounds.NECROPOLIS_AMBIENT.get()),
+                    6000, 8, 2.0))
                 .backgroundMusic(Musics.createGameMusic(net.minecraft.sounds.SoundEvents.MUSIC_BIOME_FOREST)).build())
             .build());
     }
