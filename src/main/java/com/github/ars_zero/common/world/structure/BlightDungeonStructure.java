@@ -9,7 +9,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.WorldGenerationContext;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pools.DimensionPadding;
@@ -22,6 +21,11 @@ import net.minecraft.world.level.levelgen.heightproviders.HeightProvider;
 import java.util.Optional;
 
 public class BlightDungeonStructure extends Structure {
+
+    /** Height of one staircase NBT piece in blocks. */
+    private static final int STAIRCASE_HEIGHT = 12;
+    /** Target Y level for the dungeon rooms floor. */
+    private static final int DUNGEON_TARGET_Y = 30;
 
     public static final MapCodec<BlightDungeonStructure> CODEC = RecordCodecBuilder.mapCodec(instance ->
             instance.group(settingsCodec(instance),
@@ -66,28 +70,53 @@ public class BlightDungeonStructure extends Structure {
         int x = chunkPos.getMiddleBlockX();
         int z = chunkPos.getMiddleBlockZ();
 
-        // Reject placement on water — check ocean floor vs world surface; if they differ, it's liquid
+        // Reject placement on water — if ocean floor differs from world surface, it's liquid
         int oceanFloor = context.chunkGenerator().getFirstOccupiedHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, context.heightAccessor(), context.randomState());
         int worldSurface = context.chunkGenerator().getFirstOccupiedHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), context.randomState());
         if (worldSurface > oceanFloor) {
             return Optional.empty();
         }
 
-        int startY = this.startHeight.sample(context.random(), new WorldGenerationContext(context.chunkGenerator(), context.heightAccessor()));
-        BlockPos blockPos = new BlockPos(chunkPos.getMinBlockX(), startY, chunkPos.getMinBlockZ());
+        // Compute exactly how many staircase pieces are needed to descend from surface to DUNGEON_TARGET_Y.
+        // Each piece is STAIRCASE_HEIGHT blocks tall. The top of piece 0 is at worldSurface.
+        int staircaseSegments = Math.max(1, (int) Math.ceil((double)(worldSurface - DUNGEON_TARGET_Y) / STAIRCASE_HEIGHT));
+        int dungeonY = worldSurface - (staircaseSegments * STAIRCASE_HEIGHT);
 
-        return JigsawPlacement.addPieces(
-                context,
-                this.startPool,
-                this.startJigsawName,
-                this.size,
-                blockPos,
-                this.useExpansionHack,
-                this.projectStartToHeightmap,
-                this.maxDistanceFromCenter,
-                PoolAliasLookup.EMPTY,
-                DimensionPadding.ZERO,
-                LiquidSettings.APPLY_WATERLOGGING);
+        // startX/Z for pieces: align to chunk min so the staircase entrance is predictably placed
+        int startX = chunkPos.getMinBlockX();
+        int startZ = chunkPos.getMinBlockZ();
+
+        // Jigsaw start: place room_connector via start_pool=connector, start_jigsaw_name=connector.
+        // Jigsaw subtracts the connector jigsaw local pos (8,7,8) from dungeonStart to get piece origin,
+        // then processes all 4 passage exits automatically.
+        // Staircase bottom jigsaw is at world (startX+4, dungeonY, startZ+4).
+        // Connector jigsaw should sit at (startX+4, dungeonY-1, startZ+4) — one block below, faces touching.
+        BlockPos dungeonStart = new BlockPos(startX + 4, dungeonY, startZ + 4);
+
+        return Optional.of(new Structure.GenerationStub(dungeonStart, builder -> {
+            // 1. Place exactly staircaseSegments staircase pieces, stacked downward from the surface.
+            for (int i = 0; i < staircaseSegments; i++) {
+                int pieceY = worldSurface - ((i + 1) * STAIRCASE_HEIGHT);
+                BlockPos piecePos = new BlockPos(startX, pieceY, startZ);
+                builder.addPiece(new NecropolisStaircasePiece(context.structureTemplateManager(), piecePos));
+            }
+
+            // 2. Jigsaw places room_connector first (start_pool=connector, start_jigsaw_name=connector),
+            //    then automatically fans out through all 4 passage exits into hallways.
+            JigsawPlacement.addPieces(
+                    context,
+                    this.startPool,
+                    Optional.of(ResourceLocation.fromNamespaceAndPath("ars_zero", "necropolis/connector")),
+                    15,
+                    dungeonStart,
+                    this.useExpansionHack,
+                    this.projectStartToHeightmap,
+                    this.maxDistanceFromCenter,
+                    PoolAliasLookup.EMPTY,
+                    DimensionPadding.ZERO,
+                    LiquidSettings.IGNORE_WATERLOGGING)
+                .ifPresent(stub -> stub.getPiecesBuilder().build().pieces().forEach(builder::addPiece));
+        }));
     }
 
     @Override

@@ -114,9 +114,24 @@ def nbt_compound_raw(fields: dict) -> bytes:
 # ---------------------------------------------------------------------------
 # level.dat builder
 # ---------------------------------------------------------------------------
+def _patch_nbt_string(raw: bytes, key_name: str, new_value: str) -> bytes:
+    """Find TAG_String key in raw NBT bytes and replace its string value."""
+    key = b"\x08" + struct.pack(">H", len(key_name)) + key_name.encode("utf-8")
+    idx = raw.find(key)
+    if idx == -1:
+        return raw  # key not present — leave unchanged
+    val_offset = idx + len(key)
+    old_len = struct.unpack(">H", raw[val_offset:val_offset + 2])[0]
+    old_end = val_offset + 2 + old_len
+    new_bytes = new_value.encode("utf-8")
+    return raw[:val_offset] + struct.pack(">H", len(new_bytes)) + new_bytes + raw[old_end:]
+
+
 def make_level_dat(world_name: str) -> bytes:
     """
-    Copy level.dat from the donor world and patch the LevelName string in-place.
+    Copy level.dat from the donor world and patch:
+      - LevelName → world_name
+      - GameRules: doDaylightCycle=false, doWeatherCycle=false, doMobSpawning=false
     This avoids having to replicate the full 1.21.1 WorldGenSettings codec.
     """
     donor = DONOR_WORLD / "level.dat"
@@ -127,22 +142,10 @@ def make_level_dat(world_name: str) -> bytes:
         )
     raw = gzip.decompress(donor.read_bytes())
 
-    # Find the encoded LevelName key and patch its value.
-    # NBT string encoding: 2-byte big-endian length prefix + UTF-8 bytes.
-    # We search for the key "LevelName" followed by its value string and replace the value.
-    # Pattern: TAG_String(8) + key_len(2) + "LevelName" + value_len(2) + <old name>
-    key = b"\x09\x00LevelName"  # TAG_String id=8, len=9 big-endian
-    key = b"\x08" + struct.pack(">H", len("LevelName")) + b"LevelName"
-    idx = raw.find(key)
-    if idx == -1:
-        raise ValueError("LevelName tag not found in donor level.dat")
-
-    val_offset = idx + len(key)
-    old_len = struct.unpack(">H", raw[val_offset:val_offset + 2])[0]
-    old_name_end = val_offset + 2 + old_len
-
-    new_name_bytes = world_name.encode("utf-8")
-    raw = raw[:val_offset] + struct.pack(">H", len(new_name_bytes)) + new_name_bytes + raw[old_name_end:]
+    raw = _patch_nbt_string(raw, "LevelName", world_name)
+    raw = _patch_nbt_string(raw, "doDaylightCycle", "false")
+    raw = _patch_nbt_string(raw, "doWeatherCycle", "false")
+    raw = _patch_nbt_string(raw, "doMobSpawning", "false")
 
     return gzip.compress(raw)
 

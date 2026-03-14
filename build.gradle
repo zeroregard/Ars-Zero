@@ -146,6 +146,7 @@ dependencies {
     compileOnly("mezz.jei:jei-1.21.1-neoforge-api:19.21.0.247")
     compileOnly("mezz.jei:jei-1.21.1-neoforge:19.21.0.247")
     runtimeOnly("mezz.jei:jei-1.21.1-neoforge:19.21.0.247")
+    compileOnly "curse.maven:jade-324717:5444008"
     
     compileOnly "com.hollingsworth.nuggets:nuggets-neoforge-1.21.1:${nuggets_version}"
 

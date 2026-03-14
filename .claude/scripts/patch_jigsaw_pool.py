@@ -4,8 +4,8 @@ Patch the pool field of jigsaw blocks in an NBT file.
 Useful for fixing jigsaw connections without rebuilding in-game.
 
 Usage:
-    python3 scripts/claude/patch_jigsaw_pool.py <nbt_name> <old_pool> <new_pool>
-    python3 scripts/claude/patch_jigsaw_pool.py entrance_staircase ars_zero:necropolis/rooms_2 ars_zero:necropolis/stairs
+    python3 .claude/scripts/patch_jigsaw_pool.py <nbt_name> <old_pool> <new_pool>
+    python3 .claude/scripts/patch_jigsaw_pool.py entrance_staircase ars_zero:necropolis/rooms_2 ars_zero:necropolis/stairs
 """
 
 import sys, shutil

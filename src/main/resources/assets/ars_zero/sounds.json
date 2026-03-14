@@ -96,5 +96,37 @@
       {"name": "ars_zero:undead_mage/step3"},
       {"name": "ars_zero:undead_mage/step5"}
     ]
+  },
+  "bone_golem.hurt": {
+    "sounds": [
+      {"name": "ars_zero:bone_golem/damage1"},
+      {"name": "ars_zero:bone_golem/damage2"}
+    ]
+  },
+  "bone_golem.death": {
+    "sounds": [
+      {"name": "ars_zero:bone_golem/death"}
+    ]
+  },
+  "bone_golem.step": {
+    "sounds": [
+      {"name": "ars_zero:bone_golem/walk1"},
+      {"name": "ars_zero:bone_golem/walk2"},
+      {"name": "ars_zero:bone_golem/walk3"},
+      {"name": "ars_zero:bone_golem/walk4"}
+    ]
+  },
+  "bone_golem.attack": {
+    "sounds": [
+      {"name": "ars_zero:bone_golem/hit1"},
+      {"name": "ars_zero:bone_golem/hit2"},
+      {"name": "ars_zero:bone_golem/hit3"},
+      {"name": "ars_zero:bone_golem/hit4"}
+    ]
+  },
+  "bone_golem.repair": {
+    "sounds": [
+      {"name": "ars_zero:bone_golem/repair"}
+    ]
   }
 }

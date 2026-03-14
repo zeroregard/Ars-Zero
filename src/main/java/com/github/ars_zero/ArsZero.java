@@ -143,6 +143,7 @@ public class ArsZero {
         ModRecipes.RECIPE_TYPES.register(modEventBus);
         ModWorldgen.STRUCTURE_TYPES.register(modEventBus);
         ModWorldgen.STRUCTURE_PROCESSOR_TYPES.register(modEventBus);
+        ModWorldgen.STRUCTURE_PIECE_TYPES.register(modEventBus);
         ModWorldgen.FEATURES.register(modEventBus);
         ModWorldgen.TRUNK_PLACER_TYPES.register(modEventBus);
         ModWorldgen.FOLIAGE_PLACER_TYPES.register(modEventBus);
@@ -437,13 +438,18 @@ public class ArsZero {
         lich.add(Attributes.FLYING_SPEED, 0.4);
         event.put(ModEntities.LICH.get(), lich.build());
 
-        // Bone Golem: 80 HP (slightly less than Iron Golem's 100)
-        event.put(ModEntities.BONE_GOLEM.get(), BoneGolem.createAttributes().build());
+        AttributeSupplier.Builder boneGolem = BoneGolem.createAttributes();
+        boneGolem.add(Attributes.MAX_HEALTH, 40.0);
+        event.put(ModEntities.BONE_GOLEM.get(), boneGolem.build());
     }
 
     private static boolean checkBlightedSpawnRules(EntityType<? extends Monster> type, ServerLevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
-        return level.getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL;
+        if (level.getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) return false;
+        net.minecraft.world.level.block.Block floor = level.getBlockState(pos.below()).getBlock();
+        return ModBlocks.CORRUPTED_BLOCKS.entrySet().stream()
+                .anyMatch(e -> e.getKey().startsWith("smooth_corrupted_sourcestone") && e.getValue().get() == floor);
     }
+
 
     private static void onRegisterSpawnPlacements(RegisterSpawnPlacementsEvent event) {
         event.register(

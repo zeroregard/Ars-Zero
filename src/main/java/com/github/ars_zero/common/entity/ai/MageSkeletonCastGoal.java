@@ -19,7 +19,7 @@ import java.util.List;
 public class MageSkeletonCastGoal extends Goal {
 
     public static final int COOLDOWN_TICKS = 30;
-    private static final float MIN_CAST_DISTANCE = 4.0f;
+    private static final float MIN_CAST_DISTANCE = 1.5f;
     private static final float MAX_CAST_DISTANCE = 22.0f;
 
     private final AbstractBlightedSkeleton mob;

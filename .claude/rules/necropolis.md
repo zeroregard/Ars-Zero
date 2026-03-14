@@ -14,7 +14,6 @@ All necropolis pieces live in `src/main/resources/data/ars_zero/structure/necrop
 - `entrance_staircase.nbt`
 - `hallway_straight.nbt`
 - `small_room_1.nbt`
-- `small_to_medium.nbt`
 - `medium_room_1.nbt`
 - `dead_end_small.nbt`
 - `room_connector.nbt` ← **needs to be built and saved in-game**
@@ -53,22 +52,26 @@ After sync, TNT becomes `minecraft:structure_void` so those positions don't over
 
 ## Mob Spawning
 
-Acolytes (and other blighted skeletons) spawn inside the structure via `spawn_overrides` in `necropolis.json`.
+Blighted skeletons spawn inside the structure via `spawn_overrides` in `necropolis.json`.
+Light level is **NOT checked** — dungeon is decoratively lit; we don't want pitch black required.
 
-### Spawn predicate (`ArsZero.java → checkBlightedSpawnRules`)
-- ✅ Not peaceful difficulty
-- ❌ Light level is **NOT checked** — the dungeon is lit with decorative lighting; we don't want it pitch black
+### Floor restrictions (`ArsZero.java`)
 
-### Floor check (`AbstractBlightedSkeleton.checkSpawnRules`)
-- ✅ Block below must be `ars_zero:smooth_corrupted_sourcestone`
-- This restricts spawning to the dungeon floor only, not random terrain outside
+| Entity | Spawn rule | Floor required |
+|--------|-----------|----------------|
+| Acolyte | `checkBlightedSpawnRules` | Any `smooth_corrupted_sourcestone*` variant |
+| Necromancer | `checkNecromancerSpawnRules` | `smooth_corrupted_sourcestone_small_bricks` only |
+| Lich | `checkBlightedSpawnRules` | Any `smooth_corrupted_sourcestone*` variant |
 
 ### spawn_overrides in `necropolis.json`
 ```json
 "spawn_overrides": {
   "monster": {
     "bounding_box": "full",
-    "spawns": [{"type": "ars_zero:acolyte", "weight": 2, "minCount": 1, "maxCount": 1}]
+    "spawns": [
+      {"type": "ars_zero:acolyte",     "weight": 1, "minCount": 1, "maxCount": 1},
+      {"type": "ars_zero:necromancer", "weight": 4, "minCount": 1, "maxCount": 1}
+    ]
   }
 }
 ```
@@ -99,8 +102,7 @@ Jigsaw names used by staircase:
 |------|------|---------|
 | `necropolis/start` | `start.json` | Start piece → entrance_staircase |
 | `necropolis/stairs` | `stairs.json` | Chain: staircase (w3) or room_connector (w1) |
-| `necropolis/hallways` | `hallways.json` | hallway_straight, small_room_1, dead_end_small, small_to_medium |
-| `necropolis/medium_rooms` | `medium_rooms.json` | medium_room_1 |
+| `necropolis/hallways` | `hallways.json` | hallway_straight, small_room_1, dead_end_small, medium_room_1 |
 
 ---
 
@@ -125,13 +127,11 @@ Jigsaw names used by staircase:
 - Hand-built NBT: `structure/necropolis/small_room_1.nbt`
 - 19×14×19, 4 side jigsaws → `necropolis/hallways`
 
-### ✅ small_to_medium
-- Hand-built NBT: `structure/necropolis/small_to_medium.nbt`
-- 19×13×8 connector, bridges to medium rooms
-
 ### 🔲 medium_room_1 (WIP)
 - Hand-built NBT: `structure/necropolis/medium_room_1.nbt`
 - 21×13×19
+- Placed directly from hallways/connector_exits/lower_hallways pools (weight 1)
+- Must have `necropolis/passage` jigsaw on entry face to connect from hallways
 
 ### ✅ dead_end_small
 - Hand-built NBT: `structure/necropolis/dead_end_small.nbt`

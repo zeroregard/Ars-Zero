@@ -2,7 +2,6 @@ package com.github.ars_zero.common.event;
 
 import com.github.ars_zero.registry.ModEntities;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;

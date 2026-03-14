@@ -8,12 +8,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.monster.Skeleton;
-import com.github.ars_zero.registry.ModBlocks;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 
 import java.util.List;
 
@@ -44,24 +40,6 @@ public class NecromancerBlightedSkeleton extends AbstractBlightedSkeleton {
         this.goalSelector.addGoal(2, new MageSkeletonCastGoal(this, List.of(
                 new FireVoxelPushSpellBehaviour(),
                 new IceVoxelPushSpellBehaviour())));
-    }
-
-    @Override
-    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnType) {
-        // Require smooth_corrupted_sourcestone_small_bricks underfoot (instead of plain variant)
-        BlockPos below = blockPosition().below();
-        net.minecraft.resources.ResourceLocation id = net.minecraft.core.registries.BuiltInRegistries.BLOCK
-                .getKey(level.getBlockState(below).getBlock());
-        if (id == null || !id.getNamespace().equals(com.github.ars_zero.ArsZero.MOD_ID)
-                || !id.getPath().equals("smooth_corrupted_sourcestone_small_bricks")) return false;
-        // Also require an ossuary beacon within 16 blocks
-        BlockPos origin = blockPosition();
-        for (BlockPos p : BlockPos.betweenClosed(
-                origin.offset(-16, -4, -16),
-                origin.offset(16, 4, 16))) {
-            if (level.getBlockState(p).is(ModBlocks.OSSUARY_BEACON.get())) return true;
-        }
-        return false;
     }
 
     @Override

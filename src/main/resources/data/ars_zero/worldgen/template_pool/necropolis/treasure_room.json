@@ -1,0 +1,16 @@
+{
+  "name": "ars_zero:necropolis/treasure_room",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "max_count": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "ars_zero:necropolis/treasure_room",
+        "processors": "ars_zero:necropolis",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

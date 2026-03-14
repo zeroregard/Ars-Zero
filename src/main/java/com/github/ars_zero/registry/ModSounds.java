@@ -61,4 +61,24 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> UNDEAD_MAGE_STEP = SOUNDS.register(
             "undead_mage.step",
             () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("undead_mage.step")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> BONE_GOLEM_HURT = SOUNDS.register(
+            "bone_golem.hurt",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("bone_golem.hurt")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> BONE_GOLEM_DEATH = SOUNDS.register(
+            "bone_golem.death",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("bone_golem.death")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> BONE_GOLEM_STEP = SOUNDS.register(
+            "bone_golem.step",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("bone_golem.step")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> BONE_GOLEM_ATTACK = SOUNDS.register(
+            "bone_golem.attack",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("bone_golem.attack")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> BONE_GOLEM_REPAIR = SOUNDS.register(
+            "bone_golem.repair",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("bone_golem.repair")));
 }

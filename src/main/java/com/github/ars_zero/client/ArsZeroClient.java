@@ -38,8 +38,8 @@ import com.github.ars_zero.registry.ModEntities;
 import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.registry.ModParticles;
 import com.github.ars_zero.client.renderer.entity.MageSkeletonRenderer;
-import com.github.ars_zero.client.renderer.entity.model.BlightedSkeletonModel;
-import net.minecraft.client.renderer.entity.IronGolemRenderer;
+import com.github.ars_zero.client.renderer.entity.BoneGolemRenderer;
+import com.github.ars_zero.client.renderer.entity.model.BoneGolemModel;
 import net.minecraft.client.model.SkeletonModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.EntityRenderers;
@@ -99,15 +99,19 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.ACOLYTE.get(), MageSkeletonRenderer::new);
             EntityRenderers.register(ModEntities.NECROMANCER.get(), MageSkeletonRenderer::new);
             EntityRenderers.register(ModEntities.LICH.get(), MageSkeletonRenderer::new);
-            EntityRenderers.register(ModEntities.BONE_GOLEM.get(), IronGolemRenderer::new);
+            EntityRenderers.register(ModEntities.BONE_GOLEM.get(), BoneGolemRenderer::new);
         });
     }
 
     public static final ModelLayerLocation BLIGHTED_SKELETON_LAYER =
             new ModelLayerLocation(ArsZero.prefix("blighted_skeleton"), "main");
 
+    public static final ModelLayerLocation BONE_GOLEM_LAYER =
+            new ModelLayerLocation(ArsZero.prefix("bone_golem"), "main");
+
     public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(MageSkeletonRenderer.BLIGHTED_SKELETON_LAYER, SkeletonModel::createBodyLayer);
+        event.registerLayerDefinition(BONE_GOLEM_LAYER, BoneGolemModel::createBodyLayer);
     }
 
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
