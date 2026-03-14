@@ -4,8 +4,8 @@ Print the block palette and block counts for a given NBT file.
 Useful for checking what's in a structure piece.
 
 Usage:
-    python3 scripts/claude/inspect_palette.py <nbt_name>
-    python3 scripts/claude/inspect_palette.py entrance_staircase
+    python3 .claude/scripts/inspect_palette.py <nbt_name>
+    python3 .claude/scripts/inspect_palette.py entrance_staircase
 """
 
 import sys

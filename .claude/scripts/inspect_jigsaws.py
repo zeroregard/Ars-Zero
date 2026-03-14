@@ -4,7 +4,7 @@ Print all jigsaw block data from every necropolis NBT.
 Useful for debugging jigsaw connection issues.
 
 Usage:
-    python3 scripts/claude/inspect_jigsaws.py
+    python3 .claude/scripts/inspect_jigsaws.py
 """
 
 import nbtlib
