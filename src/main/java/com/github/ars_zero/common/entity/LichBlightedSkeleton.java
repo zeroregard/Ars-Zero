@@ -1,9 +1,10 @@
 package com.github.ars_zero.common.entity;
 
-import com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour;
+import com.github.ars_zero.common.entity.ai.FireVoxelPushSpellBehaviour;
+import com.github.ars_zero.common.entity.ai.IceVoxelPushSpellBehaviour;
+import com.github.ars_zero.common.entity.ai.LightningVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.MageSkeletonBlinkGoal;
 import com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal;
-import com.github.ars_zero.common.entity.ai.LichSummonGoal;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Tier 3 blighted skeleton: flying, unlimited blink, up to 2 summons, blight cast.
+ * Tier 3 blighted skeleton: flying, unlimited blink, fire/ice/lightning triple-voxel casts.
  */
 public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
 
@@ -58,8 +59,10 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new MageSkeletonBlinkGoal(this));
-        this.goalSelector.addGoal(1, new LichSummonGoal(this));
-        this.goalSelector.addGoal(2, new MageSkeletonCastGoal(this, List.of(new BlightVoxelPushSpellBehaviour())));
+        this.goalSelector.addGoal(1, new MageSkeletonCastGoal(this, List.of(
+                new FireVoxelPushSpellBehaviour(),
+                new IceVoxelPushSpellBehaviour(),
+                new LightningVoxelPushSpellBehaviour())));
     }
 
     @Override
@@ -121,7 +124,7 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
 
     @Override
     public int getMaxSummons() {
-        return 1;
+        return 0;
     }
 
     @Override

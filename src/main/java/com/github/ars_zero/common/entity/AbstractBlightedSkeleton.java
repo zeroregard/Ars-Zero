@@ -194,7 +194,7 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
                             : java.util.List.of(inFront);
                     for (int i = 0; i < pendingVoxelIds.size(); i++) {
                         Entity e = level().getEntity(pendingVoxelIds.get(i));
-                        if (e instanceof BlightVoxelEntity voxel && voxel.isAlive() && i < positions.size()) {
+                        if (e instanceof BaseVoxelEntity voxel && voxel.isAlive() && i < positions.size()) {
                             Vec3 p = positions.get(i);
                             voxel.setPos(p.x, p.y, p.z);
                         }
@@ -208,7 +208,7 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
                     LivingEntity pushTarget = getTarget();
                     for (int voxelId : pendingVoxelIds) {
                         Entity e = level().getEntity(voxelId);
-                        if (e instanceof BlightVoxelEntity voxel && voxel.isAlive() && pushTarget != null) {
+                        if (e instanceof BaseVoxelEntity voxel && voxel.isAlive() && pushTarget != null) {
                             com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour.executePush(this, pushTarget, voxel);
                         }
 
@@ -394,7 +394,7 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
     public boolean hurt(DamageSource source, float amount) {
         if (source.is(DamageTypes.WITHER) || source.is(DamageTypes.WITHER_SKULL)) return false;
         Entity direct = source.getDirectEntity();
-        if (direct instanceof BlightVoxelEntity voxel && voxel.getStoredCaster() == this) return false;
+        if (direct instanceof BaseVoxelEntity voxel && voxel.getStoredCaster() == this) return false;
         return super.hurt(source, amount);
     }
 

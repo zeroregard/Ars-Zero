@@ -26,12 +26,11 @@ import java.util.EnumSet;
 /**
  * When undisturbed (no target), walks to the nearest ritual altar and periodically
  * raises vanilla undead near it. Yields immediately when a target is acquired.
- *
- * Pass a custom {@code raiseIntervalTicks} to tune how quickly each tier raises undead.
  */
 public class NecromancerRitualGoal extends Goal {
 
     private static final int ALTAR_SCAN_RADIUS = 16;
+    private static final int RAISE_INTERVAL_TICKS = 400;
     private static final int MAX_RAISED = 3;
     private static final double WALK_SPEED = 0.6;
     /** Stop walking once within 8 blocks (8² = 64). */
@@ -41,13 +40,11 @@ public class NecromancerRitualGoal extends Goal {
     private static final Vector3f BLIGHT_COLOR = new Vector3f(0.29f, 0.48f, 0.19f);
 
     private final AbstractBlightedSkeleton mob;
-    private final int raiseIntervalTicks;
     @Nullable private BlockPos altarPos;
     private int raiseTicker = 0;
 
-    public NecromancerRitualGoal(AbstractBlightedSkeleton mob, int raiseIntervalTicks) {
+    public NecromancerRitualGoal(AbstractBlightedSkeleton mob) {
         this.mob = mob;
-        this.raiseIntervalTicks = raiseIntervalTicks;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
@@ -110,7 +107,7 @@ public class NecromancerRitualGoal extends Goal {
         }
 
         raiseTicker++;
-        if (raiseTicker >= raiseIntervalTicks) {
+        if (raiseTicker >= RAISE_INTERVAL_TICKS) {
             raiseTicker = 0;
             tryRaiseUndead();
         }
