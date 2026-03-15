@@ -3,6 +3,7 @@ package com.github.ars_zero.registry;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.block.BlightCauldronBlock;
 import com.github.ars_zero.common.block.BlightedSoilBlock;
+import com.github.ars_zero.common.block.BoneChestBlock;
 import com.github.ars_zero.common.block.FrozenBlightBlock;
 import com.github.ars_zero.common.block.MultiphaseSpellTurret;
 import com.github.ars_zero.common.block.OssuaryBeaconBlock;
@@ -27,7 +28,13 @@ import java.util.Map;
 public class ModBlocks {
     
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(BuiltInRegistries.BLOCK, ArsZero.MOD_ID);
-    
+
+    public static final DeferredHolder<Block, BoneChestBlock> BONE_CHEST = BLOCKS.register(
+        "bone_chest",
+        BoneChestBlock::new
+    );
+
+
     public static final DeferredHolder<Block, VoxelSpawnerBlock> ARCANE_VOXEL_SPAWNER = BLOCKS.register(
         "arcane_voxel_spawner",
         () -> new VoxelSpawnerBlock(BlockBehaviour.Properties.of()

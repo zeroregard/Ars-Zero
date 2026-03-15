@@ -94,7 +94,11 @@ public class BlightDungeonStructure extends Structure {
         BlockPos dungeonStart = new BlockPos(startX + 4, dungeonY, startZ + 4);
 
         return Optional.of(new Structure.GenerationStub(dungeonStart, builder -> {
-            // 1. Place exactly staircaseSegments staircase pieces, stacked downward from the surface.
+            // 1. Place the surface entrance piece once, sitting on top of the terrain.
+            builder.addPiece(new NecropolisEntrancePiece(context.structureTemplateManager(),
+                    new BlockPos(startX, worldSurface, startZ)));
+
+            // 2. Place exactly staircaseSegments staircase pieces, stacked downward from the surface.
             for (int i = 0; i < staircaseSegments; i++) {
                 int pieceY = worldSurface - ((i + 1) * STAIRCASE_HEIGHT);
                 BlockPos piecePos = new BlockPos(startX, pieceY, startZ);

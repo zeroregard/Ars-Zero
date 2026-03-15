@@ -134,5 +134,17 @@
       {"name": "ars_zero:necropolis/atmosphere_1", "stream": true},
       {"name": "ars_zero:necropolis/atmosphere_2", "stream": true}
     ]
+  },
+  "bone_chest.open": {
+    "sounds": [
+      {"name": "ars_zero:bone_chest/open"}
+    ]
+  },
+  "bone_chest.close": {
+    "sounds": [
+      {"name": "ars_zero:bone_chest/close1"},
+      {"name": "ars_zero:bone_chest/close2"},
+      {"name": "ars_zero:bone_chest/close3"}
+    ]
   }
 }

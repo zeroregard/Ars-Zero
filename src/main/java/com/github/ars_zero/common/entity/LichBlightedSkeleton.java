@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.entity;
 
+import com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.FireVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.IceVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.LightningVoxelPushSpellBehaviour;
@@ -34,7 +35,7 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
 
     private static final int MAX_MANA = 1500;
     private static final double MANA_REGEN = 2.0;
-    private static final int BLINK_COOLDOWN = 10;
+    private static final int BLINK_COOLDOWN = 200;
     /** Fake gravity per tick so the Lich slowly drifts down when in the air. */
     private static final double FAKE_GRAVITY_PER_TICK = -0.012;
     private static final double MAX_FALL_SPEED = -0.06;
@@ -60,6 +61,7 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
         super.registerGoals();
         this.goalSelector.addGoal(0, new MageSkeletonBlinkGoal(this));
         this.goalSelector.addGoal(1, new MageSkeletonCastGoal(this, List.of(
+                new BlightVoxelPushSpellBehaviour(),
                 new FireVoxelPushSpellBehaviour(),
                 new IceVoxelPushSpellBehaviour(),
                 new LightningVoxelPushSpellBehaviour())));

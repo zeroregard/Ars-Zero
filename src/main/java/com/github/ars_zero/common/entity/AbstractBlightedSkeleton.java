@@ -76,9 +76,14 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
     protected static final ResourceLocation NOVICE_SPELL_BOOK_ID =
             ResourceLocation.fromNamespaceAndPath("ars_nouveau", "novice_spell_book");
 
+    /** Ticks between sequential voxel pushes when firing a multi-voxel burst (500 ms). */
+    private static final int BURST_FIRE_DELAY_TICKS = 10;
+
     private int castCooldownTicks = 0;
     private int chargeTicks = 0;
     private final List<Integer> pendingVoxelIds = new ArrayList<>();
+    private final List<Integer> pendingBurstQueue = new ArrayList<>();
+    private int burstFireDelay = 0;
     private int blinkCooldownTicks = 0;
     private int summonCooldownTicks = 0;
     private final List<UUID> ownedRevenantUuids = new ArrayList<>();
@@ -184,6 +189,21 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
                 });
             }
 
+            if (burstFireDelay > 0) {
+                burstFireDelay--;
+                if (burstFireDelay == 0 && !pendingBurstQueue.isEmpty()) {
+                    LivingEntity pushTarget = getTarget();
+                    int voxelId = pendingBurstQueue.remove(0);
+                    Entity e = level().getEntity(voxelId);
+                    if (e instanceof BaseVoxelEntity voxel && voxel.isAlive() && pushTarget != null) {
+                        com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour.executePush(this, pushTarget, voxel);
+                    }
+                    if (!pendingBurstQueue.isEmpty()) {
+                        burstFireDelay = BURST_FIRE_DELAY_TICKS;
+                    }
+                }
+            }
+
             if (chargeTicks > 0) {
                 LivingEntity target = getTarget();
                 if (target != null && target.isAlive()) {
@@ -206,14 +226,16 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
                 chargeTicks--;
                 if (chargeTicks == 0 && !pendingVoxelIds.isEmpty()) {
                     LivingEntity pushTarget = getTarget();
-                    for (int voxelId : pendingVoxelIds) {
-                        Entity e = level().getEntity(voxelId);
-                        if (e instanceof BaseVoxelEntity voxel && voxel.isAlive() && pushTarget != null) {
-                            com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour.executePush(this, pushTarget, voxel);
-                        }
-
+                    int firstId = pendingVoxelIds.get(0);
+                    Entity e = level().getEntity(firstId);
+                    if (e instanceof BaseVoxelEntity voxel && voxel.isAlive() && pushTarget != null) {
+                        com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour.executePush(this, pushTarget, voxel);
                     }
-
+                    if (pendingVoxelIds.size() > 1) {
+                        pendingBurstQueue.clear();
+                        pendingBurstQueue.addAll(pendingVoxelIds.subList(1, pendingVoxelIds.size()));
+                        burstFireDelay = BURST_FIRE_DELAY_TICKS;
+                    }
                     pendingVoxelIds.clear();
                     castCooldownTicks = com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal.COOLDOWN_TICKS;
                 }

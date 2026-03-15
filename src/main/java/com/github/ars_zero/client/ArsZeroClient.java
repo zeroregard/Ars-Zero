@@ -30,6 +30,7 @@ import com.github.ars_zero.client.particle.BlightSplashParticle;
 import com.github.ars_zero.client.particle.ExplosiveChargeParticle;
 import com.github.ars_zero.client.particle.FastPoofParticle;
 import com.github.ars_zero.client.particle.SourceJarChargeParticle;
+import com.github.ars_zero.client.renderer.tile.BoneChestBlockRenderer;
 import com.github.ars_zero.client.renderer.tile.MultiphaseTurretRenderer;
 import com.github.ars_zero.client.renderer.tile.StaffDisplayRenderer;
 import com.github.ars_zero.registry.ModBlockEntities;
@@ -119,6 +120,8 @@ public class ArsZeroClient {
                 MultiphaseTurretRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.STAFF_DISPLAY.get(),
                 StaffDisplayRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.BONE_CHEST.get(),
+                BoneChestBlockRenderer::new);
     }
 
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {

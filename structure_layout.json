@@ -1,4 +1,5 @@
 [
+  { "nbt": "entrance",           "sizeXYZ": [11,  9, 11] },
   { "nbt": "entrance_staircase", "sizeXYZ": [11, 12, 11] },
   { "nbt": "hallway_straight",   "sizeXYZ": [17, 10, 13] },
   { "nbt": "small_room_1",       "sizeXYZ": [19, 14, 19] },

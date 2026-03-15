@@ -85,4 +85,12 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> NECROPOLIS_AMBIENT = SOUNDS.register(
             "ambient.necropolis",
             () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("ambient.necropolis")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> BONE_CHEST_OPEN = SOUNDS.register(
+            "bone_chest.open",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("bone_chest.open")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> BONE_CHEST_CLOSE = SOUNDS.register(
+            "bone_chest.close",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("bone_chest.close")));
 }

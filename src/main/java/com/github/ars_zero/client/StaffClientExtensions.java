@@ -1,9 +1,13 @@
 package com.github.ars_zero.client;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.client.renderer.item.BoneChestItemRenderer;
 import com.github.ars_zero.client.renderer.item.StaticStaffRendererProvider;
 import com.github.ars_zero.common.item.StaticStaffRendererRegistry;
+import com.github.ars_zero.registry.ModItems;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -42,5 +46,18 @@ public class StaffClientExtensions {
         for (var holder : com.github.ars_zero.registry.ModStaffItems.getRegisteredStaticStaffs()) {
             event.registerItem(staffExtensions, holder.get());
         }
+
+        event.registerItem(new IClientItemExtensions() {
+            private BoneChestItemRenderer renderer;
+
+            @Override
+            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                if (renderer == null) {
+                    Minecraft mc = Minecraft.getInstance();
+                    renderer = new BoneChestItemRenderer(mc.getBlockEntityRenderDispatcher(), mc.getEntityModels());
+                }
+                return renderer;
+            }
+        }, ModItems.BONE_CHEST.get());
     }
 }

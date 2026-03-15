@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.entity;
 
+import com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.FireVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.IceVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal;
@@ -39,7 +40,8 @@ public class NecromancerBlightedSkeleton extends AbstractBlightedSkeleton {
         this.goalSelector.addGoal(1, new NecromancerRitualGoal(this));
         this.goalSelector.addGoal(2, new MageSkeletonCastGoal(this, List.of(
                 new FireVoxelPushSpellBehaviour(),
-                new IceVoxelPushSpellBehaviour())));
+                new IceVoxelPushSpellBehaviour(),
+                new BlightVoxelPushSpellBehaviour())));
     }
 
     @Override

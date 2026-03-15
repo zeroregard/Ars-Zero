@@ -9,6 +9,7 @@ import com.github.ars_zero.registry.ModEntities;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
+import com.github.ars_zero.common.item.BoneChestItem;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.DullCirclet;
 import com.github.ars_zero.common.item.MageSpellStaff;
@@ -53,6 +54,8 @@ public class ModItems {
     public static final ItemRegistryWrapper<DullCirclet> DULL_CIRCLET = register("dull_circlet", () -> new DullCirclet(defaultItemProperties()));
 
     public static final ItemRegistryWrapper<Item> ARCHWOOD_ROD = register("archwood_rod", () -> new Item(defaultItemProperties()));
+
+    public static final ItemRegistryWrapper<BoneChestItem> BONE_CHEST = register("bone_chest", () -> new BoneChestItem(ModBlocks.BONE_CHEST.get(), defaultItemProperties()));
 
     public static final ItemRegistryWrapper<MultiphaseSpellParchment> MULTIPHASE_SPELL_PARCHMENT = register("multiphase_spell_parchment", () -> new MultiphaseSpellParchment(defaultItemProperties()));
 

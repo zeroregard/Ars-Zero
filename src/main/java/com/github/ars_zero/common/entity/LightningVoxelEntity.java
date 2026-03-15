@@ -81,15 +81,15 @@ public class LightningVoxelEntity extends BaseVoxelEntity {
                 ModSounds.LIGHTNING_VOXEL_HIT.get(), SoundSource.BLOCKS, 0.4f, 2.0f);
             
             if (hit instanceof LivingEntity living) {
-                applyImpactDamage(living);
-                castDischargeEffect(living);
-                
-                // Charge creepers like lightning does
-                if (hit instanceof Creeper creeper) {
-                    CompoundTag nbt = new CompoundTag();
-                    creeper.saveWithoutId(nbt);
-                    nbt.putBoolean("powered", true);
-                    creeper.load(nbt);
+                if (applyImpactDamage(living)) {
+                    castDischargeEffect(living);
+                    // Charge creepers like lightning does
+                    if (hit instanceof Creeper creeper) {
+                        CompoundTag nbt = new CompoundTag();
+                        creeper.saveWithoutId(nbt);
+                        nbt.putBoolean("powered", true);
+                        creeper.load(nbt);
+                    }
                 }
             }
             spawnHitParticles(result.getLocation());
@@ -97,10 +97,10 @@ public class LightningVoxelEntity extends BaseVoxelEntity {
         this.discard();
     }
     
-    private void applyImpactDamage(LivingEntity target) {
+    private boolean applyImpactDamage(LivingEntity target) {
         double speed = this.getDeltaMovement().length();
         if (speed < DAMAGE_SPEED_THRESHOLD) {
-            return;
+            return false;
         }
         float sizeScale = Math.max(1.0f, this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE);
         float damage = BASE_DAMAGE + (float) ((speed - DAMAGE_SPEED_THRESHOLD) * DAMAGE_SCALE);
@@ -109,15 +109,15 @@ public class LightningVoxelEntity extends BaseVoxelEntity {
         LivingEntity sender = this.getStoredCaster();
         net.minecraft.world.damagesource.DamageSource damageSource;
         if (sender != null) {
-            damageSource = this.level().damageSources().indirectMagic(this, sender);
+            damageSource = this.level().damageSources().mobProjectile(this, sender);
             target.setLastHurtByMob(sender);
             if (sender instanceof net.minecraft.world.entity.player.Player) {
                 target.setLastHurtByPlayer((net.minecraft.world.entity.player.Player) sender);
             }
         } else {
-            damageSource = this.level().damageSources().magic();
+            damageSource = this.level().damageSources().mobProjectile(this, null);
         }
-        target.hurt(damageSource, damage);
+        return target.hurt(damageSource, damage);
     }
     
     private void castDischargeEffect(LivingEntity target) {

@@ -311,5 +311,7 @@
   "item.ars_zero.rotted_arcanist_leggings": "Rotted Arcanist's Breeches",
   "item.ars_zero.rotted_arcanist_boots": "Rotted Arcanist's Boots",
 
-  "config.jade.plugin_ars_zero.entity_mana": "Entity Mana"
+  "config.jade.plugin_ars_zero.entity_mana": "Entity Mana",
+
+  "block.ars_zero.bone_chest": "Bone Chest"
 }

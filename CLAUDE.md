@@ -81,6 +81,22 @@ All registrations in `registry/` (register before use):
 
 **Add/modify worldgen:** Edit `WorldgenProvider` in `common/datagen/` → `runData`
 
+## Ars Zero Gradle Tasks
+
+```bash
+./gradlew generateStructureWorld   # Generate run/saves/Structure Layout world from structure_layout.json
+./gradlew syncStructures           # Copy saved NBTs from Structure Layout world back to src/main/resources
+```
+
+**Structure Layout workflow:**
+1. Add entry to `structure_layout.json` (NBT must exist in `structure/necropolis/`)
+2. `./gradlew generateStructureWorld`
+3. Open "Structure Layout" in runClient — LOAD/SAVE blocks appear per piece
+4. Build piece in-game, click SAVE block button
+5. `./gradlew syncStructures` to copy NBT back to resources
+
+**NBT generation:** All placeholder NBTs must be **gzip-compressed**. Use Python's `gzip` module directly — do not rely on `nbtlib.File.save()` as it may write uncompressed depending on version.
+
 ## Testing
 
 NeoForge **GameTest** in `src/test/java/com/arszero/tests/` (18 test classes).

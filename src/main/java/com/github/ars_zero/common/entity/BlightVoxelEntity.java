@@ -125,12 +125,14 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
                 convertBucketToBlight(itemEntity);
             } else if (hitEntity instanceof Sheep sheep && !sheep.isSheared() && sheep.readyForShearing()) {
                 shearSheep(sheep, result.getLocation());
-                applyDamage(sheep);
-                applyEffect(sheep, true);
+                if (applyDamage(sheep)) {
+                    applyEffect(sheep, true);
+                }
                 spawnVaporizationEffects(result.getLocation());
             } else if (hitEntity instanceof LivingEntity living) {
-                applyDamage(living);
-                applyEffect(living, true);
+                if (applyDamage(living)) {
+                    applyEffect(living, true);
+                }
                 spawnVaporizationEffects(result.getLocation());
             }
         }
@@ -429,7 +431,7 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
     /** Necromancy Power is multiplied by this before adding to damage (so 3 power = +6 damage). */
     private static final float POWER_DAMAGE_PER_LEVEL = 2.0f;
 
-    private void applyDamage(LivingEntity target) {
+    private boolean applyDamage(LivingEntity target) {
         float sizeScale = Math.max(1.0f, this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE);
         float damage = BASE_DAMAGE * sizeScale;
         LivingEntity sender = this.getStoredCaster();
@@ -450,8 +452,9 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
         } else {
             damageSource = this.level().damageSources().magic();
         }
-        target.hurt(damageSource, damage);
+        boolean hit = target.hurt(damageSource, damage);
         target.hurtMarked = true;
+        return hit;
     }
     
     private void applyEffect(LivingEntity living, boolean burst) {
