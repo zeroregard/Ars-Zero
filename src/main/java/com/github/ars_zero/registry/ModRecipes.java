@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.crafting.recipes.DyeRecipe;
 import com.github.ars_zero.common.crafting.recipes.ExtendableShapelessSerializer;
 import com.github.ars_zero.common.crafting.recipes.ProtectionUpgradeRecipe;
+import com.github.ars_zero.common.crafting.recipes.StaffFilialRecipe;
 import com.github.ars_zero.common.crafting.recipes.StaffUpgradeRecipe;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -38,6 +39,12 @@ public class ModRecipes {
         RECIPE_TYPES.register(PROTECTION_UPGRADE_ID, () -> RecipeType.simple(ResourceLocation.fromNamespaceAndPath(ArsZero.MOD_ID, PROTECTION_UPGRADE_ID)));
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<ProtectionUpgradeRecipe>> PROTECTION_UPGRADE_SERIALIZER =
         RECIPE_SERIALIZERS.register(PROTECTION_UPGRADE_ID, ProtectionUpgradeRecipe.Serializer::new);
+
+    public static final String STAFF_FILIAL_ID = "staff_filial";
+    public static final DeferredHolder<RecipeType<?>, RecipeType<StaffFilialRecipe>> STAFF_FILIAL_TYPE =
+        RECIPE_TYPES.register(STAFF_FILIAL_ID, () -> RecipeType.simple(ResourceLocation.fromNamespaceAndPath(ArsZero.MOD_ID, STAFF_FILIAL_ID)));
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<StaffFilialRecipe>> STAFF_FILIAL_SERIALIZER =
+        RECIPE_SERIALIZERS.register(STAFF_FILIAL_ID, StaffFilialRecipe.Serializer::new);
 
     public static class ModRecipeType<T extends Recipe<?>> implements RecipeType<T> {
         @Override

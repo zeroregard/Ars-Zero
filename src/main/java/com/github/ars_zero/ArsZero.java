@@ -167,6 +167,7 @@ public class ArsZero {
                 registerCauldronInteractions();
                 registerArsNouveauDungeonLoot();
                 ArsNouveauAPI.getInstance().getEnchantingRecipeTypes().add(ModRecipes.PROTECTION_UPGRADE_TYPE.get());
+                ArsNouveauAPI.getInstance().getEnchantingRecipeTypes().add(ModRecipes.STAFF_FILIAL_TYPE.get());
                 ModGlyphs.addOptionalAugmentCompatibility();
                 registerBlightForestBiome();
             });
@@ -492,6 +493,7 @@ public class ArsZero {
             generator.addProvider(true, new StaffRecipeDatagen(generator));
             generator.addProvider(true, new GlyphRecipeDatagen(generator));
             generator.addProvider(true, new BlockTagDatagen(generator.getPackOutput(), event.getLookupProvider(), event.getExistingFileHelper()));
+            generator.addProvider(true, new com.github.ars_zero.common.datagen.FilialRecipeDatagen(generator));
         }
     }
 

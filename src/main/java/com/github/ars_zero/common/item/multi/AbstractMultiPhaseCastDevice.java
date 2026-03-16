@@ -3,6 +3,7 @@ package com.github.ars_zero.common.item.multi;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.RadialMenuTracker;
 import com.github.ars_zero.common.glyph.AnchorEffect;
+import com.github.ars_zero.common.item.FilialItem;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.network.Networking;
@@ -55,10 +56,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.core.Holder;
+import net.minecraft.world.entity.EquipmentSlotGroup;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemAttributeModifiers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.component.CustomData;
@@ -79,6 +85,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public abstract class AbstractMultiPhaseCastDevice extends Item implements ICasterTool, IRadialProvider, IMultiPhaseCaster, IScribeable {
 
@@ -100,7 +107,28 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     private static int getDefaultTickDelay() {
         return ServerConfig.DEFAULT_MULTIPHASE_DEVICE_TICK_DELAY.get();
     }
-    
+
+    /**
+     * Grants the embedded filial's power bonus when this device is held in the mainhand.
+     * If no filial is embedded, no modifier is added.
+     */
+    @Override
+    public void getAttributeModifiers(ItemStack stack, Consumer<ItemAttributeModifiers.Entry> consumer) {
+        super.getAttributeModifiers(stack, consumer);
+        String schoolId = FilialItem.getStaffFilialSchool(stack);
+        if (schoolId == null) return;
+        Holder<Attribute> power = FilialItem.getPowerForSchool(schoolId);
+        if (power == null) return;
+        int bonus = ServerConfig.FILIAL_POWER_BONUS.get();
+        if (bonus <= 0) return;
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath("ars_zero", "filial_mainhand_" + schoolId);
+        consumer.accept(new ItemAttributeModifiers.Entry(
+            power,
+            new AttributeModifier(id, bonus, AttributeModifier.Operation.ADD_VALUE),
+            EquipmentSlotGroup.MAINHAND
+        ));
+    }
+
     public static CastingStyle getCastingStyle(ItemStack stack, int logicalSlot) {
         if (stack == null || stack.isEmpty()) {
             return new CastingStyle();

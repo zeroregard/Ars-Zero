@@ -12,11 +12,13 @@ import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.BoneChestItem;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.DullCirclet;
+import com.github.ars_zero.common.item.FilialItem;
 import com.github.ars_zero.common.item.MageSpellStaff;
 import com.github.ars_zero.common.item.MultiphaseOrbItem;
 import com.github.ars_zero.common.item.MultiphaseSpellParchment;
 import com.github.ars_zero.common.item.NoviceSpellStaff;
 import com.github.ars_zero.common.item.SpellcastingCirclet;
+import com.alexthw.sauce.registry.ModRegistry;
 import com.hollingsworth.arsnouveau.common.items.RendererBlockItem;
 import com.hollingsworth.arsnouveau.setup.registry.ItemRegistryWrapper;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -33,7 +35,6 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.List;
-
 import java.util.function.Supplier;
 
 public class ModItems {
@@ -167,6 +168,32 @@ public class ModItems {
                     () -> new BlockItem(ModBlocks.CORRUPTED_SLABS.get(name).get(), defaultItemProperties())));
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Filial items — one per school of magic
+    // -------------------------------------------------------------------------
+    public static final ItemRegistryWrapper<FilialItem> FIRE_FILIAL =
+        register("fire_filial", () -> new FilialItem("fire", ModRegistry.FIRE_POWER));
+    public static final ItemRegistryWrapper<FilialItem> WATER_FILIAL =
+        register("water_filial", () -> new FilialItem("water", ModRegistry.WATER_POWER));
+    public static final ItemRegistryWrapper<FilialItem> AIR_FILIAL =
+        register("air_filial", () -> new FilialItem("air", ModRegistry.AIR_POWER));
+    public static final ItemRegistryWrapper<FilialItem> EARTH_FILIAL =
+        register("earth_filial", () -> new FilialItem("earth", ModRegistry.EARTH_POWER));
+    public static final ItemRegistryWrapper<FilialItem> NECROMANCY_FILIAL =
+        register("necromancy_filial", () -> new FilialItem("necromancy", ModRegistry.NECROMANCY_POWER));
+    public static final ItemRegistryWrapper<FilialItem> ABJURATION_FILIAL =
+        register("abjuration_filial", () -> new FilialItem("abjuration", ModRegistry.ABJURATION_POWER));
+    public static final ItemRegistryWrapper<FilialItem> CONJURATION_FILIAL =
+        register("conjuration_filial", () -> new FilialItem("conjuration", ModRegistry.CONJURATION_POWER));
+    public static final ItemRegistryWrapper<FilialItem> MANIPULATION_FILIAL =
+        register("manipulation_filial", () -> new FilialItem("manipulation", ModRegistry.MANIPULATION_POWER));
+
+    /** All 8 filials in school order — used by datagen and other utilities. */
+    public static final List<ItemRegistryWrapper<FilialItem>> ALL_FILIALS = List.of(
+        FIRE_FILIAL, WATER_FILIAL, AIR_FILIAL, EARTH_FILIAL,
+        NECROMANCY_FILIAL, ABJURATION_FILIAL, CONJURATION_FILIAL, MANIPULATION_FILIAL
+    );
 
     /** Spawn eggs for blighted skeleton tiers. */
     public static final DeferredHolder<Item, SpawnEggItem> ACOLYTE_SPAWN_EGG = ITEMS.register(

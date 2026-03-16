@@ -10,6 +10,8 @@ public class ServerConfig {
     public static ModConfigSpec.IntValue DEFAULT_MULTIPHASE_DEVICE_TICK_DELAY;
     /** Weight for blight forest biome when using Terrablender. ~25% of archwood forest when set to 1 and archwood weight is 3. */
     public static ModConfigSpec.IntValue BLIGHT_FOREST_WEIGHT;
+    /** Spell power bonus granted per filial item (held offhand or embedded in staff). */
+    public static ModConfigSpec.IntValue FILIAL_POWER_BONUS;
 
     static {
         ModConfigSpec.Builder SERVER_BUILDER = new ModConfigSpec.Builder();
@@ -37,6 +39,12 @@ public class ServerConfig {
         BLIGHT_FOREST_WEIGHT = SERVER_BUILDER.comment(
                 "Region weight for blight forest. Use 1 for ~25%% when Ars Nouveau archwood forest weight is 3.")
                 .defineInRange("weight", 1, 0, Integer.MAX_VALUE);
+        SERVER_BUILDER.pop();
+
+        SERVER_BUILDER.comment("Filial item settings").push("filial");
+        FILIAL_POWER_BONUS = SERVER_BUILDER.comment(
+                "Spell power bonus granted per filial (held offhand or embedded in staff).")
+                .defineInRange("powerBonus", 3, 0, 100);
         SERVER_BUILDER.pop();
 
         SERVER_CONFIG = SERVER_BUILDER.build();

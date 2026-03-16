@@ -1,7 +1,9 @@
 package com.github.ars_zero.client.renderer.item;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.casting.SpellSchoolBoneIds;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
+import com.github.ars_zero.common.item.FilialItem;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -35,14 +37,39 @@ public class SpellStaffRenderer extends GeoItemRenderer<AbstractSpellStaff> {
     public void preRender(PoseStack poseStack, AbstractSpellStaff animatable, BakedGeoModel model, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int color) {
         resetBoneVisibility(model, "tier2");
         resetBoneVisibility(model, "tier3");
-        
+
         for (String boneName : hiddenBones) {
             model.getBone(boneName).ifPresent(bone -> {
                 bone.setHidden(true);
                 hideChildBones(bone);
             });
         }
+
+        // Filial bone placeholder — shows the school bone matching the embedded filial
+        applyFilialBones(model, currentItemStack);
+
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, color);
+    }
+
+    /**
+     * Placeholder: activates the school bone for the filial embedded in this staff.
+     *
+     * <p>TODO: When school-specific bones are added to the geo model, unhide the bone matching
+     * the embedded filial school and hide/ignore the rest. The filial school string is read from
+     * {@link FilialItem#TAG_KEY} in the item's CUSTOM_DATA — this data is already synced to the
+     * client automatically as part of the ItemStack, so no extra network packet is required.
+     *
+     * <p>Example implementation once bones are present in the model:
+     * <pre>{@code
+     * String school = FilialItem.getStaffFilialSchool(stack);
+     * String boneName = SpellSchoolBoneIds.boneIdForSchool(school); // e.g. "school_fire"
+     * model.getBone(boneName).ifPresent(bone -> bone.setHidden(false));
+     * }</pre>
+     */
+    private void applyFilialBones(BakedGeoModel model, net.minecraft.world.item.ItemStack stack) {
+        // No-op placeholder — filial bone logic will be implemented once model bones are finalised.
+        // String school = FilialItem.getStaffFilialSchool(stack);
+        // if (school != null) { ... activate matching school bone ... }
     }
     
     private void resetBoneVisibility(BakedGeoModel model, String boneName) {
