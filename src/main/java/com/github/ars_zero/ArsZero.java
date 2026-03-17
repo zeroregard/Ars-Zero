@@ -2,10 +2,14 @@ package com.github.ars_zero;
 
 import com.github.ars_zero.client.ArsZeroClient;
 import com.github.ars_zero.common.block.BlightCauldronBlock;
+import com.github.ars_zero.common.datagen.BlockStatesDatagen;
+import com.github.ars_zero.common.datagen.BlockTagDatagen;
 import com.github.ars_zero.common.datagen.DyeRecipeDatagen;
 import com.github.ars_zero.common.datagen.GlyphRecipeDatagen;
+import com.github.ars_zero.common.datagen.ItemModelDatagen;
 import com.github.ars_zero.common.datagen.StaffRecipeDatagen;
 import com.github.ars_zero.common.entity.ArcaneVoxelEntity;
+import com.github.ars_zero.common.entity.BoneGolem;
 import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
 import com.github.ars_zero.common.entity.LightningVoxelEntity;
@@ -39,6 +43,9 @@ import com.github.ars_zero.common.entity.interaction.WindWaterInteraction;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.event.AnchorEffectEvents;
 import com.github.ars_zero.common.event.GravitySuppressionEvents;
+import com.github.ars_zero.common.event.BlightedSkeletonSummonEvents;
+import com.github.ars_zero.common.event.BoneGolemConstructionEvents;
+import com.github.ars_zero.common.event.WitherImmunityEffectEvents;
 import com.github.ars_zero.common.event.ZeroGravityMobEffectEvents;
 import com.github.ars_zero.common.event.discount.AirPowerCostReductionEvents;
 import com.github.ars_zero.common.event.discount.AnimaPowerCostReductionEvents;
@@ -59,8 +66,12 @@ import com.github.ars_zero.registry.ModMobEffects;
 import com.github.ars_zero.registry.ModParticleTimelines;
 import com.github.ars_zero.registry.ModParticles;
 import com.github.ars_zero.registry.ModRecipes;
+import com.github.ars_zero.common.world.biome.BlightForestRegion;
+import com.github.ars_zero.registry.ModWorldgen;
 import com.github.ars_zero.registry.ModSounds;
 import com.hollingsworth.arsnouveau.api.ArsNouveauAPI;
+import com.hollingsworth.arsnouveau.common.capability.ManaCap;
+import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import com.hollingsworth.arsnouveau.api.loot.DungeonLootTables;
 import com.hollingsworth.arsnouveau.api.spell.ITurretBehavior;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
@@ -68,6 +79,10 @@ import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
 import com.hollingsworth.arsnouveau.common.spell.method.MethodSelf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.core.Position;
 import net.minecraft.core.cauldron.CauldronInteraction;
 import net.minecraft.resources.ResourceLocation;
@@ -82,13 +97,24 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.AbstractSkeleton;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.BlockHitResult;
+import com.alexthw.sauce.registry.ModRegistry;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import org.apache.logging.log4j.LogManager;
@@ -106,6 +132,7 @@ public class ArsZero {
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
         ModEntities.ENTITIES.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
+        ModItems.ARMOR_MATERIALS.register(modEventBus);
         ModParticles.PARTICLES.register(modEventBus);
         ModSounds.SOUNDS.register(modEventBus);
         ModCreativeTabs.TABS.register(modEventBus);
@@ -114,12 +141,22 @@ public class ArsZero {
         ModAttachments.ATTACHMENT_TYPES.register(modEventBus);
         ModRecipes.RECIPE_SERIALIZERS.register(modEventBus);
         ModRecipes.RECIPE_TYPES.register(modEventBus);
+        ModWorldgen.STRUCTURE_TYPES.register(modEventBus);
+        ModWorldgen.STRUCTURE_PROCESSOR_TYPES.register(modEventBus);
+        ModWorldgen.STRUCTURE_PIECE_TYPES.register(modEventBus);
+        ModWorldgen.FEATURES.register(modEventBus);
+        ModWorldgen.TRUNK_PLACER_TYPES.register(modEventBus);
+        ModWorldgen.FOLIAGE_PLACER_TYPES.register(modEventBus);
+        ModWorldgen.PLACEMENT_MODIFIER_TYPES.register(modEventBus);
         ModParticleTimelines.init(modEventBus);
 
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
 
         modEventBus.addListener(Networking::register);
         modEventBus.addListener(this::gatherData);
+        modEventBus.addListener(ArsZero::onEntityAttributeCreation);
+        modEventBus.addListener(ArsZero::onRegisterSpawnPlacements);
+        modEventBus.addListener(ArsZero::registerCapabilities);
 
         modEventBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) -> {
             event.enqueueWork(() -> {
@@ -131,6 +168,7 @@ public class ArsZero {
                 registerArsNouveauDungeonLoot();
                 ArsNouveauAPI.getInstance().getEnchantingRecipeTypes().add(ModRecipes.PROTECTION_UPGRADE_TYPE.get());
                 ModGlyphs.addOptionalAugmentCompatibility();
+                registerBlightForestBiome();
             });
         });
 
@@ -143,6 +181,9 @@ public class ArsZero {
         NeoForge.EVENT_BUS.register(GravitySuppressionEvents.class);
         NeoForge.EVENT_BUS.register(CurioCastingHandler.class);
         NeoForge.EVENT_BUS.register(AnchorEffectEvents.class);
+        NeoForge.EVENT_BUS.register(WitherImmunityEffectEvents.class);
+        NeoForge.EVENT_BUS.register(BlightedSkeletonSummonEvents.class);
+        NeoForge.EVENT_BUS.register(BoneGolemConstructionEvents.class);
 
         if (FMLEnvironment.dist.isClient()) {
             ArsZeroClient.init(modEventBus);
@@ -151,6 +192,23 @@ public class ArsZero {
 
     private static void registerArsNouveauDungeonLoot() {
         DungeonLootTables.RARE_LOOT.add(() -> new ItemStack(ModItems.STAFF_TELEKINESIS.get(), 1));
+    }
+
+    /** Default blight forest weight; must not read ServerConfig here because config is not loaded yet during CommonSetup. */
+    private static final int DEFAULT_BLIGHT_FOREST_WEIGHT = 1;
+
+    private static boolean blightForestRegionRegistered = false;
+
+    private static void registerBlightForestBiome() {
+        if (blightForestRegionRegistered) {
+            return;
+        }
+        int weight = DEFAULT_BLIGHT_FOREST_WEIGHT;
+        if (ModList.get().isLoaded("terrablender") && weight > 0) {
+            terrablender.api.Regions.register(
+                new BlightForestRegion(ArsZero.prefix("overworld"), weight));
+            blightForestRegionRegistered = true;
+        }
     }
 
     private static void registerTurretBehaviors() {
@@ -361,13 +419,79 @@ public class ArsZero {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 
+    private static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
+        // Acolyte: 20 HP (vanilla skeleton default)
+        AttributeSupplier.Builder acolyte = AbstractSkeleton.createAttributes();
+        acolyte.add(ModRegistry.NECROMANCY_POWER, 5.0);
+        event.put(ModEntities.ACOLYTE.get(), acolyte.build());
+
+        // Necromancer: 30 HP
+        AttributeSupplier.Builder necromancer = AbstractSkeleton.createAttributes();
+        necromancer.add(ModRegistry.NECROMANCY_POWER, 5.0);
+        necromancer.add(Attributes.MAX_HEALTH, 30.0);
+        event.put(ModEntities.NECROMANCER.get(), necromancer.build());
+
+        // Lich: 40 HP + flying speed
+        AttributeSupplier.Builder lich = AbstractSkeleton.createAttributes();
+        lich.add(ModRegistry.NECROMANCY_POWER, 5.0);
+        lich.add(Attributes.MAX_HEALTH, 40.0);
+        lich.add(Attributes.FLYING_SPEED, 0.4);
+        event.put(ModEntities.LICH.get(), lich.build());
+
+        AttributeSupplier.Builder boneGolem = BoneGolem.createAttributes();
+        boneGolem.add(Attributes.MAX_HEALTH, 40.0);
+        event.put(ModEntities.BONE_GOLEM.get(), boneGolem.build());
+    }
+
+    private static boolean checkBlightedSpawnRules(EntityType<? extends Monster> type, ServerLevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
+        if (level.getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) return false;
+        net.minecraft.world.level.block.Block floor = level.getBlockState(pos.below()).getBlock();
+        return ModBlocks.CORRUPTED_BLOCKS.entrySet().stream()
+                .anyMatch(e -> e.getKey().startsWith("smooth_corrupted_sourcestone") && e.getValue().get() == floor);
+    }
+
+
+    private static void onRegisterSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+        event.register(
+                ModEntities.ACOLYTE.get(),
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                ArsZero::checkBlightedSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        event.register(
+                ModEntities.NECROMANCER.get(),
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                ArsZero::checkBlightedSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        event.register(
+                ModEntities.LICH.get(),
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                ArsZero::checkBlightedSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.REPLACE);
+    }
+
+    private static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerEntity(CapabilityRegistry.MANA_CAPABILITY, ModEntities.ACOLYTE.get(), (entity, ctx) -> new ManaCap(entity));
+        event.registerEntity(CapabilityRegistry.MANA_CAPABILITY, ModEntities.NECROMANCER.get(), (entity, ctx) -> new ManaCap(entity));
+        event.registerEntity(CapabilityRegistry.MANA_CAPABILITY, ModEntities.LICH.get(), (entity, ctx) -> new ManaCap(entity));
+    }
+
     public void gatherData(GatherDataEvent event) {
         var generator = event.getGenerator();
 
+        if (event.includeClient()) {
+            generator.addProvider(true, new BlockStatesDatagen(generator.getPackOutput(), event.getExistingFileHelper()));
+            generator.addProvider(true, new ItemModelDatagen(generator.getPackOutput(), event.getExistingFileHelper()));
+        }
+
         if (event.includeServer()) {
+            generator.addProvider(true, new com.github.ars_zero.common.datagen.WorldgenProvider(generator.getPackOutput(), event.getLookupProvider()));
             generator.addProvider(true, new DyeRecipeDatagen(generator));
             generator.addProvider(true, new StaffRecipeDatagen(generator));
             generator.addProvider(true, new GlyphRecipeDatagen(generator));
+            generator.addProvider(true, new BlockTagDatagen(generator.getPackOutput(), event.getLookupProvider(), event.getExistingFileHelper()));
         }
     }
 

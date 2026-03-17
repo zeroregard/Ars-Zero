@@ -101,4 +101,5 @@ final class ClientPacketHandlers {
             CurioCastKeyHandler.setPendingOpenCircletGui(packet.slot());
         });
     }
+
 }

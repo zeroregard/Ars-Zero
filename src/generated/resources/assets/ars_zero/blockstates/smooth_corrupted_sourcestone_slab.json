@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "ars_zero:block/smooth_corrupted_sourcestone_slab"
+    },
+    "type=double": {
+      "model": "ars_zero:block/smooth_corrupted_sourcestone"
+    },
+    "type=top": {
+      "model": "ars_zero:block/smooth_corrupted_sourcestone_slab_top"
+    }
+  }
+}

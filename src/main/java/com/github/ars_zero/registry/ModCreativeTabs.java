@@ -40,10 +40,24 @@ public class ModCreativeTabs {
                     output.accept(ModItems.ICE_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.LIGHTNING_VOXEL_SPAWNER.get().getDefaultInstance());
                     output.accept(ModItems.BLIGHT_VOXEL_SPAWNER.get().getDefaultInstance());
+                    output.accept(ModItems.BLIGHTED_SOIL.get().getDefaultInstance());
                     output.accept(ModItems.FROZEN_BLIGHT.get().getDefaultInstance());
+                    output.accept(ModItems.BLIGHT_ARCHWOOD_LOG.get().getDefaultInstance());
+                    output.accept(ModItems.BLIGHT_ARCHWOOD_LEAVES.get().getDefaultInstance());
                     output.accept(ModItems.STAFF_DISPLAY.get().getDefaultInstance());
+                    output.accept(ModItems.BONE_CHEST.get().getDefaultInstance());
+                    output.accept(ModItems.OSSUARY_BEACON.get().getDefaultInstance());
                     output.accept(ModFluids.BLIGHT_FLUID_BUCKET.get().getDefaultInstance());
                     output.accept(ModItems.MULTIPHASE_SPELL_TURRET.get().getDefaultInstance());
+                    output.accept(ModItems.ACOLYTE_SPAWN_EGG.get().getDefaultInstance());
+                    output.accept(ModItems.NECROMANCER_SPAWN_EGG.get().getDefaultInstance());
+                    output.accept(ModItems.LICH_SPAWN_EGG.get().getDefaultInstance());
+                    output.accept(ModItems.BONE_GOLEM_SPAWN_EGG.get().getDefaultInstance());
+                    for (String name : ModBlocks.CORRUPTED_BASE_NAMES) {
+                        output.accept(ModItems.CORRUPTED_BLOCK_ITEMS.get(name).get().getDefaultInstance());
+                        output.accept(ModItems.CORRUPTED_STAIR_ITEMS.get(name).get().getDefaultInstance());
+                        output.accept(ModItems.CORRUPTED_SLAB_ITEMS.get(name).get().getDefaultInstance());
+                    }
                 })
                 .build();
     });

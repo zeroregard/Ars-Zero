@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "ars_zero:necropolis",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 384739302,
+    "separation": 14,
+    "spacing": 36
+  }
+}
