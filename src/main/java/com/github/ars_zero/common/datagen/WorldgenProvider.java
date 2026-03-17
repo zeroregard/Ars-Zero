@@ -7,6 +7,7 @@ import com.github.ars_zero.common.world.tree.HugeDeadArchwoodTrunkPlacer;
 import com.github.ars_zero.common.world.feature.BlightPoolFeature;
 import com.github.ars_zero.common.world.placement.NoBlightLogNearbyFilter;
 import com.github.ars_zero.registry.ModBlocks;
+import com.github.ars_zero.registry.ModSounds;
 import com.github.ars_zero.registry.ModFluids;
 import com.github.ars_zero.registry.ModWorldgen;
 import net.minecraft.core.HolderGetter;
@@ -14,12 +15,10 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.data.worldgen.features.FeatureUtils;
 import net.minecraft.data.worldgen.placement.MiscOverworldPlacements;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
-import net.minecraft.data.worldgen.placement.VegetationPlacements;
 import net.minecraft.sounds.Musics;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.entity.EntityType;
@@ -38,17 +37,19 @@ import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConf
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSize;
-import net.minecraft.world.level.levelgen.feature.foliageplacers.BlobFoliagePlacer;
+import com.github.ars_zero.common.world.tree.FlatBlobFoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.RuleBasedBlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
+import net.minecraft.world.level.levelgen.placement.BlockPredicateFilter;
+import net.minecraft.world.level.levelgen.placement.CountPlacement;
+import net.minecraft.world.level.levelgen.placement.HeightmapPlacement;
 import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
-import net.minecraft.world.level.levelgen.placement.PlacementModifier;
 import net.minecraft.world.level.levelgen.placement.RarityFilter;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -67,9 +68,9 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
     private static void bootstrapConfiguredFeatures(BootstrapContext<ConfiguredFeature<?, ?>> context) {
         TreeConfiguration deadTreeConfig = new TreeConfiguration.TreeConfigurationBuilder(
             BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LOG.get()),
-            new DeadArchwoodTrunkPlacer(9, 1, 0),
+            new DeadArchwoodTrunkPlacer(8, 2, 1),
             BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LEAVES.get().defaultBlockState().setValue(LeavesBlock.PERSISTENT, true)),
-            new BlobFoliagePlacer(UniformInt.of(2, 4), UniformInt.of(0, 2), 3),
+            new FlatBlobFoliagePlacer(UniformInt.of(5, 7), UniformInt.of(0, 1), 3, 4),
             new TwoLayersFeatureSize(2, 0, 2)
         ).build();
 
@@ -80,7 +81,7 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
             BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LOG.get()),
             new BigDeadArchwoodTrunkPlacer(16, 4, 4),
             BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LEAVES.get().defaultBlockState().setValue(LeavesBlock.PERSISTENT, true)),
-            new BlobFoliagePlacer(UniformInt.of(2, 4), UniformInt.of(0, 2), 3),
+            new FlatBlobFoliagePlacer(UniformInt.of(6, 8), UniformInt.of(0, 1), 3, 5),
             new TwoLayersFeatureSize(2, 0, 2)
         ).build();
 
@@ -91,7 +92,7 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
             BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LOG.get()),
             new HugeDeadArchwoodTrunkPlacer(24, 6, 6),
             BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LEAVES.get().defaultBlockState().setValue(LeavesBlock.PERSISTENT, true)),
-            new BlobFoliagePlacer(UniformInt.of(2, 4), UniformInt.of(0, 2), 3),
+            new FlatBlobFoliagePlacer(UniformInt.of(7, 9), UniformInt.of(0, 1), 4, 6),
             new TwoLayersFeatureSize(3, 0, 3)
         ).build();
 
@@ -128,6 +129,11 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
                     new SimpleBlockConfiguration(BlockStateProvider.simple(Blocks.GRAVEL)),
                     List.of(Blocks.GRASS_BLOCK, Blocks.DIRT))));
 
+        // Replace grass_block with blighted_soil using noise-based selective placement
+        context.register(ModWorldgen.CONFIGURED_REPLACE_GRASS_WITH_BLIGHTED_SOIL,
+            new ConfiguredFeature<>(ModWorldgen.BLIGHTED_SOIL_SURFACE_FEATURE.get(),
+                net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.INSTANCE));
+
         BlightPoolFeature.Configuration blightPoolConfig = new BlightPoolFeature.Configuration(
             BlockStateProvider.simple(ModFluids.BLIGHT_FLUID_BLOCK.get().defaultBlockState()),
             BlockStateProvider.simple(Blocks.STONE),
@@ -138,23 +144,44 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
 
     private static void bootstrapPlacedFeatures(BootstrapContext<PlacedFeature> context) {
         HolderGetter<ConfiguredFeature<?, ?>> features = context.lookup(Registries.CONFIGURED_FEATURE);
+        // Tree placements: WORLD_SURFACE_WG heightmap lands on the air block just above the surface.
+        // The would_survive sapling predicate checks the block below (the surface block must support a sapling),
+        // so it rejects logs/leaves from already-placed trees — preventing stacking.
+        BlockPredicate survivesOnGround = BlockPredicate.wouldSurvive(
+            Blocks.OAK_SAPLING.defaultBlockState(), net.minecraft.core.BlockPos.ZERO);
         context.register(ModWorldgen.PLACED_DEAD_ARCHWOOD_TREE,
             new PlacedFeature(
                 features.getOrThrow(ModWorldgen.CONFIGURED_DEAD_ARCHWOOD_TREE),
-                VegetationPlacements.treePlacement(RarityFilter.onAverageOnceEvery(1))
+                List.of(
+                    CountPlacement.of(3),
+                    InSquarePlacement.spread(),
+                    HeightmapPlacement.onHeightmap(Heightmap.Types.WORLD_SURFACE_WG),
+                    BlockPredicateFilter.forPredicate(survivesOnGround),
+                    BiomeFilter.biome()
+                )
             ));
         context.register(ModWorldgen.PLACED_BIG_DEAD_ARCHWOOD_TREE,
             new PlacedFeature(
                 features.getOrThrow(ModWorldgen.CONFIGURED_BIG_DEAD_ARCHWOOD_TREE),
-                VegetationPlacements.treePlacement(RarityFilter.onAverageOnceEvery(3))
+                List.of(
+                    RarityFilter.onAverageOnceEvery(3),
+                    InSquarePlacement.spread(),
+                    HeightmapPlacement.onHeightmap(Heightmap.Types.WORLD_SURFACE_WG),
+                    BlockPredicateFilter.forPredicate(survivesOnGround),
+                    BiomeFilter.biome()
+                )
             ));
-        List<PlacementModifier> hugeTreeModifiers = new ArrayList<>();
-        hugeTreeModifiers.add(NoBlightLogNearbyFilter.INSTANCE);
-        hugeTreeModifiers.addAll(VegetationPlacements.treePlacement(RarityFilter.onAverageOnceEvery(12)));
         context.register(ModWorldgen.PLACED_HUGE_DEAD_ARCHWOOD_TREE,
             new PlacedFeature(
                 features.getOrThrow(ModWorldgen.CONFIGURED_HUGE_DEAD_ARCHWOOD_TREE),
-                hugeTreeModifiers
+                List.of(
+                    RarityFilter.onAverageOnceEvery(8),
+                    NoBlightLogNearbyFilter.INSTANCE,
+                    InSquarePlacement.spread(),
+                    HeightmapPlacement.onHeightmap(Heightmap.Types.WORLD_SURFACE_WG),
+                    BlockPredicateFilter.forPredicate(survivesOnGround),
+                    BiomeFilter.biome()
+                )
             ));
         context.register(ModWorldgen.PLACED_PATCH_DEAD_BUSH,
             new PlacedFeature(
@@ -188,6 +215,14 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
                     InSquarePlacement.spread(),
                     PlacementUtils.HEIGHTMAP_WORLD_SURFACE,
                     BiomeFilter.biome())));
+        context.register(ModWorldgen.PLACED_REPLACE_GRASS_WITH_BLIGHTED_SOIL,
+            new PlacedFeature(
+                features.getOrThrow(ModWorldgen.CONFIGURED_REPLACE_GRASS_WITH_BLIGHTED_SOIL),
+                List.of(
+                    CountPlacement.of(5),
+                    InSquarePlacement.spread(),
+                    PlacementUtils.HEIGHTMAP_WORLD_SURFACE,
+                    BiomeFilter.biome())));
         context.register(ModWorldgen.PLACED_BLIGHT_POOL,
             new PlacedFeature(
                 features.getOrThrow(ModWorldgen.CONFIGURED_BLIGHT_POOL),
@@ -215,13 +250,13 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
         generation.addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, MiscOverworldPlacements.DISK_CLAY);
         generation.addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, MiscOverworldPlacements.DISK_GRAVEL);
         // Dense trees for canopy darkness so undead can spawn naturally (one entry per feature to avoid FeatureSorter cycle)
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_PATCH_GRASS));
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_DEAD_ARCHWOOD_TREE));
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_BIG_DEAD_ARCHWOOD_TREE));
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_HUGE_DEAD_ARCHWOOD_TREE));
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_PATCH_DEAD_BUSH));
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_PATCH_GRASS));
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_DISK_COARSE_DIRT));
-        generation.addFeature(GenerationStep.Decoration.FLUID_SPRINGS, placedFeatures.getOrThrow(ModWorldgen.PLACED_BLIGHT_POOL));
+        generation.addFeature(GenerationStep.Decoration.LOCAL_MODIFICATIONS, placedFeatures.getOrThrow(ModWorldgen.PLACED_BLIGHT_POOL));
         BiomeDefaultFeatures.addDefaultMushrooms(generation);
         BiomeDefaultFeatures.addDefaultExtraVegetation(generation);
 
@@ -245,7 +280,9 @@ public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
                 .grassColorModifier(BiomeSpecialEffects.GrassColorModifier.DARK_FOREST)
                 .grassColorOverride(0x5B6656)
                 .foliageColorOverride(0x5B6656)
-                .ambientMoodSound(net.minecraft.world.level.biome.AmbientMoodSettings.LEGACY_CAVE_SETTINGS)
+                .ambientMoodSound(new net.minecraft.world.level.biome.AmbientMoodSettings(
+                    net.minecraft.core.Holder.direct(ModSounds.NECROPOLIS_AMBIENT.get()),
+                    6000, 8, 2.0))
                 .backgroundMusic(Musics.createGameMusic(net.minecraft.sounds.SoundEvents.MUSIC_BIOME_FOREST)).build())
             .build());
     }

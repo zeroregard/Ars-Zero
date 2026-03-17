@@ -3,7 +3,7 @@ package com.github.ars_zero.common.entity;
 import com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.BlightedSkeletonFleeGoal;
 import com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal;
-import net.minecraft.resources.ResourceLocation;
+import com.github.ars_zero.common.entity.ai.NecromancerRitualGoal;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
@@ -18,8 +18,8 @@ import java.util.List;
  */
 public class AcolyteBlightedSkeleton extends AbstractBlightedSkeleton {
 
-    private static final int MAX_MANA = 1500;
-    private static final double MANA_REGEN = 1.0;
+    private static final int MAX_MANA = 600;
+    private static final double MANA_REGEN = 0.3;
 
     public AcolyteBlightedSkeleton(EntityType<? extends Skeleton> entityType, Level level) {
         super(entityType, level);
@@ -29,18 +29,15 @@ public class AcolyteBlightedSkeleton extends AbstractBlightedSkeleton {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(1, new BlightedSkeletonFleeGoal(this));
+        this.goalSelector.addGoal(2, new NecromancerRitualGoal(this));
         this.goalSelector.addGoal(2, new MageSkeletonCastGoal(this, List.of(new BlightVoxelPushSpellBehaviour())));
     }
 
     @Override
     protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
-        super.populateDefaultEquipmentSlots(random, difficulty);
-        setArmorSlot(EquipmentSlot.CHEST, SORCERER_ROBES_ID);
-    }
-
-    @Override
-    protected ResourceLocation getHeadItemId() {
-        return SORCERER_HOOD_ID;
+        setRottedArcanistSlot(EquipmentSlot.CHEST);
+        setRottedArcanistSlot(EquipmentSlot.LEGS);
+        setRottedArcanistSlot(EquipmentSlot.FEET);
     }
 
     @Override

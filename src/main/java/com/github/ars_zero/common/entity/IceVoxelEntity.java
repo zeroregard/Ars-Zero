@@ -10,6 +10,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -234,20 +235,31 @@ public class IceVoxelEntity extends BaseVoxelEntity {
         LivingEntity sender = this.getStoredCaster();
         net.minecraft.world.damagesource.DamageSource damageSource;
         if (sender != null) {
-            damageSource = this.level().damageSources().indirectMagic(this, sender);
+            damageSource = this.level().damageSources().mobProjectile(this, sender);
             target.setLastHurtByMob(sender);
             if (sender instanceof net.minecraft.world.entity.player.Player) {
                 target.setLastHurtByPlayer((net.minecraft.world.entity.player.Player) sender);
             }
         } else {
-            damageSource = this.level().damageSources().magic();
+            damageSource = this.level().damageSources().mobProjectile(this, null);
         }
-        target.hurt(damageSource, damage);
-        Vec3 impulse = this.getDeltaMovement().scale(0.35);
-        target.push(impulse.x, Math.max(0.1, impulse.y + 0.15), impulse.z);
-        target.hurtMarked = true;
+        if (target.hurt(damageSource, damage)) {
+            Vec3 impulse = this.getDeltaMovement().scale(0.35);
+            target.push(impulse.x, Math.max(0.1, impulse.y + 0.15), impulse.z);
+            target.hurtMarked = true;
+        }
     }
     
+    @Override
+    protected void onMeleeHit(DamageSource source, LivingEntity attacker) {
+        Vec3 pos = this.position();
+        this.level().playSound(null, pos.x, pos.y, pos.z,
+            SoundEvents.GLASS_BREAK, SoundSource.BLOCKS,
+            0.6f, 1.0f + this.random.nextFloat() * 0.3f);
+        spawnHitParticles(pos);
+        this.discard();
+    }
+
     @Override
     protected ParticleOptions getAmbientParticle() {
         return new BlockParticleOption(ParticleTypes.BLOCK, Blocks.ICE.defaultBlockState());

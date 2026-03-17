@@ -1,9 +1,11 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour;
+import com.github.ars_zero.common.entity.ai.FireVoxelPushSpellBehaviour;
+import com.github.ars_zero.common.entity.ai.IceVoxelPushSpellBehaviour;
+import com.github.ars_zero.common.entity.ai.LightningVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.MageSkeletonBlinkGoal;
 import com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal;
-import com.github.ars_zero.common.entity.ai.MageSkeletonSummonGoal;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
@@ -16,8 +18,11 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import com.github.ars_zero.registry.ModItems;
+import com.github.ars_zero.registry.ModSounds;
+
 import net.minecraft.world.level.Level;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -26,13 +31,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Tier 3 blighted skeleton: flying, unlimited blink, up to 2 summons, blight cast.
+ * Tier 3 blighted skeleton: flying, unlimited blink, fire/ice/lightning triple-voxel casts.
  */
 public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
 
-    private static final int MAX_MANA = 3000;
+    private static final int MAX_MANA = 1500;
     private static final double MANA_REGEN = 2.0;
-    private static final int BLINK_COOLDOWN = 10;
+    private static final int BLINK_COOLDOWN = 200;
     /** Fake gravity per tick so the Lich slowly drifts down when in the air. */
     private static final double FAKE_GRAVITY_PER_TICK = -0.012;
     private static final double MAX_FALL_SPEED = -0.06;
@@ -57,17 +62,20 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new MageSkeletonBlinkGoal(this));
-        this.goalSelector.addGoal(1, new MageSkeletonSummonGoal(this));
-        this.goalSelector.addGoal(2, new MageSkeletonCastGoal(this, List.of(new BlightVoxelPushSpellBehaviour())));
+        this.goalSelector.addGoal(1, new MageSkeletonCastGoal(this, List.of(
+                new BlightVoxelPushSpellBehaviour(),
+                new FireVoxelPushSpellBehaviour(),
+                new IceVoxelPushSpellBehaviour(),
+                new LightningVoxelPushSpellBehaviour())));
     }
 
     @Override
     protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
-        setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.NETHERITE_HELMET));
+        setItemSlot(EquipmentSlot.HEAD, new ItemStack(ModItems.NECRO_CROWN.get()));
         setDropChance(EquipmentSlot.HEAD, 0.0f);
-        setArcanistSlotTier3Enchanted(EquipmentSlot.CHEST, ARCANIST_ROBES_ID);
-        setArcanistSlotTier3Enchanted(EquipmentSlot.LEGS, ARCANIST_LEGGINGS_ID);
-        setArcanistSlotTier3Enchanted(EquipmentSlot.FEET, ARCANIST_BOOTS_ID);
+        setTatteredArcanistSlot(EquipmentSlot.CHEST);
+        setTatteredArcanistSlot(EquipmentSlot.LEGS);
+        setTatteredArcanistSlot(EquipmentSlot.FEET);
     }
 
     @Override
@@ -120,7 +128,7 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
 
     @Override
     public int getMaxSummons() {
-        return 2;
+        return 0;
     }
 
     @Override
@@ -132,4 +140,16 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
     public boolean shouldFleeWhenLowMana() {
         return false;
     }
+
+    @Override
+    protected SoundEvent getAmbientSound() { return ModSounds.LICH_AMBIENT.get(); }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) { return ModSounds.LICH_HURT.get(); }
+
+    @Override
+    protected SoundEvent getDeathSound() { return ModSounds.LICH_DEATH.get(); }
+
+    @Override
+    protected SoundEvent getStepSound() { return ModSounds.LICH_STEP.get(); }
 }

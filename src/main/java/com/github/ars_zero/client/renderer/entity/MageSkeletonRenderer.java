@@ -30,6 +30,7 @@ public class MageSkeletonRenderer extends HumanoidMobRenderer<Skeleton, Blighted
                 new SkeletonModel<>(context.bakeLayer(ModelLayers.SKELETON_OUTER_ARMOR)),
                 context.getModelManager()));
         addLayer(new MageSkeletonGlintLayer(this));
+        addLayer(new LichEyesLayer(this));
     }
 
     @Override

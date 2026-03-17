@@ -1,0 +1,170 @@
+package com.github.ars_zero.event;
+
+import com.github.ars_zero.ArsZero;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.datafixers.util.Pair;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.ResourceKeyArgument;
+import net.minecraft.commands.arguments.blocks.BlockStateArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+
+@EventBusSubscriber(modid = ArsZero.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
+public class ModCommandHandler {
+
+    private static final DynamicCommandExceptionType ERROR_NO_STRUCTURE =
+        new DynamicCommandExceptionType(id -> Component.literal("No structure '" + id + "' found within 100 chunks."));
+
+    private static final DynamicCommandExceptionType ERROR_NO_BLOCK =
+        new DynamicCommandExceptionType(id -> Component.literal("Block '" + id + "' not found in loaded chunks."));
+
+    private static final DynamicCommandExceptionType ERROR_INVALID_BIOME =
+        new DynamicCommandExceptionType(id -> Component.literal("Unknown biome: " + id));
+
+    private static final DynamicCommandExceptionType ERROR_NO_BIOME =
+        new DynamicCommandExceptionType(id -> Component.literal("No biome '" + id + "' found within 6400 blocks."));
+
+    @SubscribeEvent
+    public static void onRegisterCommands(RegisterCommandsEvent event) {
+        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
+
+        dispatcher.register(
+            Commands.literal("tplocate")
+                .requires(source -> source.hasPermission(2))
+                .then(Commands.literal("structure")
+                    .then(Commands.argument("structure", ResourceKeyArgument.key(Registries.STRUCTURE))
+                        .executes(ctx -> locateStructure(
+                            ctx.getSource(),
+                            ResourceKeyArgument.getStructure(ctx, "structure")
+                        ))
+                    )
+                )
+                .then(Commands.literal("biome")
+                    .then(Commands.argument("biome", ResourceKeyArgument.key(Registries.BIOME))
+                        .executes(ctx -> locateBiome(ctx.getSource(), ctx))
+                    )
+                )
+                .then(Commands.literal("block")
+                    .then(Commands.argument("block", BlockStateArgument.block(event.getBuildContext()))
+                        .executes(ctx -> locateBlock(
+                            ctx.getSource(),
+                            BlockStateArgument.getBlock(ctx, "block").getState()
+                        ))
+                    )
+                )
+        );
+    }
+
+    private static int locateStructure(CommandSourceStack source, Holder.Reference<Structure> structureHolder)
+            throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        ServerLevel level = player.serverLevel();
+        String id = structureHolder.key().location().toString();
+
+        source.sendSuccess(() -> Component.literal("Searching for structure " + id + "..."), false);
+
+        Pair<BlockPos, Holder<Structure>> result = level.getChunkSource().getGenerator()
+            .findNearestMapStructure(level, HolderSet.direct(structureHolder), player.blockPosition(), 100, false);
+
+        if (result == null) throw ERROR_NO_STRUCTURE.create(id);
+
+        BlockPos found = result.getFirst();
+        BlockPos surface = getSurfacePos(level, found);
+        player.teleportTo(surface.getX() + 0.5, surface.getY(), surface.getZ() + 0.5);
+        source.sendSuccess(() -> Component.literal(
+            "Found " + id + " at " + surface.toShortString() + ". Teleporting!"
+        ), false);
+        return 1;
+    }
+
+    private static int locateBiome(CommandSourceStack source,
+            com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx)
+            throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        ServerLevel level = player.serverLevel();
+
+        ResourceKey<?> rawKey = ctx.getArgument("biome", ResourceKey.class);
+        @SuppressWarnings("unchecked")
+        ResourceKey<Biome> biomeKey = (ResourceKey<Biome>) rawKey.cast(Registries.BIOME)
+            .orElseThrow(() -> ERROR_INVALID_BIOME.create(rawKey.location()));
+
+        Registry<Biome> biomeRegistry = level.registryAccess().registryOrThrow(Registries.BIOME);
+        Holder.Reference<Biome> biomeHolder = biomeRegistry.getHolder(biomeKey)
+            .orElseThrow(() -> ERROR_INVALID_BIOME.create(biomeKey.location()));
+
+        String id = biomeKey.location().toString();
+        source.sendSuccess(() -> Component.literal("Searching for biome " + id + "..."), false);
+
+        Pair<BlockPos, Holder<Biome>> result = level.findClosestBiome3d(
+            h -> h.is(biomeKey), player.blockPosition(), 6400, 32, 64
+        );
+
+        if (result == null) throw ERROR_NO_BIOME.create(id);
+
+        BlockPos found = result.getFirst();
+        BlockPos surface = getSurfacePos(level, found);
+        player.teleportTo(surface.getX() + 0.5, surface.getY(), surface.getZ() + 0.5);
+        source.sendSuccess(() -> Component.literal(
+            "Found " + id + " at " + surface.toShortString() + ". Teleporting!"
+        ), false);
+        return 1;
+    }
+
+    private static int locateBlock(CommandSourceStack source, BlockState target) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        ServerLevel level = player.serverLevel();
+        String blockName = target.getBlock().getDescriptionId();
+
+        source.sendSuccess(() -> Component.literal("Scanning 512 blocks around you for " + blockName + "..."), false);
+
+        BlockPos playerPos = player.blockPosition();
+        BlockPos nearest = null;
+        double nearestDist = Double.MAX_VALUE;
+        int range = 512;
+
+        for (BlockPos p : BlockPos.betweenClosed(
+                playerPos.offset(-range, level.getMinBuildHeight() - playerPos.getY(), -range),
+                playerPos.offset(range, level.getMaxBuildHeight() - playerPos.getY(), range))) {
+            if (level.isLoaded(p) && level.getBlockState(p).is(target.getBlock())) {
+                double d = p.distSqr(playerPos);
+                if (d < nearestDist) {
+                    nearestDist = d;
+                    nearest = p.immutable();
+                }
+            }
+        }
+
+        if (nearest == null) throw ERROR_NO_BLOCK.create(blockName);
+
+        BlockPos found = nearest;
+        player.teleportTo(found.getX() + 0.5, found.getY(), found.getZ() + 0.5);
+        source.sendSuccess(() -> Component.literal(
+            "Found " + blockName + " at " + found.toShortString() + ". Teleporting!"
+        ), false);
+        return 1;
+    }
+
+    private static BlockPos getSurfacePos(ServerLevel level, BlockPos pos) {
+        ChunkAccess chunk = level.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+        int y = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos.getX() & 15, pos.getZ() & 15) + 1;
+        return new BlockPos(pos.getX(), y, pos.getZ());
+    }
+}

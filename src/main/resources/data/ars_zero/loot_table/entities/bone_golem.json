@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": { "min": 2, "max": 5 },
+      "entries": [{ "type": "minecraft:item", "name": "minecraft:bone" }]
+    },
+    {
+      "rolls": { "min": 0, "max": 1 },
+      "entries": [{ "type": "minecraft:item", "name": "minecraft:bone_block" }]
+    }
+  ]
+}

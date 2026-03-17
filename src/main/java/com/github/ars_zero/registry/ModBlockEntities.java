@@ -3,8 +3,10 @@ package com.github.ars_zero.registry;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.block.BlightCauldronBlockEntity;
 import com.github.ars_zero.common.block.MultiphaseSpellTurretTile;
+import com.github.ars_zero.common.block.OssuaryBeaconBlockEntity;
 import com.github.ars_zero.common.block.StaffDisplayBlockEntity;
 import com.github.ars_zero.common.block.VoxelSpawnerBlockEntity;
+import com.github.ars_zero.common.block.tile.BoneChestBlockEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -55,6 +57,19 @@ public class ModBlockEntities {
         () -> BlockEntityType.Builder.of(
             StaffDisplayBlockEntity::new,
             ModBlocks.STAFF_DISPLAY.get()
+        ).build(null)
+    );
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BoneChestBlockEntity>> BONE_CHEST = BLOCK_ENTITIES.register(
+        "bone_chest",
+        () -> BlockEntityType.Builder.of(BoneChestBlockEntity::new, ModBlocks.BONE_CHEST.get()).build(null)
+    );
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<OssuaryBeaconBlockEntity>> OSSUARY_BEACON = BLOCK_ENTITIES.register(
+        "ossuary_beacon",
+        () -> BlockEntityType.Builder.of(
+            OssuaryBeaconBlockEntity::new,
+            ModBlocks.OSSUARY_BEACON.get()
         ).build(null)
     );
 }

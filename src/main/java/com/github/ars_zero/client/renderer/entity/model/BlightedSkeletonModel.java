@@ -20,10 +20,9 @@ public class BlightedSkeletonModel extends SkeletonModel<Skeleton> {
     public void setupAnim(Skeleton entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
         if (entity instanceof AbstractBlightedSkeleton blighted && blighted.getSpellCastArmsUpTicks() > 0) {
-            // Both arms raised in front for ~1 second (e.g. spell casting pose)
-            float raised = -Mth.HALF_PI;
-            this.leftArm.xRot = raised;
-            this.rightArm.xRot = raised;
+            // Both arms raised straight up
+            this.leftArm.xRot = -Mth.PI;
+            this.rightArm.xRot = -Mth.PI;
         }
     }
 }

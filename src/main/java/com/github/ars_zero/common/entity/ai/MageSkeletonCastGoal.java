@@ -19,7 +19,7 @@ import java.util.List;
 public class MageSkeletonCastGoal extends Goal {
 
     public static final int COOLDOWN_TICKS = 30;
-    private static final float MIN_CAST_DISTANCE = 4.0f;
+    private static final float MIN_CAST_DISTANCE = 1.5f;
     private static final float MAX_CAST_DISTANCE = 22.0f;
 
     private final AbstractBlightedSkeleton mob;
@@ -68,18 +68,24 @@ public class MageSkeletonCastGoal extends Goal {
         if (target == null) {
             return;
         }
-        for (MobSpellBehaviour behaviour : behaviours) {
-            var mana = CapabilityRegistry.getMana(mob);
-            if (mana != null && mana.getCurrentMana() >= behaviour.getManaCost() && behaviour.canRun(mob, target)) {
-                mob.swing(InteractionHand.MAIN_HAND);
-                mob.setSpellCastArmsUpTicks(AbstractBlightedSkeleton.SPELL_CAST_ARMS_UP_TICKS);
-                behaviour.run(mob, target);
-                if (mob.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-                    serverLevel.playSound(null, mob.getX(), mob.getY(), mob.getZ(),
-                            SoundEvents.EVOKER_CAST_SPELL, SoundSource.HOSTILE, 0.8f, 0.9f + mob.getRandom().nextFloat() * 0.2f);
-                }
-                return;
-            }
+        var mana = CapabilityRegistry.getMana(mob);
+        if (mana == null) {
+            return;
+        }
+        double current = mana.getCurrentMana();
+        List<MobSpellBehaviour> affordable = behaviours.stream()
+                .filter(b -> current >= b.getManaCost() && b.canRun(mob, target))
+                .toList();
+        if (affordable.isEmpty()) {
+            return;
+        }
+        MobSpellBehaviour behaviour = affordable.get(mob.getRandom().nextInt(affordable.size()));
+        mob.swing(InteractionHand.MAIN_HAND);
+        mob.setSpellCastArmsUpTicks(AbstractBlightedSkeleton.SPELL_CAST_ARMS_UP_TICKS);
+        behaviour.run(mob, target);
+        if (mob.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            serverLevel.playSound(null, mob.getX(), mob.getY(), mob.getZ(),
+                    SoundEvents.EVOKER_CAST_SPELL, SoundSource.HOSTILE, 0.8f, 0.9f + mob.getRandom().nextFloat() * 0.2f);
         }
     }
 }

@@ -1,6 +1,8 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.registry.ModItems;
+import com.github.ars_zero.registry.ModSounds;
 import com.hollingsworth.arsnouveau.api.entity.ISummon;
 import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.common.items.data.ArmorPerkHolder;
@@ -8,6 +10,7 @@ import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import com.hollingsworth.arsnouveau.setup.registry.DataComponentRegistry;
 import com.hollingsworth.arsnouveau.common.util.HolderHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -73,9 +76,14 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
     protected static final ResourceLocation NOVICE_SPELL_BOOK_ID =
             ResourceLocation.fromNamespaceAndPath("ars_nouveau", "novice_spell_book");
 
+    /** Ticks between sequential voxel pushes when firing a multi-voxel burst (500 ms). */
+    private static final int BURST_FIRE_DELAY_TICKS = 10;
+
     private int castCooldownTicks = 0;
     private int chargeTicks = 0;
     private final List<Integer> pendingVoxelIds = new ArrayList<>();
+    private final List<Integer> pendingBurstQueue = new ArrayList<>();
+    private int burstFireDelay = 0;
     private int blinkCooldownTicks = 0;
     private int summonCooldownTicks = 0;
     private final List<UUID> ownedRevenantUuids = new ArrayList<>();
@@ -89,21 +97,25 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
         super(entityType, level);
     }
 
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(DATA_SPELL_CAST_ARMS_TICKS, 0);
     }
 
+
     /** Ticks remaining that both arms are shown raised (client reads this for rendering). */
     public int getSpellCastArmsUpTicks() {
         return entityData.get(DATA_SPELL_CAST_ARMS_TICKS);
     }
 
+
     /** Call when starting a spell (cast, summon, blink) to raise both arms for ~1 second. */
     public void setSpellCastArmsUpTicks(int ticks) {
         entityData.set(DATA_SPELL_CAST_ARMS_TICKS, Math.max(0, ticks));
     }
+
 
     /** Max mana pool for this tier. */
     public abstract int getMaxMana();
@@ -142,6 +154,7 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, LivingEntity.class, 8.0F));
     }
 
+
     @Override
     @Nullable
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType reason, @Nullable SpawnGroupData data) {
@@ -152,8 +165,10 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
             mana.setMaxMana(max);
             mana.setMana(max);
         }
+
         return result;
     }
+
 
     @Override
     public void tick() {
@@ -165,6 +180,7 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
             if (armsTicks > 0) {
                 entityData.set(DATA_SPELL_CAST_ARMS_TICKS, armsTicks - 1);
             }
+
             if (summonCooldownTicks > 0) summonCooldownTicks--;
             if (level() instanceof net.minecraft.server.level.ServerLevel sl && !ownedRevenantUuids.isEmpty()) {
                 ownedRevenantUuids.removeIf(uuid -> {
@@ -172,6 +188,22 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
                     return e == null || !e.isAlive();
                 });
             }
+
+            if (burstFireDelay > 0) {
+                burstFireDelay--;
+                if (burstFireDelay == 0 && !pendingBurstQueue.isEmpty()) {
+                    LivingEntity pushTarget = getTarget();
+                    int voxelId = pendingBurstQueue.remove(0);
+                    Entity e = level().getEntity(voxelId);
+                    if (e instanceof BaseVoxelEntity voxel && voxel.isAlive() && pushTarget != null) {
+                        com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour.executePush(this, pushTarget, voxel);
+                    }
+                    if (!pendingBurstQueue.isEmpty()) {
+                        burstFireDelay = BURST_FIRE_DELAY_TICKS;
+                    }
+                }
+            }
+
             if (chargeTicks > 0) {
                 LivingEntity target = getTarget();
                 if (target != null && target.isAlive()) {
@@ -182,32 +214,44 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
                             : java.util.List.of(inFront);
                     for (int i = 0; i < pendingVoxelIds.size(); i++) {
                         Entity e = level().getEntity(pendingVoxelIds.get(i));
-                        if (e instanceof BlightVoxelEntity voxel && voxel.isAlive() && i < positions.size()) {
+                        if (e instanceof BaseVoxelEntity voxel && voxel.isAlive() && i < positions.size()) {
                             Vec3 p = positions.get(i);
                             voxel.setPos(p.x, p.y, p.z);
                         }
+
                     }
+
                 }
+
                 chargeTicks--;
                 if (chargeTicks == 0 && !pendingVoxelIds.isEmpty()) {
                     LivingEntity pushTarget = getTarget();
-                    for (int voxelId : pendingVoxelIds) {
-                        Entity e = level().getEntity(voxelId);
-                        if (e instanceof BlightVoxelEntity voxel && voxel.isAlive() && pushTarget != null) {
-                            com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour.executePush(this, pushTarget, voxel);
-                        }
+                    int firstId = pendingVoxelIds.get(0);
+                    Entity e = level().getEntity(firstId);
+                    if (e instanceof BaseVoxelEntity voxel && voxel.isAlive() && pushTarget != null) {
+                        com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour.executePush(this, pushTarget, voxel);
+                    }
+                    if (pendingVoxelIds.size() > 1) {
+                        pendingBurstQueue.clear();
+                        pendingBurstQueue.addAll(pendingVoxelIds.subList(1, pendingVoxelIds.size()));
+                        burstFireDelay = BURST_FIRE_DELAY_TICKS;
                     }
                     pendingVoxelIds.clear();
                     castCooldownTicks = com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal.COOLDOWN_TICKS;
                 }
+
             }
+
             IManaCap mana = CapabilityRegistry.getMana(this);
             if (mana != null && mana.getCurrentMana() < mana.getMaxMana()) {
                 double newMana = Math.min(mana.getMaxMana(), mana.getCurrentMana() + getManaRegenPerTick());
                 mana.setMana(newMana);
             }
+
         }
+
     }
+
 
     public int getCastCooldownTicks() { return castCooldownTicks; }
     public void setCastCooldownTicks(int ticks) { this.castCooldownTicks = ticks; }
@@ -222,12 +266,14 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
         this.chargeTicks = hoverTicks;
     }
 
+
     /** Used when Lich casts with Split (multiple voxels). */
     public void setPendingPushMultiple(List<Integer> voxelEntityIds, int hoverTicks) {
         this.pendingVoxelIds.clear();
         this.pendingVoxelIds.addAll(voxelEntityIds);
         this.chargeTicks = hoverTicks;
     }
+
 
     public int countLivingOwnedRevenants() {
         if (!(level() instanceof net.minecraft.server.level.ServerLevel sl)) return 0;
@@ -236,14 +282,18 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
             Entity e = sl.getEntity(uuid);
             if (e != null && e.isAlive()) count++;
         }
+
         return count;
     }
+
 
     public void addOwnedRevenantUuid(UUID uuid) {
         if (ownedRevenantUuids.size() < getMaxSummons()) {
             ownedRevenantUuids.add(uuid);
         }
+
     }
+
 
     private static final String TAG_OWNED_REVENANTS = "OwnedRevenantUUIDs";
 
@@ -256,8 +306,10 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
             entry.putUUID("Id", u);
             list.add(entry);
         }
+
         tag.put(TAG_OWNED_REVENANTS, list);
     }
+
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
@@ -270,9 +322,13 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
                 if (entry.hasUUID("Id")) {
                     ownedRevenantUuids.add(entry.getUUID("Id"));
                 }
+
             }
+
         }
+
     }
+
 
     protected void setLookAtTarget(LivingEntity target) {
         Vec3 toTarget = target.position().add(0, target.getBbHeight() * 0.5, 0)
@@ -282,15 +338,18 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
         setXRot((float) (Math.atan2(-toTarget.y, horizontalLength) * 180.0 / Math.PI));
     }
 
+
     @Override
     protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
         setHeadGear();
     }
 
+
     /** Which head item this tier wears (arcanist hood by default; Acolyte uses sorcerer hood). */
     protected ResourceLocation getHeadItemId() {
         return ARCANIST_HOOD_ID;
     }
+
 
     /** Sets head slot from getHeadItemId(); subclasses override getHeadItemId() to change. */
     protected void setHeadGear() {
@@ -303,7 +362,9 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
         } else {
             ArsZero.LOGGER.debug("Ars Nouveau head gear not found at {}, blighted skeleton will have no hat", getHeadItemId());
         }
+
     }
+
 
     /** Full arcanist set (hood, robes, leggings, boots) in black; used by Lich. */
     protected void setFullArcanistGear() {
@@ -312,6 +373,7 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
         setArmorSlot(EquipmentSlot.LEGS, ARCANIST_LEGGINGS_ID);
         setArmorSlot(EquipmentSlot.FEET, ARCANIST_BOOTS_ID);
     }
+
 
     protected void setArmorSlot(EquipmentSlot slot, ResourceLocation itemId) {
         Item item = BuiltInRegistries.ITEM.get(itemId);
@@ -323,7 +385,9 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
         } else {
             ArsZero.LOGGER.debug("Ars Nouveau armor not found at {}, slot {} will be empty", itemId, slot);
         }
+
     }
+
 
     /** Arcanist armor at tier 3 (display) with Protection I; used by Lich. */
     protected void setArcanistSlotTier3Enchanted(EquipmentSlot slot, ResourceLocation itemId) {
@@ -332,15 +396,18 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
             ArsZero.LOGGER.debug("Ars Nouveau armor not found at {}, slot {} will be empty", itemId, slot);
             return;
         }
+
         ItemStack stack = new ItemStack(item);
         stack.set(DataComponents.BASE_COLOR, DyeColor.BLACK);
         stack.set(DataComponentRegistry.ARMOR_PERKS.get(), new ArmorPerkHolder().setTier(2)); // tier 3 display (0-indexed)
         if (level() != null) {
             stack.enchant(HolderHelper.unwrap(level(), Enchantments.PROTECTION), 1);
         }
+
         setItemSlot(slot, stack);
         setDropChance(slot, 0.0f);
     }
+
 
     @Override
     public boolean doHurtTarget(Entity target) { return false; }
@@ -349,9 +416,10 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
     public boolean hurt(DamageSource source, float amount) {
         if (source.is(DamageTypes.WITHER) || source.is(DamageTypes.WITHER_SKULL)) return false;
         Entity direct = source.getDirectEntity();
-        if (direct instanceof BlightVoxelEntity voxel && voxel.getStoredCaster() == this) return false;
+        if (direct instanceof BaseVoxelEntity voxel && voxel.getStoredCaster() == this) return false;
         return super.hurt(source, amount);
     }
+
 
     @Override
     public boolean canBeAffected(MobEffectInstance effect) {
@@ -359,8 +427,63 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
         return super.canBeAffected(effect);
     }
 
+
     @Override
     protected boolean isSunBurnTick() { return false; }
+
+    @Override
+    public boolean checkSpawnRules(@javax.annotation.Nonnull net.minecraft.world.level.LevelAccessor level, @javax.annotation.Nonnull MobSpawnType spawnType) {
+        net.minecraft.core.BlockPos below = blockPosition().below();
+        net.minecraft.resources.ResourceLocation id = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                .getKey(level.getBlockState(below).getBlock());
+        return id != null
+                && id.getNamespace().equals(ArsZero.MOD_ID)
+                && id.getPath().equals("smooth_corrupted_sourcestone");
+    }
+
+
+    @Override
+    protected SoundEvent getAmbientSound() { return ModSounds.UNDEAD_MAGE_AMBIENT.get(); }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) { return ModSounds.UNDEAD_MAGE_HURT.get(); }
+
+    @Override
+    protected SoundEvent getDeathSound() { return ModSounds.UNDEAD_MAGE_DEATH.get(); }
+
+    @Override
+    protected SoundEvent getStepSound() { return ModSounds.UNDEAD_MAGE_STEP.get(); }
+
+    protected void setTatteredArcanistSlot(EquipmentSlot slot) {
+        net.minecraft.world.item.Item item = switch (slot) {
+            case HEAD -> ModItems.TATTERED_ARCANIST_HELMET.get();
+            case CHEST -> ModItems.TATTERED_ARCANIST_CHESTPLATE.get();
+            case LEGS -> ModItems.TATTERED_ARCANIST_LEGGINGS.get();
+            case FEET -> ModItems.TATTERED_ARCANIST_BOOTS.get();
+            default -> null;
+        };
+        if (item != null) {
+            setItemSlot(slot, new ItemStack(item));
+            setDropChance(slot, 0.0f);
+        }
+
+    }
+
+
+    protected void setRottedArcanistSlot(EquipmentSlot slot) {
+        net.minecraft.world.item.Item item = switch (slot) {
+            case HEAD -> ModItems.ROTTED_ARCANIST_HELMET.get();
+            case CHEST -> ModItems.ROTTED_ARCANIST_CHESTPLATE.get();
+            case LEGS -> ModItems.ROTTED_ARCANIST_LEGGINGS.get();
+            case FEET -> ModItems.ROTTED_ARCANIST_BOOTS.get();
+            default -> null;
+        };
+        if (item != null) {
+            setItemSlot(slot, new ItemStack(item));
+            setDropChance(slot, 0.0f);
+        }
+
+    }
 
     protected void setSpellbookInHand() {
         Item spellbook = BuiltInRegistries.ITEM.get(NOVICE_SPELL_BOOK_ID);
@@ -372,5 +495,7 @@ public abstract class AbstractBlightedSkeleton extends Skeleton {
         } else {
             ArsZero.LOGGER.debug("Ars Nouveau novice spell book not found at {}, blighted skeleton will have empty hand", NOVICE_SPELL_BOOK_ID);
         }
+
     }
+
 }

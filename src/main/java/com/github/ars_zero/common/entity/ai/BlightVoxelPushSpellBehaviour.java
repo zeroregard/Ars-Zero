@@ -4,6 +4,7 @@ import com.github.ars_zero.api.spell.MobSpellBehaviour;
 import com.github.ars_zero.api.spell.MobSpellResolver;
 import com.github.ars_zero.common.casting.CastingStyle;
 import com.github.ars_zero.common.entity.ArcaneCircleEntity;
+import com.github.ars_zero.common.entity.BaseVoxelEntity;
 import com.github.ars_zero.common.entity.BlightVoxelEntity;
 import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
 import com.github.ars_zero.common.entity.LichBlightedSkeleton;
@@ -108,7 +109,7 @@ public class BlightVoxelPushSpellBehaviour implements MobSpellBehaviour {
      * Executes the Push on the voxel toward the target. Called by blighted skeleton when hover delay ends.
      * Deducts mana via the resolver.
      */
-    public static void executePush(AbstractBlightedSkeleton caster, LivingEntity target, BlightVoxelEntity voxel) {
+    public static void executePush(AbstractBlightedSkeleton caster, LivingEntity target, BaseVoxelEntity voxel) {
         if (!(caster.level() instanceof ServerLevel serverLevel) || !voxel.isAlive()) {
             return;
         }

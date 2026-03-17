@@ -11,8 +11,11 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,6 +135,9 @@ public class MageSkeletonBlinkGoal extends Goal {
                     if (!canStandAt(level, candidate)) {
                         continue;
                     }
+                    if (!hasLineOfSightTo(candidate)) {
+                        continue;
+                    }
                     double distSq = target.distanceToSqr(candidate.getX() + 0.5, candidate.getY(), candidate.getZ() + 0.5);
                     if (best == null || distSq > bestDistSq) {
                         bestDistSq = distSq;
@@ -141,6 +147,17 @@ public class MageSkeletonBlinkGoal extends Goal {
             }
         }
         return best;
+    }
+
+    private boolean hasLineOfSightTo(BlockPos pos) {
+        Vec3 eye = mob.getEyePosition();
+        Vec3 dest = new Vec3(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5);
+        BlockHitResult result = mob.level().clip(new ClipContext(
+                eye, dest,
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
+                mob));
+        return result.getType() == HitResult.Type.MISS;
     }
 
     /**

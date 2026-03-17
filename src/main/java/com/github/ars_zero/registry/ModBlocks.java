@@ -2,25 +2,39 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.block.BlightCauldronBlock;
+import com.github.ars_zero.common.block.BlightedSoilBlock;
+import com.github.ars_zero.common.block.BoneChestBlock;
 import com.github.ars_zero.common.block.FrozenBlightBlock;
 import com.github.ars_zero.common.block.MultiphaseSpellTurret;
+import com.github.ars_zero.common.block.OssuaryBeaconBlock;
 import com.github.ars_zero.common.block.StaffDisplayBlock;
 import com.github.ars_zero.common.block.VoxelSpawnerBlock;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class ModBlocks {
     
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(BuiltInRegistries.BLOCK, ArsZero.MOD_ID);
-    
+
+    public static final DeferredHolder<Block, BoneChestBlock> BONE_CHEST = BLOCKS.register(
+        "bone_chest",
+        BoneChestBlock::new
+    );
+
+
     public static final DeferredHolder<Block, VoxelSpawnerBlock> ARCANE_VOXEL_SPAWNER = BLOCKS.register(
         "arcane_voxel_spawner",
         () -> new VoxelSpawnerBlock(BlockBehaviour.Properties.of()
@@ -96,6 +110,15 @@ public class ModBlocks {
             .noOcclusion())
     );
     
+    public static final DeferredHolder<Block, BlightedSoilBlock> BLIGHTED_SOIL = BLOCKS.register(
+        "blighted_soil",
+        () -> new BlightedSoilBlock(BlockBehaviour.Properties.of()
+            .mapColor(MapColor.DIRT)
+            .strength(0.5f)
+            .sound(SoundType.GRAVEL)
+            .requiresCorrectToolForDrops())
+    );
+
     public static final DeferredHolder<Block, FrozenBlightBlock> FROZEN_BLIGHT = BLOCKS.register(
         "frozen_blight",
         () -> new FrozenBlightBlock(BlockBehaviour.Properties.of()
@@ -106,6 +129,11 @@ public class ModBlocks {
     public static final DeferredHolder<Block, StaffDisplayBlock> STAFF_DISPLAY = BLOCKS.register(
         "staff_display",
         StaffDisplayBlock::new
+    );
+
+    public static final DeferredHolder<Block, OssuaryBeaconBlock> OSSUARY_BEACON = BLOCKS.register(
+        "ossuary_beacon",
+        OssuaryBeaconBlock::new
     );
 
     /** Dead archwood log for blight forest; no leaves. Same shape as Ars Nouveau archwood trees but blighted. */
@@ -134,4 +162,45 @@ public class ModBlocks {
         "blight_archwood_leaves",
         () -> new LeavesBlock(BLIGHT_LEAVES_PROP)
     );
+
+    // -------------------------------------------------------------------------
+    // Corrupted Sourcestone family (base + stairs + slab per variant)
+    // -------------------------------------------------------------------------
+
+    public static final String[] CORRUPTED_BASE_NAMES = {
+        "corrupted_sourcestone",
+        "corrupted_sourcestone_mosaic",
+        "corrupted_sourcestone_basketweave",
+        "corrupted_sourcestone_alternating",
+        "corrupted_sourcestone_large_bricks",
+        "corrupted_sourcestone_small_bricks",
+        "smooth_corrupted_sourcestone",
+        "smooth_corrupted_sourcestone_mosaic",
+        "smooth_corrupted_sourcestone_basketweave",
+        "smooth_corrupted_sourcestone_alternating",
+        "smooth_corrupted_sourcestone_large_bricks",
+        "smooth_corrupted_sourcestone_small_bricks",
+    };
+
+    public static final Map<String, DeferredHolder<Block, Block>> CORRUPTED_BLOCKS = new LinkedHashMap<>();
+    public static final Map<String, DeferredHolder<Block, StairBlock>> CORRUPTED_STAIRS = new LinkedHashMap<>();
+    public static final Map<String, DeferredHolder<Block, SlabBlock>> CORRUPTED_SLABS = new LinkedHashMap<>();
+
+    static {
+        BlockBehaviour.Properties props = BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_PURPLE)
+                .strength(1.5f, 6.0f)
+                .sound(SoundType.STONE);
+
+        for (String name : CORRUPTED_BASE_NAMES) {
+            DeferredHolder<Block, Block> base = BLOCKS.register(name, () -> new Block(props));
+            CORRUPTED_BLOCKS.put(name, base);
+
+            CORRUPTED_STAIRS.put(name, BLOCKS.register(name + "_stairs",
+                    () -> new StairBlock(CORRUPTED_BLOCKS.get(name).get().defaultBlockState(), props)));
+
+            CORRUPTED_SLABS.put(name, BLOCKS.register(name + "_slab",
+                    () -> new SlabBlock(props)));
+        }
+    }
 }
