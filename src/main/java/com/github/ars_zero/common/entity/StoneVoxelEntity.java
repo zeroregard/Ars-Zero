@@ -8,6 +8,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -210,6 +211,19 @@ public class StoneVoxelEntity extends BaseVoxelEntity {
         }
     }
     
+    @Override
+    protected void onMeleeHit(DamageSource source, LivingEntity attacker) {
+        Vec3 pushDir = this.position().subtract(attacker.position()).normalize();
+        if (pushDir.lengthSqr() < 1e-6) pushDir = new Vec3(0, 1, 0);
+        this.unfreezePhysics();
+        this.setDeltaMovement(
+            pushDir.x * 0.4,
+            Math.max(0.1, pushDir.y * 0.4),
+            pushDir.z * 0.4
+        );
+        this.hasImpulse = true;
+    }
+
     @Override
     protected ParticleOptions getAmbientParticle() {
         return new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState());

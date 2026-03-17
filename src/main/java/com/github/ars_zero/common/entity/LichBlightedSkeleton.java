@@ -19,8 +19,10 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.item.ItemStack;
 import com.github.ars_zero.registry.ModItems;
+import com.github.ars_zero.registry.ModSounds;
 
 import net.minecraft.world.level.Level;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -138,4 +140,16 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
     public boolean shouldFleeWhenLowMana() {
         return false;
     }
+
+    @Override
+    protected SoundEvent getAmbientSound() { return ModSounds.LICH_AMBIENT.get(); }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) { return ModSounds.LICH_HURT.get(); }
+
+    @Override
+    protected SoundEvent getDeathSound() { return ModSounds.LICH_DEATH.get(); }
+
+    @Override
+    protected SoundEvent getStepSound() { return ModSounds.LICH_STEP.get(); }
 }

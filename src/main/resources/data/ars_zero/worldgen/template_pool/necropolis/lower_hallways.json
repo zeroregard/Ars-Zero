@@ -5,9 +5,8 @@
     {"weight": 4, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/dead_end_small", "processors": "ars_zero:necropolis", "projection": "rigid"}},
     {"weight": 3, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/hallway_turn", "processors": "ars_zero:necropolis", "projection": "rigid"}},
     {"weight": 3, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/hallway_straight", "processors": "ars_zero:necropolis", "projection": "rigid"}},
-    {"weight": 2, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/small_room_1", "processors": "ars_zero:necropolis", "projection": "rigid"}},
-    {"weight": 2, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/small_room_2", "processors": "ars_zero:necropolis", "projection": "rigid"}},
-    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/medium_room_1", "processors": "ars_zero:necropolis", "projection": "rigid"}},
+    {"weight": 2, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/small_room_1", "processors": "ars_zero:necropolis_room", "projection": "rigid"}},
+{"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/medium_room_1", "processors": "ars_zero:necropolis", "projection": "rigid"}},
     {"weight": 1, "max_count": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/treasure_room", "processors": "ars_zero:necropolis", "projection": "rigid"}}
   ]
 }

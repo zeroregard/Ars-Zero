@@ -8,6 +8,7 @@ import com.github.ars_zero.common.world.structure.CobwebProcessor;
 import com.github.ars_zero.common.world.structure.NecropolisConnectorPiece;
 import com.github.ars_zero.common.world.structure.NecropolisEntrancePiece;
 import com.github.ars_zero.common.world.structure.NecropolisStaircasePiece;
+import com.github.ars_zero.common.world.structure.RandomBlockSubsetProcessor;
 import com.github.ars_zero.common.world.structure.StripWaterloggedProcessor;
 import com.github.ars_zero.common.world.placement.NoBlightLogNearbyFilter;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType;
@@ -48,6 +49,9 @@ public final class ModWorldgen {
 
     public static final DeferredHolder<StructureProcessorType<?>, StructureProcessorType<StripWaterloggedProcessor>> STRIP_WATERLOGGED_PROCESSOR =
         STRUCTURE_PROCESSOR_TYPES.register("strip_waterlogged", () -> () -> StripWaterloggedProcessor.CODEC);
+
+    public static final DeferredHolder<StructureProcessorType<?>, StructureProcessorType<RandomBlockSubsetProcessor>> RANDOM_BLOCK_SUBSET_PROCESSOR =
+        STRUCTURE_PROCESSOR_TYPES.register("random_block_subset", () -> () -> RandomBlockSubsetProcessor.CODEC);
 
     public static final DeferredRegister<StructurePieceType> STRUCTURE_PIECE_TYPES =
         DeferredRegister.create(BuiltInRegistries.STRUCTURE_PIECE, ArsZero.MOD_ID);

@@ -93,4 +93,20 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> BONE_CHEST_CLOSE = SOUNDS.register(
             "bone_chest.close",
             () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("bone_chest.close")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> LICH_AMBIENT = SOUNDS.register(
+            "lich.ambient",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("lich.ambient")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> LICH_HURT = SOUNDS.register(
+            "lich.hurt",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("lich.hurt")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> LICH_DEATH = SOUNDS.register(
+            "lich.death",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("lich.death")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> LICH_STEP = SOUNDS.register(
+            "lich.step",
+            () -> SoundEvent.createVariableRangeEvent(ArsZero.prefix("lich.step")));
 }

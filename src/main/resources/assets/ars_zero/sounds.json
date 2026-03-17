@@ -97,6 +97,33 @@
       {"name": "ars_zero:undead_mage/step5"}
     ]
   },
+  "lich.ambient": {
+    "sounds": [
+      {"name": "ars_zero:undead_mage/say1"},
+      {"name": "ars_zero:undead_mage/say2"},
+      {"name": "ars_zero:undead_mage/say3"}
+    ]
+  },
+  "lich.hurt": {
+    "sounds": [
+      {"name": "ars_zero:lich/hurt1"},
+      {"name": "ars_zero:lich/hurt2"},
+      {"name": "ars_zero:lich/hurt3"}
+    ]
+  },
+  "lich.death": {
+    "sounds": [
+      {"name": "ars_zero:lich/death1"}
+    ]
+  },
+  "lich.step": {
+    "sounds": [
+      {"name": "ars_zero:undead_mage/step1"},
+      {"name": "ars_zero:undead_mage/step2"},
+      {"name": "ars_zero:undead_mage/step3"},
+      {"name": "ars_zero:undead_mage/step5"}
+    ]
+  },
   "bone_golem.hurt": {
     "sounds": [
       {"name": "ars_zero:bone_golem/damage1"},
