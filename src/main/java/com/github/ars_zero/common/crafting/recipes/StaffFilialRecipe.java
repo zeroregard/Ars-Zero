@@ -42,14 +42,14 @@ public class StaffFilialRecipe extends EnchantingApparatusRecipe {
     public boolean matches(ApparatusRecipeInput input, Level level) {
         if (!super.matches(input, level)) return false;
         // Ensure at least one pedestal item is a FilialItem (safety check)
-        return input.pedestalItems().stream().anyMatch(s -> s.getItem() instanceof FilialItem);
+        return input.pedestals().stream().anyMatch(s -> s.getItem() instanceof FilialItem);
     }
 
     @Override
     public @NotNull ItemStack assemble(ApparatusRecipeInput input, HolderLookup.@NotNull Provider lookup) {
         ItemStack staffCopy = input.catalyst().copy();
         // Find the FilialItem in the pedestal items and embed its school
-        for (ItemStack pedestal : input.pedestalItems()) {
+        for (ItemStack pedestal : input.pedestals()) {
             if (pedestal.getItem() instanceof FilialItem filial) {
                 FilialItem.setStaffFilialSchool(staffCopy, filial.getSchoolId());
                 break;

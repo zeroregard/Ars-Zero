@@ -27,6 +27,9 @@ public class ModCreativeTabs {
                     for (var holder : ModStaffItems.getRegisteredStaticStaffs()) {
                         output.accept(holder.get().getDefaultInstance());
                     }
+                    for (var filial : ModItems.ALL_FILIALS) {
+                        output.accept(filial.get().getDefaultInstance());
+                    }
                     output.accept(ModItems.DULL_CIRCLET.get().getDefaultInstance());
                     output.accept(ModItems.SPELLCASTING_CIRCLET.get().getDefaultInstance());
                     output.accept(ModItems.ARCHWOOD_ROD.get().getDefaultInstance());

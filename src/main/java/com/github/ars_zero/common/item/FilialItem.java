@@ -1,6 +1,9 @@
 package com.github.ars_zero.common.item;
 
+import com.github.ars_zero.client.renderer.model.AnimatedFilialGeoModel;
+import com.github.ars_zero.client.renderer.model.StaticFilialGeoModel;
 import com.github.ars_zero.common.config.ServerConfig;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -9,10 +12,19 @@ import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemAttributeModifiers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.animatable.GeoItem;
+import software.bernie.geckolib.animatable.client.GeoRenderProvider;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +39,7 @@ import java.util.function.Consumer;
  * ({@code ars_zero:staff_filial} recipe), granting the same bonus when the staff is in the
  * mainhand. Both bonuses stack.
  */
-public class FilialItem extends Item {
+public class FilialItem extends Item implements GeoItem {
 
     /** CUSTOM_DATA CompoundTag key used to store the embedded filial school on a staff. */
     public static final String TAG_KEY = "ars_zero_filial_school";
@@ -37,11 +49,15 @@ public class FilialItem extends Item {
 
     private final String schoolId;
     private final Holder<Attribute> powerAttribute;
+    /** Looping animation name, or {@code null} for static filials. */
+    @Nullable private final String animationName;
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
-    public FilialItem(String schoolId, Holder<Attribute> powerAttribute) {
-        super(new Properties());
+    public FilialItem(String schoolId, Holder<Attribute> powerAttribute, @Nullable String animationName) {
+        super(new Properties().stacksTo(1));
         this.schoolId = schoolId;
         this.powerAttribute = powerAttribute;
+        this.animationName = animationName;
         SCHOOL_POWER_MAP.put(schoolId, powerAttribute);
     }
 
@@ -57,16 +73,50 @@ public class FilialItem extends Item {
      * Grants power bonus when held in the offhand slot.
      */
     @Override
-    public void getAttributeModifiers(ItemStack stack, Consumer<ItemAttributeModifiers.Entry> consumer) {
+    public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
+        ItemAttributeModifiers base = super.getDefaultAttributeModifiers(stack);
         int bonus = ServerConfig.FILIAL_POWER_BONUS.get();
         if (bonus > 0) {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath("ars_zero", "filial_offhand_" + schoolId);
-            consumer.accept(new ItemAttributeModifiers.Entry(
+            base = base.withModifierAdded(
                 powerAttribute,
                 new AttributeModifier(id, bonus, AttributeModifier.Operation.ADD_VALUE),
                 EquipmentSlotGroup.OFFHAND
-            ));
+            );
         }
+        return base;
+    }
+
+    // -------------------------------------------------------------------------
+    // GeoItem — animation + rendering
+    // -------------------------------------------------------------------------
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        if (animationName != null) {
+            controllers.add(new AnimationController<>(this, "spin", 0, state ->
+                    state.setAndContinue(RawAnimation.begin().thenLoop(animationName))));
+        }
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return cache;
+    }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
+        consumer.accept(new GeoRenderProvider() {
+            private final BlockEntityWithoutLevelRenderer renderer =
+                    new com.github.ars_zero.client.renderer.item.FilialItemRenderer(
+                            animationName != null ? new AnimatedFilialGeoModel() : new StaticFilialGeoModel());
+
+            @Override
+            public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
+                return renderer;
+            }
+        });
     }
 
     // -------------------------------------------------------------------------

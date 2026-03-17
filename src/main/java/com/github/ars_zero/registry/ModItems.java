@@ -173,21 +173,21 @@ public class ModItems {
     // Filial items — one per school of magic
     // -------------------------------------------------------------------------
     public static final ItemRegistryWrapper<FilialItem> FIRE_FILIAL =
-        register("fire_filial", () -> new FilialItem("fire", ModRegistry.FIRE_POWER));
+        register("fire_filial", () -> new FilialItem("fire", ModRegistry.FIRE_POWER, null));
     public static final ItemRegistryWrapper<FilialItem> WATER_FILIAL =
-        register("water_filial", () -> new FilialItem("water", ModRegistry.WATER_POWER));
+        register("water_filial", () -> new FilialItem("water", ModRegistry.WATER_POWER, "animation"));
     public static final ItemRegistryWrapper<FilialItem> AIR_FILIAL =
-        register("air_filial", () -> new FilialItem("air", ModRegistry.AIR_POWER));
+        register("air_filial", () -> new FilialItem("air", ModRegistry.AIR_POWER, "twister"));
     public static final ItemRegistryWrapper<FilialItem> EARTH_FILIAL =
-        register("earth_filial", () -> new FilialItem("earth", ModRegistry.EARTH_POWER));
+        register("earth_filial", () -> new FilialItem("earth", ModRegistry.EARTH_POWER, null));
     public static final ItemRegistryWrapper<FilialItem> NECROMANCY_FILIAL =
-        register("necromancy_filial", () -> new FilialItem("necromancy", ModRegistry.NECROMANCY_POWER));
+        register("necromancy_filial", () -> new FilialItem("necromancy", ModRegistry.NECROMANCY_POWER, null));
     public static final ItemRegistryWrapper<FilialItem> ABJURATION_FILIAL =
-        register("abjuration_filial", () -> new FilialItem("abjuration", ModRegistry.ABJURATION_POWER));
+        register("abjuration_filial", () -> new FilialItem("abjuration", ModRegistry.ABJURATION_POWER, null));
     public static final ItemRegistryWrapper<FilialItem> CONJURATION_FILIAL =
-        register("conjuration_filial", () -> new FilialItem("conjuration", ModRegistry.CONJURATION_POWER));
+        register("conjuration_filial", () -> new FilialItem("conjuration", ModRegistry.SUMMON_POWER, "spinning"));
     public static final ItemRegistryWrapper<FilialItem> MANIPULATION_FILIAL =
-        register("manipulation_filial", () -> new FilialItem("manipulation", ModRegistry.MANIPULATION_POWER));
+        register("manipulation_filial", () -> new FilialItem("manipulation", ModRegistry.MANIPULATION_POWER, null));
 
     /** All 8 filials in school order — used by datagen and other utilities. */
     public static final List<ItemRegistryWrapper<FilialItem>> ALL_FILIALS = List.of(

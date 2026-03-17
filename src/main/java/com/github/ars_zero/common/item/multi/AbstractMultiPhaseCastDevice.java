@@ -64,7 +64,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemAttributeModifiers;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.component.CustomData;
@@ -85,7 +85,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 public abstract class AbstractMultiPhaseCastDevice extends Item implements ICasterTool, IRadialProvider, IMultiPhaseCaster, IScribeable {
 
@@ -113,20 +112,20 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
      * If no filial is embedded, no modifier is added.
      */
     @Override
-    public void getAttributeModifiers(ItemStack stack, Consumer<ItemAttributeModifiers.Entry> consumer) {
-        super.getAttributeModifiers(stack, consumer);
+    public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
+        ItemAttributeModifiers base = super.getDefaultAttributeModifiers(stack);
         String schoolId = FilialItem.getStaffFilialSchool(stack);
-        if (schoolId == null) return;
+        if (schoolId == null) return base;
         Holder<Attribute> power = FilialItem.getPowerForSchool(schoolId);
-        if (power == null) return;
+        if (power == null) return base;
         int bonus = ServerConfig.FILIAL_POWER_BONUS.get();
-        if (bonus <= 0) return;
+        if (bonus <= 0) return base;
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath("ars_zero", "filial_mainhand_" + schoolId);
-        consumer.accept(new ItemAttributeModifiers.Entry(
+        return base.withModifierAdded(
             power,
             new AttributeModifier(id, bonus, AttributeModifier.Operation.ADD_VALUE),
             EquipmentSlotGroup.MAINHAND
-        ));
+        );
     }
 
     public static CastingStyle getCastingStyle(ItemStack stack, int logicalSlot) {
