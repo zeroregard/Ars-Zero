@@ -1,0 +1,26 @@
+{
+  "type": "ars_nouveau:enchanting_apparatus",
+  "keepNbtOfReagent": false,
+  "pedestalItems": [
+    {
+      "item": "ars_nouveau:water_essence"
+    },
+    {
+      "item": "minecraft:heart_of_the_sea"
+    },
+    {
+      "item": "minecraft:water_bucket"
+    },
+    {
+      "item": "minecraft:prismarine_shard"
+    }
+  ],
+  "reagent": {
+    "item": "ars_nouveau:source_gem"
+  },
+  "result": {
+    "count": 1,
+    "id": "ars_zero:water_filial"
+  },
+  "sourceCost": 1000
+}

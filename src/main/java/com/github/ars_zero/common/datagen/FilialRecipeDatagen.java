@@ -16,6 +16,8 @@ import java.util.List;
  *   <li>8 filial crafting recipes (type {@code ars_nouveau:enchanting_apparatus}) — one per school</li>
  *   <li>8 staff-filial embedding recipes (type {@code ars_zero:staff_filial}) — one per school</li>
  * </ul>
+ * Reagent (centre block) is always {@code ars_nouveau:source_gem}.
+ * Each recipe has exactly 4 pedestal items.
  */
 public class FilialRecipeDatagen extends SimpleDataProvider {
 
@@ -28,24 +30,64 @@ public class FilialRecipeDatagen extends SimpleDataProvider {
     @Override
     public void collectJsons(CachedOutput pOutput) {
         // Filial creation recipes (ars_nouveau:enchanting_apparatus)
-        addFilialCreationRecipe("fire_filial",        "ars_nouveau:fire_essence",        "ars_nouveau:fire_essence",        "ars_nouveau:fire_essence");
-        addFilialCreationRecipe("water_filial",       "ars_nouveau:water_essence",       "ars_nouveau:water_essence",       "ars_nouveau:water_essence");
-        addFilialCreationRecipe("air_filial",         "ars_nouveau:air_essence",         "ars_nouveau:air_essence",         "ars_nouveau:air_essence");
-        addFilialCreationRecipe("earth_filial",       "ars_nouveau:earth_essence",       "ars_nouveau:earth_essence",       "ars_nouveau:earth_essence");
-        addFilialCreationRecipe("necromancy_filial",  "ars_nouveau:source_gem",          "ars_nouveau:source_gem",          "ars_nouveau:wilden_tribute");
-        addFilialCreationRecipe("abjuration_filial",  "ars_nouveau:source_gem",          "ars_nouveau:source_gem",          "minecraft:totem_of_undying");
-        addFilialCreationRecipe("conjuration_filial", "ars_nouveau:conjuration_essence", "ars_nouveau:conjuration_essence", "ars_nouveau:source_gem");
-        addFilialCreationRecipe("manipulation_filial","ars_nouveau:manipulation_essence", "ars_nouveau:manipulation_essence","ars_nouveau:source_gem");
+        // Pedestal order matches FILIALS.md ingredients.
+        addFilialCreationRecipe("air_filial",
+                "ars_nouveau:air_essence",
+                "minecraft:phantom_membrane",
+                "minecraft:feather",
+                "minecraft:breeze_rod");
+
+        addFilialCreationRecipe("earth_filial",
+                "ars_nouveau:earth_essence",
+                "minecraft:oak_log",
+                "minecraft:emerald",
+                "minecraft:moss_block");
+
+        addFilialCreationRecipe("fire_filial",
+                "ars_nouveau:fire_essence",
+                "minecraft:lava_bucket",
+                "minecraft:blaze_rod",
+                "minecraft:netherite_ingot");
+
+        addFilialCreationRecipe("water_filial",
+                "ars_nouveau:water_essence",
+                "minecraft:heart_of_the_sea",
+                "minecraft:water_bucket",
+                "minecraft:prismarine_shard");
+
+        addFilialCreationRecipe("abjuration_filial",
+                "ars_nouveau:abjuration_essence",
+                "minecraft:quartz",
+                "minecraft:shield",
+                "minecraft:amethyst_shard");
+
+        addFilialCreationRecipe("conjuration_filial",
+                "ars_nouveau:conjuration_essence",
+                "minecraft:diamond",
+                "minecraft:totem_of_undying",
+                "minecraft:egg");
+
+        addFilialCreationRecipe("manipulation_filial",
+                "ars_nouveau:manipulation_essence",
+                "minecraft:redstone",
+                "minecraft:ender_pearl",
+                "minecraft:string");
+
+        addFilialCreationRecipe("necromancy_filial",
+                "ars_elemental:anima_essence",
+                "minecraft:wither_skeleton_skull",
+                "minecraft:bone",
+                "minecraft:echo_shard");
 
         // Staff embedding recipes (ars_zero:staff_filial)
-        addStaffFilialRecipe("fire_filial");
-        addStaffFilialRecipe("water_filial");
         addStaffFilialRecipe("air_filial");
         addStaffFilialRecipe("earth_filial");
-        addStaffFilialRecipe("necromancy_filial");
+        addStaffFilialRecipe("fire_filial");
+        addStaffFilialRecipe("water_filial");
         addStaffFilialRecipe("abjuration_filial");
         addStaffFilialRecipe("conjuration_filial");
         addStaffFilialRecipe("manipulation_filial");
+        addStaffFilialRecipe("necromancy_filial");
 
         for (FileObj fileObj : files) {
             saveStable(pOutput, fileObj.element(), fileObj.path());
@@ -54,10 +96,11 @@ public class FilialRecipeDatagen extends SimpleDataProvider {
 
     /**
      * Generates an {@code ars_nouveau:enchanting_apparatus} recipe that crafts the named filial.
-     * The reagent (centre) is always a Source Gem; {@code pedestal1}, {@code pedestal2}, and
-     * {@code pedestal3} are the three pedestal items.
+     * The reagent (centre) is always a Source Gem; the four pedestal items are as specified.
      */
-    private void addFilialCreationRecipe(String filialId, String pedestal1, String pedestal2, String pedestal3) {
+    private void addFilialCreationRecipe(String filialId,
+                                         String pedestal1, String pedestal2,
+                                         String pedestal3, String pedestal4) {
         JsonObject json = new JsonObject();
         json.addProperty("type", "ars_nouveau:enchanting_apparatus");
 
@@ -67,6 +110,7 @@ public class FilialRecipeDatagen extends SimpleDataProvider {
         pedestalItems.add(item(pedestal1));
         pedestalItems.add(item(pedestal2));
         pedestalItems.add(item(pedestal3));
+        pedestalItems.add(item(pedestal4));
         json.add("pedestalItems", pedestalItems);
 
         JsonObject result = new JsonObject();
@@ -75,6 +119,7 @@ public class FilialRecipeDatagen extends SimpleDataProvider {
         json.add("result", result);
 
         json.addProperty("sourceCost", 1000);
+        json.addProperty("keepNbtOfReagent", false);
 
         files.add(new FileObj(resolvePath("data/ars_zero/recipe/create_" + filialId + ".json"), json));
     }

@@ -313,5 +313,14 @@
 
   "config.jade.plugin_ars_zero.entity_mana": "Entity Mana",
 
-  "block.ars_zero.bone_chest": "Bone Chest"
+  "block.ars_zero.bone_chest": "Bone Chest",
+
+  "item.ars_zero.air_filial": "Vortex Gale",
+  "item.ars_zero.earth_filial": "Oakheart",
+  "item.ars_zero.fire_filial": "Emberclast",
+  "item.ars_zero.water_filial": "Crux of the Sea",
+  "item.ars_zero.abjuration_filial": "Crucible",
+  "item.ars_zero.conjuration_filial": "Soulwell",
+  "item.ars_zero.manipulation_filial": "Metacarpus",
+  "item.ars_zero.necromancy_filial": "Ossuary Sigil"
 }

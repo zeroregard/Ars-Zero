@@ -1,0 +1,26 @@
+{
+  "type": "ars_nouveau:enchanting_apparatus",
+  "keepNbtOfReagent": false,
+  "pedestalItems": [
+    {
+      "item": "ars_nouveau:abjuration_essence"
+    },
+    {
+      "item": "minecraft:quartz"
+    },
+    {
+      "item": "minecraft:shield"
+    },
+    {
+      "item": "minecraft:amethyst_shard"
+    }
+  ],
+  "reagent": {
+    "item": "ars_nouveau:source_gem"
+  },
+  "result": {
+    "count": 1,
+    "id": "ars_zero:abjuration_filial"
+  },
+  "sourceCost": 1000
+}
