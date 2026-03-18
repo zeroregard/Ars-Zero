@@ -83,6 +83,7 @@ public final class ModStaffItems {
         return StaticStaffConfig.builder("Staff of Demonbane", "item.ars_zero.staff_demonbane.desc")
                 .visualTier(StaticStaffConfig.VisualTier.ARCHMAGE)
                 .defaultDyeColor(DyeColor.RED)
+                .presetFilialSchool("demonbane")
                 .beginSpell("ars_zero:near_form", "ars_nouveau:glyph_delay", "ars_nouveau:glyph_amplify", "ars_zero:effect_beam", "ars_nouveau:glyph_split", "ars_nouveau:glyph_amplify", "ars_nouveau:glyph_amplify", "ars_nouveau:glyph_amplify")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
                 .endSpell()
@@ -107,6 +108,7 @@ public final class ModStaffItems {
         return StaticStaffConfig.builder("Staff of Geometrize", "item.ars_zero.staff_geometrize.desc")
                 .visualTier(StaticStaffConfig.VisualTier.MAGE)
                 .defaultDyeColor(DyeColor.BROWN)
+                .presetFilialSchool("earth")
                 .beginSpell("ars_nouveau:glyph_projectile", "ars_zero:effect_geometrize", "ars_elemental:glyph_conjure_terrain")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
                 .endSpell("ars_zero:temporal_context_form")
@@ -119,6 +121,7 @@ public final class ModStaffItems {
         return StaticStaffConfig.builder("Staff of the Explosion Arch Wizard", "item.ars_zero.staff_convergence.desc")
                 .visualTier(StaticStaffConfig.VisualTier.ARCHMAGE)
                 .defaultDyeColor(DyeColor.ORANGE)
+                .presetFilialSchool("fire")
                 .beginSpell("ars_nouveau:glyph_projectile", "ars_zero:effect_convergence", "ars_nouveau:glyph_explosion")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:sustain_effect")
                 .endSpell()
@@ -149,6 +152,7 @@ public final class ModStaffItems {
                 .tickDelay(1)
                 .discountPercent(100)
                 .defaultDyeColor(DyeColor.ORANGE)
+                .presetFilialSchool("manipulation")
                 .devOnly()
                 .build();
     }

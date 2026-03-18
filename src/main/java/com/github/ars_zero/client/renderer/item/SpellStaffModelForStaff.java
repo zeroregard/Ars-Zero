@@ -12,7 +12,7 @@ import software.bernie.geckolib.model.GeoModel;
  */
 public class SpellStaffModelForStaff extends GeoModel<AbstractStaff> {
 
-    private static final ResourceLocation MODEL_RESOURCE = ArsZero.prefix("geo/spell_staff.geo.json");
+    private static final ResourceLocation MODEL_RESOURCE = ArsZero.prefix("geo/spell_staff_new.geo.json");
     private static final ResourceLocation TEXTURE_RESOURCE = ArsZero.prefix("textures/item/spell_staff.png");
     private static final ResourceLocation ANIMATION_RESOURCE = ArsZero.prefix("animations/spell_staff.animation.json");
 

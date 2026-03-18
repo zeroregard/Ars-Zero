@@ -55,14 +55,15 @@ public class FilialItem extends Item implements GeoItem {
     /** Looping animation name, or {@code null} for static filials. */
     @Nullable private final String animationName;
     private boolean spinOnStaff = true;
+    private boolean emissive = false;
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
-    public FilialItem(String schoolId, Holder<Attribute> powerAttribute, @Nullable String animationName) {
+    public FilialItem(String schoolId, @Nullable Holder<Attribute> powerAttribute, @Nullable String animationName) {
         super(new Properties().stacksTo(1));
         this.schoolId = schoolId;
         this.powerAttribute = powerAttribute;
         this.animationName = animationName;
-        SCHOOL_POWER_MAP.put(schoolId, powerAttribute);
+        if (powerAttribute != null) SCHOOL_POWER_MAP.put(schoolId, powerAttribute);
         SCHOOL_ITEM_MAP.put(schoolId, this);
     }
 
@@ -73,6 +74,15 @@ public class FilialItem extends Item implements GeoItem {
 
     public boolean shouldSpinOnStaff() {
         return spinOnStaff;
+    }
+
+    public FilialItem emissive() {
+        this.emissive = true;
+        return this;
+    }
+
+    public boolean isEmissive() {
+        return emissive;
     }
 
     public String getSchoolId() {
@@ -89,6 +99,7 @@ public class FilialItem extends Item implements GeoItem {
     @Override
     public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
         ItemAttributeModifiers base = super.getDefaultAttributeModifiers(stack);
+        if (powerAttribute == null) return base;
         int bonus = ServerConfig.FILIAL_POWER_BONUS.get();
         if (bonus > 0) {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath("ars_zero", "filial_offhand_" + schoolId);
