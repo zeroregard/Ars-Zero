@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.item;
 
 import com.github.ars_zero.client.gui.StaticStaffScreen;
+import com.github.ars_zero.common.casting.CastingStyle;
 import com.github.ars_zero.common.item.FilialItem;
 import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.client.renderer.item.StaticSpellStaffRenderer;
@@ -172,6 +173,7 @@ public abstract class AbstractStaticSpellStaff extends AbstractStaff implements 
         }
         ensureDefaultDye(stack);
         ensurePresetFilial(stack);
+        ensurePresetCastingStyle(stack);
     }
 
     /** If this staff has a default dye, apply it to the stack. Override {@link #getDefaultDyeColor()} to provide one. */
@@ -190,6 +192,21 @@ public abstract class AbstractStaticSpellStaff extends AbstractStaff implements 
     /** Preset filial school for this staff, or null for no preset filial. */
     protected @org.jetbrains.annotations.Nullable String getPresetFilialSchool() {
         return null;
+    }
+
+    /** Preset casting style for slot 0, or null for none. */
+    protected @org.jetbrains.annotations.Nullable CastingStyle getPresetCastingStyle() {
+        return null;
+    }
+
+    /** If this staff has a preset casting style and slot 0 has no saved style yet, apply it. */
+    protected void ensurePresetCastingStyle(ItemStack stack) {
+        CastingStyle preset = getPresetCastingStyle();
+        if (preset == null) return;
+        CastingStyle existing = AbstractMultiPhaseCastDevice.getCastingStyle(stack, 0);
+        if (!existing.isEnabled() && existing.getColor() == 0xFFFFFF) {
+            AbstractMultiPhaseCastDevice.saveCastingStyle(stack, 0, preset);
+        }
     }
 
     /** If this staff has a preset filial school and the stack has no filial yet, apply it. */

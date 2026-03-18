@@ -189,7 +189,7 @@ public class ModItems {
     public static final ItemRegistryWrapper<FilialItem> MANIPULATION_FILIAL =
         register("manipulation_filial", () -> new FilialItem("manipulation", ModRegistry.MANIPULATION_POWER, null).noSpin());
     public static final ItemRegistryWrapper<FilialItem> DEMONBANE_FILIAL =
-        register("demonbane_filial", () -> new FilialItem("demonbane", null, null).emissive());
+        register("demonbane_filial", () -> new FilialItem("demonbane", null, null));
 
     /** All 8 filials in school order — used by datagen and other utilities. */
     public static final List<ItemRegistryWrapper<FilialItem>> ALL_FILIALS = List.of(

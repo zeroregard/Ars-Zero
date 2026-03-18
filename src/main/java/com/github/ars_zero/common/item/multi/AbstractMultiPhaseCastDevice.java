@@ -147,6 +147,13 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         return new CastingStyle();
     }
 
+    public static void saveCastingStyle(ItemStack stack, int logicalSlot, CastingStyle style) {
+        CustomData existing = stack.get(DataComponents.CUSTOM_DATA);
+        CompoundTag tag = existing != null ? existing.copyTag() : new CompoundTag();
+        tag.put("ars_zero_casting_style_" + logicalSlot, style.save());
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+    }
+
     protected AbstractMultiPhaseCastDevice(SpellTier tier, Properties properties) {
         super(properties
             .stacksTo(1)

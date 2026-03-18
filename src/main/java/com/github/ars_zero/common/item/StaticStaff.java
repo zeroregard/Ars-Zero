@@ -59,6 +59,11 @@ public final class StaticStaff extends AbstractStaticSpellStaff {
     }
 
     @Override
+    protected com.github.ars_zero.common.casting.CastingStyle getPresetCastingStyle() {
+        return config.presetCastingStyle();
+    }
+
+    @Override
     public void appendHoverText(@NotNull ItemStack stack, @NotNull Item.TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
         if (config.tooltipKey() != null && !config.tooltipKey().isEmpty()) {

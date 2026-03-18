@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.item;
 
+import com.github.ars_zero.common.casting.CastingStyle;
 import net.minecraft.world.item.DyeColor;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,8 @@ public record StaticStaffConfig(
     boolean devOnly,
     @Nullable DyeColor defaultDyeColor,
     @Nullable VisualTier visualTier,
-    @Nullable String presetFilialSchool
+    @Nullable String presetFilialSchool,
+    @Nullable CastingStyle presetCastingStyle
 ) {
 
     public enum VisualTier { NOVICE, MAGE, ARCHMAGE }
@@ -45,6 +47,7 @@ public record StaticStaffConfig(
         private DyeColor defaultDyeColor = null;
         private VisualTier visualTier = null;
         private String presetFilialSchool = null;
+        private CastingStyle presetCastingStyle = null;
 
         private Builder(String spellName, String tooltipKey) {
             this.spellName = spellName;
@@ -101,6 +104,11 @@ public record StaticStaffConfig(
             return this;
         }
 
+        public Builder presetCastingStyle(CastingStyle style) {
+            this.presetCastingStyle = style;
+            return this;
+        }
+
         public StaticStaffConfig build() {
             return new StaticStaffConfig(
                 spellName,
@@ -114,7 +122,8 @@ public record StaticStaffConfig(
                 devOnly,
                 defaultDyeColor,
                 visualTier,
-                presetFilialSchool
+                presetFilialSchool,
+                presetCastingStyle
             );
         }
     }

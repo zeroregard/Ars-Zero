@@ -4,7 +4,6 @@ import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
 import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
@@ -54,8 +53,7 @@ public class EntityManaProvider implements IServerDataProvider<EntityAccessor> {
             if (!data.contains(KEY_CURRENT)) return;
             int current = (int) data.getFloat(KEY_CURRENT);
             int max = data.getInt(KEY_MAX);
-            tooltip.add(Component.literal(String.format("Mana: %d / %d", current, max))
-                    .withStyle(style -> style.withColor(0x9D4BDD)));
+            tooltip.add(new ManaElement(current, max));
         }
     }
 }

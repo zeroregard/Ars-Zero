@@ -1,6 +1,7 @@
 package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.casting.CastingStyle;
 import com.github.ars_zero.common.item.AbstractStaff;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
@@ -80,10 +81,15 @@ public final class ModStaffItems {
     }
 
     private static StaticStaffConfig staffDemonbaneConfig() {
+        CastingStyle demonbaneCircle = new CastingStyle();
+        demonbaneCircle.setEnabled(true);
+        demonbaneCircle.setColor(0xFFFFFF);
+        demonbaneCircle.setPlacement(CastingStyle.Placement.NEAR);
         return StaticStaffConfig.builder("Staff of Demonbane", "item.ars_zero.staff_demonbane.desc")
                 .visualTier(StaticStaffConfig.VisualTier.ARCHMAGE)
                 .defaultDyeColor(DyeColor.RED)
                 .presetFilialSchool("demonbane")
+                .presetCastingStyle(demonbaneCircle)
                 .beginSpell("ars_zero:near_form", "ars_nouveau:glyph_delay", "ars_nouveau:glyph_amplify", "ars_zero:effect_beam", "ars_nouveau:glyph_split", "ars_nouveau:glyph_amplify", "ars_nouveau:glyph_amplify", "ars_nouveau:glyph_amplify")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
                 .endSpell()
@@ -109,7 +115,7 @@ public final class ModStaffItems {
                 .visualTier(StaticStaffConfig.VisualTier.MAGE)
                 .defaultDyeColor(DyeColor.BROWN)
                 .presetFilialSchool("earth")
-                .beginSpell("ars_nouveau:glyph_projectile", "ars_zero:effect_geometrize", "ars_elemental:glyph_conjure_terrain")
+                .beginSpell("ars_zero:near_form", "ars_zero:effect_geometrize", "ars_elemental:glyph_conjure_terrain")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
                 .endSpell("ars_zero:temporal_context_form")
                 .tickDelay(1)
