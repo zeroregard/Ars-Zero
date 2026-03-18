@@ -181,13 +181,13 @@ public class ModItems {
     public static final ItemRegistryWrapper<FilialItem> EARTH_FILIAL =
         register("earth_filial", () -> new FilialItem("earth", ModRegistry.EARTH_POWER, null));
     public static final ItemRegistryWrapper<FilialItem> NECROMANCY_FILIAL =
-        register("necromancy_filial", () -> new FilialItem("necromancy", ModRegistry.NECROMANCY_POWER, null));
+        register("necromancy_filial", () -> new FilialItem("necromancy", ModRegistry.NECROMANCY_POWER, null).noSpin());
     public static final ItemRegistryWrapper<FilialItem> ABJURATION_FILIAL =
         register("abjuration_filial", () -> new FilialItem("abjuration", ModRegistry.ABJURATION_POWER, null));
     public static final ItemRegistryWrapper<FilialItem> CONJURATION_FILIAL =
         register("conjuration_filial", () -> new FilialItem("conjuration", ModRegistry.SUMMON_POWER, "spinning"));
     public static final ItemRegistryWrapper<FilialItem> MANIPULATION_FILIAL =
-        register("manipulation_filial", () -> new FilialItem("manipulation", ModRegistry.MANIPULATION_POWER, null));
+        register("manipulation_filial", () -> new FilialItem("manipulation", ModRegistry.MANIPULATION_POWER, null).noSpin());
 
     /** All 8 filials in school order — used by datagen and other utilities. */
     public static final List<ItemRegistryWrapper<FilialItem>> ALL_FILIALS = List.of(

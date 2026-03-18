@@ -69,7 +69,8 @@ public final class ModStaffItems {
 
     private static StaticStaffConfig staffTelekinesisConfig() {
         return StaticStaffConfig.builder("Staff of Telekinesis", "item.ars_zero.staff_telekinesis.desc")
-                .rendererType(StaticStaffConfig.RENDERER_TELEKINESIS)
+                .visualTier(StaticStaffConfig.VisualTier.NOVICE)
+                .defaultDyeColor(DyeColor.PURPLE)
                 .beginSpell("ars_nouveau:glyph_projectile", "ars_zero:select_effect")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
                 .endSpell("ars_zero:temporal_context_form", "ars_zero:push_effect")
@@ -80,7 +81,8 @@ public final class ModStaffItems {
 
     private static StaticStaffConfig staffDemonbaneConfig() {
         return StaticStaffConfig.builder("Staff of Demonbane", "item.ars_zero.staff_demonbane.desc")
-                .rendererType(StaticStaffConfig.RENDERER_TELEKINESIS)
+                .visualTier(StaticStaffConfig.VisualTier.ARCHMAGE)
+                .defaultDyeColor(DyeColor.RED)
                 .beginSpell("ars_zero:near_form", "ars_nouveau:glyph_delay", "ars_nouveau:glyph_amplify", "ars_zero:effect_beam", "ars_nouveau:glyph_split", "ars_nouveau:glyph_amplify", "ars_nouveau:glyph_amplify", "ars_nouveau:glyph_amplify")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
                 .endSpell()
@@ -91,7 +93,8 @@ public final class ModStaffItems {
 
     private static StaticStaffConfig staffVoxelsConfig() {
         return StaticStaffConfig.builder("Staff of Voxels", "item.ars_zero.staff_voxels.desc")
-                .rendererType(StaticStaffConfig.RENDERER_TELEKINESIS)
+                .visualTier(StaticStaffConfig.VisualTier.MAGE)
+                .defaultDyeColor(DyeColor.CYAN)
                 .beginSpell("ars_zero:near_form", "ars_zero:conjure_voxel_effect", "ars_nouveau:glyph_split", "ars_nouveau:glyph_conjure_water")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
                 .endSpell("ars_zero:temporal_context_form", "ars_nouveau:glyph_explosion")
@@ -102,7 +105,8 @@ public final class ModStaffItems {
 
     private static StaticStaffConfig staffGeometrizeConfig() {
         return StaticStaffConfig.builder("Staff of Geometrize", "item.ars_zero.staff_geometrize.desc")
-                .rendererType(StaticStaffConfig.RENDERER_TELEKINESIS)
+                .visualTier(StaticStaffConfig.VisualTier.MAGE)
+                .defaultDyeColor(DyeColor.BROWN)
                 .beginSpell("ars_nouveau:glyph_projectile", "ars_zero:effect_geometrize", "ars_elemental:glyph_conjure_terrain")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
                 .endSpell("ars_zero:temporal_context_form")
@@ -113,7 +117,8 @@ public final class ModStaffItems {
 
     private static StaticStaffConfig staffConvergenceConfig() {
         return StaticStaffConfig.builder("Staff of the Explosion Arch Wizard", "item.ars_zero.staff_convergence.desc")
-                .rendererType(StaticStaffConfig.RENDERER_TELEKINESIS)
+                .visualTier(StaticStaffConfig.VisualTier.ARCHMAGE)
+                .defaultDyeColor(DyeColor.ORANGE)
                 .beginSpell("ars_nouveau:glyph_projectile", "ars_zero:effect_convergence", "ars_nouveau:glyph_explosion")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:sustain_effect")
                 .endSpell()
@@ -124,7 +129,9 @@ public final class ModStaffItems {
 
     private static StaticStaffConfig staffLakesConfig() {
         return StaticStaffConfig.builder("Staff of Lakes", "item.ars_zero.staff_lakes.desc")
-                .rendererType(StaticStaffConfig.RENDERER_TELEKINESIS)
+                .visualTier(StaticStaffConfig.VisualTier.ARCHMAGE)
+                .defaultDyeColor(DyeColor.BLUE)
+                .presetFilialSchool("water")
                 .beginSpell("ars_nouveau:glyph_projectile", "ars_zero:effect_convergence", "ars_nouveau:glyph_conjure_water")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:sustain_effect")
                 .endSpell()

@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.item;
 
 import com.github.ars_zero.client.gui.StaticStaffScreen;
+import com.github.ars_zero.common.item.FilialItem;
 import com.github.ars_zero.common.item.multi.AbstractMultiPhaseCastDevice;
 import com.github.ars_zero.client.renderer.item.StaticSpellStaffRenderer;
 import com.hollingsworth.arsnouveau.api.mana.IManaDiscountEquipment;
@@ -170,6 +171,7 @@ public abstract class AbstractStaticSpellStaff extends AbstractStaff implements 
             AbstractMultiPhaseCastDevice.setSlotTickDelay(stack, 0, getPresetSlotTickDelay());
         }
         ensureDefaultDye(stack);
+        ensurePresetFilial(stack);
     }
 
     /** If this staff has a default dye, apply it to the stack. Override {@link #getDefaultDyeColor()} to provide one. */
@@ -183,6 +185,19 @@ public abstract class AbstractStaticSpellStaff extends AbstractStaff implements 
     /** Default dye color for this staff, or null to use the item's default. */
     protected net.minecraft.world.item.DyeColor getDefaultDyeColor() {
         return null;
+    }
+
+    /** Preset filial school for this staff, or null for no preset filial. */
+    protected @org.jetbrains.annotations.Nullable String getPresetFilialSchool() {
+        return null;
+    }
+
+    /** If this staff has a preset filial school and the stack has no filial yet, apply it. */
+    protected void ensurePresetFilial(ItemStack stack) {
+        String school = getPresetFilialSchool();
+        if (school != null && FilialItem.getStaffFilialSchool(stack) == null) {
+            FilialItem.setStaffFilialSchool(stack, school);
+        }
     }
 
     @OnlyIn(Dist.CLIENT)

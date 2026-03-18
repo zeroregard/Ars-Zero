@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Configuration for a {@link StaticStaff}. Use the builder to construct.
  * rendererType is resolved on the client (e.g. "telekinesis", "spell_staff_style").
+ * Use visualTier for spell-staff-style rendering with a specific tier bone set.
  */
 public record StaticStaffConfig(
     String spellName,
@@ -17,8 +18,12 @@ public record StaticStaffConfig(
     int tickDelay,
     int discountPercent,
     boolean devOnly,
-    @Nullable DyeColor defaultDyeColor
+    @Nullable DyeColor defaultDyeColor,
+    @Nullable VisualTier visualTier,
+    @Nullable String presetFilialSchool
 ) {
+
+    public enum VisualTier { NOVICE, MAGE, ARCHMAGE }
 
     public static final String RENDERER_TELEKINESIS = "telekinesis";
     public static final String RENDERER_SPELL_STAFF_STYLE = "spell_staff_style";
@@ -38,6 +43,8 @@ public record StaticStaffConfig(
         private int discountPercent = 0;
         private boolean devOnly = false;
         private DyeColor defaultDyeColor = null;
+        private VisualTier visualTier = null;
+        private String presetFilialSchool = null;
 
         private Builder(String spellName, String tooltipKey) {
             this.spellName = spellName;
@@ -84,6 +91,16 @@ public record StaticStaffConfig(
             return this;
         }
 
+        public Builder visualTier(VisualTier tier) {
+            this.visualTier = tier;
+            return this;
+        }
+
+        public Builder presetFilialSchool(String school) {
+            this.presetFilialSchool = school;
+            return this;
+        }
+
         public StaticStaffConfig build() {
             return new StaticStaffConfig(
                 spellName,
@@ -95,7 +112,9 @@ public record StaticStaffConfig(
                 tickDelay,
                 discountPercent,
                 devOnly,
-                defaultDyeColor
+                defaultDyeColor,
+                visualTier,
+                presetFilialSchool
             );
         }
     }

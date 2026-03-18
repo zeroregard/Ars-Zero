@@ -15,7 +15,22 @@ public final class StaticStaffRendererProvider {
     private StaticStaffRendererProvider() {}
 
     public static GeoRenderProvider create(String rendererType, StaticStaff staff) {
-        BlockEntityWithoutLevelRenderer renderer = switch (rendererType) {
+        StaticStaffConfig config = staff.getConfig();
+        if (config.visualTier() != null) {
+            Set<String> hiddenBones = switch (config.visualTier()) {
+                case NOVICE   -> Set.of("tier2", "tier3");
+                case MAGE     -> Set.of("tier3");
+                case ARCHMAGE -> Set.of();
+            };
+            BlockEntityWithoutLevelRenderer r = new SpellStaffStyleRenderer(hiddenBones);
+            return new GeoRenderProvider() {
+                @Override
+                public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
+                    return r;
+                }
+            };
+        }
+        BlockEntityWithoutLevelRenderer renderer = rendererType == null ? new TelekinesisStaffRenderer() : switch (rendererType) {
             case StaticStaffConfig.RENDERER_TELEKINESIS -> new TelekinesisStaffRenderer();
             case StaticStaffConfig.RENDERER_SPELL_STAFF_STYLE -> new SpellStaffStyleRenderer(Set.of("tier3"));
             default -> new TelekinesisStaffRenderer();

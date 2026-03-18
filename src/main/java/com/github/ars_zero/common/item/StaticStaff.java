@@ -54,6 +54,11 @@ public final class StaticStaff extends AbstractStaticSpellStaff {
     }
 
     @Override
+    protected String getPresetFilialSchool() {
+        return config.presetFilialSchool();
+    }
+
+    @Override
     public void appendHoverText(@NotNull ItemStack stack, @NotNull Item.TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
         if (config.tooltipKey() != null && !config.tooltipKey().isEmpty()) {
@@ -65,7 +70,8 @@ public final class StaticStaff extends AbstractStaticSpellStaff {
     @OnlyIn(Dist.CLIENT)
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
         String type = config.rendererType();
-        if (type != null && !type.isEmpty() && StaticStaffRendererRegistry.RENDERER_FACTORY != null) {
+        boolean hasRenderer = (type != null && !type.isEmpty()) || config.visualTier() != null;
+        if (hasRenderer && StaticStaffRendererRegistry.RENDERER_FACTORY != null) {
             consumer.accept(StaticStaffRendererRegistry.RENDERER_FACTORY.apply(type, this));
             return;
         }

@@ -47,10 +47,14 @@ public class FilialItem extends Item implements GeoItem {
     /** Maps school ID → power attribute Holder, populated by each FilialItem constructor. */
     private static final Map<String, Holder<Attribute>> SCHOOL_POWER_MAP = new HashMap<>();
 
+    /** Maps school ID → FilialItem instance, populated by each FilialItem constructor. */
+    private static final Map<String, FilialItem> SCHOOL_ITEM_MAP = new HashMap<>();
+
     private final String schoolId;
     private final Holder<Attribute> powerAttribute;
     /** Looping animation name, or {@code null} for static filials. */
     @Nullable private final String animationName;
+    private boolean spinOnStaff = true;
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     public FilialItem(String schoolId, Holder<Attribute> powerAttribute, @Nullable String animationName) {
@@ -59,6 +63,16 @@ public class FilialItem extends Item implements GeoItem {
         this.powerAttribute = powerAttribute;
         this.animationName = animationName;
         SCHOOL_POWER_MAP.put(schoolId, powerAttribute);
+        SCHOOL_ITEM_MAP.put(schoolId, this);
+    }
+
+    public FilialItem noSpin() {
+        this.spinOnStaff = false;
+        return this;
+    }
+
+    public boolean shouldSpinOnStaff() {
+        return spinOnStaff;
     }
 
     public String getSchoolId() {
@@ -155,5 +169,14 @@ public class FilialItem extends Item implements GeoItem {
     @Nullable
     public static Holder<Attribute> getPowerForSchool(String schoolId) {
         return SCHOOL_POWER_MAP.get(schoolId);
+    }
+
+    /**
+     * Returns the {@link FilialItem} instance for a given school ID, or {@code null} if unknown.
+     * Populated when {@link FilialItem} instances are constructed during item registration.
+     */
+    @Nullable
+    public static FilialItem getItemForSchool(String schoolId) {
+        return SCHOOL_ITEM_MAP.get(schoolId);
     }
 }

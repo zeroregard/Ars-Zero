@@ -15,7 +15,9 @@
     "mood_sound": {
       "block_search_extent": 8,
       "offset": 2.0,
-      "sound": "minecraft:ambient.cave",
+      "sound": {
+        "sound_id": "ars_zero:ambient.necropolis"
+      },
       "tick_delay": 6000
     },
     "music": {
