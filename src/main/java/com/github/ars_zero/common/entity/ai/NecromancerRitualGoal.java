@@ -1,8 +1,11 @@
 package com.github.ars_zero.common.entity.ai;
 
 import com.github.ars_zero.common.block.OssuaryBeaconBlockEntity;
+import com.github.ars_zero.common.casting.CastingStyle;
 import com.github.ars_zero.common.entity.AbstractBlightedSkeleton;
+import com.github.ars_zero.common.entity.ArcaneCircleEntity;
 import com.github.ars_zero.registry.ModBlocks;
+import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.mana.IManaCap;
 import com.hollingsworth.arsnouveau.setup.registry.CapabilityRegistry;
 import net.minecraft.core.BlockPos;
@@ -22,6 +25,7 @@ import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * When undisturbed (no target), walks to the nearest ritual altar and periodically
@@ -38,9 +42,12 @@ public class NecromancerRitualGoal extends Goal {
     /** Mana consumed each time an undead is raised. */
     private static final int RITUAL_MANA_COST = 500;
     private static final Vector3f BLIGHT_COLOR = new Vector3f(0.29f, 0.48f, 0.19f);
+    private static final int SUMMONING_CIRCLE_COLOR = 0x26C6DA;
 
     private final AbstractBlightedSkeleton mob;
     @Nullable private BlockPos altarPos;
+    @Nullable private BlockPos pendingSpawnPos;
+    @Nullable private ArcaneCircleEntity summoningCircle;
     private int raiseTicker = 0;
 
     public NecromancerRitualGoal(AbstractBlightedSkeleton mob) {
@@ -82,7 +89,12 @@ public class NecromancerRitualGoal extends Goal {
             OssuaryBeaconBlockEntity be = getBeaconEntity(altarPos);
             if (be != null) be.unregister(mob.getUUID());
         }
+        if (summoningCircle != null && summoningCircle.isAlive()) {
+            summoningCircle.scheduleDiscard();
+        }
         altarPos = null;
+        pendingSpawnPos = null;
+        summoningCircle = null;
         raiseTicker = 0;
         mob.getNavigation().stop();
     }
@@ -110,11 +122,50 @@ public class NecromancerRitualGoal extends Goal {
             }
         }
 
+        // Spawn the conjuration circle at the start of each raise countdown
+        if (raiseTicker == 0 && mob.level() instanceof ServerLevel sl) {
+            beginSummoningRitual(sl);
+        }
+
         raiseTicker++;
         if (raiseTicker >= RAISE_INTERVAL_TICKS) {
             raiseTicker = 0;
             tryRaiseUndead();
         }
+    }
+
+    /**
+     * Called at the start of each summoning countdown (raiseTicker == 0).
+     * Picks the spawn position and places the conjuration circle there so it
+     * glows throughout the full ritual, disappearing when the mob actually rises.
+     */
+    private void beginSummoningRitual(ServerLevel serverLevel) {
+        // Discard any leftover circle from a previous cycle
+        if (summoningCircle != null && summoningCircle.isAlive()) {
+            summoningCircle.scheduleDiscard();
+            summoningCircle = null;
+        }
+        BlockPos soilPos = findBlightedSoilNearAltar();
+        if (soilPos == null) return;
+        int dx = mob.getRandom().nextInt(5) - 2;
+        int dz = mob.getRandom().nextInt(5) - 2;
+        pendingSpawnPos = soilPos.offset(dx, 1, dz);
+
+        ArcaneCircleEntity circle = ModEntities.ARCANE_CIRCLE.get().create(serverLevel);
+        if (circle == null) return;
+        CastingStyle conjureStyle = new CastingStyle();
+        conjureStyle.setEnabled(true);
+        conjureStyle.setPlacement(CastingStyle.Placement.FEET);
+        conjureStyle.setColor(SUMMONING_CIRCLE_COLOR);
+        conjureStyle.setActiveBones(Set.of("alphabet", "circle_big", "circle_small"));
+        conjureStyle.setSymbolAuto(false);
+        conjureStyle.setSelectedSymbolBone("school_conjuration");
+        circle.setPos(pendingSpawnPos.getX() + 0.5, pendingSpawnPos.getY() + 0.1, pendingSpawnPos.getZ() + 0.5);
+        circle.initialize(null, conjureStyle);
+        // Auto-expire slightly after the raise interval as a fallback if the raise never fires
+        circle.setMaxAliveTicks(RAISE_INTERVAL_TICKS + 20);
+        serverLevel.addFreshEntity(circle);
+        summoningCircle = circle;
     }
 
     private void tryRaiseUndead() {
@@ -128,12 +179,15 @@ public class NecromancerRitualGoal extends Goal {
         if (mana == null || mana.getCurrentMana() < RITUAL_MANA_COST) return;
         mana.setMana(mana.getCurrentMana() - RITUAL_MANA_COST);
 
-        // Spawn near the closest blighted soil to the altar (± small random offset)
-        BlockPos soilPos = findBlightedSoilNearAltar();
-        if (soilPos == null) return;
-        int dx = mob.getRandom().nextInt(5) - 2;
-        int dz = mob.getRandom().nextInt(5) - 2;
-        BlockPos spawnPos = soilPos.offset(dx, 1, dz);
+        // Use the pre-chosen spawn position from beginSummoningRitual, or pick one now as fallback
+        BlockPos spawnPos = pendingSpawnPos;
+        if (spawnPos == null) {
+            BlockPos soilPos = findBlightedSoilNearAltar();
+            if (soilPos == null) return;
+            int dx = mob.getRandom().nextInt(5) - 2;
+            int dz = mob.getRandom().nextInt(5) - 2;
+            spawnPos = soilPos.offset(dx, 1, dz);
+        }
 
         // Raise zombie or skeleton randomly
         boolean raiseZombie = mob.getRandom().nextBoolean();
@@ -150,6 +204,14 @@ public class NecromancerRitualGoal extends Goal {
             serverLevel.addFreshEntity(skeleton);
             mob.addOwnedRevenantUuid(skeleton.getUUID());
         }
+
+        // Dismiss the circle now that the mob has risen from it
+        if (summoningCircle != null && summoningCircle.isAlive()) {
+            summoningCircle.scheduleDiscard();
+            summoningCircle = null;
+        }
+        pendingSpawnPos = null;
+
         // Dust particles rising from the spawn position
         serverLevel.sendParticles(
                 new DustParticleOptions(BLIGHT_COLOR, 1.2f),

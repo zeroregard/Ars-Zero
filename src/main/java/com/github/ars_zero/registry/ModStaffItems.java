@@ -48,7 +48,6 @@ public final class ModStaffItems {
 
         STAFF_TELEKINESIS = registerStaticStaff(items, "staff_telekinesis", staffTelekinesisConfig());
         registerStaticStaff(items, "staff_demonbane", staffDemonbaneConfig());
-        registerStaticStaff(items, "staff_voxels", staffVoxelsConfig());
         registerStaticStaff(items, "staff_geometrize", staffGeometrizeConfig());
         registerStaticStaff(items, "staff_convergence", staffConvergenceConfig());
         registerStaticStaff(items, "staff_lakes", staffLakesConfig());
@@ -93,18 +92,6 @@ public final class ModStaffItems {
                 .beginSpell("ars_zero:near_form", "ars_nouveau:glyph_delay", "ars_nouveau:glyph_amplify", "ars_zero:effect_beam", "ars_nouveau:glyph_split", "ars_nouveau:glyph_amplify", "ars_nouveau:glyph_amplify", "ars_nouveau:glyph_amplify")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
                 .endSpell()
-                .tickDelay(1)
-                .devOnly()
-                .build();
-    }
-
-    private static StaticStaffConfig staffVoxelsConfig() {
-        return StaticStaffConfig.builder("Staff of Voxels", "item.ars_zero.staff_voxels.desc")
-                .visualTier(StaticStaffConfig.VisualTier.MAGE)
-                .defaultDyeColor(DyeColor.CYAN)
-                .beginSpell("ars_zero:near_form", "ars_zero:conjure_voxel_effect", "ars_nouveau:glyph_split", "ars_nouveau:glyph_conjure_water")
-                .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
-                .endSpell("ars_zero:temporal_context_form", "ars_nouveau:glyph_explosion")
                 .tickDelay(1)
                 .devOnly()
                 .build();

@@ -176,6 +176,13 @@ public abstract class AbstractStaticSpellStaff extends AbstractStaff implements 
         ensurePresetCastingStyle(stack);
     }
 
+    /** Apply all defaults (dye, filial, casting style) to a freshly-created stack. */
+    public void initStack(ItemStack stack) {
+        ensureDefaultDye(stack);
+        ensurePresetFilial(stack);
+        ensurePresetCastingStyle(stack);
+    }
+
     /** If this staff has a default dye, apply it to the stack. Override {@link #getDefaultDyeColor()} to provide one. */
     protected void ensureDefaultDye(ItemStack stack) {
         var dye = getDefaultDyeColor();

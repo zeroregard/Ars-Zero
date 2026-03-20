@@ -15,7 +15,6 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -48,12 +47,15 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
     private static final int MAX_MANA = 1500;
     private static final double MANA_REGEN = 2.0;
     private static final int BLINK_COOLDOWN = 200;
+    private static final int BLINK_COOLDOWN_BLOODIED = 100;
     /** Fake gravity per tick so the Lich slowly drifts down when in the air. */
     private static final double FAKE_GRAVITY_PER_TICK = -0.012;
     private static final double MAX_FALL_SPEED = -0.06;
     /** Ticks between each point of health regenerated. */
     private static final int REGEN_INTERVAL_TICKS = 40;
     private static final float REGEN_AMOUNT = 1.0f;
+    private static final int ASCENT_INTERVAL_TICKS = 40;
+    private static final double ASCENT_IMPULSE = 0.15;
 
     public LichBlightedSkeleton(EntityType<? extends Skeleton> entityType, Level level) {
         super(entityType, level);
@@ -72,8 +74,7 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new MageSkeletonBlinkGoal(this));
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2, false));
-        this.goalSelector.addGoal(3, new MageSkeletonCastGoal(this, List.of(
+        this.goalSelector.addGoal(2, new MageSkeletonCastGoal(this, List.of(
                 new BlightVoxelPushSpellBehaviour(),
                 new FireVoxelPushSpellBehaviour(),
                 new IceVoxelPushSpellBehaviour(),
@@ -91,8 +92,13 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
                 reg.get(LICH_STAVES_TAG).ifPresent(tag -> {
                     var list = tag.stream().toList();
                     if (!list.isEmpty()) {
-                        Item staff = list.get(level().getRandom().nextInt(list.size())).value();
-                        setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(staff));
+                        int idx = (int) Math.floorMod(getUUID().getLeastSignificantBits(), list.size());
+                        Item staffItem = list.get(idx).value();
+                        ItemStack staffStack = new ItemStack(staffItem);
+                        if (staffItem instanceof com.github.ars_zero.common.item.AbstractStaticSpellStaff staticStaff) {
+                            staticStaff.initStack(staffStack);
+                        }
+                        setItemSlot(EquipmentSlot.MAINHAND, staffStack);
                         setDropChance(EquipmentSlot.MAINHAND, 1.0f);
                     }
                 })
@@ -133,6 +139,11 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
             double newY = Mth.clamp(motion.y + FAKE_GRAVITY_PER_TICK, MAX_FALL_SPEED, 1.0);
             setDeltaMovement(motion.x, newY, motion.z);
         }
+        if (isBloodied() && !onGround() && !isInWaterOrBubble()
+                && tickCount % ASCENT_INTERVAL_TICKS == 0) {
+            Vec3 motion = getDeltaMovement();
+            setDeltaMovement(motion.x, motion.y + ASCENT_IMPULSE, motion.z);
+        }
         if (tickCount % REGEN_INTERVAL_TICKS == 0 && getHealth() < getMaxHealth()) {
             heal(REGEN_AMOUNT);
         }
@@ -150,7 +161,11 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
 
     @Override
     public int getBlinkCooldownTicksMax() {
-        return BLINK_COOLDOWN;
+        return isBloodied() ? BLINK_COOLDOWN_BLOODIED : BLINK_COOLDOWN;
+    }
+
+    private boolean isBloodied() {
+        return getHealth() < getMaxHealth() * 0.5f;
     }
 
     @Override
