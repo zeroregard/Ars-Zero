@@ -1,15 +1,22 @@
 package com.github.ars_zero.common.entity;
 
+import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.entity.ai.BlightVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.FireVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.IceVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.LightningVoxelPushSpellBehaviour;
 import com.github.ars_zero.common.entity.ai.MageSkeletonBlinkGoal;
 import com.github.ars_zero.common.entity.ai.MageSkeletonCastGoal;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.MobSpawnType;
@@ -34,6 +41,9 @@ import java.util.List;
  * Tier 3 blighted skeleton: flying, unlimited blink, fire/ice/lightning triple-voxel casts.
  */
 public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
+
+    private static final TagKey<Item> LICH_STAVES_TAG = TagKey.create(
+            Registries.ITEM, ArsZero.prefix("lich_staves"));
 
     private static final int MAX_MANA = 1500;
     private static final double MANA_REGEN = 2.0;
@@ -62,7 +72,8 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new MageSkeletonBlinkGoal(this));
-        this.goalSelector.addGoal(1, new MageSkeletonCastGoal(this, List.of(
+        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2, false));
+        this.goalSelector.addGoal(3, new MageSkeletonCastGoal(this, List.of(
                 new BlightVoxelPushSpellBehaviour(),
                 new FireVoxelPushSpellBehaviour(),
                 new IceVoxelPushSpellBehaviour(),
@@ -76,6 +87,22 @@ public class LichBlightedSkeleton extends AbstractBlightedSkeleton {
         setTatteredArcanistSlot(EquipmentSlot.CHEST);
         setTatteredArcanistSlot(EquipmentSlot.LEGS);
         setTatteredArcanistSlot(EquipmentSlot.FEET);
+        level().registryAccess().lookup(Registries.ITEM).ifPresent(reg ->
+                reg.get(LICH_STAVES_TAG).ifPresent(tag -> {
+                    var list = tag.stream().toList();
+                    if (!list.isEmpty()) {
+                        Item staff = list.get(level().getRandom().nextInt(list.size())).value();
+                        setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(staff));
+                        setDropChance(EquipmentSlot.MAINHAND, 1.0f);
+                    }
+                })
+        );
+    }
+
+    @Override
+    public boolean doHurtTarget(Entity target) {
+        float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        return target.hurt(this.damageSources().mobAttack(this), damage);
     }
 
     @Override
