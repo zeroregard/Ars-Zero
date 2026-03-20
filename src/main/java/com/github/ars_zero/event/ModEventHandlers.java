@@ -1,13 +1,26 @@
 package com.github.ars_zero.event;
 
 import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.entity.BoneGolem;
 import com.github.ars_zero.registry.ModItems;
+import net.minecraft.tags.EntityTypeTags;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 @EventBusSubscriber(modid = ArsZero.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
 public class ModEventHandlers {
+
+    /** Undead mobs (zombies, skeletons) inherit a vanilla goal to attack IronGolem subclasses.
+     *  Cancel that targeting when the intended victim is a BoneGolem. */
+    @SubscribeEvent
+    public static void onLivingChangeTarget(LivingChangeTargetEvent event) {
+        if (event.getNewAboutToBeSetTarget() instanceof BoneGolem
+                && event.getEntity().getType().is(EntityTypeTags.UNDEAD)) {
+            event.setCanceled(true);
+        }
+    }
 
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Pre event) {
