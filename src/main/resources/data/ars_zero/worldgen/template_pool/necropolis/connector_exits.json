@@ -1,0 +1,8 @@
+{
+  "name": "ars_zero:necropolis/connector_exits",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {"weight": 5, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/hallway_down", "processors": "ars_zero:necropolis", "projection": "rigid"}},
+    {"weight": 1, "element": {"element_type": "minecraft:single_pool_element", "location": "ars_zero:necropolis/medium_room_1", "processors": "ars_zero:necropolis", "projection": "rigid"}}
+  ]
+}

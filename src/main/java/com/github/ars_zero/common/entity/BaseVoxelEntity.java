@@ -14,6 +14,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -487,6 +488,22 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity, I
     }
 
     @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.level().isClientSide) return false;
+        Entity directEntity = source.getDirectEntity();
+        boolean isMelee = directEntity instanceof LivingEntity
+                          && !(directEntity instanceof Projectile);
+        if (isMelee) {
+            onMeleeHit(source, (LivingEntity) directEntity);
+        }
+        return false;
+    }
+
+    protected void onMeleeHit(DamageSource source, LivingEntity attacker) {
+        // default: pass through — no effect
+    }
+
+    @Override
     public boolean isPushable() {
         return true;
     }
@@ -500,8 +517,19 @@ public abstract class BaseVoxelEntity extends Projectile implements GeoEntity, I
         this.entityData.set(FROZEN_UNTIL_TICK, this.level().getGameTime() + 1);
     }
 
+    public void unfreezePhysics() {
+        this.entityData.set(FROZEN_UNTIL_TICK, 0L);
+    }
+
     public boolean isPhysicsFrozen() {
         return this.entityData.get(FROZEN_UNTIL_TICK) >= this.level().getGameTime();
+    }
+
+    @Override
+    public boolean skipAttackInteraction(@NotNull Entity entity) {
+        // Projectile base may intercept player attacks for deflection logic.
+        // Voxels handle melee via hurt() → onMeleeHit(), so always allow attacks through.
+        return false;
     }
 
     public abstract int getColor();

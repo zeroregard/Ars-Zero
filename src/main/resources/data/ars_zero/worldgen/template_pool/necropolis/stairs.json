@@ -1,0 +1,24 @@
+{
+  "name": "ars_zero:necropolis/stairs",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 3,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "ars_zero:necropolis/entrance_staircase",
+        "processors": "ars_zero:necropolis",
+        "projection": "rigid"
+      }
+    },
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "ars_zero:necropolis/room_connector",
+        "processors": "ars_zero:necropolis",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

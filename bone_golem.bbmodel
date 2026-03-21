@@ -1,0 +1,253 @@
+{
+	"meta": {
+		"format_version": "4.10",
+		"model_format": "free",
+		"box_uv": false
+	},
+	"name": "bone_golem",
+	"resolution": {
+		"width": 128,
+		"height": 128
+	},
+	"elements": [
+		{
+			"name": "head_main",
+			"box_uv": false,
+			"from": [-4, 14, -7.5],
+			"to": [4, 24, 0.5],
+			"autouv": 0,
+			"color": 0,
+			"origin": [0, 17, -2],
+			"faces": {
+				"north": {"uv": [8, 0, 16, 10], "texture": 0},
+				"east":  {"uv": [0, 0, 8, 10], "texture": 0},
+				"south": {"uv": [24, 0, 32, 10], "texture": 0},
+				"west":  {"uv": [16, 0, 24, 10], "texture": 0},
+				"up":    {"uv": [8, 0, 16, 8], "texture": 0},
+				"down":  {"uv": [16, 0, 24, 8], "texture": 0}
+			},
+			"uuid": "a1000001-0000-0000-0000-000000000001"
+		},
+		{
+			"name": "head_nose",
+			"box_uv": false,
+			"from": [-1, 17, -9.5],
+			"to": [1, 21, -7.5],
+			"autouv": 0,
+			"color": 0,
+			"origin": [0, 17, -2],
+			"faces": {
+				"north": {"uv": [25, 0, 27, 4], "texture": 0},
+				"east":  {"uv": [24, 0, 25, 4], "texture": 0},
+				"south": {"uv": [27, 0, 29, 4], "texture": 0},
+				"west":  {"uv": [28, 0, 29, 4], "texture": 0},
+				"up":    {"uv": [25, 0, 27, 2], "texture": 0},
+				"down":  {"uv": [27, 0, 29, 2], "texture": 0}
+			},
+			"uuid": "a1000001-0000-0000-0000-000000000002"
+		},
+		{
+			"name": "body_main",
+			"box_uv": false,
+			"from": [-9, 4, -6],
+			"to": [9, 16, 5],
+			"autouv": 0,
+			"color": 1,
+			"origin": [0, 17, 0],
+			"faces": {
+				"north": {"uv": [11, 40, 29, 52], "texture": 0},
+				"east":  {"uv": [0, 40, 11, 52], "texture": 0},
+				"south": {"uv": [29, 40, 47, 52], "texture": 0},
+				"west":  {"uv": [18, 40, 29, 52], "texture": 0},
+				"up":    {"uv": [11, 29, 29, 40], "texture": 0},
+				"down":  {"uv": [29, 29, 47, 40], "texture": 0}
+			},
+			"uuid": "a1000002-0000-0000-0000-000000000001"
+		},
+		{
+			"name": "body_waist",
+			"box_uv": false,
+			"from": [-4.5, -1, -3],
+			"to": [4.5, 4, 3],
+			"inflate": 0.5,
+			"autouv": 0,
+			"color": 1,
+			"origin": [0, 17, 0],
+			"faces": {
+				"north": {"uv": [5, 70, 14, 75], "texture": 0},
+				"east":  {"uv": [0, 70, 5, 75], "texture": 0},
+				"south": {"uv": [14, 70, 23, 75], "texture": 0},
+				"west":  {"uv": [9, 70, 14, 75], "texture": 0},
+				"up":    {"uv": [5, 65, 14, 70], "texture": 0},
+				"down":  {"uv": [14, 65, 23, 70], "texture": 0}
+			},
+			"uuid": "a1000002-0000-0000-0000-000000000002"
+		},
+		{
+			"name": "right_arm",
+			"box_uv": false,
+			"from": [-13, -9.5, -3],
+			"to": [-9, 20.5, 3],
+			"autouv": 0,
+			"color": 2,
+			"origin": [0, 17, 0],
+			"faces": {
+				"north": {"uv": [64, 21, 68, 51], "texture": 0},
+				"east":  {"uv": [60, 21, 64, 51], "texture": 0},
+				"south": {"uv": [68, 21, 72, 51], "texture": 0},
+				"west":  {"uv": [72, 21, 76, 51], "texture": 0},
+				"up":    {"uv": [64, 17, 68, 21], "texture": 0},
+				"down":  {"uv": [68, 17, 72, 21], "texture": 0}
+			},
+			"uuid": "a1000003-0000-0000-0000-000000000001"
+		},
+		{
+			"name": "left_arm",
+			"box_uv": false,
+			"from": [9, -9.5, -3],
+			"to": [13, 20.5, 3],
+			"autouv": 0,
+			"color": 3,
+			"origin": [0, 17, 0],
+			"faces": {
+				"north": {"uv": [64, 58, 68, 88], "texture": 0},
+				"east":  {"uv": [72, 58, 76, 88], "texture": 0},
+				"south": {"uv": [68, 58, 72, 88], "texture": 0},
+				"west":  {"uv": [60, 58, 64, 88], "texture": 0},
+				"up":    {"uv": [64, 54, 68, 58], "texture": 0},
+				"down":  {"uv": [68, 54, 72, 58], "texture": 0}
+			},
+			"uuid": "a1000004-0000-0000-0000-000000000001"
+		},
+		{
+			"name": "right_leg",
+			"box_uv": false,
+			"from": [-7.5, -24, -3],
+			"to": [-1.5, -8, 2],
+			"autouv": 0,
+			"color": 4,
+			"origin": [-4, -13, 0],
+			"faces": {
+				"north": {"uv": [40, 0, 46, 16], "texture": 0},
+				"east":  {"uv": [37, 0, 40, 16], "texture": 0},
+				"south": {"uv": [46, 0, 52, 16], "texture": 0},
+				"west":  {"uv": [52, 0, 55, 16], "texture": 0},
+				"up":    {"uv": [40, 0, 46, 3], "texture": 0},
+				"down":  {"uv": [46, 0, 52, 3], "texture": 0}
+			},
+			"uuid": "a1000005-0000-0000-0000-000000000001"
+		},
+		{
+			"name": "left_leg",
+			"box_uv": false,
+			"from": [1.5, -24, -3],
+			"to": [7.5, -8, 2],
+			"autouv": 0,
+			"color": 5,
+			"origin": [5, -13, 0],
+			"faces": {
+				"north": {"uv": [66, 0, 72, 16], "texture": 0},
+				"east":  {"uv": [72, 0, 75, 16], "texture": 0},
+				"south": {"uv": [75, 0, 81, 16], "texture": 0},
+				"west":  {"uv": [60, 0, 63, 16], "texture": 0},
+				"up":    {"uv": [66, 0, 72, 3], "texture": 0},
+				"down":  {"uv": [72, 0, 78, 3], "texture": 0}
+			},
+			"uuid": "a1000006-0000-0000-0000-000000000001"
+		}
+	],
+	"outliner": [
+		{
+			"name": "head",
+			"origin": [0, 17, -2],
+			"uuid": "b1000001-0000-0000-0000-000000000001",
+			"export": true,
+			"isOpen": true,
+			"locked": false,
+			"visibility": true,
+			"children": [
+				"a1000001-0000-0000-0000-000000000001",
+				"a1000001-0000-0000-0000-000000000002"
+			]
+		},
+		{
+			"name": "body",
+			"origin": [0, 17, 0],
+			"uuid": "b1000002-0000-0000-0000-000000000002",
+			"export": true,
+			"isOpen": true,
+			"locked": false,
+			"visibility": true,
+			"children": [
+				"a1000002-0000-0000-0000-000000000001",
+				"a1000002-0000-0000-0000-000000000002"
+			]
+		},
+		{
+			"name": "right_arm",
+			"origin": [0, 17, 0],
+			"uuid": "b1000003-0000-0000-0000-000000000003",
+			"export": true,
+			"isOpen": true,
+			"locked": false,
+			"visibility": true,
+			"children": [
+				"a1000003-0000-0000-0000-000000000001"
+			]
+		},
+		{
+			"name": "left_arm",
+			"origin": [0, 17, 0],
+			"uuid": "b1000004-0000-0000-0000-000000000004",
+			"export": true,
+			"isOpen": true,
+			"locked": false,
+			"visibility": true,
+			"children": [
+				"a1000004-0000-0000-0000-000000000001"
+			]
+		},
+		{
+			"name": "right_leg",
+			"origin": [-4, -13, 0],
+			"uuid": "b1000005-0000-0000-0000-000000000005",
+			"export": true,
+			"isOpen": true,
+			"locked": false,
+			"visibility": true,
+			"children": [
+				"a1000005-0000-0000-0000-000000000001"
+			]
+		},
+		{
+			"name": "left_leg",
+			"origin": [5, -13, 0],
+			"uuid": "b1000006-0000-0000-0000-000000000006",
+			"export": true,
+			"isOpen": true,
+			"locked": false,
+			"visibility": true,
+			"children": [
+				"a1000006-0000-0000-0000-000000000001"
+			]
+		}
+	],
+	"textures": [
+		{
+			"path": "src/main/resources/assets/ars_zero/textures/entity/bone_golem.png",
+			"name": "bone_golem.png",
+			"folder": "entity",
+			"namespace": "ars_zero",
+			"id": "0",
+			"particle": false,
+			"render_mode": "default",
+			"render_sides": "auto",
+			"frame_time": 1,
+			"frame_interpolate": false,
+			"visible": true,
+			"internal": false,
+			"saved": true,
+			"uuid": "c1000001-0000-0000-0000-000000000001"
+		}
+	]
+}

@@ -1,0 +1,16 @@
+{
+  "values": [
+    "ars_zero:corrupted_sourcestone_slab",
+    "ars_zero:corrupted_sourcestone_mosaic_slab",
+    "ars_zero:corrupted_sourcestone_basketweave_slab",
+    "ars_zero:corrupted_sourcestone_alternating_slab",
+    "ars_zero:corrupted_sourcestone_large_bricks_slab",
+    "ars_zero:corrupted_sourcestone_small_bricks_slab",
+    "ars_zero:smooth_corrupted_sourcestone_slab",
+    "ars_zero:smooth_corrupted_sourcestone_mosaic_slab",
+    "ars_zero:smooth_corrupted_sourcestone_basketweave_slab",
+    "ars_zero:smooth_corrupted_sourcestone_alternating_slab",
+    "ars_zero:smooth_corrupted_sourcestone_large_bricks_slab",
+    "ars_zero:smooth_corrupted_sourcestone_small_bricks_slab"
+  ]
+}

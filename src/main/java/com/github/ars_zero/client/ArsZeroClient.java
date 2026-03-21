@@ -24,19 +24,32 @@ import com.github.ars_zero.client.renderer.entity.WaterConvergenceControllerEnti
 import com.github.ars_zero.client.renderer.entity.SourceJarChargerEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.PlayerChargerEntityRenderer;
 import com.github.ars_zero.client.renderer.entity.ArcaneCircleEntityRenderer;
+import com.github.ars_zero.client.color.BlightedSoilBlockColor;
+import com.github.ars_zero.client.color.BlightedSoilItemColor;
 import com.github.ars_zero.client.particle.BlightSplashParticle;
 import com.github.ars_zero.client.particle.ExplosiveChargeParticle;
 import com.github.ars_zero.client.particle.FastPoofParticle;
 import com.github.ars_zero.client.particle.SourceJarChargeParticle;
+import com.github.ars_zero.client.renderer.tile.BoneChestBlockRenderer;
 import com.github.ars_zero.client.renderer.tile.MultiphaseTurretRenderer;
 import com.github.ars_zero.client.renderer.tile.StaffDisplayRenderer;
 import com.github.ars_zero.registry.ModBlockEntities;
+import com.github.ars_zero.registry.ModBlocks;
 import com.github.ars_zero.registry.ModEntities;
+import com.github.ars_zero.registry.ModItems;
 import com.github.ars_zero.registry.ModParticles;
+import com.github.ars_zero.client.renderer.entity.MageSkeletonRenderer;
+import com.github.ars_zero.client.renderer.entity.BoneGolemRenderer;
+import com.github.ars_zero.client.renderer.entity.model.BoneGolemModel;
+import net.minecraft.client.model.SkeletonModel;
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
@@ -49,7 +62,10 @@ public class ArsZeroClient {
         modEventBus.addListener(ArsZeroClient::onClientSetup);
         modEventBus.addListener(ArsZeroClient::registerGuiLayers);
         modEventBus.addListener(ArsZeroClient::registerRenderers);
+        modEventBus.addListener(ArsZeroClient::registerLayerDefinitions);
         modEventBus.addListener(ArsZeroClient::registerParticleProviders);
+        modEventBus.addListener(ArsZeroClient::registerBlockColors);
+        modEventBus.addListener(ArsZeroClient::registerItemColors);
         modEventBus.addListener(ClientNetworking::register);
 
         NeoForge.EVENT_BUS.register(StaffScrollHandler.class);
@@ -59,6 +75,7 @@ public class ArsZeroClient {
 
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.BLIGHT_VEIN.get(), RenderType.cutout());
             EntityRenderers.register(ModEntities.ARCANE_VOXEL_ENTITY.get(), ArcaneVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.WATER_VOXEL_ENTITY.get(), WaterVoxelEntityRenderer::new);
             EntityRenderers.register(ModEntities.FIRE_VOXEL_ENTITY.get(), FireVoxelEntityRenderer::new);
@@ -83,7 +100,22 @@ public class ArsZeroClient {
             EntityRenderers.register(ModEntities.SOURCE_JAR_CHARGER.get(), SourceJarChargerEntityRenderer::new);
             EntityRenderers.register(ModEntities.PLAYER_CHARGER.get(), PlayerChargerEntityRenderer::new);
             EntityRenderers.register(ModEntities.ARCANE_CIRCLE.get(), ArcaneCircleEntityRenderer::new);
+            EntityRenderers.register(ModEntities.ACOLYTE.get(), MageSkeletonRenderer::new);
+            EntityRenderers.register(ModEntities.NECROMANCER.get(), MageSkeletonRenderer::new);
+            EntityRenderers.register(ModEntities.LICH.get(), MageSkeletonRenderer::new);
+            EntityRenderers.register(ModEntities.BONE_GOLEM.get(), BoneGolemRenderer::new);
         });
+    }
+
+    public static final ModelLayerLocation BLIGHTED_SKELETON_LAYER =
+            new ModelLayerLocation(ArsZero.prefix("blighted_skeleton"), "main");
+
+    public static final ModelLayerLocation BONE_GOLEM_LAYER =
+            new ModelLayerLocation(ArsZero.prefix("bone_golem"), "main");
+
+    public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(MageSkeletonRenderer.BLIGHTED_SKELETON_LAYER, SkeletonModel::createBodyLayer);
+        event.registerLayerDefinition(BONE_GOLEM_LAYER, BoneGolemModel::createBodyLayer);
     }
 
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -91,6 +123,8 @@ public class ArsZeroClient {
                 MultiphaseTurretRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.STAFF_DISPLAY.get(),
                 StaffDisplayRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.BONE_CHEST.get(),
+                BoneChestBlockRenderer::new);
     }
 
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
@@ -99,6 +133,14 @@ public class ArsZeroClient {
                 GeometryEntityOverlayHelper.OVERLAY);
         event.registerAbove(VanillaGuiLayers.CROSSHAIR, ArsZero.prefix("mana_drain_overlay"),
                 GuiManaDrainOverlay.OVERLAY);
+    }
+
+    public static void registerBlockColors(RegisterColorHandlersEvent.Block event) {
+        event.register(BlightedSoilBlockColor.INSTANCE, ModBlocks.BLIGHTED_SOIL.get());
+    }
+
+    public static void registerItemColors(RegisterColorHandlersEvent.Item event) {
+        event.register(BlightedSoilItemColor.INSTANCE, ModItems.BLIGHTED_SOIL.get());
     }
 
     public static void registerParticleProviders(RegisterParticleProvidersEvent event) {

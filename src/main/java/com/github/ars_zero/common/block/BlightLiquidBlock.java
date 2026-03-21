@@ -51,6 +51,16 @@ public class BlightLiquidBlock extends LiquidBlock {
     }
     
     @Override
+    public void animateTick(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull RandomSource random) {
+        super.animateTick(state, level, pos, random);
+        if (random.nextInt(100) == 0) {
+            level.addParticle(ParticleTypes.CAMPFIRE_COSY_SMOKE,
+                pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                0.0, 0.04, 0.0);
+        }
+    }
+    
+    @Override
     public void entityInside(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull Entity entity) {
         if (entity instanceof LivingEntity livingEntity) {
             livingEntity.addEffect(new MobEffectInstance(MobEffects.WITHER, 100, 0));

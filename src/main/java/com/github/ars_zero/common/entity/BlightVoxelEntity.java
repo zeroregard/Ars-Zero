@@ -1,5 +1,6 @@
 package com.github.ars_zero.common.entity;
 
+import com.alexthw.sauce.registry.ModRegistry;
 import com.github.ars_zero.common.block.BlightCauldronBlock;
 import com.github.ars_zero.common.block.BlightLiquidBlock;
 import com.github.ars_zero.registry.ModBlocks;
@@ -124,12 +125,14 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
                 convertBucketToBlight(itemEntity);
             } else if (hitEntity instanceof Sheep sheep && !sheep.isSheared() && sheep.readyForShearing()) {
                 shearSheep(sheep, result.getLocation());
-                applyDamage(sheep);
-                applyEffect(sheep, true);
+                if (applyDamage(sheep)) {
+                    applyEffect(sheep, true);
+                }
                 spawnVaporizationEffects(result.getLocation());
             } else if (hitEntity instanceof LivingEntity living) {
-                applyDamage(living);
-                applyEffect(living, true);
+                if (applyDamage(living)) {
+                    applyEffect(living, true);
+                }
                 spawnVaporizationEffects(result.getLocation());
             }
         }
@@ -423,13 +426,25 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
         serverLevel.playSound(null, location.x, location.y, location.z, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5f, 1.0f);
     }
 
-    private void applyDamage(LivingEntity target) {
+    /** Base damage before size or Necromancy Power scaling. */
+    private static final float BASE_DAMAGE = 5.0f;
+    /** Necromancy Power is multiplied by this before adding to damage (so 3 power = +6 damage). */
+    private static final float POWER_DAMAGE_PER_LEVEL = 2.0f;
+
+    private boolean applyDamage(LivingEntity target) {
         float sizeScale = Math.max(1.0f, this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE);
-        float damage = 2.0f * sizeScale;
+        float damage = BASE_DAMAGE * sizeScale;
         LivingEntity sender = this.getStoredCaster();
+        if (sender != null) {
+            var powerAttr = sender.getAttribute(ModRegistry.NECROMANCY_POWER);
+            if (powerAttr != null) {
+                damage += (float) (powerAttr.getValue() * POWER_DAMAGE_PER_LEVEL);
+            }
+        }
         net.minecraft.world.damagesource.DamageSource damageSource;
         if (sender != null) {
-            damageSource = this.level().damageSources().indirectMagic(this, sender);
+            // Use mobProjectile so damage is blockable with a shield (indirectMagic is not).
+            damageSource = this.level().damageSources().mobProjectile(this, sender);
             target.setLastHurtByMob(sender);
             if (sender instanceof net.minecraft.world.entity.player.Player) {
                 target.setLastHurtByPlayer((net.minecraft.world.entity.player.Player) sender);
@@ -437,8 +452,9 @@ public class BlightVoxelEntity extends BaseVoxelEntity {
         } else {
             damageSource = this.level().damageSources().magic();
         }
-        target.hurt(damageSource, damage);
+        boolean hit = target.hurt(damageSource, damage);
         target.hurtMarked = true;
+        return hit;
     }
     
     private void applyEffect(LivingEntity living, boolean burst) {

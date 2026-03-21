@@ -1,0 +1,26 @@
+{
+  "type": "ars_nouveau:enchanting_apparatus",
+  "keepNbtOfReagent": false,
+  "pedestalItems": [
+    {
+      "item": "ars_elemental:anima_essence"
+    },
+    {
+      "item": "minecraft:wither_skeleton_skull"
+    },
+    {
+      "item": "minecraft:bone"
+    },
+    {
+      "item": "minecraft:echo_shard"
+    }
+  ],
+  "reagent": {
+    "item": "ars_nouveau:source_gem"
+  },
+  "result": {
+    "count": 1,
+    "id": "ars_zero:necromancy_filial"
+  },
+  "sourceCost": 1000
+}

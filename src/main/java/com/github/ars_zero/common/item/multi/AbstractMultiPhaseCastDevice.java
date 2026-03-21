@@ -3,6 +3,7 @@ package com.github.ars_zero.common.item.multi;
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.client.RadialMenuTracker;
 import com.github.ars_zero.common.glyph.AnchorEffect;
+import com.github.ars_zero.common.item.FilialItem;
 import com.github.ars_zero.common.glyph.TemporalContextForm;
 import com.github.ars_zero.common.config.ServerConfig;
 import com.github.ars_zero.common.network.Networking;
@@ -55,10 +56,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.core.Holder;
+import net.minecraft.world.entity.EquipmentSlotGroup;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.component.CustomData;
@@ -100,7 +106,28 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
     private static int getDefaultTickDelay() {
         return ServerConfig.DEFAULT_MULTIPHASE_DEVICE_TICK_DELAY.get();
     }
-    
+
+    /**
+     * Grants the embedded filial's power bonus when this device is held in the mainhand.
+     * If no filial is embedded, no modifier is added.
+     */
+    @Override
+    public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
+        ItemAttributeModifiers base = super.getDefaultAttributeModifiers(stack);
+        String schoolId = FilialItem.getStaffFilialSchool(stack);
+        if (schoolId == null) return base;
+        Holder<Attribute> power = FilialItem.getPowerForSchool(schoolId);
+        if (power == null) return base;
+        int bonus = ServerConfig.FILIAL_POWER_BONUS.get();
+        if (bonus <= 0) return base;
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath("ars_zero", "filial_mainhand_" + schoolId);
+        return base.withModifierAdded(
+            power,
+            new AttributeModifier(id, bonus, AttributeModifier.Operation.ADD_VALUE),
+            EquipmentSlotGroup.MAINHAND
+        );
+    }
+
     public static CastingStyle getCastingStyle(ItemStack stack, int logicalSlot) {
         if (stack == null || stack.isEmpty()) {
             return new CastingStyle();
@@ -118,6 +145,13 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         }
         
         return new CastingStyle();
+    }
+
+    public static void saveCastingStyle(ItemStack stack, int logicalSlot, CastingStyle style) {
+        CustomData existing = stack.get(DataComponents.CUSTOM_DATA);
+        CompoundTag tag = existing != null ? existing.copyTag() : new CompoundTag();
+        tag.put("ars_zero_casting_style_" + logicalSlot, style.save());
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
 
     protected AbstractMultiPhaseCastDevice(SpellTier tier, Properties properties) {
@@ -358,6 +392,8 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         context.isCasting = true;
         context.tickCount = 0;
         context.sequenceTick = 0;
+        context.hasFiredFirstTick = false;
+        context.lastExecuteGameTick = -1;
         context.outOfMana = false;
         context.createdAt = System.currentTimeMillis();
         context.beginResults.clear();
@@ -422,6 +458,12 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
             return;
         }
 
+        // Don't run TICK until BEGIN has completed (e.g. projectile hit, beginResults populated).
+        // Otherwise we'd burn tickCount/cooldown during the wait, and the "first tick" would be delayed.
+        if (!context.beginFinished) {
+            return;
+        }
+
         IMultiPhaseCaster multiPhaseCaster = asMultiPhaseCaster(player, castingStack);
         multiPhaseCaster.updateContextPhase(SpellPhase.TICK);
 
@@ -440,19 +482,28 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
 
             if (context.tickCount == 1) {
                 int storedDelay = getSlotTickDelay(castingStack, currentLogicalSlot);
-                if (storedDelay == 0) {
-                    context.tickCooldown = 0; // every tick
+                if (storedDelay <= 1) {
+                    context.tickCooldown = 0; // delay 1 = every tick
                 } else {
-                    int sliderDelay = getSlotTickDelayOffset(castingStack, currentLogicalSlot);
-                    context.tickCooldown = calculateTickCooldown(spell) + sliderDelay;
+                    // storedDelay 2-20 = ticks between fires (delay 20 = once per second at 20 TPS)
+                    context.tickCooldown = storedDelay - 1;
                 }
             }
         }
 
-        if (context.tickCooldown > 0 && (context.tickCount - 1) % (context.tickCooldown + 1) != 0) {
+        // First tick after BEGIN always fires; delay applies only to subsequent ticks
+        if (context.hasFiredFirstTick && context.tickCooldown > 0 && (context.tickCount - 1) % (context.tickCooldown + 1) != 0) {
             return;
         }
 
+        // Prevent double execution when onUseTick and releaseUsing both call tickPhase in the same game tick
+        long gameTick = player.level().getGameTime();
+        if (context.lastExecuteGameTick == gameTick) {
+            return;
+        }
+        context.lastExecuteGameTick = gameTick;
+
+        context.hasFiredFirstTick = true;
         executeSpell(player, castingStack, SpellPhase.TICK);
 
         if (player instanceof ServerPlayer serverPlayer) {

@@ -1,0 +1,12 @@
+{
+  "type": "ars_zero:staff_filial",
+  "pedestalItems": [
+    {
+      "item": "ars_zero:earth_filial"
+    }
+  ],
+  "reagent": {
+    "tag": "ars_zero:filial_staff_input"
+  },
+  "sourceCost": 500
+}
