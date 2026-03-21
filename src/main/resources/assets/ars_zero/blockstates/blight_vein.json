@@ -1,0 +1,10 @@
+{
+  "multipart": [
+    {"when": {"north": "true"}, "apply": {"model": "ars_zero:block/blight_vein", "uvlock": true, "y": 0}},
+    {"when": {"east":  "true"}, "apply": {"model": "ars_zero:block/blight_vein", "uvlock": true, "y": 90}},
+    {"when": {"south": "true"}, "apply": {"model": "ars_zero:block/blight_vein", "uvlock": true, "y": -180}},
+    {"when": {"west":  "true"}, "apply": {"model": "ars_zero:block/blight_vein", "uvlock": true, "y": -90}},
+    {"when": {"up":    "true"}, "apply": {"model": "ars_zero:block/blight_vein", "uvlock": true, "x": 270}},
+    {"when": {"down":  "true"}, "apply": {"model": "ars_zero:block/blight_vein", "uvlock": true, "x": 90}}
+  ]
+}

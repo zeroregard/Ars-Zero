@@ -2,6 +2,7 @@
   "processors": [
     {"processor_type": "ars_zero:cobweb"},
     {"processor_type": "ars_zero:strip_waterlogged"},
+    {"processor_type": "ars_zero:blight_vein"},
     {
       "processor_type": "minecraft:rule",
       "rules": [

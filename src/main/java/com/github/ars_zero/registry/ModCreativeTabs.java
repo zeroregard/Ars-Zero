@@ -56,6 +56,7 @@ public class ModCreativeTabs {
                     output.accept(ModItems.NECROMANCER_SPAWN_EGG.get().getDefaultInstance());
                     output.accept(ModItems.LICH_SPAWN_EGG.get().getDefaultInstance());
                     output.accept(ModItems.BONE_GOLEM_SPAWN_EGG.get().getDefaultInstance());
+                    output.accept(ModItems.BLIGHT_VEIN.get().getDefaultInstance());
                     for (String name : ModBlocks.CORRUPTED_BASE_NAMES) {
                         output.accept(ModItems.CORRUPTED_BLOCK_ITEMS.get(name).get().getDefaultInstance());
                         output.accept(ModItems.CORRUPTED_STAIR_ITEMS.get(name).get().getDefaultInstance());

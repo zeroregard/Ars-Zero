@@ -2,6 +2,7 @@ package com.github.ars_zero.registry;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.block.BlightCauldronBlock;
+import com.github.ars_zero.common.block.BlightVeinBlock;
 import com.github.ars_zero.common.block.BlightedSoilBlock;
 import com.github.ars_zero.common.block.BoneChestBlock;
 import com.github.ars_zero.common.block.FrozenBlightBlock;
@@ -203,4 +204,14 @@ public class ModBlocks {
                     () -> new SlabBlock(props)));
         }
     }
+
+    public static final DeferredHolder<Block, BlightVeinBlock> BLIGHT_VEIN = BLOCKS.register(
+        "blight_vein",
+        () -> new BlightVeinBlock(BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_CYAN)
+            .noCollission()
+            .strength(0.2f)
+            .sound(SoundType.SCULK)
+            .pushReaction(PushReaction.DESTROY))
+    );
 }

@@ -4,6 +4,7 @@ import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.world.feature.BlightPoolFeature;
 import com.github.ars_zero.common.world.feature.BlightedSoilSurfaceFeature;
 import com.github.ars_zero.common.world.structure.BlightDungeonStructure;
+import com.github.ars_zero.common.world.structure.BlightVeinProcessor;
 import com.github.ars_zero.common.world.structure.CobwebProcessor;
 import com.github.ars_zero.common.world.structure.NecropolisConnectorPiece;
 import com.github.ars_zero.common.world.structure.NecropolisEntrancePiece;
@@ -52,6 +53,9 @@ public final class ModWorldgen {
 
     public static final DeferredHolder<StructureProcessorType<?>, StructureProcessorType<RandomBlockSubsetProcessor>> RANDOM_BLOCK_SUBSET_PROCESSOR =
         STRUCTURE_PROCESSOR_TYPES.register("random_block_subset", () -> () -> RandomBlockSubsetProcessor.CODEC);
+
+    public static final DeferredHolder<StructureProcessorType<?>, StructureProcessorType<BlightVeinProcessor>> BLIGHT_VEIN_PROCESSOR =
+        STRUCTURE_PROCESSOR_TYPES.register("blight_vein", () -> () -> BlightVeinProcessor.CODEC);
 
     public static final DeferredRegister<StructurePieceType> STRUCTURE_PIECE_TYPES =
         DeferredRegister.create(BuiltInRegistries.STRUCTURE_PIECE, ArsZero.MOD_ID);

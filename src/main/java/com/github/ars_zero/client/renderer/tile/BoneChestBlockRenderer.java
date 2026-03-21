@@ -36,11 +36,11 @@ public class BoneChestBlockRenderer extends GeoBlockRenderer<BoneChestBlockEntit
         // Derived from the confirmed-working WEST case: translate(0.375, 0, -0.375) + rotate(180°).
         // Model geo centre in local space = (-0.125, y, -0.875). Each case shifts that to (0.5, y, 0.5).
         switch (facing) {
-            case EAST  -> { poseStack.translate( 0.625, 0.0,  1.375); poseStack.mulPose(Axis.YP.rotationDegrees(  0)); }
-            case SOUTH -> { poseStack.translate(-0.375, 0.0,  0.625); poseStack.mulPose(Axis.YP.rotationDegrees( 90)); }
+            case EAST  -> { poseStack.translate( -0.375, 0.0,  0.375); poseStack.mulPose(Axis.YP.rotationDegrees(  180)); }
+            case SOUTH -> { poseStack.translate(-0.375, 0.0,  -0.375); poseStack.mulPose(Axis.YP.rotationDegrees( 180)); }
             case WEST  -> { poseStack.translate( 0.375, 0.0, -0.375); poseStack.mulPose(Axis.YP.rotationDegrees(180)); }
-            case NORTH -> { poseStack.translate( 1.375, 0.0,  0.375); poseStack.mulPose(Axis.YP.rotationDegrees(270)); }
-            default    -> { poseStack.translate( 0.375, 0.0, -0.375); poseStack.mulPose(Axis.YP.rotationDegrees(180)); }
+            case NORTH -> { poseStack.translate( 0.375, 0.0,  0.375); poseStack.mulPose(Axis.YP.rotationDegrees(180)); }
+            default    -> { poseStack.translate( 0, 0.0, 0); poseStack.mulPose(Axis.YP.rotationDegrees(0)); }
         }
     }
 }

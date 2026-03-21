@@ -320,5 +320,6 @@
   "item.ars_zero.abjuration_filial": "Crucible",
   "item.ars_zero.conjuration_filial": "Soulwell",
   "item.ars_zero.manipulation_filial": "Metacarpus",
-  "item.ars_zero.necromancy_filial": "Ossuary Sigil"
+  "item.ars_zero.necromancy_filial": "Ossuary Sigil",
+  "block.ars_zero.blight_vein": "Blight Vein"
 }

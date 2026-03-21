@@ -28,5 +28,6 @@ public class BlockStatesDatagen extends BlockStateProvider {
             slabBlock((SlabBlock) ModBlocks.CORRUPTED_SLABS.get(name).get(),
                     ArsZero.prefix("block/" + name), tex);
         }
+
     }
 }

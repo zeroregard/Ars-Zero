@@ -28,5 +28,6 @@ public class BlockTagDatagen extends BlockTagsProvider {
             tag(BlockTags.STAIRS).add(stair);
             tag(BlockTags.SLABS).add(slab);
         }
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.BLIGHT_VEIN.get());
     }
 }

@@ -132,6 +132,11 @@ public class ModItems {
         () -> new BlockItem(ModBlocks.BLIGHT_ARCHWOOD_LEAVES.get(), defaultItemProperties())
     );
 
+    public static final DeferredHolder<Item, BlockItem> BLIGHT_VEIN = ITEMS.register(
+        "blight_vein",
+        () -> new BlockItem(ModBlocks.BLIGHT_VEIN.get(), defaultItemProperties())
+    );
+
     public static final DeferredHolder<Item, RendererBlockItem> MULTIPHASE_SPELL_TURRET = ITEMS.register(
         "multiphase_spell_turret",
         () -> {
