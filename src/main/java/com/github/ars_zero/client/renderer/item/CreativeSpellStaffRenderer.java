@@ -8,10 +8,12 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
 
-public class CreativeSpellStaffRenderer extends AbstractStaffRenderer<AbstractSpellStaff> {
+import java.util.Set;
+
+public class CreativeSpellStaffRenderer extends SpellStaffRenderer {
 
     public CreativeSpellStaffRenderer() {
-        super(new SpellStaffModel());
+        super(Set.of());
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.github.ars_zero.registry.ModEntities;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.github.ars_zero.common.item.ArchmageSpellStaff;
+import com.github.ars_zero.common.item.CreativeFilialItem;
 import com.github.ars_zero.common.item.BoneChestItem;
 import com.github.ars_zero.common.item.CreativeSpellStaff;
 import com.github.ars_zero.common.item.DullCirclet;
@@ -192,8 +193,12 @@ public class ModItems {
         register("conjuration_filial", () -> new FilialItem("conjuration", ModRegistry.SUMMON_POWER, "spinning"));
     public static final ItemRegistryWrapper<FilialItem> MANIPULATION_FILIAL =
         register("manipulation_filial", () -> new FilialItem("manipulation", ModRegistry.MANIPULATION_POWER, null).noSpin());
+
+    // Uncraftable filials
     public static final ItemRegistryWrapper<FilialItem> DEMONBANE_FILIAL =
         register("demonbane_filial", () -> new FilialItem("demonbane", null, null));
+    public static final ItemRegistryWrapper<FilialItem> CREATIVE_FILIAL =
+        register("creative_filial", CreativeFilialItem::new);
 
     /** All 8 filials in school order — used by datagen and other utilities. */
     public static final List<ItemRegistryWrapper<FilialItem>> ALL_FILIALS = List.of(
