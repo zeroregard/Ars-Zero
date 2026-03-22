@@ -182,20 +182,21 @@ public class FireVoxelEntity extends BaseVoxelEntity {
         LivingEntity sender = this.getStoredCaster();
         net.minecraft.world.damagesource.DamageSource damageSource;
         if (sender != null) {
-            damageSource = this.level().damageSources().indirectMagic(this, sender);
+            damageSource = this.level().damageSources().mobProjectile(this, sender);
             target.setLastHurtByMob(sender);
             if (sender instanceof net.minecraft.world.entity.player.Player) {
                 target.setLastHurtByPlayer((net.minecraft.world.entity.player.Player) sender);
             }
         } else {
-            damageSource = this.level().damageSources().magic();
+            damageSource = this.level().damageSources().mobProjectile(this, null);
         }
-        target.hurt(damageSource, damage);
-        int fireDuration = Math.max(20, (int) ((this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE) * 20));
-        target.setRemainingFireTicks(target.getRemainingFireTicks() + fireDuration);
-        Vec3 impulse = this.getDeltaMovement().scale(0.35);
-        target.push(impulse.x, Math.max(0.1, impulse.y + 0.15), impulse.z);
-        target.hurtMarked = true;
+        if (target.hurt(damageSource, damage)) {
+            int fireDuration = Math.max(20, (int) ((this.getSize() / BaseVoxelEntity.DEFAULT_BASE_SIZE) * 20));
+            target.setRemainingFireTicks(target.getRemainingFireTicks() + fireDuration);
+            Vec3 impulse = this.getDeltaMovement().scale(0.35);
+            target.push(impulse.x, Math.max(0.1, impulse.y + 0.15), impulse.z);
+            target.hurtMarked = true;
+        }
     }
     
     private boolean canEvaporateWater(BlockState waterState) {

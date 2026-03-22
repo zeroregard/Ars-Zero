@@ -65,14 +65,113 @@
   },
   "splash_fast": {
     "sounds": [
-      {
-        "name": "ars_zero:splash_fast_1",
-        "stream": false
-      },
-      {
-        "name": "ars_zero:splash_fast_2",
-        "stream": false
-      }
+      {"name": "ars_zero:splash_fast_1", "stream": false},
+      {"name": "ars_zero:splash_fast_2", "stream": false}
+    ]
+  },
+  "undead_mage.ambient": {
+    "sounds": [
+      {"name": "ars_zero:undead_mage/say1"},
+      {"name": "ars_zero:undead_mage/say2"},
+      {"name": "ars_zero:undead_mage/say3"}
+    ]
+  },
+  "undead_mage.hurt": {
+    "sounds": [
+      {"name": "ars_zero:undead_mage/hurt1"},
+      {"name": "ars_zero:undead_mage/hurt2"},
+      {"name": "ars_zero:undead_mage/hurt3"},
+      {"name": "ars_zero:undead_mage/hurt4"}
+    ]
+  },
+  "undead_mage.death": {
+    "sounds": [
+      {"name": "ars_zero:undead_mage/death1"}
+    ]
+  },
+  "undead_mage.step": {
+    "sounds": [
+      {"name": "ars_zero:undead_mage/step1"},
+      {"name": "ars_zero:undead_mage/step2"},
+      {"name": "ars_zero:undead_mage/step3"},
+      {"name": "ars_zero:undead_mage/step5"}
+    ]
+  },
+  "lich.ambient": {
+    "sounds": [
+      {"name": "ars_zero:undead_mage/say1"},
+      {"name": "ars_zero:undead_mage/say2"},
+      {"name": "ars_zero:undead_mage/say3"}
+    ]
+  },
+  "lich.hurt": {
+    "sounds": [
+      {"name": "ars_zero:lich/hurt1"},
+      {"name": "ars_zero:lich/hurt2"},
+      {"name": "ars_zero:lich/hurt3"}
+    ]
+  },
+  "lich.death": {
+    "sounds": [
+      {"name": "ars_zero:lich/death1"}
+    ]
+  },
+  "lich.step": {
+    "sounds": [
+      {"name": "ars_zero:undead_mage/step1"},
+      {"name": "ars_zero:undead_mage/step2"},
+      {"name": "ars_zero:undead_mage/step3"},
+      {"name": "ars_zero:undead_mage/step5"}
+    ]
+  },
+  "bone_golem.hurt": {
+    "sounds": [
+      {"name": "ars_zero:bone_golem/damage1"},
+      {"name": "ars_zero:bone_golem/damage2"}
+    ]
+  },
+  "bone_golem.death": {
+    "sounds": [
+      {"name": "ars_zero:bone_golem/death"}
+    ]
+  },
+  "bone_golem.step": {
+    "sounds": [
+      {"name": "ars_zero:bone_golem/walk1"},
+      {"name": "ars_zero:bone_golem/walk2"},
+      {"name": "ars_zero:bone_golem/walk3"},
+      {"name": "ars_zero:bone_golem/walk4"}
+    ]
+  },
+  "bone_golem.attack": {
+    "sounds": [
+      {"name": "ars_zero:bone_golem/hit1"},
+      {"name": "ars_zero:bone_golem/hit2"},
+      {"name": "ars_zero:bone_golem/hit3"},
+      {"name": "ars_zero:bone_golem/hit4"}
+    ]
+  },
+  "bone_golem.repair": {
+    "sounds": [
+      {"name": "ars_zero:bone_golem/repair"}
+    ]
+  },
+  "ambient.necropolis": {
+    "sounds": [
+      {"name": "ars_zero:necropolis/atmosphere_1", "stream": true},
+      {"name": "ars_zero:necropolis/atmosphere_2", "stream": true}
+    ]
+  },
+  "bone_chest.open": {
+    "sounds": [
+      {"name": "ars_zero:bone_chest/open"}
+    ]
+  },
+  "bone_chest.close": {
+    "sounds": [
+      {"name": "ars_zero:bone_chest/close1"},
+      {"name": "ars_zero:bone_chest/close2"},
+      {"name": "ars_zero:bone_chest/close3"}
     ]
   }
 }

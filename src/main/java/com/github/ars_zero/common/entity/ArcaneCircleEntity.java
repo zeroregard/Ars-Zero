@@ -6,6 +6,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -38,6 +39,8 @@ public class ArcaneCircleEntity extends AbstractConvergenceEntity {
     private UUID casterUUID;
     private int spawnTick = 0;
     private CastingStyle style;
+    /** When > 0, circle will schedule discard after this many ticks from spawn. Server-only. */
+    private int maxAliveTicks = 0;
 
     public ArcaneCircleEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -129,6 +132,11 @@ public class ArcaneCircleEntity extends AbstractConvergenceEntity {
         return this.entityData.get(DATA_FADE_OUT_LIFESPAN);
     }
 
+    /** Set a max lifetime in ticks; after this many ticks from spawn the circle will start fading out. Ignored if <= 0. */
+    public void setMaxAliveTicks(int ticks) {
+        this.maxAliveTicks = Math.max(0, ticks);
+    }
+
     public void scheduleDiscard() {
         if (!this.level().isClientSide && !this.entityData.get(DATA_PENDING_DISCARD)) {
             this.entityData.set(DATA_PENDING_DISCARD, true);
@@ -141,6 +149,9 @@ public class ArcaneCircleEntity extends AbstractConvergenceEntity {
         super.tick();
 
         if (!this.level().isClientSide) {
+            if (this.maxAliveTicks > 0 && this.tickCount - getSpawnTick() >= this.maxAliveTicks) {
+                scheduleDiscard();
+            }
             if (this.entityData.get(DATA_PENDING_DISCARD)) {
                 int lifespan = this.entityData.get(DATA_FADE_OUT_LIFESPAN) - 1;
                 this.entityData.set(DATA_FADE_OUT_LIFESPAN, lifespan);
@@ -164,8 +175,8 @@ public class ArcaneCircleEntity extends AbstractConvergenceEntity {
 
     private void updatePositionAndRotation() {
         if (this.level() instanceof ServerLevel serverLevel && this.casterUUID != null) {
-            Player caster = serverLevel.getServer().getPlayerList().getPlayer(this.casterUUID);
-            if (caster == null || !caster.isAlive()) {
+            Entity entity = serverLevel.getEntity(this.casterUUID);
+            if (!(entity instanceof LivingEntity caster) || !caster.isAlive()) {
                 this.scheduleDiscard();
                 return;
             }
@@ -205,7 +216,7 @@ public class ArcaneCircleEntity extends AbstractConvergenceEntity {
     }
 
     @Override
-    public boolean canCollideWith(net.minecraft.world.entity.Entity entity) {
+    public boolean canCollideWith(Entity entity) {
         return false;
     }
 

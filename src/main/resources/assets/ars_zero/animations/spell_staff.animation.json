@@ -5,7 +5,7 @@
 			"loop": true,
 			"animation_length": 16,
 			"bones": {
-				"gem": {
+				"no_filial": {
 					"rotation": {
 						"0.0": {
 							"vector": [0, 0, 0]
@@ -19,11 +19,10 @@
 							"vector": [0, 0, 0]
 						},
 						"8.0": {
-							"vector": [0, -0.5, 0],
-							"easing": "easeInOutBack"						},
+							"vector": [0, -0.5, 0]
+						},
 						"16.0": {
-							"vector": [0, 0, 0],
-							"easing": "easeInOutBack"
+							"vector": [0, 0, 0]
 						}
 					}
 				},
@@ -37,13 +36,13 @@
 						}
 					}
 				},
-				"side": {
+				"tier2_no_filial": {
 					"rotation": {
 						"0.0": {
 							"vector": [0, 0, 0]
 						},
 						"16.0": {
-							"vector": [0, -720, 0]
+							"vector": [0, 0, 0]
 						}
 					}
 				},
@@ -57,12 +56,38 @@
 						}
 					}
 				},
-				"scroll": {
-					"position": {
-						"vector": [0, 0, 0]
+				"filial": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"15.9167": {
+							"vector": [0, 0, 0]
+						},
+						"16.0": {
+							"vector": [0, 0, 0]
+						}
+					}
+				},
+				"tier2_filial": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"16.0": {
+							"vector": [0, 180, 0]
+						}
 					},
-					"scale": {
-						"vector": [0, 0, 0]
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"8.0": {
+							"vector": [0, 1, 0]
+						},
+						"16.0": {
+							"vector": [0, 0, 0]
+						}
 					}
 				}
 			}

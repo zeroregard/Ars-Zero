@@ -1,0 +1,104 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.unknown",
+				"texture_width": 64,
+				"texture_height": 64,
+				"visible_bounds_width": 2,
+				"visible_bounds_height": 4,
+				"visible_bounds_offset": [0, 1, 0]
+			},
+			"bones": [
+				{
+					"name": "filial_abjuration",
+					"pivot": [0, -25, 1],
+					"cubes": [
+						{
+							"origin": [-2.5, -2, -1.5],
+							"size": [5, 4, 5],
+							"uv": {
+								"north": {"uv": [18, 25], "uv_size": [5, 4]},
+								"east": {"uv": [25, 20], "uv_size": [5, 4]},
+								"south": {"uv": [25, 24], "uv_size": [5, 4]},
+								"west": {"uv": [26, 10], "uv_size": [5, 4]},
+								"up": {"uv": [18, 20], "uv_size": [5, 5]},
+								"down": {"uv": [21, 15], "uv_size": [5, -5]}
+							}
+						},
+						{
+							"origin": [-1.5, 2, -0.5],
+							"size": [3, 2, 3],
+							"uv": {
+								"north": {"uv": [34, 30], "uv_size": [3, 2]},
+								"east": {"uv": [31, 34], "uv_size": [3, 2]},
+								"south": {"uv": [34, 32], "uv_size": [3, 2]},
+								"west": {"uv": [34, 34], "uv_size": [3, 2]},
+								"up": {"uv": [32, 3], "uv_size": [3, 3]},
+								"down": {"uv": [5, 35], "uv_size": [3, -3]}
+							}
+						},
+						{
+							"origin": [0, -5, -3.5],
+							"size": [0, 11, 5],
+							"uv": {
+								"north": {"uv": [0, 0], "uv_size": [0, 11]},
+								"east": {"uv": [0, 0], "uv_size": [5, 11]},
+								"south": {"uv": [0, 0], "uv_size": [0, 11]},
+								"west": {"uv": [5, 0], "uv_size": [5, 11]},
+								"up": {"uv": [0, 0], "uv_size": [0, 5]},
+								"down": {"uv": [0, 5], "uv_size": [0, -5]}
+							}
+						},
+						{
+							"origin": [-4.5, -2, 1],
+							"size": [9, 4, 0],
+							"uv": {
+								"north": {"uv": [16, 6], "uv_size": [9, 4]},
+								"east": {"uv": [0, 0], "uv_size": [0, 4]},
+								"south": {"uv": [0, 18], "uv_size": [9, 4]},
+								"west": {"uv": [0, 0], "uv_size": [0, 4]},
+								"up": {"uv": [0, 0], "uv_size": [9, 0]},
+								"down": {"uv": [0, 0], "uv_size": [9, 0]}
+							}
+						}
+					]
+				},
+				{
+					"name": "liquid",
+					"parent": "filial_abjuration",
+					"pivot": [0, 1.5, 1],
+					"cubes": [
+						{
+							"origin": [-2.5, -2, -1.5],
+							"size": [5, 4, 5],
+							"inflate": -0.5,
+							"uv": {
+								"north": {"uv": [26, 14], "uv_size": [5, 4]},
+								"east": {"uv": [0, 27], "uv_size": [5, 4]},
+								"south": {"uv": [27, 0], "uv_size": [5, 4]},
+								"west": {"uv": [27, 4], "uv_size": [5, 4]},
+								"up": {"uv": [21, 15], "uv_size": [5, 5]},
+								"down": {"uv": [0, 27], "uv_size": [5, -5]}
+							}
+						},
+						{
+							"origin": [-1.5, 1, -0.5],
+							"size": [3, 3, 3],
+							"inflate": -0.5,
+							"uv": {
+								"north": {"uv": [32, 17], "uv_size": [3, 3]},
+								"east": {"uv": [32, 20], "uv_size": [3, 3]},
+								"south": {"uv": [24, 32], "uv_size": [3, 3]},
+								"west": {"uv": [18, 33], "uv_size": [3, 3]},
+								"up": {"uv": [33, 23], "uv_size": [3, 3]},
+								"down": {"uv": [2, 37], "uv_size": [3, -3]}
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}

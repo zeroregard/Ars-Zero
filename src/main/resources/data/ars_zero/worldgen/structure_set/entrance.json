@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "ars_zero:entrance",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 384739303,
+    "separation": 14,
+    "spacing": 36
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "ars_zero:block/blight_vein",
+    "blight_vein": "ars_zero:block/blight_vein"
+  },
+  "elements": [
+    {
+      "from": [ 0, 0, 0.1 ],
+      "to": [ 16, 16, 0.1 ],
+      "faces": {
+        "north": { "uv": [ 0, 0, 16, 16 ], "texture": "#blight_vein" },
+        "south": { "uv": [ 0, 0, 16, 16 ], "texture": "#blight_vein" }
+      }
+    }
+  ]
+}

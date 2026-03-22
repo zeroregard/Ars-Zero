@@ -1,0 +1,289 @@
+package com.github.ars_zero.common.datagen;
+
+import com.github.ars_zero.ArsZero;
+import com.github.ars_zero.common.world.tree.BigDeadArchwoodTrunkPlacer;
+import com.github.ars_zero.common.world.tree.DeadArchwoodTrunkPlacer;
+import com.github.ars_zero.common.world.tree.HugeDeadArchwoodTrunkPlacer;
+import com.github.ars_zero.common.world.feature.BlightPoolFeature;
+import com.github.ars_zero.common.world.placement.NoBlightLogNearbyFilter;
+import com.github.ars_zero.registry.ModBlocks;
+import com.github.ars_zero.registry.ModSounds;
+import com.github.ars_zero.registry.ModFluids;
+import com.github.ars_zero.registry.ModWorldgen;
+import net.minecraft.core.HolderGetter;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.data.PackOutput;
+import net.minecraft.data.worldgen.BiomeDefaultFeatures;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.data.worldgen.features.FeatureUtils;
+import net.minecraft.data.worldgen.placement.MiscOverworldPlacements;
+import net.minecraft.data.worldgen.placement.PlacementUtils;
+import net.minecraft.sounds.Musics;
+import net.minecraft.util.valueproviders.UniformInt;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeGenerationSettings;
+import net.minecraft.world.level.biome.BiomeSpecialEffects;
+import net.minecraft.world.level.biome.MobSpawnSettings;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.configurations.DiskConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
+import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
+import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSize;
+import com.github.ars_zero.common.world.tree.FlatBlobFoliagePlacer;
+import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.levelgen.feature.stateproviders.RuleBasedBlockStateProvider;
+import net.minecraft.world.level.levelgen.placement.BiomeFilter;
+import net.minecraft.world.level.levelgen.placement.BlockPredicateFilter;
+import net.minecraft.world.level.levelgen.placement.CountPlacement;
+import net.minecraft.world.level.levelgen.placement.HeightmapPlacement;
+import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+import net.minecraft.world.level.levelgen.placement.RarityFilter;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
+
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
+public class WorldgenProvider extends DatapackBuiltinEntriesProvider {
+
+    private static final net.minecraft.core.RegistrySetBuilder BUILDER = new net.minecraft.core.RegistrySetBuilder()
+        .add(Registries.CONFIGURED_FEATURE, WorldgenProvider::bootstrapConfiguredFeatures)
+        .add(Registries.PLACED_FEATURE, WorldgenProvider::bootstrapPlacedFeatures)
+        .add(Registries.BIOME, WorldgenProvider::bootstrapBiomes);
+
+    public WorldgenProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+        super(output, registries, BUILDER, Set.of(ArsZero.MOD_ID));
+    }
+
+    private static void bootstrapConfiguredFeatures(BootstrapContext<ConfiguredFeature<?, ?>> context) {
+        TreeConfiguration deadTreeConfig = new TreeConfiguration.TreeConfigurationBuilder(
+            BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LOG.get()),
+            new DeadArchwoodTrunkPlacer(8, 2, 1),
+            BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LEAVES.get().defaultBlockState().setValue(LeavesBlock.PERSISTENT, true)),
+            new FlatBlobFoliagePlacer(UniformInt.of(5, 7), UniformInt.of(0, 1), 3, 4),
+            new TwoLayersFeatureSize(2, 0, 2)
+        ).build();
+
+        context.register(ModWorldgen.CONFIGURED_DEAD_ARCHWOOD_TREE,
+            new ConfiguredFeature<>(Feature.TREE, deadTreeConfig));
+
+        TreeConfiguration bigDeadTreeConfig = new TreeConfiguration.TreeConfigurationBuilder(
+            BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LOG.get()),
+            new BigDeadArchwoodTrunkPlacer(16, 4, 4),
+            BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LEAVES.get().defaultBlockState().setValue(LeavesBlock.PERSISTENT, true)),
+            new FlatBlobFoliagePlacer(UniformInt.of(6, 8), UniformInt.of(0, 1), 3, 5),
+            new TwoLayersFeatureSize(2, 0, 2)
+        ).build();
+
+        context.register(ModWorldgen.CONFIGURED_BIG_DEAD_ARCHWOOD_TREE,
+            new ConfiguredFeature<>(Feature.TREE, bigDeadTreeConfig));
+
+        TreeConfiguration hugeDeadTreeConfig = new TreeConfiguration.TreeConfigurationBuilder(
+            BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LOG.get()),
+            new HugeDeadArchwoodTrunkPlacer(24, 6, 6),
+            BlockStateProvider.simple(ModBlocks.BLIGHT_ARCHWOOD_LEAVES.get().defaultBlockState().setValue(LeavesBlock.PERSISTENT, true)),
+            new FlatBlobFoliagePlacer(UniformInt.of(7, 9), UniformInt.of(0, 1), 4, 6),
+            new TwoLayersFeatureSize(3, 0, 3)
+        ).build();
+
+        context.register(ModWorldgen.CONFIGURED_HUGE_DEAD_ARCHWOOD_TREE,
+            new ConfiguredFeature<>(Feature.TREE, hugeDeadTreeConfig));
+
+        context.register(ModWorldgen.CONFIGURED_PATCH_DEAD_BUSH,
+            new ConfiguredFeature<>(Feature.RANDOM_PATCH,
+                FeatureUtils.simplePatchConfiguration(
+                    Feature.SIMPLE_BLOCK,
+                    new SimpleBlockConfiguration(BlockStateProvider.simple(Blocks.DEAD_BUSH)),
+                    List.of(Blocks.GRASS_BLOCK, Blocks.DIRT))));
+
+        context.register(ModWorldgen.CONFIGURED_PATCH_GRASS,
+            new ConfiguredFeature<>(Feature.RANDOM_PATCH,
+                FeatureUtils.simplePatchConfiguration(
+                    Feature.SIMPLE_BLOCK,
+                    new SimpleBlockConfiguration(BlockStateProvider.simple(Blocks.SHORT_GRASS)),
+                    List.of(Blocks.GRASS_BLOCK, Blocks.DIRT))));
+
+        // Coarse dirt disk replaces grass_block/dirt with coarse_dirt (surface patches), not placed on top
+        context.register(ModWorldgen.CONFIGURED_DISK_COARSE_DIRT,
+            new ConfiguredFeature<>(Feature.DISK,
+                new DiskConfiguration(
+                    RuleBasedBlockStateProvider.simple(Blocks.COARSE_DIRT),
+                    BlockPredicate.matchesBlocks(List.of(Blocks.GRASS_BLOCK, Blocks.DIRT)),
+                    UniformInt.of(1, 3),
+                    1)));
+
+        context.register(ModWorldgen.CONFIGURED_DISK_GRAVEL_SURFACE,
+            new ConfiguredFeature<>(Feature.RANDOM_PATCH,
+                FeatureUtils.simplePatchConfiguration(
+                    Feature.SIMPLE_BLOCK,
+                    new SimpleBlockConfiguration(BlockStateProvider.simple(Blocks.GRAVEL)),
+                    List.of(Blocks.GRASS_BLOCK, Blocks.DIRT))));
+
+        // Replace grass_block with blighted_soil using noise-based selective placement
+        context.register(ModWorldgen.CONFIGURED_REPLACE_GRASS_WITH_BLIGHTED_SOIL,
+            new ConfiguredFeature<>(ModWorldgen.BLIGHTED_SOIL_SURFACE_FEATURE.get(),
+                net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.INSTANCE));
+
+        BlightPoolFeature.Configuration blightPoolConfig = new BlightPoolFeature.Configuration(
+            BlockStateProvider.simple(ModFluids.BLIGHT_FLUID_BLOCK.get().defaultBlockState()),
+            BlockStateProvider.simple(Blocks.STONE),
+            BlockStateProvider.simple(Blocks.CAMPFIRE.defaultBlockState()));
+        context.register(ModWorldgen.CONFIGURED_BLIGHT_POOL,
+            new ConfiguredFeature<>(ModWorldgen.BLIGHT_POOL_FEATURE.get(), blightPoolConfig));
+    }
+
+    private static void bootstrapPlacedFeatures(BootstrapContext<PlacedFeature> context) {
+        HolderGetter<ConfiguredFeature<?, ?>> features = context.lookup(Registries.CONFIGURED_FEATURE);
+        // Tree placements: WORLD_SURFACE_WG heightmap lands on the air block just above the surface.
+        // The would_survive sapling predicate checks the block below (the surface block must support a sapling),
+        // so it rejects logs/leaves from already-placed trees — preventing stacking.
+        BlockPredicate survivesOnGround = BlockPredicate.wouldSurvive(
+            Blocks.OAK_SAPLING.defaultBlockState(), net.minecraft.core.BlockPos.ZERO);
+        context.register(ModWorldgen.PLACED_DEAD_ARCHWOOD_TREE,
+            new PlacedFeature(
+                features.getOrThrow(ModWorldgen.CONFIGURED_DEAD_ARCHWOOD_TREE),
+                List.of(
+                    CountPlacement.of(3),
+                    InSquarePlacement.spread(),
+                    HeightmapPlacement.onHeightmap(Heightmap.Types.WORLD_SURFACE_WG),
+                    BlockPredicateFilter.forPredicate(survivesOnGround),
+                    BiomeFilter.biome()
+                )
+            ));
+        context.register(ModWorldgen.PLACED_BIG_DEAD_ARCHWOOD_TREE,
+            new PlacedFeature(
+                features.getOrThrow(ModWorldgen.CONFIGURED_BIG_DEAD_ARCHWOOD_TREE),
+                List.of(
+                    RarityFilter.onAverageOnceEvery(3),
+                    InSquarePlacement.spread(),
+                    HeightmapPlacement.onHeightmap(Heightmap.Types.WORLD_SURFACE_WG),
+                    BlockPredicateFilter.forPredicate(survivesOnGround),
+                    BiomeFilter.biome()
+                )
+            ));
+        context.register(ModWorldgen.PLACED_HUGE_DEAD_ARCHWOOD_TREE,
+            new PlacedFeature(
+                features.getOrThrow(ModWorldgen.CONFIGURED_HUGE_DEAD_ARCHWOOD_TREE),
+                List.of(
+                    RarityFilter.onAverageOnceEvery(8),
+                    NoBlightLogNearbyFilter.INSTANCE,
+                    InSquarePlacement.spread(),
+                    HeightmapPlacement.onHeightmap(Heightmap.Types.WORLD_SURFACE_WG),
+                    BlockPredicateFilter.forPredicate(survivesOnGround),
+                    BiomeFilter.biome()
+                )
+            ));
+        context.register(ModWorldgen.PLACED_PATCH_DEAD_BUSH,
+            new PlacedFeature(
+                features.getOrThrow(ModWorldgen.CONFIGURED_PATCH_DEAD_BUSH),
+                List.of(
+                    RarityFilter.onAverageOnceEvery(6),
+                    InSquarePlacement.spread(),
+                    PlacementUtils.HEIGHTMAP_WORLD_SURFACE,
+                    BiomeFilter.biome())));
+        context.register(ModWorldgen.PLACED_PATCH_GRASS,
+            new PlacedFeature(
+                features.getOrThrow(ModWorldgen.CONFIGURED_PATCH_GRASS),
+                List.of(
+                    RarityFilter.onAverageOnceEvery(2),
+                    InSquarePlacement.spread(),
+                    PlacementUtils.HEIGHTMAP_WORLD_SURFACE,
+                    BiomeFilter.biome())));
+        context.register(ModWorldgen.PLACED_DISK_COARSE_DIRT,
+            new PlacedFeature(
+                features.getOrThrow(ModWorldgen.CONFIGURED_DISK_COARSE_DIRT),
+                List.of(
+                    RarityFilter.onAverageOnceEvery(5),
+                    InSquarePlacement.spread(),
+                    PlacementUtils.HEIGHTMAP_WORLD_SURFACE,
+                    BiomeFilter.biome())));
+        context.register(ModWorldgen.PLACED_DISK_GRAVEL_SURFACE,
+            new PlacedFeature(
+                features.getOrThrow(ModWorldgen.CONFIGURED_DISK_GRAVEL_SURFACE),
+                List.of(
+                    RarityFilter.onAverageOnceEvery(6),
+                    InSquarePlacement.spread(),
+                    PlacementUtils.HEIGHTMAP_WORLD_SURFACE,
+                    BiomeFilter.biome())));
+        context.register(ModWorldgen.PLACED_REPLACE_GRASS_WITH_BLIGHTED_SOIL,
+            new PlacedFeature(
+                features.getOrThrow(ModWorldgen.CONFIGURED_REPLACE_GRASS_WITH_BLIGHTED_SOIL),
+                List.of(
+                    CountPlacement.of(5),
+                    InSquarePlacement.spread(),
+                    PlacementUtils.HEIGHTMAP_WORLD_SURFACE,
+                    BiomeFilter.biome())));
+        context.register(ModWorldgen.PLACED_BLIGHT_POOL,
+            new PlacedFeature(
+                features.getOrThrow(ModWorldgen.CONFIGURED_BLIGHT_POOL),
+                List.of(
+                    RarityFilter.onAverageOnceEvery(5),
+                    InSquarePlacement.spread(),
+                    PlacementUtils.HEIGHTMAP_WORLD_SURFACE,
+                    BiomeFilter.biome())));
+    }
+
+    private static void bootstrapBiomes(BootstrapContext<Biome> context) {
+        HolderGetter<PlacedFeature> placedFeatures = context.lookup(Registries.PLACED_FEATURE);
+        HolderGetter<net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver<?>> carvers = context.lookup(Registries.CONFIGURED_CARVER);
+
+        BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
+        BiomeDefaultFeatures.addDefaultCarversAndLakes(generation);
+        BiomeDefaultFeatures.addDefaultCrystalFormations(generation);
+        BiomeDefaultFeatures.addDefaultUndergroundVariety(generation);
+        BiomeDefaultFeatures.addDefaultSprings(generation);
+        BiomeDefaultFeatures.addSurfaceFreezing(generation);
+        // No flowers or ferns in blight forest
+        BiomeDefaultFeatures.addDefaultOres(generation);
+        BiomeDefaultFeatures.addExtraGold(generation);
+        generation.addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, MiscOverworldPlacements.DISK_SAND);
+        generation.addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, MiscOverworldPlacements.DISK_CLAY);
+        generation.addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, MiscOverworldPlacements.DISK_GRAVEL);
+        // Dense trees for canopy darkness so undead can spawn naturally (one entry per feature to avoid FeatureSorter cycle)
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_PATCH_GRASS));
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_DEAD_ARCHWOOD_TREE));
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_BIG_DEAD_ARCHWOOD_TREE));
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_HUGE_DEAD_ARCHWOOD_TREE));
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_PATCH_DEAD_BUSH));
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, placedFeatures.getOrThrow(ModWorldgen.PLACED_DISK_COARSE_DIRT));
+        generation.addFeature(GenerationStep.Decoration.LOCAL_MODIFICATIONS, placedFeatures.getOrThrow(ModWorldgen.PLACED_BLIGHT_POOL));
+        BiomeDefaultFeatures.addDefaultMushrooms(generation);
+        BiomeDefaultFeatures.addDefaultExtraVegetation(generation);
+
+        MobSpawnSettings.Builder spawns = new MobSpawnSettings.Builder();
+        spawns.addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(EntityType.SKELETON, 100, 4, 4));
+        BiomeDefaultFeatures.commonSpawns(spawns);
+
+        // Flatter (swamp-like) terrain would require overworld surface rules conditioned on ars_zero:blight_forest.
+        // NeoForge's built-in biome modifiers do not expose surface rules; dimension/chunk-gen modification would be needed. Left as follow-up.
+        context.register(ModWorldgen.BLIGHT_FOREST, new Biome.BiomeBuilder()
+            .hasPrecipitation(true)
+            .downfall(0.9f)
+            .temperature(0.65f)
+            .generationSettings(generation.build())
+            .mobSpawnSettings(spawns.build())
+            .specialEffects(new BiomeSpecialEffects.Builder()
+                .waterColor(0x2d5016)
+                .waterFogColor(0x1a3009)
+                .fogColor(0x303030)
+                .skyColor(0x303030)
+                .grassColorModifier(BiomeSpecialEffects.GrassColorModifier.DARK_FOREST)
+                .grassColorOverride(0x5B6656)
+                .foliageColorOverride(0x5B6656)
+                .ambientMoodSound(new net.minecraft.world.level.biome.AmbientMoodSettings(
+                    net.minecraft.core.Holder.direct(ModSounds.NECROPOLIS_AMBIENT.get()),
+                    6000, 8, 2.0))
+                .backgroundMusic(Musics.createGameMusic(net.minecraft.sounds.SoundEvents.MUSIC_BIOME_FOREST)).build())
+            .build());
+    }
+}

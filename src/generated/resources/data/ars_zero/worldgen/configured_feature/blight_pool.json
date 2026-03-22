@@ -1,0 +1,32 @@
+{
+  "type": "ars_zero:blight_pool",
+  "config": {
+    "barrier": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "minecraft:stone"
+      }
+    },
+    "below_block": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "minecraft:campfire",
+        "Properties": {
+          "facing": "north",
+          "lit": "true",
+          "signal_fire": "false",
+          "waterlogged": "false"
+        }
+      }
+    },
+    "fluid": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "ars_zero:blight_fluid",
+        "Properties": {
+          "level": "0"
+        }
+      }
+    }
+  }
+}

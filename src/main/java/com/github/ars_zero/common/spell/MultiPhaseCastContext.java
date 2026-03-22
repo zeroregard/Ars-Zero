@@ -32,7 +32,11 @@ public class MultiPhaseCastContext {
     
     public double distanceMultiplier = 1.0;
     public int tickCooldown = 0;
-    
+    /** True after the first TICK has fired this cast; ensures first tick always fires, delay applies only to subsequent ticks. */
+    public boolean hasFiredFirstTick = false;
+    /** Last game tick when we executed TICK; prevents double execution when onUseTick and releaseUsing both call tickPhase in same tick. */
+    public long lastExecuteGameTick = -1;
+
     public Entity arcaneCircleEntity = null;
     
     public MultiPhaseCastContext(UUID playerId, CastSource source) {
