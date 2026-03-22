@@ -6,8 +6,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Configuration for a {@link StaticStaff}. Use the builder to construct.
- * rendererType is resolved on the client (e.g. "telekinesis", "spell_staff_style").
- * Use visualTier for spell-staff-style rendering with a specific tier bone set.
+ * Use visualTier for spell-staff-style rendering with a specific tier bone set,
+ * or rendererType with {@link #RENDERER_SPELL_STAFF_STYLE} for a default novice-tier appearance.
  */
 public record StaticStaffConfig(
     String spellName,
@@ -27,7 +27,6 @@ public record StaticStaffConfig(
 
     public enum VisualTier { NOVICE, MAGE, ARCHMAGE }
 
-    public static final String RENDERER_TELEKINESIS = "telekinesis";
     public static final String RENDERER_SPELL_STAFF_STYLE = "spell_staff_style";
 
     public static Builder builder(String spellName, String tooltipKey) {

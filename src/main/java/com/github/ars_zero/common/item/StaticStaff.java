@@ -74,10 +74,9 @@ public final class StaticStaff extends AbstractStaticSpellStaff {
     @Override
     @OnlyIn(Dist.CLIENT)
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
-        String type = config.rendererType();
-        boolean hasRenderer = (type != null && !type.isEmpty()) || config.visualTier() != null;
+        boolean hasRenderer = (config.rendererType() != null && !config.rendererType().isEmpty()) || config.visualTier() != null;
         if (hasRenderer && StaticStaffRendererRegistry.RENDERER_FACTORY != null) {
-            consumer.accept(StaticStaffRendererRegistry.RENDERER_FACTORY.apply(type, this));
+            consumer.accept(StaticStaffRendererRegistry.RENDERER_FACTORY.apply(this));
             return;
         }
         super.createGeoRenderer(consumer);

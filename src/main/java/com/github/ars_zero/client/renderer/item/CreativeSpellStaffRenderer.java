@@ -2,98 +2,21 @@ package com.github.ars_zero.client.renderer.item;
 
 import com.github.ars_zero.ArsZero;
 import com.github.ars_zero.common.item.AbstractSpellStaff;
-import com.mojang.blaze3d.platform.Lighting;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemDisplayContext;
-import software.bernie.geckolib.cache.object.BakedGeoModel;
-import software.bernie.geckolib.renderer.GeoItemRenderer;
-import software.bernie.geckolib.util.Color;
-import com.github.ars_zero.client.renderer.item.SpellStaffModel;
 
-import javax.annotation.Nullable;
-
-public class CreativeSpellStaffRenderer extends GeoItemRenderer<AbstractSpellStaff> {
+public class CreativeSpellStaffRenderer extends AbstractStaffRenderer<AbstractSpellStaff> {
 
     public CreativeSpellStaffRenderer() {
         super(new SpellStaffModel());
     }
 
     @Override
-    protected void renderInGui(ItemDisplayContext transformType, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay, float partialTick) {
-        this.animatable.getAnimatableInstanceCache().getManagerForId(this.animatable.hashCode()).getAnimationControllers().values().forEach(controller -> controller.stop());
-        
-        if (this.useEntityGuiLighting) {
-            Lighting.setupForEntityInInventory();
-        } else {
-            Lighting.setupForFlatItems();
-        }
-        int color = Color.ofOpaque(0xFFFFFF).argbInt();
-
-        MultiBufferSource.BufferSource var10000;
-        if (bufferSource instanceof MultiBufferSource.BufferSource bufferSource2) {
-            var10000 = bufferSource2;
-        } else {
-            var10000 = Minecraft.getInstance().renderBuffers().bufferSource();
-        }
-        MultiBufferSource.BufferSource defaultBufferSource = var10000;
-        RenderType renderType = this.getRenderType(this.animatable, this.getTextureLocation(this.animatable), defaultBufferSource, partialTick);
-        VertexConsumer buffer = ItemRenderer.getFoilBufferDirect(bufferSource, renderType, true, this.currentItemStack != null && this.currentItemStack.hasFoil());
-
-        poseStack.pushPose();
-        
-        poseStack.translate(0F, 0.35, 0F);
-        poseStack.scale(0.47F, 0.47F, 0.47F);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(-45));
-        poseStack.mulPose(Axis.XP.rotationDegrees(10));
-        
-        this.defaultRenderGui(poseStack, this.animatable, defaultBufferSource, renderType, buffer, 0.0F, 0.0F, packedLight, packedOverlay, color);
-        defaultBufferSource.endBatch();
-        RenderSystem.enableDepthTest();
-        Lighting.setupFor3DItems();
-        poseStack.popPose();
-    }
-
-    @Override
-    public void defaultRender(PoseStack poseStack, AbstractSpellStaff animatable, MultiBufferSource bufferSource, @Nullable RenderType renderType, @Nullable VertexConsumer buffer, float yaw, float partialTick, int packedLight) {
-        super.defaultRender(poseStack, animatable, bufferSource, renderType, buffer, yaw, partialTick, packedLight);
-    }
-
-    public void defaultRenderGui(PoseStack poseStack, AbstractSpellStaff animatable, MultiBufferSource bufferSource, @Nullable RenderType renderType, @Nullable VertexConsumer buffer, float yaw, float partialTick, int packedLight, int packedOverlay, int packedColor) {
-        poseStack.pushPose();
-        Color renderColor = Color.ofOpaque(0xFFFFFF);
-        float red = renderColor.getRedFloat();
-        float green = renderColor.getGreenFloat();
-        float blue = renderColor.getBlueFloat();
-        float alpha = renderColor.getAlphaFloat();
-        BakedGeoModel model = this.model.getBakedModel(this.model.getModelResource(animatable));
-        if (renderType == null) {
-            renderType = this.getRenderType(animatable, this.getTextureLocation(animatable), bufferSource, partialTick);
-        }
-
-        if (buffer == null) {
-            buffer = bufferSource.getBuffer(renderType);
-        }
-
-        this.preRender(poseStack, animatable, model, bufferSource, buffer, false, partialTick, packedLight, packedOverlay, packedColor);
-        if (this.firePreRenderEvent(poseStack, model, bufferSource, partialTick, packedLight)) {
-            this.preApplyRenderLayers(poseStack, animatable, model, renderType, bufferSource, buffer, (float) packedLight, packedLight, packedOverlay);
-            this.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer, false, partialTick, packedLight, packedOverlay, packedColor);
-            this.applyRenderLayers(poseStack, animatable, model, renderType, bufferSource, buffer, partialTick, packedLight, packedOverlay);
-            this.postRender(poseStack, animatable, model, bufferSource, buffer, false, partialTick, packedLight, packedOverlay, packedColor);
-            this.firePostRenderEvent(poseStack, model, bufferSource, partialTick, packedLight);
-        }
-
-        poseStack.popPose();
-        this.renderFinal(poseStack, animatable, model, bufferSource, buffer, partialTick, packedLight, packedOverlay, packedColor);
+    protected void applyGuiTransform(PoseStack poseStack) {
+        poseStack.translate(-0.05F, 0.25, 0F);
     }
 
     @Override
@@ -109,15 +32,3 @@ public class CreativeSpellStaffRenderer extends GeoItemRenderer<AbstractSpellSta
         return RenderType.entityTranslucent(texture);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-

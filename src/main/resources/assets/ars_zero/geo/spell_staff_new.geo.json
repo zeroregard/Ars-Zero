@@ -130,7 +130,7 @@
 				},
 				{
 					"name": "source_gem",
-					"parent": "filial",
+					"parent": "no_filial",
 					"pivot": [0, 24, 0],
 					"rotation": [0, 45, 0],
 					"cubes": [
