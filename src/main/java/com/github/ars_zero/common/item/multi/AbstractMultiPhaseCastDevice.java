@@ -610,6 +610,12 @@ public abstract class AbstractMultiPhaseCastDevice extends Item implements ICast
         Spell spell = caster.getSpell(physicalSlot);
 
         if (spell.isEmpty()) {
+            if (phase == SpellPhase.BEGIN) {
+                MultiPhaseCastContext ctx = findContextByStack(player, stack);
+                if (ctx != null) {
+                    ctx.beginFinished = true;
+                }
+            }
             return;
         }
 
