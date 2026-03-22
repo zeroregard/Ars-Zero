@@ -69,7 +69,11 @@ public class DocumentationEvents {
         }
         Documentation.addPage(lifespanBuilder);
 
-        Documentation.addPage(ExamplesDocHelper.buildEntry(category));
+        Documentation.addPage(new DocEntryBuilder(ArsZero.MOD_ID, category, "blight_forest")
+                .withIcon(ModItems.BLIGHTED_SOIL.get())
+                .withSortNum(5)
+                .withIntroPage()
+                .withLocalizedText());
     }
 
     private static List<ItemStack> lifespanGlyphStacks() {

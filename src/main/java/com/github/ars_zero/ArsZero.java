@@ -192,7 +192,7 @@ public class ArsZero {
     }
 
     private static void registerArsNouveauDungeonLoot() {
-        DungeonLootTables.RARE_LOOT.add(() -> new ItemStack(ModItems.STAFF_TELEKINESIS.get(), 1));
+        DungeonLootTables.RARE_LOOT.add(() -> new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(ArsZero.prefix("staff_telekinesis")), 1));
     }
 
     /** Default blight forest weight; must not read ServerConfig here because config is not loaded yet during CommonSetup. */

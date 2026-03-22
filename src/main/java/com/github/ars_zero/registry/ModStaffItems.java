@@ -34,7 +34,6 @@ public final class ModStaffItems {
     public static ItemRegistryWrapper<CreativeSpellStaff> CREATIVE_SPELL_STAFF;
     public static ItemRegistryWrapper<SpellcastingCirclet> SPELLCASTING_CIRCLET;
 
-    public static ItemRegistryWrapper<StaticStaff> STAFF_TELEKINESIS;
     private static final List<ItemRegistryWrapper<StaticStaff>> REGISTERED_STATIC_STAFFS = new ArrayList<>();
 
     private ModStaffItems() {}
@@ -46,7 +45,8 @@ public final class ModStaffItems {
         CREATIVE_SPELL_STAFF = wrap(items.register("creative_spell_staff", CreativeSpellStaff::new));
         SPELLCASTING_CIRCLET = wrap(items.register("spellcasting_circlet", SpellcastingCirclet::new));
 
-        STAFF_TELEKINESIS = registerStaticStaff(items, "staff_telekinesis", staffTelekinesisConfig());
+        registerStaticStaff(items, "staff_telekinesis", staffTelekinesisConfig());
+        registerStaticStaff(items, "staff_aetherwalk", staffAetherWalkConfig());
         registerStaticStaff(items, "staff_demonbane", staffDemonbaneConfig());
         registerStaticStaff(items, "staff_geometrize", staffGeometrizeConfig());
         registerStaticStaff(items, "staff_convergence", staffConvergenceConfig());
@@ -71,9 +71,24 @@ public final class ModStaffItems {
         return StaticStaffConfig.builder("Staff of Telekinesis", "item.ars_zero.staff_telekinesis.desc")
                 .visualTier(StaticStaffConfig.VisualTier.NOVICE)
                 .defaultDyeColor(DyeColor.PURPLE)
+                .presetFilialSchool("manipulation")
                 .beginSpell("ars_nouveau:glyph_projectile", "ars_zero:select_effect")
                 .tickSpell("ars_zero:temporal_context_form", "ars_zero:anchor_effect")
                 .endSpell("ars_zero:temporal_context_form", "ars_zero:push_effect")
+                .tickDelay(1)
+                .discountPercent(50)
+                .build();
+    }
+
+    private static StaticStaffConfig staffAetherWalkConfig() {
+        return StaticStaffConfig.builder("Staff of Aetherwalk", "item.ars_zero.staff_aetherwalk.desc")
+                .visualTier(StaticStaffConfig.VisualTier.MAGE)
+                .defaultDyeColor(DyeColor.CYAN)
+                .presetFilialSchool("conjuration")
+                .beginSpell()
+                .tickSpell("ars_nouveau:glyph_underfoot", "ars_nouveau:glyph_phantom_block",
+                           "ars_nouveau:glyph_aoe", "ars_nouveau:glyph_aoe")
+                .endSpell()
                 .tickDelay(1)
                 .discountPercent(50)
                 .build();

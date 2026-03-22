@@ -153,7 +153,6 @@ public class ModItems {
         }
     );
 
-    public static final ItemRegistryWrapper<com.github.ars_zero.common.item.StaticStaff> STAFF_TELEKINESIS = ModStaffItems.STAFF_TELEKINESIS;
 
     // -------------------------------------------------------------------------
     // Corrupted Sourcestone block items
