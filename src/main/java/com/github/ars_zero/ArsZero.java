@@ -66,7 +66,7 @@ import com.github.ars_zero.registry.ModMobEffects;
 import com.github.ars_zero.registry.ModParticleTimelines;
 import com.github.ars_zero.registry.ModParticles;
 import com.github.ars_zero.registry.ModRecipes;
-import com.github.ars_zero.common.world.biome.BlightForestRegion;
+import com.github.ars_zero.common.world.biome.TerraBlenderCompat;
 import com.github.ars_zero.registry.ModWorldgen;
 import com.github.ars_zero.registry.ModSounds;
 import com.hollingsworth.arsnouveau.api.ArsNouveauAPI;
@@ -206,8 +206,7 @@ public class ArsZero {
         }
         int weight = DEFAULT_BLIGHT_FOREST_WEIGHT;
         if (ModList.get().isLoaded("terrablender") && weight > 0) {
-            terrablender.api.Regions.register(
-                new BlightForestRegion(ArsZero.prefix("overworld"), weight));
+            TerraBlenderCompat.registerBlightForestRegion(ArsZero.prefix("overworld"), weight);
             blightForestRegionRegistered = true;
         }
     }
