@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.entity;
 
 import com.github.ars_zero.common.glyph.EffectBeam;
+import com.github.ars_zero.common.util.TurretHelper;
 import com.github.ars_zero.registry.ModEntities;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
@@ -9,6 +10,8 @@ import com.hollingsworth.arsnouveau.api.spell.Spell;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
 import com.hollingsworth.arsnouveau.api.spell.SpellResolver;
 import com.hollingsworth.arsnouveau.api.spell.SpellStats;
+import dev.ryanhcode.sable.companion.SableCompanion;
+import net.minecraft.core.Position;
 import org.jetbrains.annotations.Nullable;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtendTime;
 import net.minecraft.core.Direction;
@@ -239,7 +242,8 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         
         if (this.entityData.get(IS_TURRET)) {
             Direction facing = Direction.from3DDataValue(this.entityData.get(TURRET_FACING));
-            lookVec = new Vec3(facing.getStepX(), facing.getStepY(), facing.getStepZ()).normalize();
+            BlockPos turretPos = new BlockPos(this.entityData.get(TURRET_X), this.entityData.get(TURRET_Y), this.entityData.get(TURRET_Z));
+            lookVec = TurretHelper.getTurretLookDir(level, turretPos, facing);
         } else {
             if (this.casterUUID == null) {
                 return;
@@ -250,7 +254,7 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
             }
             lookVec = caster.getLookAngle();
         }
-        
+
         if (lookVec.lengthSqr() >= 1.0E-12) {
             float[] yawPitch = com.github.ars_zero.common.util.MathHelper.vecToYawPitch(lookVec);
             this.setYRot(yawPitch[0]);
@@ -332,7 +336,8 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
     public void tick() {
         super.tick();
 
-        if (!this.level().isClientSide && this.level() instanceof ServerLevel serverLevel) {
+        Level world = this.level();
+        if (!world.isClientSide && world instanceof ServerLevel serverLevel) {
             tickAndSyncDrain(serverLevel);
             if (this.getLifetime() <= 0) {
                 this.discard();
@@ -346,8 +351,8 @@ public class EffectBeamEntity extends Entity implements ILifespanExtendable, IMa
         Vec3 forward = this.getForward();
         Vec3 end = origin.add(forward.scale(RAY_LENGTH + 0.5));
 
-        BlockHitResult blockHit = this.level().clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-        HitResult hitResult = blockHit;
+        BlockHitResult blockHit = world.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        HitResult hitResult = blockHit.getType() == HitResult.Type.MISS ? blockHit : new BlockHitResult(SableCompanion.INSTANCE.projectOutOfSubLevel(world, (Position) blockHit.getLocation()), blockHit.getDirection(), blockHit.getBlockPos(), blockHit.isInside());
         if (!this.isIgnoreEntities()) {
             EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(this, origin, end, this.getBoundingBox().inflate(RAY_LENGTH), e -> e.isPickable() && !e.isSpectator() && e != this, RAY_LENGTH * RAY_LENGTH);
             if (entityHit != null) {

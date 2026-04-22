@@ -110,6 +110,10 @@ repositories {
         name = "RedlanceMinecraft"
         url = "https://repo.redlance.org/public"
     }
+    maven {
+        name = "RyanHCode Maven"
+        url = "https://maven.ryanhcode.dev/releases"
+    }
     exclusiveContent {
         forRepository {
             maven {
@@ -149,6 +153,12 @@ dependencies {
     compileOnly "curse.maven:jade-324717:5444008"
     
     compileOnly "com.hollingsworth.nuggets:nuggets-neoforge-1.21.1:${nuggets_version}"
+
+    jarJar(api("dev.ryanhcode.sable-companion:sable-companion-common-${project.minecraft_version}") {
+        version {
+            prefer project.sable_companion_version
+        }
+    })
 
     testImplementation("net.neoforged:neoforge:${neo_version}")
     
