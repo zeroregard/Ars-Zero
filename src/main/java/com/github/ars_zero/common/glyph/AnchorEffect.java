@@ -12,6 +12,8 @@ import com.github.ars_zero.common.spell.SpellEffectType;
 import com.github.ars_zero.common.spell.SpellResult;
 import com.github.ars_zero.common.spell.MultiPhaseCastContext;
 import com.github.ars_zero.common.util.BlockImmutabilityUtil;
+import com.github.ars_zero.common.util.MathHelper;
+import com.github.ars_zero.common.util.TurretHelper;
 import com.hollingsworth.arsnouveau.api.spell.AbstractAugment;
 import com.hollingsworth.arsnouveau.api.spell.AbstractEffect;
 import com.hollingsworth.arsnouveau.api.spell.SpellContext;
@@ -21,12 +23,16 @@ import com.hollingsworth.arsnouveau.api.spell.SpellTier;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchools;
 import com.hollingsworth.arsnouveau.api.spell.SpellSchool;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
+import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
+import com.hollingsworth.arsnouveau.common.block.BasicSpellTurret;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentAmplify;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentDampen;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentExtract;
 import com.hollingsworth.arsnouveau.common.spell.augment.AugmentSensitive;
+import dev.ryanhcode.sable.companion.SableCompanion;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Position;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -61,8 +67,45 @@ public class AnchorEffect extends AbstractEffect {
     public static final String ID = "anchor_effect";
     public static final AnchorEffect INSTANCE = new AnchorEffect();
 
+    private record RepositionResult(float yaw, float pitch, Vec3 newPosition) {}
+
     public AnchorEffect() {
         super(ArsZero.prefix(ID), "Anchor");
+    }
+
+    private static RepositionResult getRepositionResult(ServerLevel world, SpellStats spellStats, Player player, SpellResult beginResult, SpellContext baseCastContext, MultiPhaseCastContext multiphaseCastContext) {
+        boolean isSensitive = spellStats.hasBuff(AugmentSensitive.INSTANCE);
+        float yaw = player.getYRot();
+        float pitch = player.getXRot();
+        Vec3 casterPos = player.getEyePosition(1.0f);
+        if(isSensitive) {
+            yaw = beginResult.casterYaw;
+            pitch = beginResult.casterPitch;
+            if(beginResult.casterPosition != null)
+                casterPos = beginResult.casterPosition;
+        }
+        else if (baseCastContext.getCaster().getCasterType() == SpellContext.CasterType.TURRET && baseCastContext.getCaster() instanceof TileCaster tileCaster) {
+            float[] yawPitch = MathHelper.vecToYawPitch(TurretHelper.getTurretLookDir(world, tileCaster.getTile().getBlockPos(), tileCaster.getFacingDirection()));
+            yaw = yawPitch[0];
+            pitch = yawPitch[1];
+            casterPos = SableCompanion.INSTANCE.projectOutOfSubLevel(world, BasicSpellTurret.getDispensePosition(tileCaster.getTile().getBlockPos(), tileCaster.getFacingDirection()));
+        } else if (player instanceof FakePlayer) {
+            BlockPos shooterBlock = BlockPos.containing(player.position());
+            TurretHelper.TurretAim aim = TurretHelper.findTurretAim(world, shooterBlock);
+            if (aim != null) {
+                Position dispensePos = BasicSpellTurret.getDispensePosition(aim.turretPos(), aim.facing());
+                float[] yawPitch = MathHelper.vecToYawPitch(TurretHelper.getTurretLookDir(world, aim.turretPos(), aim.facing()));
+                yaw = yawPitch[0];
+                pitch = yawPitch[1];
+                casterPos = SableCompanion.INSTANCE.projectOutOfSubLevel(world, dispensePos);
+            }
+        }
+        Vec3 newPosition = beginResult.transformLocalToWorld(
+                yaw,
+                pitch,
+                casterPos,
+                multiphaseCastContext.distanceMultiplier);
+        return new RepositionResult(yaw, pitch, newPosition);
     }
 
     @Override
@@ -121,20 +164,10 @@ public class AnchorEffect extends AbstractEffect {
                 }
             }
 
-            boolean isSensitive = spellStats.hasBuff(AugmentSensitive.INSTANCE);
-            boolean useStoredCasterInfo = isSensitive || player instanceof FakePlayer;
-            float yaw = useStoredCasterInfo ? beginResult.casterYaw : player.getYRot();
-            float pitch = useStoredCasterInfo ? beginResult.casterPitch : player.getXRot();
-            Vec3 casterPos = useStoredCasterInfo && beginResult.casterPosition != null
-                    ? beginResult.casterPosition
-                    : player.getEyePosition(1.0f);
-
-            Vec3 newPosition = beginResult.transformLocalToWorld(
-                    yaw,
-                    pitch,
-                    casterPos,
-                    castContext.distanceMultiplier);
-
+            RepositionResult result = getRepositionResult(serverLevel, spellStats, player, beginResult, spellContext, castContext);
+            Vec3 newPosition = result.newPosition();
+            float yaw = result.yaw();
+            float pitch = result.pitch();
             if (newPosition != null && canMoveToPosition(newPosition, world, target)) {
                 if (target instanceof ServerPlayer targetPlayer) {
                     targetPlayer.teleportTo(newPosition.x, newPosition.y, newPosition.z);
@@ -321,6 +354,8 @@ public class AnchorEffect extends AbstractEffect {
             return;
         if (!(shooter instanceof Player player))
             return;
+        if (!(world instanceof ServerLevel serverLevel))
+            return;
 
         IMultiPhaseCaster caster = IMultiPhaseCaster.from(spellContext, shooter);
         if (caster == null) {
@@ -336,19 +371,8 @@ public class AnchorEffect extends AbstractEffect {
             if (beginResult.blockGroup != null && beginResult.relativeOffset != null) {
                 BlockGroupEntity blockGroup = beginResult.blockGroup;
 
-                boolean isSensitive = spellStats.hasBuff(AugmentSensitive.INSTANCE);
-                boolean useStoredCasterInfo = isSensitive || player instanceof FakePlayer;
-                float yaw = useStoredCasterInfo ? beginResult.casterYaw : player.getYRot();
-                float pitch = useStoredCasterInfo ? beginResult.casterPitch : player.getXRot();
-                Vec3 casterPos = useStoredCasterInfo && beginResult.casterPosition != null
-                        ? beginResult.casterPosition
-                        : player.getEyePosition(1.0f);
-
-                Vec3 newPosition = beginResult.transformLocalToWorld(
-                        yaw,
-                        pitch,
-                        casterPos,
-                        castContext.distanceMultiplier);
+                RepositionResult repositionResult = getRepositionResult(serverLevel, spellStats, player, beginResult, spellContext, castContext);
+                Vec3 newPosition = repositionResult.newPosition();
 
                 if (newPosition != null && canMoveToPosition(newPosition, world, blockGroup)) {
                     blockGroup.setPos(newPosition.x, newPosition.y, newPosition.z);
