@@ -116,4 +116,11 @@ jobs:
           version: ${{ env.NEW_VERSION }}
           game-versions: |
             >=${{ env.MC_MIN_VER }} <=${{ env.MC_MAX_VER }}
+          loaders: |
+            neoforge
+          java: |
+            21
+          environments: |
+            client
+            server
           changelog-file: .ci-changelog.md
