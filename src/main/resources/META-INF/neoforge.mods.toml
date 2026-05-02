@@ -41,3 +41,10 @@ config="ars_zero.mixins.json"
     versionRange="[9.0.14,)"
     ordering="AFTER"
     side="BOTH"
+
+[[dependencies.ars_zero]]
+    modId="terrablender"
+    mandatory=false
+    versionRange="[1.21.1-4.0.0.0,)"
+    ordering="AFTER"
+    side="BOTH"
