@@ -37,7 +37,7 @@ public class ServerConfig {
 
         SERVER_BUILDER.comment("Blight forest biome (Terrablender). Set to 0 to disable.").push("blight_forest");
         BLIGHT_FOREST_WEIGHT = SERVER_BUILDER.comment(
-                "Region weight for blight forest. Use 1 for ~25%% when Ars Nouveau archwood forest weight is 3.")
+                "Region weight for blight forest. Default 1 gives roughly 1 blight forest per 5 archwood forests.")
                 .defineInRange("weight", 1, 0, Integer.MAX_VALUE);
         SERVER_BUILDER.pop();
 
