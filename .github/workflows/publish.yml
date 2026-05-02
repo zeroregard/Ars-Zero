@@ -77,11 +77,43 @@ jobs:
         run: |
           PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           if [[ -n "$PREV_TAG" ]]; then
-            LOG=$(git log "${PREV_TAG}..HEAD" --oneline)
+            COMMITS=$(git log "${PREV_TAG}..HEAD" --pretty=format:"%s")
           else
-            LOG=$(git log HEAD --oneline)
+            COMMITS=$(git log HEAD --pretty=format:"%s")
           fi
-          printf "Auto-generated Changelog:\n%s" "$(echo "$LOG" | awk '! / (ci|ver|internal|README)!?([:,. ]|$)/ { $1="-"; print $0 }')" > .ci-changelog.md
+
+          FILTERED=$(echo "$COMMITS" | grep -vE '^(ci|ver|chore|internal)[!: ]' | grep -v '^$')
+
+          FEATURES=$(echo "$FILTERED" | grep -iE '^(feat|add|new)[!:(]' | sed -E 's/^[^:!]+[!:]?: *//')
+          FIXES=$(echo "$FILTERED" | grep -iE '^fix[!:(]' | sed -E 's/^[^:!]+[!:]?: *//')
+          OTHER=$(echo "$FILTERED" | grep -viE '^(feat|add|new|fix)[!:(]' | grep -v '^$')
+
+          {
+            echo "## Ars Zero $NEW_VERSION"
+            echo ""
+            if [[ -n "$PREV_TAG" ]]; then
+              echo "_Changes since \`${PREV_TAG}\`_"
+              echo ""
+            fi
+
+            if [[ -n "$FEATURES" ]]; then
+              echo "### New Features"
+              while IFS= read -r line; do [[ -n "$line" ]] && echo "- $line"; done <<< "$FEATURES"
+              echo ""
+            fi
+
+            if [[ -n "$FIXES" ]]; then
+              echo "### Bug Fixes"
+              while IFS= read -r line; do [[ -n "$line" ]] && echo "- $line"; done <<< "$FIXES"
+              echo ""
+            fi
+
+            if [[ -n "$OTHER" ]]; then
+              echo "### Changes"
+              while IFS= read -r line; do [[ -n "$line" ]] && echo "- $line"; done <<< "$OTHER"
+            fi
+          } > .ci-changelog.md
+
           cat .ci-changelog.md
       - name: Update gradle.properties
         run: |
@@ -116,4 +148,11 @@ jobs:
           version: ${{ env.NEW_VERSION }}
           game-versions: |
             >=${{ env.MC_MIN_VER }} <=${{ env.MC_MAX_VER }}
+          loaders: |
+            neoforge
+          java: |
+            21
+          environments: |
+            client
+            server
           changelog-file: .ci-changelog.md
