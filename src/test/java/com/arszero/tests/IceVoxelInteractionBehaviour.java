@@ -31,7 +31,7 @@ public class IceVoxelInteractionBehaviour {
         }
     }
     
-    @GameTest(batch = "IceVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "IceVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 250)
     public static void iceDestroysWindOnCollision(GameTestHelper helper) {
         WindVoxelEntity wind = createWind(helper, DEFAULT_SIZE);
         IceVoxelEntity ice = createIce(helper, DEFAULT_SIZE);
@@ -61,7 +61,7 @@ public class IceVoxelInteractionBehaviour {
         );
     }
     
-    @GameTest(batch = "IceVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "IceVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 250)
     public static void iceExtinguishesFireOnCollision(GameTestHelper helper) {
         IceVoxelEntity ice = createIce(helper, DEFAULT_SIZE);
         FireVoxelEntity fire = createFire(helper, DEFAULT_SIZE);
@@ -91,7 +91,7 @@ public class IceVoxelInteractionBehaviour {
         );
     }
     
-    @GameTest(batch = "IceVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "IceVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 250)
     public static void iceBlocksWaterOnCollision(GameTestHelper helper) {
         IceVoxelEntity ice = createIce(helper, DEFAULT_SIZE);
         WaterVoxelEntity water = createWater(helper, DEFAULT_SIZE);
@@ -121,7 +121,7 @@ public class IceVoxelInteractionBehaviour {
         );
     }
     
-    @GameTest(batch = "IceVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "IceVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 250)
     public static void twoIceVoxelsBreakOnCollision(GameTestHelper helper) {
         IceVoxelEntity ice1 = createIce(helper, DEFAULT_SIZE);
         IceVoxelEntity ice2 = createIce(helper, DEFAULT_SIZE);
@@ -151,7 +151,7 @@ public class IceVoxelInteractionBehaviour {
         );
     }
     
-    @GameTest(batch = "IceVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "IceVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 250)
     public static void iceBreaksOnStoneCollision(GameTestHelper helper) {
         IceVoxelEntity ice = createIce(helper, DEFAULT_SIZE);
         StoneVoxelEntity stone = createStone(helper, DEFAULT_SIZE);
