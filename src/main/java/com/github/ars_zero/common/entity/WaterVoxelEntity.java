@@ -93,7 +93,7 @@ public class WaterVoxelEntity extends BaseVoxelEntity {
                 super.tick();
                 return;
             }
-            if (this.tickCount % 20 == 0) {
+            if (this.tickCount > 0 && this.tickCount % 20 == 0) {
                 updateFarmlandHydration(true);
                 handleHotBiomeEvaporation();
             }

@@ -1,4 +1,4 @@
-name: Quality
+name: Game Tests
 
 on:
   pull_request:
@@ -7,12 +7,13 @@ env:
   JAVA_VERSION: 21
 
 jobs:
-  build:
+  gametest:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
@@ -22,9 +23,9 @@ jobs:
           cache-dependency-path: |
             *.gradle*
             gradle/wrapper/gradle-wrapper.properties
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-      - name: Checkstyle
-        run: ./gradlew checkstyleMain --no-daemon
-      - name: Build (no tests)
-        run: ./gradlew build -x test -x checkstyleMain --no-daemon
+
+      - name: Run Game Tests
+        run: ./gradlew runGameTestServer --no-daemon

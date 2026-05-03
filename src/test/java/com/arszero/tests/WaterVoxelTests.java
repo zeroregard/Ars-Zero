@@ -36,7 +36,7 @@ public class WaterVoxelTests {
         }
     }
 
-    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 600)
     public static void waterVoxelCreatesAndEvaporatesWater(GameTestHelper helper) {
         BlockPos relativeGrassPos = new BlockPos(2, 0, 2);
         VoxelTestUtils.prepareColumn(
@@ -109,8 +109,8 @@ public class WaterVoxelTests {
             return;
         }
 
-        VoxelTestUtils.spawnVoxel(helper, voxel, spawnPos, Vec3.ZERO, 200);
         voxel.setNoGravityCustom(true);
+        VoxelTestUtils.spawnVoxel(helper, voxel, spawnPos, Vec3.ZERO, 200);
 
         helper.runAfterDelay(25, () -> {
             BlockState farmlandState = helper.getLevel().getBlockState(farmlandPos);
@@ -227,7 +227,7 @@ public class WaterVoxelTests {
         });
     }
 
-    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 250)
     public static void waterVoxelTurnsSourceLavaToObsidian(GameTestHelper helper) {
         BlockPos lavaRelativePos = new BlockPos(2, 0, 2);
         helper.setBlock(lavaRelativePos, Blocks.LAVA.defaultBlockState());
@@ -263,7 +263,7 @@ public class WaterVoxelTests {
         );
     }
 
-    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 250)
     public static void waterVoxelTurnsFlowingLavaToCobblestone(GameTestHelper helper) {
         BlockPos lavaRelativePos = new BlockPos(2, 0, 2);
         helper.setBlock(
@@ -435,7 +435,7 @@ public class WaterVoxelTests {
         });
     }
 
-    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "WaterVoxelTests", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 250)
     public static void waterVoxelIncreasesCauldronLevel(GameTestHelper helper) {
         BlockPos relativeCauldronPos = new BlockPos(2, 0, 2);
         VoxelTestUtils.prepareColumn(

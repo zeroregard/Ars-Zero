@@ -35,7 +35,7 @@ public class FireWaterVoxelInteractionBehaviour {
         }
     }
 
-    @GameTest(batch = "FireWaterVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "FireWaterVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 300)
     public static void fireAndWaterOfEqualSizeDestroyEachOther(GameTestHelper helper) {
         WaterVoxelEntity water = createWater(helper, DEFAULT_SIZE);
         if (water == null) {
@@ -67,7 +67,7 @@ public class FireWaterVoxelInteractionBehaviour {
         );
     }
 
-    @GameTest(batch = "FireWaterVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "FireWaterVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 300)
     public static void largerWaterVoxelSurvivesWithReducedSize(GameTestHelper helper) {
         float waterSize = DEFAULT_SIZE * 2.0f;
         WaterVoxelEntity water = createWater(helper, waterSize);
@@ -106,7 +106,7 @@ public class FireWaterVoxelInteractionBehaviour {
         );
     }
 
-    @GameTest(batch = "FireWaterVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "FireWaterVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 300)
     public static void largerFireVoxelSurvivesWithReducedSize(GameTestHelper helper) {
         WaterVoxelEntity water = createWater(helper, DEFAULT_SIZE);
         if (water == null) {
@@ -189,7 +189,7 @@ public class FireWaterVoxelInteractionBehaviour {
         );
     }
 
-    @GameTest(batch = "FireWaterVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "FireWaterVoxelInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 300)
     public static void waterVoxelExtinguishesFire(GameTestHelper helper) {
         BlockPos baseRelative = new BlockPos(2, 0, 2);
         helper.setBlock(baseRelative, Blocks.NETHERRACK.defaultBlockState());

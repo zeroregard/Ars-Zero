@@ -27,7 +27,12 @@ public final class FriendlyTestReporter implements TestReporter {
 
     @Override
     public void onTestFailed(GameTestInfo info) {
-        failedTests.add(formatEntry(info));
+        String entry = formatEntry(info);
+        Throwable error = info.getError();
+        if (error != null) {
+            entry = entry + ": " + error.getMessage();
+        }
+        failedTests.add(entry);
     }
 
     @Override
@@ -42,7 +47,7 @@ public final class FriendlyTestReporter implements TestReporter {
         int totalCount = passedCount + failedCount;
         List<String> lines = buildSummary(totalCount, passedCount, failedCount);
         FINAL_LINES.set(lines);
-        lines.forEach(line -> LOGGER.debug("{}", line));
+        lines.forEach(line -> LOGGER.info("{}", line));
         summaryPrinted = true;
     }
 
