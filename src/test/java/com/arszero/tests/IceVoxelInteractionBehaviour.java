@@ -190,9 +190,10 @@ public class IceVoxelInteractionBehaviour {
         }
         ice.setSize(size);
         ice.refreshDimensions();
+        ice.setNoGravityCustom(true);
         return ice;
     }
-    
+
     private static StoneVoxelEntity createStone(GameTestHelper helper, float size) {
         ServerLevel level = helper.getLevel();
         StoneVoxelEntity stone = ModEntities.STONE_VOXEL_ENTITY.get().create(level);
@@ -202,9 +203,10 @@ public class IceVoxelInteractionBehaviour {
         }
         stone.setSize(size);
         stone.refreshDimensions();
+        stone.setNoGravityCustom(true);
         return stone;
     }
-    
+
     private static WindVoxelEntity createWind(GameTestHelper helper, float size) {
         ServerLevel level = helper.getLevel();
         WindVoxelEntity wind = ModEntities.WIND_VOXEL_ENTITY.get().create(level);
@@ -214,9 +216,10 @@ public class IceVoxelInteractionBehaviour {
         }
         wind.setSize(size);
         wind.refreshDimensions();
+        wind.setNoGravityCustom(true);
         return wind;
     }
-    
+
     private static FireVoxelEntity createFire(GameTestHelper helper, float size) {
         ServerLevel level = helper.getLevel();
         FireVoxelEntity fire = ModEntities.FIRE_VOXEL_ENTITY.get().create(level);
@@ -226,9 +229,10 @@ public class IceVoxelInteractionBehaviour {
         }
         fire.setSize(size);
         fire.refreshDimensions();
+        fire.setNoGravityCustom(true);
         return fire;
     }
-    
+
     private static WaterVoxelEntity createWater(GameTestHelper helper, float size) {
         ServerLevel level = helper.getLevel();
         WaterVoxelEntity water = ModEntities.WATER_VOXEL_ENTITY.get().create(level);
@@ -238,6 +242,7 @@ public class IceVoxelInteractionBehaviour {
         }
         water.setSize(size);
         water.refreshDimensions();
+        water.setNoGravityCustom(true);
         return water;
     }
 }

@@ -109,8 +109,8 @@ public class WaterVoxelTests {
             return;
         }
 
-        VoxelTestUtils.spawnVoxel(helper, voxel, spawnPos, Vec3.ZERO, 200);
         voxel.setNoGravityCustom(true);
+        VoxelTestUtils.spawnVoxel(helper, voxel, spawnPos, Vec3.ZERO, 200);
 
         helper.runAfterDelay(25, () -> {
             BlockState farmlandState = helper.getLevel().getBlockState(farmlandPos);

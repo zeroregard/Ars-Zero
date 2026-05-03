@@ -38,6 +38,7 @@ public class FireVoxelWorldInteractionBehaviour {
     @GameTest(batch = "FireVoxelWorldInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void fireVoxelIgnitesCampfire(GameTestHelper helper) {
         BlockPos campfirePos = helper.absolutePos(CENTER_RELATIVE);
+        helper.setBlock(CENTER_RELATIVE.below(), Blocks.STONE.defaultBlockState());
         helper.setBlock(CENTER_RELATIVE, Blocks.CAMPFIRE.defaultBlockState().setValue(BlockStateProperties.LIT, false));
 
         FireVoxelEntity fire = createFire(helper, DEFAULT_SIZE);
@@ -153,6 +154,7 @@ public class FireVoxelWorldInteractionBehaviour {
     @GameTest(batch = "FireVoxelWorldInteractionBehaviour", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
     public static void fireVoxelMeltsIce(GameTestHelper helper) {
         BlockPos icePos = helper.absolutePos(CENTER_RELATIVE);
+        helper.setBlock(CENTER_RELATIVE.below(), Blocks.STONE.defaultBlockState());
         helper.setBlock(CENTER_RELATIVE, Blocks.ICE.defaultBlockState());
 
         FireVoxelEntity fire = createFire(helper, DEFAULT_SIZE);

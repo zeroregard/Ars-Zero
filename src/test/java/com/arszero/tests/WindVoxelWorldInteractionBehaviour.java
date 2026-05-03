@@ -39,6 +39,7 @@ public class WindVoxelWorldInteractionBehaviour {
     public static void fireInteractionCausesSmallExplosion(GameTestHelper helper) {
         BlockPos firePos = CENTER_RELATIVE;
         BlockPos fragilePos = CENTER_RELATIVE.offset(1, 0, 0);
+        helper.setBlock(firePos.below(), Blocks.STONE.defaultBlockState());
         helper.setBlock(firePos, Blocks.FIRE.defaultBlockState());
         helper.setBlock(fragilePos, Blocks.GLASS.defaultBlockState());
         

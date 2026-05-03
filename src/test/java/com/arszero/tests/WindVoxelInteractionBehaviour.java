@@ -131,9 +131,10 @@ public class WindVoxelInteractionBehaviour {
         }
         fire.setSize(size);
         fire.refreshDimensions();
+        fire.setNoGravityCustom(true);
         return fire;
     }
-    
+
     private static WaterVoxelEntity createWater(GameTestHelper helper, float size) {
         ServerLevel level = helper.getLevel();
         WaterVoxelEntity water = ModEntities.WATER_VOXEL_ENTITY.get().create(level);
@@ -143,6 +144,7 @@ public class WindVoxelInteractionBehaviour {
         }
         water.setSize(size);
         water.refreshDimensions();
+        water.setNoGravityCustom(true);
         return water;
     }
 }

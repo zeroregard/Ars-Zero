@@ -43,11 +43,13 @@ public class VoxelDamageAttributionTests {
         player.setPos(playerPos.getX() + 0.5, playerPos.getY(), playerPos.getZ() + 0.5);
         level.addFreshEntity(player);
         
+        helper.setBlock(CENTER_RELATIVE.below(), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+
         IronGolem golem = new IronGolem(net.minecraft.world.entity.EntityType.IRON_GOLEM, level);
         BlockPos golemPos = helper.absolutePos(CENTER_RELATIVE);
         golem.setPos(golemPos.getX() + 0.5, golemPos.getY(), golemPos.getZ() + 0.5);
         level.addFreshEntity(golem);
-        
+
         helper.runAfterDelay(5, () -> {
             StoneVoxelEntity stone = ModEntities.STONE_VOXEL_ENTITY.get().create(level);
             if (stone == null) {
@@ -81,11 +83,13 @@ public class VoxelDamageAttributionTests {
         player.setPos(playerPos.getX() + 0.5, playerPos.getY(), playerPos.getZ() + 0.5);
         level.addFreshEntity(player);
         
+        helper.setBlock(CENTER_RELATIVE.below(), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+
         IronGolem golem = new IronGolem(net.minecraft.world.entity.EntityType.IRON_GOLEM, level);
         BlockPos golemPos = helper.absolutePos(CENTER_RELATIVE);
         golem.setPos(golemPos.getX() + 0.5, golemPos.getY(), golemPos.getZ() + 0.5);
         level.addFreshEntity(golem);
-        
+
         helper.runAfterDelay(5, () -> {
             com.github.ars_zero.common.entity.FireVoxelEntity fire = ModEntities.FIRE_VOXEL_ENTITY.get().create(level);
             if (fire == null) {

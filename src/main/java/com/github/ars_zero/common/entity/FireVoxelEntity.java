@@ -464,7 +464,7 @@ public class FireVoxelEntity extends BaseVoxelEntity {
                 if (!this.isAlive()) {
                     return;
                 }
-            } else if (this.tickCount % 20 == 0) {
+            } else if (this.tickCount > 0 && this.tickCount % 20 == 0) {
                 handleRainDampening();
                 if (!this.isAlive()) {
                     return;
