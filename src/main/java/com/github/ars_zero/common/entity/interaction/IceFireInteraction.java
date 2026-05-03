@@ -1,6 +1,7 @@
 package com.github.ars_zero.common.entity.interaction;
 
 import com.github.ars_zero.common.entity.BaseVoxelEntity;
+import com.github.ars_zero.common.entity.FireVoxelEntity;
 import com.github.ars_zero.common.entity.IceVoxelEntity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
