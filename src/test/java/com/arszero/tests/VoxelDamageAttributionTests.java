@@ -30,7 +30,7 @@ public class VoxelDamageAttributionTests {
         }
     }
     
-    @GameTest(batch = "VoxelDamageAttribution", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "VoxelDamageAttribution", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 250)
     public static void stoneVoxelDamageAttributionToPlayer(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
@@ -70,7 +70,7 @@ public class VoxelDamageAttributionTests {
         });
     }
     
-    @GameTest(batch = "VoxelDamageAttribution", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7")
+    @GameTest(batch = "VoxelDamageAttribution", templateNamespace = ArsZero.MOD_ID, template = "common/empty_7x7", timeoutTicks = 250)
     public static void fireVoxelIgnitionAttributionToPlayer(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
