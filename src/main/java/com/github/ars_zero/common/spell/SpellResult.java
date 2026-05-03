@@ -1,13 +1,19 @@
 package com.github.ars_zero.common.spell;
 
 import com.github.ars_zero.common.entity.BlockGroupEntity;
+import com.github.ars_zero.common.util.MathHelper;
+import com.github.ars_zero.common.util.TurretHelper;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.IWrappedCaster;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.LivingCaster;
 import com.hollingsworth.arsnouveau.api.spell.wrapped_caster.TileCaster;
+import dev.ryanhcode.sable.companion.SableCompanion;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Position;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -112,10 +118,13 @@ public class SpellResult {
             yaw = living.getYRot();
             pitch = living.getXRot();
         } else if (caster instanceof TileCaster tileCaster) {
-            position = tileCaster.getPosition().add(0.5, 0.5, 0.5);
-            Direction facing = tileCaster.getFacingDirection();
-            yaw = directionToYaw(facing);
-            pitch = directionToPitch(facing);
+            BlockEntity tile = tileCaster.getTile();
+            BlockPos tilePos = tile.getBlockPos();
+            Level tileLevel = tile.getLevel();
+            position = SableCompanion.INSTANCE.projectOutOfSubLevel(tileLevel, (Position) tileCaster.getPosition().add(0.5, 0.5, 0.5));
+            float[] yawPitch = MathHelper.vecToYawPitch(TurretHelper.getTurretLookDir(tileLevel, tilePos, tileCaster.getFacingDirection()));
+            yaw = yawPitch[0];
+            pitch = yawPitch[1];
         } else {
             position = caster.getPosition();
         }

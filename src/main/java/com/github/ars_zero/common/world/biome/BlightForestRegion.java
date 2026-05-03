@@ -16,11 +16,12 @@ import java.util.function.Consumer;
 /**
  * Terrablender region that adds blight forest only in the "interior" of the forest climate zone
  * (narrow parameter band), so it appears in larger patches instead of narrow strips between other biomes.
- * Excludes ocean/coast (mid–far inland only). Restricts to swamp-level flatness only: narrowest weirdness ±0.03 and EROSION_5 only.
+ * Restricted to a single climate slot (COOL + WET + FAR_INLAND + EROSION_5) to keep it rare —
+ * roughly 1 blight forest per 5 archwood forests.
  */
 public class BlightForestRegion extends Region {
 
-    /** Weirdness: narrowest band around 0, same order as swamp (only the flattest possible terrain). */
+    /** Weirdness: narrowest band around 0, same as swamp (only the flattest possible terrain). */
     private static final float FLAT_WEIRDNESS = 0.03F;
 
     public BlightForestRegion(ResourceLocation name, int weight) {
@@ -29,12 +30,12 @@ public class BlightForestRegion extends Region {
 
     @Override
     public void addBiomes(Registry<Biome> registry, Consumer<Pair<Climate.ParameterPoint, ResourceKey<Biome>>> mapper) {
-        // Use mapper directly (no VanillaParameterOverlayBuilder) so the biome is placed
-        // ONLY at the exact parameter points listed — no gap-filling that could bleed into oceans.
+        // Single climate combination to keep blight forest rare. Previously used 2×2×2 = 8 combinations
+        // which caused it to appear far more often than the archwood forests.
         new ParameterUtils.ParameterPointListBuilder()
-            .temperature(ParameterUtils.Temperature.COOL, ParameterUtils.Temperature.NEUTRAL)
-            .humidity(ParameterUtils.Humidity.WET, ParameterUtils.Humidity.HUMID)
-            .continentalness(ParameterUtils.Continentalness.MID_INLAND, ParameterUtils.Continentalness.FAR_INLAND)
+            .temperature(ParameterUtils.Temperature.COOL)
+            .humidity(ParameterUtils.Humidity.WET)
+            .continentalness(ParameterUtils.Continentalness.FAR_INLAND)
             .erosion(ParameterUtils.Erosion.EROSION_5)
             .depth(ParameterUtils.Depth.SURFACE)
             .weirdness(Climate.Parameter.span(-FLAT_WEIRDNESS, FLAT_WEIRDNESS))

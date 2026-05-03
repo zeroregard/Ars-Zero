@@ -1,0 +1,158 @@
+name: Publish on CurseForge
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type (ignored when bumping beta of an existing beta)'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      is_beta:
+        description: 'Beta release — if current is beta: +1 to beta number; if current is release: start X.(minor+1).0-beta1'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  MC_MIN_VER: '1.21'
+  MC_MAX_VER: '1.21.1'
+  JAVA_VERSION: 21
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch tags
+        run: git fetch --tags --force
+      - name: Compute new version
+        run: |
+          CURRENT=$(grep "^mod_version=" gradle.properties | cut -d= -f2)
+          echo "Current version: $CURRENT"
+
+          if [[ "$CURRENT" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)-beta([0-9]+)$ ]]; then
+            IS_CURRENT_BETA=true
+            MAJOR="${BASH_REMATCH[1]}"
+            MINOR="${BASH_REMATCH[2]}"
+            PATCH="${BASH_REMATCH[3]}"
+            BETA="${BASH_REMATCH[4]}"
+          elif [[ "$CURRENT" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            IS_CURRENT_BETA=false
+            MAJOR="${BASH_REMATCH[1]}"
+            MINOR="${BASH_REMATCH[2]}"
+            PATCH="${BASH_REMATCH[3]}"
+            BETA=0
+          else
+            echo "Unrecognized version format: $CURRENT" && exit 1
+          fi
+
+          if [[ "${{ inputs.is_beta }}" == "true" ]]; then
+            if [[ "$IS_CURRENT_BETA" == "true" ]]; then
+              NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}-beta$((BETA + 1))"
+            else
+              NEW_VERSION="${MAJOR}.$((MINOR + 1)).0-beta1"
+            fi
+          else
+            case "${{ inputs.bump_type }}" in
+              patch) NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))" ;;
+              minor) NEW_VERSION="${MAJOR}.$((MINOR + 1)).0" ;;
+              major) NEW_VERSION="$((MAJOR + 1)).0.0" ;;
+            esac
+          fi
+
+          echo "New version: $NEW_VERSION"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+      - name: Generate changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [[ -n "$PREV_TAG" ]]; then
+            COMMITS=$(git log "${PREV_TAG}..HEAD" --pretty=format:"%s")
+          else
+            COMMITS=$(git log HEAD --pretty=format:"%s")
+          fi
+
+          FILTERED=$(echo "$COMMITS" | grep -vE '^(ci|ver|chore|internal)[!: ]' | grep -v '^$')
+
+          FEATURES=$(echo "$FILTERED" | grep -iE '^(feat|add|new)[!:(]' | sed -E 's/^[^:!]+[!:]?: *//')
+          FIXES=$(echo "$FILTERED" | grep -iE '^fix[!:(]' | sed -E 's/^[^:!]+[!:]?: *//')
+          OTHER=$(echo "$FILTERED" | grep -viE '^(feat|add|new|fix)[!:(]' | grep -v '^$')
+
+          {
+            echo "## Ars Zero $NEW_VERSION"
+            echo ""
+            if [[ -n "$PREV_TAG" ]]; then
+              echo "_Changes since \`${PREV_TAG}\`_"
+              echo ""
+            fi
+
+            if [[ -n "$FEATURES" ]]; then
+              echo "### New Features"
+              while IFS= read -r line; do [[ -n "$line" ]] && echo "- $line"; done <<< "$FEATURES"
+              echo ""
+            fi
+
+            if [[ -n "$FIXES" ]]; then
+              echo "### Bug Fixes"
+              while IFS= read -r line; do [[ -n "$line" ]] && echo "- $line"; done <<< "$FIXES"
+              echo ""
+            fi
+
+            if [[ -n "$OTHER" ]]; then
+              echo "### Changes"
+              while IFS= read -r line; do [[ -n "$line" ]] && echo "- $line"; done <<< "$OTHER"
+            fi
+          } > .ci-changelog.md
+
+          cat .ci-changelog.md
+      - name: Update gradle.properties
+        run: |
+          sed -i "s/^mod_version=.*/mod_version=${{ env.NEW_VERSION }}/" gradle.properties
+      - name: Commit and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add gradle.properties
+          git commit -m "ver: ${{ env.NEW_VERSION }}"
+          git tag "${{ env.NEW_VERSION }}"
+          git push origin HEAD:${{ github.ref_name }}
+          git push origin "${{ env.NEW_VERSION }}"
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: "temurin"
+          cache: gradle
+          cache-dependency-path: |
+            *.gradle*
+            gradle/wrapper/gradle-wrapper.properties
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Build with Gradle
+        run: ./gradlew build --no-daemon
+      - uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          curseforge-id: 1377482
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          name: Ars Zero ${{ env.NEW_VERSION }} for ${{ env.MC_MAX_VER }}
+          version: ${{ env.NEW_VERSION }}
+          game-versions: |
+            >=${{ env.MC_MIN_VER }} <=${{ env.MC_MAX_VER }}
+          loaders: |
+            neoforge
+          java: |
+            21
+          environments: |
+            client
+            server
+          changelog-file: .ci-changelog.md
