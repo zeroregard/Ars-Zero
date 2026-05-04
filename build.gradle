@@ -1,88 +1,37 @@
 plugins {
-    id 'java-library'
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0+'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
     id 'checkstyle'
 }
 
+version = "${minecraft_version}-${mod_version}"
+group = 'com.github.ars_zero'
+
 base {
-    version = "${minecraft_version}-${mod_version}"
-    group = 'com.github.ars_zero'
-    archivesBaseName = 'ars_zero'
+    archivesName = 'ars_zero'
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+def enableLegacyNeoTests = providers.gradleProperty('enableLegacyNeoTests').map { it.toBoolean() }.orElse(false).get()
+def enableCheckstyle = providers.gradleProperty('enableCheckstyle').map { it.toBoolean() }.orElse(false).get()
+def resourceProperties = [
+    loader_version_range   : loader_version_range,
+    mod_license            : mod_license,
+    mod_id                 : mod_id,
+    mod_version            : mod_version,
+    mod_name               : mod_name,
+    mod_authors            : mod_authors,
+    mod_description        : mod_description,
+    forge_version_range    : forge_version_range,
+    minecraft_version_range: minecraft_version_range
+]
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 java.withSourcesJar()
 
-tasks.named('wrapper', Wrapper).configure {
-    distributionType = Wrapper.DistributionType.BIN
-}
-
-neoForge {
-    version = project.neo_version
-
-    parchment {
-        mappingsVersion = project.parchment_version
-        minecraftVersion = "1.21.1"
-    }
-
-    runs {
-        client {
-            client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
-            def resolvedFilter = System.getProperty('filter', System.getProperty('ars_zero.testFilter', ''))
-            systemProperty 'filter', resolvedFilter
-            systemProperty 'ars_zero.testFilter', resolvedFilter
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
-
-        server {
-            server()
-            programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
-            def resolvedFilter = System.getProperty('filter', System.getProperty('ars_zero.testFilter', ''))
-            systemProperty 'filter', resolvedFilter
-            systemProperty 'ars_zero.testFilter', resolvedFilter
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
-
-        gameTestServer {
-            type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
-            def resolvedFilter = System.getProperty('filter', System.getProperty('ars_zero.testFilter', ''))
-            systemProperty 'filter', resolvedFilter
-            systemProperty 'ars_zero.testFilter', resolvedFilter
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
-
-        data {
-            data()
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-
-        botClient {
-            client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            gameDirectory = file('run-bot')
-        }
-    }
-
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
-        }
-        "ars_zero_tests" {
-            sourceSet sourceSets.test
-        }
-    }
-}
-
-sourceSets.main.resources { srcDir "src/generated/resources" }
+sourceSets.main.resources { srcDir 'src/generated/resources' }
 sourceSets {
     test {
         resources {
@@ -93,79 +42,130 @@ sourceSets {
     }
 }
 
-repositories {
-    mavenCentral()
-    maven { url = "https://maven.neoforged.net/releases" }
-    maven { url = "https://maven.saps.dev/releases" }
-    maven { url = "https://maven.saps.dev/snapshots" }
-    mavenLocal()
-    maven { url = "https://modmaven.dev" }
-    maven { url = "https://maven.minecraftforge.net" }
-    maven { url = "https://maven.blamejared.com/" }
-    maven { url = "https://maven.theillusivec4.top/" }
-    maven { url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/" }
-    maven { url = "https://jitpack.io" }
-    maven { url = "https://maven.octo-studios.com/releases" }
-    maven { 
-        name = "RedlanceMinecraft"
-        url = "https://repo.redlance.org/public"
-    }
-    maven {
-        name = "RyanHCode Maven"
-        url = "https://maven.ryanhcode.dev/releases"
-    }
-    exclusiveContent {
-        forRepository {
-            maven {
-                url "https://cursemaven.com"
+mixin {
+    add sourceSets.main, 'ars_zero.refmap.json'
+    config 'ars_zero.mixins.json'
+}
+
+minecraft {
+    mappings channel: 'official', version: minecraft_version
+    copyIdeResources = true
+    accessTransformer = file('META-INF/accesstransformer.cfg')
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                ars_zero {
+                    source sourceSets.main
+                }
+                if (enableLegacyNeoTests) {
+                    ars_zero_tests {
+                        source sourceSets.test
+                    }
+                }
             }
         }
-        filter {
-            includeGroup "curse.maven"
+
+        client {
+            property 'forge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
+            def resolvedFilter = System.getProperty('filter', System.getProperty('ars_zero.testFilter', ''))
+            property 'filter', resolvedFilter
+            property 'ars_zero.testFilter', resolvedFilter
+        }
+
+        server {
+            property 'forge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
+            def resolvedFilter = System.getProperty('filter', System.getProperty('ars_zero.testFilter', ''))
+            property 'filter', resolvedFilter
+            property 'ars_zero.testFilter', resolvedFilter
+            arg '--nogui'
+        }
+
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', "${project.mod_id},minecraft"
+            def resolvedFilter = System.getProperty('filter', System.getProperty('ars_zero.testFilter', ''))
+            property 'filter', resolvedFilter
+            property 'ars_zero.testFilter', resolvedFilter
+        }
+
+        data {
+            workingDirectory project.file('run-data')
+            args '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
     }
 }
 
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.minecraftforge.net' }
+    maven { url = 'https://maven.saps.dev/releases' }
+    maven { url = 'https://maven.saps.dev/snapshots' }
+    maven { url = 'https://modmaven.dev' }
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    maven { url = 'https://maven.blamejared.com/' }
+    maven { url = 'https://maven.theillusivec4.top/' }
+    maven { url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' }
+    maven { url = 'https://api.modrinth.com/maven' }
+    maven { url = 'https://jitpack.io' }
+    maven { url = 'https://maven.octo-studios.com/releases' }
+    maven { url = 'https://repo.redlance.org/public' }
+    mavenLocal()
+}
+
 dependencies {
-    implementation("com.hollingsworth.ars_nouveau:ars_nouveau-${minecraft_version}:${ars_version}")
-    compileOnly('com.github.glitchfiend:TerraBlender-neoforge:1.21.1-4.1.0.8')
-    
-    implementation("com.alexthw.ars_elemental:ars_elemental-${minecraft_version}:${elemental_version}") {
-        transitive = false
-    }
-    
-    implementation("com.alexthw.sauce:sauce-${minecraft_version}:${sauce_version}")
-    
-    jarJar(implementation("com.alexthw.sauce:sauce-${minecraft_version}") {
-        version {
-            strictly '[0.0.2,)'
-            prefer sauce_version
-        }
-    }) { transitive = false }
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    implementation("software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}")
-    runtimeOnly("vazkii.patchouli:Patchouli:1.21-${patchouli_version}")
-    implementation("top.theillusivec4.curios:curios-neoforge:${curios_version}+${minecraft_version}")
+    implementation fg.deobf('com.hollingsworth.ars_nouveau:ars_nouveau-1.20.1:4.12.5.243')
+    implementation fg.deobf('com.github.glitchfiend:TerraBlender-forge:1.20.1-3.0.1.10')
+    implementation fg.deobf('software.bernie.geckolib:geckolib-forge-1.20.1:4.8.2')
+    implementation fg.deobf('top.theillusivec4.curios:curios-forge:5.14.1+1.20.1')
+    runtimeOnly files('libs/mixinextras-forge-0.2.0-beta.8.jar')
 
-    compileOnly("mezz.jei:jei-1.21.1-neoforge-api:19.21.0.247")
-    compileOnly("mezz.jei:jei-1.21.1-neoforge:19.21.0.247")
-    runtimeOnly("mezz.jei:jei-1.21.1-neoforge:19.21.0.247")
-    compileOnly "curse.maven:jade-324717:5444008"
-    
-    compileOnly "com.hollingsworth.nuggets:nuggets-neoforge-1.21.1:${nuggets_version}"
+    compileOnly fg.deobf('mezz.jei:jei-1.20.1-common-api:15.20.0.129')
+    compileOnly fg.deobf('mezz.jei:jei-1.20.1-forge-api:15.20.0.129')
+    runtimeOnly fg.deobf('mezz.jei:jei-1.20.1-forge:15.20.0.129')
+    compileOnly fg.deobf('maven.modrinth:jade:11.13.1+forge')
+    runtimeOnly fg.deobf('vazkii.patchouli:Patchouli:1.20.1-84.1-FORGE')
 
-    jarJar(api("dev.ryanhcode.sable-companion:sable-companion-common-${project.minecraft_version}") {
-        version {
-            prefer project.sable_companion_version
-        }
-    })
-
-    testImplementation("net.neoforged:neoforge:${neo_version}")
-    
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
 tasks.withType(Copy).configureEach {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.withType(org.gradle.api.tasks.bundling.AbstractArchiveTask).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    inputs.properties(resourceProperties)
+    filesMatching(['META-INF/mods.toml']) {
+        expand(resourceProperties)
+    }
+    from('src/main/resources/assets/ars_zero/patchouli_books/worn_notebook') {
+        into 'assets/ars_nouveau/patchouli_books/worn_notebook'
+    }
+}
+
+tasks.named('compileTestJava').configure {
+    enabled = enableLegacyNeoTests
+}
+
+tasks.matching { it.name in ['processTestResources', 'testClasses', 'test'] }.configureEach {
+    enabled = enableLegacyNeoTests
+}
+
+tasks.named('jar', Jar).configure {
+    finalizedBy 'reobfJar'
 }
 
 publishing {
@@ -181,59 +181,13 @@ publishing {
     }
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-}
-
 checkstyle {
     toolVersion = '10.12.5'
     configFile = file('config/checkstyle/checkstyle.xml')
 }
 
-
-
-tasks.named("runGameTestServer").configure {
-    def filterProperty = System.getProperty("ars_zero.testFilter")
-    if (filterProperty != null && !filterProperty.isBlank()) {
-        systemProperty "ars_zero.testFilter", filterProperty
-    }
-    doFirst {
-        def sourceDir = file("gameteststructures")
-        if (sourceDir.exists()) {
-            copy {
-                from(sourceDir)
-                into(file("run/gameteststructures"))
-            }
-        }
-        def mainResourceStructuresDir = file("src/main/resources/data/ars_zero/structure")
-        if (mainResourceStructuresDir.exists()) {
-            copy {
-                from(mainResourceStructuresDir)
-                into(file("run/gameteststructures/ars_zero"))
-            }
-        }
-        def testResourceStructuresDir = file("src/test/resources/data/ars_zero/structure")
-        if (testResourceStructuresDir.exists()) {
-            copy {
-                from(testResourceStructuresDir)
-                into(file("run/gameteststructures/ars_zero"))
-            }
-        }
-        def buildMainResourceStructuresDir = file("build/resources/main/data/ars_zero/structure")
-        if (buildMainResourceStructuresDir.exists()) {
-            copy {
-                from(buildMainResourceStructuresDir)
-                into(file("run/gameteststructures/ars_zero"))
-            }
-        }
-        def buildTestResourceStructuresDir = file("build/resources/test/data/ars_zero/structure")
-        if (buildTestResourceStructuresDir.exists()) {
-            copy {
-                from(buildTestResourceStructuresDir)
-                into(file("run/gameteststructures/ars_zero"))
-            }
-        }
-    }
+tasks.withType(Checkstyle).configureEach {
+    enabled = enableCheckstyle
 }
 
 tasks.register('generateStructureWorld', Exec) {
@@ -254,4 +208,3 @@ tasks.register('runDataClient') {
     dependsOn 'runData'
     finalizedBy 'runClient'
 }
-

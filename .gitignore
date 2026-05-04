@@ -47,6 +47,3 @@ run-bot/
 
 # Generated
 src/generated/resources/.cache
-
-# Other
-.mcp.json
